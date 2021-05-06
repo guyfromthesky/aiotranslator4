@@ -42,6 +42,8 @@ from tkinter import DISABLED
 
 from tkinter import colorchooser
 from tkinter import scrolledtext 
+from tkinter import simpledialog
+
 
 import webbrowser
 
@@ -372,13 +374,16 @@ class DocumentTranslator(Frame):
 	def Generate_TM_Manager_UI(self, Tab):
 		self.pair_list = []
 		self.removed_list = []
-		Row = 1
-		self.search_text = Text(Tab, width = 50, height=1) #
-		self.search_text.grid(row=Row, column=1, columnspan=5, padx=5, pady=5, stick=W)
-
-		self.search_text.bind("<Enter>", self.search_tm_event)
-
 		Max_Size = 10
+		Row = 1
+		Label(Tab, width = 100, text= "").grid(row=Row, column=1, columnspan=Max_Size-1, padx=5, pady=5, sticky = (N,S,W,E))
+		Row += 1
+		self.search_text = Text(Tab, width = (125- self.HalfButtonWidth*3), height=1) #
+		self.search_text.grid(row=Row, column=1, columnspan=Max_Size-3, padx=5, pady=5, stick=W)
+
+		#self.search_text.bind("<Enter>", self.search_tm_event)
+
+		print('Btn size', self.HalfButtonWidth)
 		Button(Tab, text= 'Load', width= self.HalfButtonWidth, command= self.load_tm_list).grid(row=Row, column=Max_Size-2, sticky=E)
 		Button(Tab, text= 'Save', width= self.HalfButtonWidth, command= self.save_tm).grid(row=Row, column=Max_Size-1, sticky=E)
 		Button(Tab, width = self.HalfButtonWidth, text=  'Search' , command= self.search_tm_list).grid(row=Row, column=Max_Size,sticky=E)
@@ -391,7 +396,7 @@ class DocumentTranslator(Frame):
 		#style.map('Treeview', background = [('seleted', 'green')])
 		
 		self.Treeview = Treeview(Tab)
-		self.Treeview.grid(row=Row, column=1, columnspan = Max_Size, sticky = (N,S,W,E))
+		self.Treeview.grid(row=Row, column=1, columnspan=Max_Size-1, padx=5, pady=5, sticky = (N,S,W,E))
 		verscrlbar = Scrollbar(Tab, orient ="vertical", command = self.Treeview.yview)
 		#verscrlbar.pack(side ='right', fill ='x') 
 		self.Treeview.configure(  yscrollcommand=verscrlbar.set)
@@ -401,9 +406,9 @@ class DocumentTranslator(Frame):
 		#self.Treeview.heading("#0", text='Hangul', anchor='w')
 		self.Treeview.heading("#0", text='Hangul')
 		#self.Treeview.column("#0", anchor="w")
-		self.Treeview.column("#0", anchor='center', width=250)
+		self.Treeview.column("#0", anchor='center', width=350)
 		self.Treeview.heading('status', text='English')
-		self.Treeview.column('status', anchor='center', width=250)
+		self.Treeview.column('status', anchor='center', width=350)
 
 		self.Treeview.tag_configure('pass', background= 'green')
 		self.Treeview.tag_configure('fail', background= 'red')
@@ -414,14 +419,15 @@ class DocumentTranslator(Frame):
 		verscrlbar.grid(row=Row, column=Max_Size,  sticky = (N,S,E))
 		Tab.grid_columnconfigure(Max_Size, weight=0, pad=0)
 		styles = Style()
-		styles.configure('Treeview',rowheight=16)
+		styles.configure('Treeview',rowheight=22)
 
 		self.Treeview.bind("<Delete>", self.Delete_Line)	
 		self.Treeview.bind("<Double-1>", self.DoubleRightClick)	
 
-		Row +=1
-		self.Debugger = scrolledtext.ScrolledText(Tab, width=125, height=6, undo=True, wrap=WORD, )
-		self.Debugger.grid(row=Row, column=1, columnspan=Max_Size, padx=5, pady=5, sticky = (N,S,W,E))
+		
+		#Row +=1
+		#self.Debugger = scrolledtext.ScrolledText(Tab, width=125, height=6, undo=True, wrap=WORD, )
+		#self.Debugger.grid(row=Row, column=1, columnspan=Max_Size, padx=5, pady=5, sticky = (N,S,W,E))
 
 	def Generate_DB_Uploader_UI(self, Tab):
 		
@@ -431,7 +437,7 @@ class DocumentTranslator(Frame):
 		Label(Tab, text=  self.LanguagePack.Label['MainDB']).grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky= W)
 		self.Entry_Old_File_Path = Entry(Tab,width = 130, state="readonly", textvariable=self.Str_DB_Path)
 		self.Entry_Old_File_Path.grid(row=Row, column=3, columnspan=6, padx=4, pady=5, sticky=E)
-		Button(Tab, width = self.Button_Width_Half, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Browse_DB_File).grid(row=Row, column=9, columnspan=2, padx=5, pady=5, sticky=E)
+		Button(Tab, width = self.HalfButtonWidth, text=  self.LanguagePack.Button['Browse'], command= self.Btn_DB_Uploader_Browse_DB_File).grid(row=Row, column=9, columnspan=2, padx=5, pady=5, sticky=E)
 		
 		Row += 1
 		Label(Tab, text= self.LanguagePack.Label['ProjectKey']).grid(row=Row, column=1, padx=5, pady=5, sticky=W)
@@ -440,10 +446,10 @@ class DocumentTranslator(Frame):
 		self.Text_GlossaryID.set_completion_list([])
 		self.Text_GlossaryID.grid(row=Row, column=3, columnspan=2, padx=5, pady=5, stick=W)
 
-		Button(Tab, width = self.Button_Width_Half, text=  self.LanguagePack.Button['Execute'], command= self.Btn_Execute_Script).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
+		Button(Tab, width = self.HalfButtonWidth, text=  self.LanguagePack.Button['Execute'], command= self.Btn_DB_Uploader_Execute_Script).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
 
 		Row += 1
-		self.Debugger = Text(Tab, width=125, height=10, undo=True, wrap=WORD, )
+		self.Debugger = Text(Tab, width=125, height=14, undo=True, wrap=WORD, )
 		self.Debugger.grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E+N+S)
 
 
@@ -497,18 +503,19 @@ class DocumentTranslator(Frame):
 		text = self.search_text.get("1.0", END).replace("\n", "").replace(" ", "")
 		self.remove_treeview()
 		print("Text to search: ", text)
-		tm_size = len(self.MyTranslator.EN)
-		for i in range(tm_size):
-			en_str = self.MyTranslator.EN[i]
-			ko_str = self.MyTranslator.KO[i]
-			if text in en_str or text in ko_str:
-				if ko_str != None:
-					#print("Pair:", ko_str, en_str)
-					try:
-						self.Treeview.insert('', 'end', text= str(ko_str), values=([str(en_str)]))
-						#print('Inserted id:', id)
-					except:
-						pass	
+		if text != None:
+			tm_size = len(self.MyTranslator.EN)
+			for i in range(tm_size):
+				en_str = self.MyTranslator.EN[i]
+				ko_str = self.MyTranslator.KO[i]
+				if text in en_str or text in ko_str:
+					if ko_str != None:
+						#print("Pair:", ko_str, en_str)
+						try:
+							self.Treeview.insert('', 'end', text= str(ko_str), values=([str(en_str)]))
+							#print('Inserted id:', id)
+						except:
+							pass	
 
 	def remove_treeview(self):
 		for i in self.Treeview.get_children():
@@ -724,6 +731,129 @@ class DocumentTranslator(Frame):
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 		return
 	
+
+###########################################################################################
+# DB UPLOADER 
+###########################################################################################
+
+	def Btn_DB_Uploader_Browse_DB_File(self):
+			
+		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectSource'],filetypes = (("Workbook files", "*.xlsx *.xlsm"), ), multiple = False)	
+		if filename != "":
+			self.DB_Path = self.CorrectPath(filename)
+			self.Str_DB_Path.set(self.DB_Path)
+			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
+		else:
+			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
+		return
+
+	def Btn_Browse_Glossary_File(self):
+			
+		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectSource'],filetypes = (("Workbook files", "*.svg"), ), multiple = False)	
+		if filename != "":
+			self.DB_Path = self.CorrectPath(filename)
+			self.Str_DB_Path.set(self.DB_Path)
+			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
+		else:
+			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
+		return
+
+	def Btn_Execute_Creator_Script(self):
+		DB = self.Str_DB_Path.get()
+		Glossary_ID = self.Text_New_GlossaryID.get()
+		URI = self.Text_URI_ID.get()
+
+		self.Automation_Processor = Process(target=Function_Execute_Create_Script, args=(self.StatusQueue, DB, Glossary_ID, URI,))
+		self.Automation_Processor.start()
+		self.after(DELAY1, self.Wait_For_Automation_Creator_Processor)	
+
+	def Wait_For_Automation_Creator_Processor(self):
+		if (self.Automation_Processor.is_alive()):
+			'''
+			try:
+				percent = self.ProcessQueue.get(0)
+				self.CompareProgressbar["value"] = percent
+				self.progressbar.update()
+				#self.Progress.set("Progress: " + str(percent/10) + '%')
+			except queue.Empty:
+				pass	
+			'''
+			try:
+				Status = self.StatusQueue.get(0)
+				if Status != None:
+					self.Notice.set(Status)
+					self.Debugger.insert("end", "\n\r")
+					self.Debugger.insert("end", Status)
+			except queue.Empty:
+				pass	
+			self.after(DELAY1, self.Wait_For_Automation_Creator_Processor)
+		else:
+			try:
+				Status = self.StatusQueue.get(0)
+				if Status != None:	
+					self.Notice.set('Compare complete')
+					print(Status)
+					self.Debugger.insert("end", "\n\r")
+					self.Debugger.insert("end", Status)
+			except queue.Empty:
+				pass
+			self.Wait_For_Automation_Creator_Processor.terminate()
+
+	def Btn_DB_Uploader_Execute_Script(self):
+		DB = self.Str_DB_Path.get()
+		Glossary_ID = self.Text_GlossaryID.get()
+		
+		result = self.Confirm_Popup(Glossary_ID, 'Are you sure you want to replace the DB of '+ Glossary_ID + "?")
+		
+		if result == True:
+			
+			self.Automation_Processor = Process(target=Function_Execute_Script, args=(self.StatusQueue, DB, Glossary_ID,))
+			self.Automation_Processor.start()
+			self.after(DELAY1, self.Wait_For_Automation_Processor)	
+
+	def Wait_For_Automation_Processor(self):
+		if (self.Automation_Processor.is_alive()):
+			'''
+			try:
+				percent = self.ProcessQueue.get(0)
+				self.CompareProgressbar["value"] = percent
+				self.progressbar.update()
+				#self.Progress.set("Progress: " + str(percent/10) + '%')
+			except queue.Empty:
+				pass	
+			'''
+			try:
+				Status = self.StatusQueue.get(0)
+				if Status != None:
+					self.Notice.set(Status)
+					self.Debugger.insert("end", "\n\r")
+					self.Debugger.insert("end", Status)
+			except queue.Empty:
+				pass	
+			self.after(DELAY1, self.Wait_For_Automation_Processor)
+		else:
+			try:
+				Status = self.StatusQueue.get(0)
+				if Status != None:	
+					self.Notice.set('Compare complete')
+					print(Status)
+					self.Debugger.insert("end", "\n\r")
+					self.Debugger.insert("end", Status)
+			except queue.Empty:
+				pass
+			self.Automation_Processor.terminate()
+
+	def Confirm_Popup(self, Request, Message):
+		MsgBox = simpledialog.askstring(title="Input project ID", prompt="What's your Project ID?")
+
+		if MsgBox == Request:
+			return True
+		else:
+			return False
+
+###########################################################################################
+
+
 	def onExit(self):
 		self.quit()
 
@@ -1302,6 +1432,144 @@ def Optimize(SourceDocument, StatusQueue):
 			except Exception as e:
 				StatusQueue.put('Failed to save the result: ' + str(e))
 	StatusQueue.put('Optimized done.')	
+
+
+###########################################################################################
+
+###########################################################################################
+def Function_Execute_Script(StatusQueue, DB_Path, Glossary_ID, **kwargs):
+
+	Output = Function_Create_CSV_DB(StatusQueue, DB_Path)
+	StatusQueue.put("CSV DB created:" + str(Output))
+	if Glossary_ID != '':
+		
+		client = logging.Client()
+		log_name = 'db-update'
+		logger = client.logger(log_name)
+		try:
+			account = os.getlogin()
+		except:
+			account = 'Anonymous'
+		
+		try:
+			name = os.environ['COMPUTERNAME']
+		except:
+			name = 'Anonymous'	
+
+		text_log = account + ', ' + name + ', ' + Glossary_ID + ', ' + DB_Path
+		logger.log_text(text_log)
+
+		myTranslator = Translator('ko', 'en', None, None, False, False, False, Glossary_ID, )
+		
+		myTranslator.Update_Glob(Glossary_ID, Output)
+
+		StatusQueue.put("DB updated.")
+
+def Function_Execute_Create_Script(StatusQueue, DB_Path, Glossary_ID, URI, **kwargs):
+
+	Output = Function_Create_CSV_DB(StatusQueue, DB_Path)
+	StatusQueue.put("CSV DB created:" + str(Output))
+	myTranslator = Translator('ko', 'en', None, None, False, False, False, Glossary_ID, )
+	
+	myTranslator.Update_Glob(Glossary_ID, Output)	
+	StatusQueue.put("DB created.")
+
+def Function_Update_Glossary(self):
+
+	return
+
+def Function_Create_CSV_DB(
+		StatusQueue, DB_Path, **kwargs
+):
+	from openpyxl import load_workbook, worksheet, Workbook
+	import csv
+	
+	DatabasePath = DB_Path
+
+	Outputdir = os.path.dirname(DatabasePath)
+	baseName = os.path.basename(DatabasePath)
+	sourcename, ext = os.path.splitext(baseName)
+
+	#output_file = Outputdir + '/' + sourcename + '_SingleFile.xlsx'
+	output_file_csv = Outputdir + '/' + sourcename + '.csv'
+	SpecialSheets = ['info']
+
+	RowCount = 0
+
+	if DatabasePath != None:
+		if (os.path.isfile(DatabasePath)):
+			xlsx = load_workbook(DatabasePath)
+			DictList = []
+			Dict = []
+			with open(output_file_csv, 'w', newline='', encoding='utf_8_sig') as csv_file:
+				writer = csv.writer(csv_file, delimiter=',')
+				writer.writerow(['Description', 'ko', 'en'])
+				for sheet in xlsx:
+					sheetname = sheet.title.lower()
+					
+					if sheetname not in SpecialSheets:	
+					
+						EN_Coll = ""
+						KR_Coll = ""
+						database = None
+						ws = xlsx[sheet.title]
+						for row in ws.iter_rows():
+							for cell in row:
+								if cell.value == "KO":
+									KR_Coll = cell.column_letter
+									KR_Row = cell.row
+									database = ws
+								elif cell.value == "EN":
+									EN_Coll = cell.column_letter
+								if KR_Coll != "" and EN_Coll != "":
+									DictList.append(sheet.title)
+									break	
+							if database!=  None:
+								break		
+
+						if database != None:
+							
+							for i in range(KR_Row, database.max_row): 
+								KRAddress = KR_Coll + str(i+1)
+								ENAddress = EN_Coll + str(i+1)
+								KRCell = database[KRAddress]
+								KRValue = KRCell.value
+								ENCell = database[ENAddress]
+								ENValue = ENCell.value
+								if KRValue in [None, 'KO'] or ENValue in [None, 'EN']:
+									continue
+								elif KRValue not in  ["", 'KO'] and ENValue not in ["", 'EN']:
+									KRValue = KRCell.value.replace('\r', '').replace('\n', '')
+									ENValue = ENCell.value.replace('\r', '').replace('\n', '')
+									if sheetname != 'header':
+										ENValue = ENValue.lower()
+									writer.writerow([sheetname, KRValue, ENValue])
+									RowCount+=1
+					elif sheetname == 'info':
+						ws = xlsx[sheet.title]
+						for row in ws.iter_rows():
+							for cell in row:
+								if cell.value == "i_version":
+									temp_Col = chr(ord(cell.column_letter) + 1)
+									temp_Row = cell.row
+									temp_Add = temp_Col + str(temp_Row)	
+									temp_Cel = ws[temp_Add]
+									temp_Val = temp_Cel.value
+									writer.writerow(['info', 'i_version', temp_Val])
+								elif cell.value == "i_date":
+									temp_Col = chr(ord(cell.column_letter) + 1)
+									temp_Row = cell.row
+									temp_Add = temp_Col + str(temp_Row)	
+									temp_Cel = ws[temp_Add]
+									temp_Val = temp_Cel.value
+									writer.writerow(['info', 'i_date', temp_Val])
+
+		StatusQueue.put("Successfully load dictionary from: " +  str(DictList))
+
+	return output_file_csv
+
+
+###########################################################################################
 
 def OptimizeTM(SourceDocument, StatusQueue):
 
