@@ -17,6 +17,8 @@ class LanguagePackEN:
 
 	Menu['LoadLicensePath'] = "Load License file"
 
+	Menu['SaveSetting'] = "Save Setting"
+
 	Button = {}
 	Button['Stop'] = "Stop"
 	Button['Translate'] = "Translate"
@@ -264,6 +266,7 @@ class LanguagePackKR:
 	
 	Menu['LoadLicensePath'] = "라이센스 파일로드"
 
+	Menu['SaveSetting'] = "설정 저장"
 
 	Button = {}
 	Button['Stop'] = "중지하다"

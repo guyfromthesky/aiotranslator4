@@ -540,7 +540,7 @@ class DocumentTranslator(Frame):
 		file = Menu(menubar, tearoff = 0)
 		# Adding Load Menu 
 		menubar.add_cascade(label =  self.LanguagePack.Menu['File'], menu = file) 
-		file.add_command(label =  'Save Setting', command = self.save_app_config) 
+		file.add_command(label =  self.LanguagePack.Menu['SaveSetting'], command = self.save_app_config) 
 		#file.add_command(label =  self.LanguagePack.Menu['LoadException'], command = self.SelectException) 
 		file.add_separator() 
 		file.add_command(label =  self.LanguagePack.Menu['LoadTM'], command = self.SelectTM) 
