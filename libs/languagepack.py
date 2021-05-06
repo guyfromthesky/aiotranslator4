@@ -47,7 +47,7 @@ class LanguagePackEN:
 	Button['Search'] = "Search"
 	Button['Delete'] = "Delete"
 	Button['Save'] = "Save"
-	Button['Update'] = "Delete"
+	Button['Update'] = "Update"
 	Button['RelativeSearch'] = "Relative Search"
 
 	Option = {}
@@ -180,6 +180,9 @@ class LanguagePackEN:
 
 	Tab['AutoExec'] = "Automation Execution"
 
+	Tab['TMManager'] = "TM Manager"
+	Tab['DBUploader'] = "DB Uploader"
+
 	ToolTips = {}
 
 	ToolTips['UpdateTMFile'] = "Update the new translate result to TM file."
@@ -285,7 +288,7 @@ class LanguagePackKR:
 	Button['Search'] = "검색"
 	Button['Delete'] = "지우다"
 	Button['Save'] = "저장"
-	Button['Update'] = "지우다"
+	Button['Update'] = "최신 정보"
 	Button['RelativeSearch'] = "상대 검색"	
 
 	Option = {}
@@ -420,6 +423,9 @@ class LanguagePackKR:
 	Tab['MultiDeepCompare'] = "멀티 딥 비교"
 
 	Tab['AutoExec'] = "자동화 실행"
+
+	Tab['TMManager'] = "TM 관리자"
+	Tab['DBUploader'] = "DB 업 로더"
 
 	ToolTips = {}
 

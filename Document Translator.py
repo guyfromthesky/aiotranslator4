@@ -59,7 +59,7 @@ import json
 
 ToolDisplayName = "Document Translator"
 tool_name = 'document'
-rev = 3208
+rev = 4000
 
 a,b,c,d = list(str(rev))
 VerNum = a + '.' + b + '.' + c + chr(int(d)+97)
@@ -385,9 +385,9 @@ class DocumentTranslator(Frame):
 		#self.search_text.bind("<Enter>", self.search_tm_event)
 
 		print('Btn size', self.HalfButtonWidth)
-		Button(Tab, text= 'Load', width= self.HalfButtonWidth, command= self.load_tm_list).grid(row=Row, column=Max_Size-3, sticky=E)
-		Button(Tab, text= 'Save', width= self.HalfButtonWidth, command= self.save_tm).grid(row=Row, column=Max_Size-2, sticky=E)
-		Button(Tab, width = self.HalfButtonWidth, text=  'Search' , command= self.search_tm_list).grid(row=Row, column=Max_Size-1,sticky=E)
+		Button(Tab, text= self.LanguagePack.Button['Load'], width= self.HalfButtonWidth, command= self.load_tm_list).grid(row=Row, column=Max_Size-3, sticky=E)
+		Button(Tab, text= self.LanguagePack.Button['Save'], width= self.HalfButtonWidth, command= self.save_tm).grid(row=Row, column=Max_Size-2, sticky=E)
+		Button(Tab, width = self.HalfButtonWidth, text=  self.LanguagePack.Button['Search'] , command= self.search_tm_list).grid(row=Row, column=Max_Size-1,sticky=E)
 		Row +=1
 		#self.Debugger = Text(Tab, width=120, height=20, undo=True, wrap=WORD)
 		#self.List = scrolledtext.ScrolledText(Tab, width=125, height=20, undo=True, wrap=WORD, )
@@ -581,10 +581,10 @@ class DocumentTranslator(Frame):
 		#TAB_CONTROL.add(self.Comparison, text=  self.LanguagePack.Tab['Comparison'])
 		#Tab6
 		self.TM_Manager = ttk.Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.TM_Manager, text=  "TM Manager")
+		TAB_CONTROL.add(self.TM_Manager, text=  self.LanguagePack.Tab['TMManager'])
 
 		self.DB_Uploader = ttk.Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.DB_Uploader, text=  "DB Uploader")
+		TAB_CONTROL.add(self.DB_Uploader, text=  self.LanguagePack.Tab['DBUploader'])
 
 		self.Process = ttk.Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.Process, text=  self.LanguagePack.Tab['Debug'])
