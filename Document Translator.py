@@ -442,10 +442,14 @@ class DocumentTranslator(Frame):
 		
 		Row += 1
 		Label(Tab, text= self.LanguagePack.Label['ProjectKey']).grid(row=Row, column=1, padx=5, pady=5, sticky=W)
-		self.Text_GlossaryID = AutocompleteCombobox(Tab)
-		self.Text_GlossaryID.Set_Entry_Width(30)
-		self.Text_GlossaryID.set_completion_list([])
-		self.Text_GlossaryID.grid(row=Row, column=3, columnspan=2, padx=5, pady=5, stick=W)
+		
+		self.ProjectList = AutocompleteCombobox(Tab)
+		self.ProjectList.Set_Entry_Width(30)
+		self.ProjectList.set_completion_list([])
+		if self.GlossaryID != None:
+			self.ProjectList.set(self.GlossaryID)
+
+		self.ProjectList.grid(row=Row, column=3, columnspan=2, padx=5, pady=5, stick=W)
 
 		Button(Tab, width = self.HalfButtonWidth, text=  self.LanguagePack.Button['Execute'], command= self.Btn_DB_Uploader_Execute_Script).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
 
@@ -801,7 +805,7 @@ class DocumentTranslator(Frame):
 
 	def Btn_DB_Uploader_Execute_Script(self):
 		DB = self.Str_DB_Path.get()
-		Glossary_ID = self.Text_GlossaryID.get()
+		Glossary_ID = self.ProjectList.get()
 		
 		result = self.Confirm_Popup(Glossary_ID, 'Are you sure you want to replace the DB of '+ Glossary_ID + "?")
 		
@@ -957,10 +961,14 @@ class DocumentTranslator(Frame):
 
 			glossary_list = [""] + self.MyTranslator.GlossaryList
 			self.Text_GlossaryID.set_completion_list(glossary_list)
+			self.ProjectList.set_completion_list(glossary_list)
+
 			if self.GlossaryID in self.MyTranslator.GlossaryList:
 				self.Text_GlossaryID.set(self.GlossaryID)
+				self.ProjectList.set(self.GlossaryID)
 			else:
 				self.Text_GlossaryID.set("")
+				self.ProjectList.set(self.GlossaryID)
 				#self.Error('No Valid Project selected, please update the project key and try again.')	
 			
 			if isinstance(self.MyTranslator.Version, str):
