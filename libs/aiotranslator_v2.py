@@ -166,9 +166,9 @@ class Translator:
 			self.invalid_request_log = self.config_path + '\\AIO Translator\\invalid_request_logging.pkl'
 			self.tm_request_log = self.config_path + '\\AIO Translator\\tm_request_logging.pkl'
 		
-		self.tracking_log = correct_path_os(self.tracking_log)
-		self.invalid_request_log = correct_path_os(self.invalid_request_log)
-		self.tm_request_log = correct_path_os(self.tm_request_log)
+		self.tracking_log = self.correct_path_os(self.tracking_log)
+		self.invalid_request_log = self.correct_path_os(self.invalid_request_log)
+		self.tm_request_log = self.correct_path_os(self.tm_request_log)
 
 	def correct_path_os(self, path):
 		if not sys.platform.startswith('win'):
@@ -1269,15 +1269,16 @@ class Translator:
 	def init_tm_path(self, TM_Path):
 		if TM_Path != None:
 			if os.path.isfile(TM_Path):
-				self.TM_Path = correct_path_os(TM_Path)
+				self.TM_Path = self.correct_path_os(TM_Path)
 				return
 		TM_Path = self.config_path + '\\AIO Translator\\Local.pkl'
-		self.TM_Path = correct_path_os(TM_Path)
+		self.TM_Path = self.correct_path_os(TM_Path)
 		return
 
 	def import_translation_memory(self):
-		print('Loading data from TM')
+		print('Import TM from pickle file')
 		if not os.path.isfile(self.TM_Path):
+			print('Pickle file not found')
 			return
 		else:
 			try:
@@ -1285,27 +1286,116 @@ class Translator:
 					all_tm = pickle.load(pickle_load)
 				if isinstance(all_tm, dict):
 					# TM format v4
-					if 'project_id' in all_tm:
-						self.TranslationMemory = TM[project_id]
+					if self.GlossaryID in all_tm:
+						print('TM v4')
+						self.TranslationMemory = all_tm[self.GlossaryID]
 					# TM format v3
-					elif 'EN' in TM:
-						print('New TM format')
+					elif 'EN' in all_tm:
+						print('TM v3')
 						self.TranslationMemory = pd.DataFrame({'en': all_tm['EN'],'ko': all_tm['KO']})
 		
 				elif isinstance(all_tm, list):
-					print('TM format V2')
+					print('TM v2')
 					#Consider drop support
 					self.TranslationMemory = pd.DataFrame()
 					for Pair in all_tm:
 						new_row = {'en': Pair[1], 'ko':Pair[0],}
 						self.TranslationMemory = self.TranslationMemory.append(new_row, ignore_index=True)
-			except:
-				print('Fail to load tm')
+			except Exception as e:
+				print("Error:", e)
+				print('Fail to load pickle file')
 				return
-
 		self.TranslationMemorySize = len(self.TranslationMemory)
 		print('Size of TM', self.TranslationMemorySize)		
 
+	# Update TM from temporary_tm to pickle file
+	def append_translation_memory(self):
+		new_tm_size = len(self.temporary_tm)
+		print('Size of temporary TM: ', new_tm_size)
+
+		if len(self.temporary_tm) > 0:
+			while True:
+				try:
+					with open(self.TM_Path, 'rb') as pickle_load:
+						all_tm = pickle.load(pickle_load)
+					if isinstance(all_tm, dict):
+						# TM format v4
+						if self.GlossaryID in all_tm:
+							print('TM v4 format')
+							self.TranslationMemory = all_tm[self.GlossaryID]
+						# TM format v3
+						elif 'EN' in TM:
+							print('TM v3 format')
+							self.TranslationMemory = pd.DataFrame({'en': all_tm['EN'],'ko': all_tm['KO']})
+			
+					elif isinstance(all_tm, list):
+						print('TM v2 format')
+						self.TranslationMemory = pd.DataFrame()
+						for Pair in all_tm:
+							new_row = {'en': Pair[1], 'ko':Pair[0]}
+						self.TranslationMemory = self.TranslationMemory.append(new_row, ignore_index=True)
+				except:
+					print('Fail to load tm')
+					all_tm = {}
+					
+				if isinstance(self.TranslationMemory, pd.DataFrame):
+					self.TranslationMemory = self.TranslationMemory.append(self.temporary_tm)
+				else:
+					self.TranslationMemory = self.temporary_tm
+
+				all_tm[self.GlossaryID] = self.TranslationMemory
+				
+				try:
+					with open(self.TM_Path, 'wb') as pickle_file:
+						print("Updating pickle file....", self.TM_Path)
+						pickle.dump(all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+					
+					self.temporary_tm[:]
+					print('Size TM in memory', len(self.temporary_tm))
+					return new_tm_size
+				except Exception as e:
+					print("Error:", e)
+		return new_tm_size
+	
+	def export_current_translation_memory(self):
+	
+		while True:
+			try:
+				with open(self.TM_Path, 'rb') as pickle_load:
+					all_tm = pickle.load(pickle_load)
+				if isinstance(all_tm, dict):
+					# TM format v4
+					if self.GlossaryID in all_tm:
+						print('TM v4 format')
+					elif 'EN' in TM:
+						all_tm = {}
+		
+				elif isinstance(all_tm, list):
+					all_tm = {}
+			except:
+				print('Fail to load tm')
+				all_tm = {}
+
+				
+			if isinstance(self.TranslationMemory, pd.DataFrame):
+				save_data = self.TranslationMemory.append(self.temporary_tm)
+			else:
+				save_data = self.temporary_tm
+
+			all_tm[self.GlossaryID] = save_data
+			
+			try:
+				with open(self.TM_Path, 'wb') as pickle_file:
+					print("Updating pickle file....", self.TM_Path)
+					pickle.dump(all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+				
+				self.temporary_tm[:]
+				
+				return
+			except Exception as e:
+				print("Error:", e)
+		
+		return 
 	def refresh_translation_memory(self):
 		#self.ImportNumTranslationMemory()
 		self.import_translation_memory()
@@ -1321,7 +1411,6 @@ class Translator:
 			new_row = {self.To_Language: Translated, self.From_Language: Input}
 			df = df.append(new_row, ignore_index=True)
 
-		print('New size:', len(self.temporary_tm))
 
 	# Not use, update later
 	def simple_optmize(self):
@@ -1340,34 +1429,13 @@ class Translator:
 	# Not use, update later
 	def OptimizeTranslationMemory(self):
 		print('Optimizing TM...')
-		New_EN = []
-		New_KO = []
-		print('Old TM:', len(self.EN))
-		counter = 0
-		for text in self.EN:
-			#print('Appending:', text)
-			simple =  text.lower()
-			#text = text.lower
-			if simple not in New_EN:
-				try:
-					index = self.EN.index(text)	
-				except:
-					continue
-			
-			counter+=1
-			if counter % 10000 == 0:
-				print('Appending:', text, counter)
-			New_EN.append(self.EN[index].lower())
-			New_KO.append(self.KO[index].lower())
-			
-		del self.EN
-		self.EN = New_EN
-		del self.KO
-		self.KO = New_KO
-		print('New TM:', len(self.EN))	
-
-		self.Optmized = True
+		print('Old TM:', len(self.TranslationMemory))
+		self.TranslationMemory = self.TranslationMemory.append(self.temporary_tm)
+		#self.TranslatiomMemory = self.TranslationMemory.drop_duplicates(keep=False)
+		self.TranslationMemory.drop_duplicates(inplace=True)
+		print('New TM:', len(self.TranslationMemory))
 		print('Optmize TM completed...')
+		#self.export_current_translation_memory()
 
 	# Used in TM Manager tool
 	# to remove TM pair in the TM
@@ -1397,55 +1465,7 @@ class Translator:
 			print("Updating pickle file....", self.TM_Path)
 			pickle.dump(self.TranslationMemory, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 
-	# Update TM from temporary_tm to pickle file
-	def append_translation_memory(self):
-		new_tm_size = len(self.temporary_tm)
-		print('Size of new TM: ', new_tm_size)
 
-		if len(self.temporary_tm) > 0:
-			while True:
-				try:
-					with open(self.TM_Path, 'rb') as pickle_load:
-						all_tm = pickle.load(pickle_load)
-					if isinstance(all_tm, dict):
-						# TM format v4
-						if self.GlossaryID in all_tm:
-							self.TranslationMemory = TM[self.GlossaryID]
-						# TM format v3
-						elif 'EN' in TM:
-							print('New TM format')
-							self.TranslationMemory = pd.DataFrame({'en': all_tm['EN'],'ko': all_tm['KO']})
-			
-					elif isinstance(all_tm, list):
-						print('TM format V2')
-						#Consider drop support
-						self.TranslationMemory = pd.DataFrame()
-						for Pair in all_tm:
-							new_row = {'en': Pair[1], 'ko':Pair[0]}
-						self.TranslationMemory = self.TranslationMemory.append(new_row, ignore_index=True)
-				except:
-					print('Fail to load tm')
-					all_tm = {}
-					
-				if isinstance(self.TranslationMemory, pd.DataFrame):
-					self.TranslationMemory.append(self.temporary_tm)
-				else:
-					self.TranslationMemory = self.temporary_tm
-
-				all_tm[self.GlossaryID] = self.TranslationMemory
-				
-				try:
-					with open(self.TM_Path, 'wb') as pickle_file:
-						print("Updating pickle file....", self.TM_Path)
-						pickle.dump(all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
-					
-					self.temporary_tm[:]
-					print('Size TM in memory', len(self.temporary_tm))
-					return new_tm_size
-				except Exception as e:
-					print("Error:", e)
-		return new_tm_size
-	
 		# If Translation Memory is exist, replace the text with the defined one.
 	# This method can speed up the translate progress x100 time 
 	# and improve the translation speed.
