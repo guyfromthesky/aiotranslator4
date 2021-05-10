@@ -6,9 +6,7 @@ import configparser
 import base64
 #System lib
 import os
-import sys, getopt
-import unicodedata
-#from unicodedata import category
+import sys
 
 class ConfigLoader:
 	def __init__(self):
@@ -18,8 +16,6 @@ class ConfigLoader:
 		else:
 			self.appdata = os.getcwd() + '\\AIO Translator'
 	
-		
-		
 		# Config file
 		self.Doc_Config_Path = self.appdata + '\\doc.ini'
 		self.Writer_Config_Path = self.appdata + '\\writer.ini'
@@ -27,7 +23,6 @@ class ConfigLoader:
 
 		# Folder
 		self.TM_Backup_Folder_Path = self.appdata + '\\TM'
-
 
 		self.LocalTM = self.appdata + '\\Local.pkl'
 
@@ -278,4 +273,4 @@ class ConfigLoader:
 	def Refresh_Config_Data(self):
 		self.Writer_Init_Setting()
 		self.Doc_Init_Setting()
-		self.Translator_Init_Setting()	
+		self.Translator_Init_Setting()
