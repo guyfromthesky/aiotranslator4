@@ -59,7 +59,7 @@ import json
 
 ToolDisplayName = "Document Translator"
 tool_name = 'document'
-rev = 3208
+rev = 4000
 
 a,b,c,d = list(str(rev))
 VerNum = a + '.' + b + '.' + c + chr(int(d)+97)
@@ -167,9 +167,10 @@ class DocumentTranslator(Frame):
 		#self.Generate_Excel_Option_UI(self.ExcelSetting)
 		self.Generate_Utility_UI(self.Utility)
 		#self.Generate_Comparison_UI(self.Comparison)
-		self.Generate_Debugger_UI(self.Process)
+		
 		self.Generate_TM_Manager_UI(self.TM_Manager)
 		self.Generate_DB_Uploader_UI(self.DB_Uploader)
+		self.Generate_Debugger_UI(self.Process)
 
 		#self.init_App_Setting()
 		
@@ -376,17 +377,17 @@ class DocumentTranslator(Frame):
 		self.removed_list = []
 		Max_Size = 10
 		Row = 1
-		Label(Tab, width = 100, text= "").grid(row=Row, column=1, columnspan=Max_Size-1, padx=5, pady=5, sticky = (N,S,W,E))
+		Label(Tab, width = 100, text= "").grid(row=Row, column=1, columnspan=Max_Size, padx=5, pady=5, sticky = (N,S,W,E))
 		Row += 1
 		self.search_text = Text(Tab, width = (125- self.HalfButtonWidth*3), height=1) #
-		self.search_text.grid(row=Row, column=1, columnspan=Max_Size-3, padx=5, pady=5, stick=W)
+		self.search_text.grid(row=Row, column=1, columnspan=Max_Size-4, padx=5, pady=5, stick=W)
 
 		#self.search_text.bind("<Enter>", self.search_tm_event)
 
 		print('Btn size', self.HalfButtonWidth)
-		Button(Tab, text= 'Load', width= self.HalfButtonWidth, command= self.load_tm_list).grid(row=Row, column=Max_Size-2, sticky=E)
-		Button(Tab, text= 'Save', width= self.HalfButtonWidth, command= self.save_tm).grid(row=Row, column=Max_Size-1, sticky=E)
-		Button(Tab, width = self.HalfButtonWidth, text=  'Search' , command= self.search_tm_list).grid(row=Row, column=Max_Size,sticky=E)
+		Button(Tab, text= self.LanguagePack.Button['Load'], width= self.HalfButtonWidth, command= self.load_tm_list).grid(row=Row, column=Max_Size-3, sticky=E)
+		Button(Tab, text= self.LanguagePack.Button['Save'], width= self.HalfButtonWidth, command= self.save_tm).grid(row=Row, column=Max_Size-2, sticky=E)
+		Button(Tab, width = self.HalfButtonWidth, text=  self.LanguagePack.Button['Search'] , command= self.search_tm_list).grid(row=Row, column=Max_Size-1,sticky=E)
 		Row +=1
 		#self.Debugger = Text(Tab, width=120, height=20, undo=True, wrap=WORD)
 		#self.List = scrolledtext.ScrolledText(Tab, width=125, height=20, undo=True, wrap=WORD, )
@@ -396,7 +397,7 @@ class DocumentTranslator(Frame):
 		#style.map('Treeview', background = [('seleted', 'green')])
 		
 		self.Treeview = Treeview(Tab)
-		self.Treeview.grid(row=Row, column=1, columnspan=Max_Size-1, padx=5, pady=5, sticky = (N,S,W,E))
+		self.Treeview.grid(row=Row, column=1, columnspan=Max_Size, padx=5, pady=5, sticky = (N,S,W,E))
 		verscrlbar = Scrollbar(Tab, orient ="vertical", command = self.Treeview.yview)
 		#verscrlbar.pack(side ='right', fill ='x') 
 		self.Treeview.configure(  yscrollcommand=verscrlbar.set)
@@ -406,9 +407,9 @@ class DocumentTranslator(Frame):
 		#self.Treeview.heading("#0", text='Hangul', anchor='w')
 		self.Treeview.heading("#0", text='Hangul')
 		#self.Treeview.column("#0", anchor="w")
-		self.Treeview.column("#0", anchor='center', width=350)
+		self.Treeview.column("#0", anchor='center', width=500)
 		self.Treeview.heading('status', text='English')
-		self.Treeview.column('status', anchor='center', width=350)
+		self.Treeview.column('status', anchor='center', width=500)
 
 		self.Treeview.tag_configure('pass', background= 'green')
 		self.Treeview.tag_configure('fail', background= 'red')
@@ -441,10 +442,14 @@ class DocumentTranslator(Frame):
 		
 		Row += 1
 		Label(Tab, text= self.LanguagePack.Label['ProjectKey']).grid(row=Row, column=1, padx=5, pady=5, sticky=W)
-		self.Text_GlossaryID = AutocompleteCombobox(Tab)
-		self.Text_GlossaryID.Set_Entry_Width(30)
-		self.Text_GlossaryID.set_completion_list([])
-		self.Text_GlossaryID.grid(row=Row, column=3, columnspan=2, padx=5, pady=5, stick=W)
+		
+		self.ProjectList = AutocompleteCombobox(Tab)
+		self.ProjectList.Set_Entry_Width(30)
+		self.ProjectList.set_completion_list([])
+		if self.GlossaryID != None:
+			self.ProjectList.set(self.GlossaryID)
+
+		self.ProjectList.grid(row=Row, column=3, columnspan=2, padx=5, pady=5, stick=W)
 
 		Button(Tab, width = self.HalfButtonWidth, text=  self.LanguagePack.Button['Execute'], command= self.Btn_DB_Uploader_Execute_Script).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
 
@@ -535,7 +540,7 @@ class DocumentTranslator(Frame):
 		file = Menu(menubar, tearoff = 0)
 		# Adding Load Menu 
 		menubar.add_cascade(label =  self.LanguagePack.Menu['File'], menu = file) 
-		file.add_command(label =  'Save Setting', command = self.save_app_config) 
+		file.add_command(label =  self.LanguagePack.Menu['SaveSetting'], command = self.save_app_config) 
 		#file.add_command(label =  self.LanguagePack.Menu['LoadException'], command = self.SelectException) 
 		file.add_separator() 
 		file.add_command(label =  self.LanguagePack.Menu['LoadTM'], command = self.SelectTM) 
@@ -575,15 +580,14 @@ class DocumentTranslator(Frame):
 		#self.Comparison = ttk.Frame(TAB_CONTROL)
 		#TAB_CONTROL.add(self.Comparison, text=  self.LanguagePack.Tab['Comparison'])
 		#Tab6
-		self.Process = ttk.Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.Process, text=  self.LanguagePack.Tab['Debug'])
-
-		
 		self.TM_Manager = ttk.Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.TM_Manager, text=  "TM Manager")
+		TAB_CONTROL.add(self.TM_Manager, text=  self.LanguagePack.Tab['TMManager'])
 
 		self.DB_Uploader = ttk.Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.DB_Uploader, text=  "DB Uploader")
+		TAB_CONTROL.add(self.DB_Uploader, text=  self.LanguagePack.Tab['DBUploader'])
+
+		self.Process = ttk.Frame(TAB_CONTROL)
+		TAB_CONTROL.add(self.Process, text=  self.LanguagePack.Tab['Debug'])
 
 		TAB_CONTROL.pack(expand=1, fill="both")
 
@@ -801,7 +805,7 @@ class DocumentTranslator(Frame):
 
 	def Btn_DB_Uploader_Execute_Script(self):
 		DB = self.Str_DB_Path.get()
-		Glossary_ID = self.Text_GlossaryID.get()
+		Glossary_ID = self.ProjectList.get()
 		
 		result = self.Confirm_Popup(Glossary_ID, 'Are you sure you want to replace the DB of '+ Glossary_ID + "?")
 		
@@ -957,10 +961,14 @@ class DocumentTranslator(Frame):
 
 			glossary_list = [""] + self.MyTranslator.GlossaryList
 			self.Text_GlossaryID.set_completion_list(glossary_list)
+			self.ProjectList.set_completion_list(glossary_list)
+
 			if self.GlossaryID in self.MyTranslator.GlossaryList:
 				self.Text_GlossaryID.set(self.GlossaryID)
+				self.ProjectList.set(self.GlossaryID)
 			else:
 				self.Text_GlossaryID.set("")
+				self.ProjectList.set(self.GlossaryID)
 				#self.Error('No Valid Project selected, please update the project key and try again.')	
 			
 			if isinstance(self.MyTranslator.Version, str):
