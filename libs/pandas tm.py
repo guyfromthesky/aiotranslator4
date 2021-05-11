@@ -4,22 +4,19 @@ from sys import getsizeof
 
 df = pd.DataFrame()
 
-print(getsizeof(df))
-
-
-print(df)
 keya = 'A'
 keyB = 'B'
-new_row = {keyB:'Geo', keya:87,}
+a_string = 'Come'
+new_row = {keyB:a_string, keya:87,}
 #append row to the dataframe
-df.append(new_row, ignore_index=True)
+df = df.append(new_row, ignore_index=True)
 
-df.append(new_row, ignore_index=True)
+df = df.append(new_row, ignore_index=True)
 
-df.append(new_row, ignore_index=True)
+df = df.append(new_row, ignore_index=True)
 
 
-result = df['A'].where(df['B'] == 'Geo')
+result = df[keya].where(df[keyB] == a_string)[0]
 
 
 print(result)

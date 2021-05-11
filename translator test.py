@@ -22,11 +22,36 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = Configuration['License_File']['pa
 GlossaryID = Configuration['Glossary_ID']['value']
 print(tm)
 
-MyTranslator = Translator(From_Language = 'ko', To_Language = 'en', GlossaryID =  GlossaryID, ProactiveTMTranslate= True, TM_Path=tm)
+MyTranslator = Translator(From_Language = 'en', To_Language = 'ko', GlossaryID =  GlossaryID, ProactiveTMTranslate= True, TM_Path=tm)
 #MyTranslator.temporary_tm = MyTranslator.TranslationMemory
 #MyTranslator.temporary_tm['en'] = MyTranslator.temporary_tm['en']
 #MyTranslator.append_translation_memory()
-MyTranslator.OptimizeTranslationMemory()
+#MyTranslator.OptimizeTranslationMemory()
+text = 'Coupon test'
+source_text = text.lower()
+'''
+MyTranslator.TranslationMemory = MyTranslator.TranslationMemory.set_index([MyTranslator.From_Language])
+translated = MyTranslator.TranslationMemory.loc[source_text][MyTranslator.To_Language]
+print(translated)
+'''
+
+#text = MyTranslator.TranslationMemory[MyTranslator.TranslationMemory[MyTranslator.From_Language].str.match(source_text)]
+print(len(MyTranslator.TranslationMemory))
+#text = MyTranslator.TranslationMemory.loc[MyTranslator.TranslationMemory[MyTranslator.From_Language] == source_text]
+
+#print(text)
+'''
+for index, row  in MyTranslator.TranslationMemory.iterrows():
+	if index < 100:
+		print(row[MyTranslator.From_Language])
+		if source_text == row[MyTranslator.From_Language]:
+			print('Result: ', row[MyTranslator.To_Language])
+			break
+print('Not found')
+'''
+
+print(MyTranslator.memory_translate(text))
+#print(MyTranslator.translate(text))
 #Source_Text = '201211_V4_GL19.1_데이터패치배포_3차'.lower()
 #print('Translated', MyTranslator.MemoryTranslate('201211_V4_GL19.1_데이터패치배포_3차'))
 #print(MyTranslator.translate('201211_V4_GL19.1_데이터패치배포_3차'))

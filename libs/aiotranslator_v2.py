@@ -84,7 +84,7 @@ class Translator:
 		self.SpecialSheets = ['kr_only', 'en_only', 'name']
 
 		
-		self.temporary_tm	= pd.DataFrame()
+		self.init_temporary_tm()
 
 		# The multi-language DB.
 		# Used to translate from A -> B and vice versa
@@ -174,6 +174,10 @@ class Translator:
 		if not sys.platform.startswith('win'):
 			return str(path).replace('\\', '//')
 		return path
+	
+	def init_temporary_tm(self):
+		self.temporary_tm	= pd.DataFrame(columns=['en','ko', 'cn', 'jp'])
+		#self.temporary_tm = self.temporary_tm.append({'en': np.nan,'ko': np.nan, 'cn': np.nan, 'jp': np.nan}, ignore_index=True)
 
 	def get_user_name(self):
 		try:
@@ -1292,8 +1296,19 @@ class Translator:
 					# TM format v3
 					elif 'EN' in all_tm:
 						print('TM v3')
-						self.TranslationMemory = pd.DataFrame({'en': all_tm['EN'],'ko': all_tm['KO']})
-		
+						#data_tuples = list(zip(all_tm['EN'],all_tm['KO']))
+						
+						self.TranslationMemory = pd.DataFrame()
+						self.TranslationMemory['en'] = all_tm['EN']
+						self.TranslationMemory['en'] = self.TranslationMemory['en'].str.lower()
+						self.TranslationMemory['ko'] = all_tm['KO']
+						self.TranslationMemory['ko'] = self.TranslationMemory['ko'].str.lower()
+						'''
+						text = 'Can\'t get rewards'
+						source_text = text.lower()
+						text = self.TranslationMemory.loc[self.TranslationMemory[self.From_Language] == source_text]
+						print(text)
+						'''
 				elif isinstance(all_tm, list):
 					print('TM v2')
 					#Consider drop support
@@ -1306,7 +1321,7 @@ class Translator:
 				print('Fail to load pickle file')
 				return
 		self.TranslationMemorySize = len(self.TranslationMemory)
-		print('Size of TM', self.TranslationMemorySize)		
+		print('Size of loaded TM', self.TranslationMemorySize)		
 
 	# Update TM from temporary_tm to pickle file
 	def append_translation_memory(self):
@@ -1350,7 +1365,7 @@ class Translator:
 						print("Updating pickle file....", self.TM_Path)
 						pickle.dump(all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 					
-					self.temporary_tm[:]
+					self.init_temporary_tm()
 					print('Size TM in memory', len(self.temporary_tm))
 					return new_tm_size
 				except Exception as e:
@@ -1389,7 +1404,7 @@ class Translator:
 					print("Updating pickle file....", self.TM_Path)
 					pickle.dump(all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 				
-				self.temporary_tm[:]
+				self.init_temporary_tm()
 				
 				return
 			except Exception as e:
@@ -1406,11 +1421,13 @@ class Translator:
 		#print("Adding a pair to Temp TM")
 		Translated = str_translated.lower()
 		Input = str_input.lower()
-
-		if Input not in self.temporary_tm[self.From_Language]:	
+		if self.From_Language in self.temporary_tm:
+			if Input not in self.temporary_tm[self.From_Language]:	
+				new_row = {self.To_Language: Translated, self.From_Language: Input}
+				self.temporary_tm = self.temporary_tm.append(new_row, ignore_index=True)
+		else:
 			new_row = {self.To_Language: Translated, self.From_Language: Input}
-			df = df.append(new_row, ignore_index=True)
-
+			self.temporary_tm = self.temporary_tm.append(new_row, ignore_index=True)
 
 	# Not use, update later
 	def simple_optmize(self):
@@ -1469,18 +1486,35 @@ class Translator:
 		# If Translation Memory is exist, replace the text with the defined one.
 	# This method can speed up the translate progress x100 time 
 	# and improve the translation speed.
-	def memory_translate(self, Source_Text):
+	def memory_translate(self, source_text):
 		# Use the previous translate result to speed up the translation progress
+		source_text = source_text.lower()
+
 		try:
-			translated = self.TranslationMemory[self.To_Language].where(self.TranslationMemory[self.From_Language] == source_text)[0]
-			return translated	
+			if len(self.TranslationMemory) > 0:
+				#translated = self.TranslationMemory[self.To_Language].where(self.TranslationMemory[self.From_Language] == source_text)[0]
+				translated = self.TranslationMemory.loc[self.TranslationMemory[self.From_Language] == source_text]
+				if len(translated) > 0:
+					#print('TM translate', translated)
+					return translated.iloc[0][self.From_Language]
+
 		except Exception as e:
+			#print('Error message (TM):', e)
 			pass
+		
 		try:
-			translated = self.temporary_tm[self.To_Language].where(self.temporary_tm[self.From_Language] == source_text)[0]
-			return translated	
+			if len(self.temporary_tm) > 0:
+				#translated = self.temporary_tm[self.To_Language].where(self.temporary_tm[self.From_Language] == source_text)[0]
+				translated = self.temporary_tm.loc[self.temporary_tm[self.From_Language] == source_text]
+				if len(translated) > 0:
+					#print('Temporary TM translate', translated)
+					return translated.iloc[0][self.From_Language]
+
 		except Exception as e:
+			#print('Error message(temporary TM):', e)
 			return False
+
+		return False
 
 	def translate_by_memory(self, source_text):
 		# Use the previous translate result to speed up the translation progress
