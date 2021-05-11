@@ -47,8 +47,8 @@ from tkinter import simpledialog
 
 import webbrowser
 
-from libs.aiotranslator import Translator
-from libs.aiotranslator import VerNum as TranslatorVersion
+from libs.aiotranslator_v2 import Translator
+from libs.aiotranslator_v2 import ver_num as TranslatorVersion
 from libs.aioconfigmanager import ConfigLoader
 from libs.documentprocessing import translateDocx, translateDPF, translateMsg
 from libs.documentprocessing import TranslatePresentation, translateWorkbook
@@ -191,16 +191,16 @@ class DocumentTranslator(Frame):
 
 				
 		Label(Tab, text= self.LanguagePack.Label['ProjectKey']).grid(row=Row, column=4, padx=5, pady=5, sticky=W)
-		self.Text_GlossaryID = AutocompleteCombobox(Tab)
-		self.Text_GlossaryID.Set_Entry_Width(20)
+		self.Text_glossary_id = AutocompleteCombobox(Tab)
+		self.Text_glossary_id.Set_Entry_Width(20)
 		
-		self.Text_GlossaryID.set_completion_list([])
+		self.Text_glossary_id.set_completion_list([])
 
-		if self.GlossaryID != None:
-			self.Text_GlossaryID.set(self.GlossaryID )
+		if self.glossary_id != None:
+			self.Text_glossary_id.set(self.glossary_id )
 
-		self.Text_GlossaryID.grid(row=Row, column=5, columnspan=2, padx=5, pady=5, stick=W)
-		self.Text_GlossaryID.bind("<<ComboboxSelected>>", self.SaveProjectKey)
+		self.Text_glossary_id.grid(row=Row, column=5, columnspan=2, padx=5, pady=5, stick=W)
+		self.Text_glossary_id.bind("<<ComboboxSelected>>", self.SaveProjectKey)
 
 		#Label(Tab, text=  self.LanguagePack.Label['Translator'], width= 10, font='calibri 11 bold').grid(row=Row, column=4, padx=10, pady=5, sticky=W)
 		#self.TranslatorAgent = IntVar()	
@@ -446,8 +446,8 @@ class DocumentTranslator(Frame):
 		self.ProjectList = AutocompleteCombobox(Tab)
 		self.ProjectList.Set_Entry_Width(30)
 		self.ProjectList.set_completion_list([])
-		if self.GlossaryID != None:
-			self.ProjectList.set(self.GlossaryID)
+		if self.glossary_id != None:
+			self.ProjectList.set(self.glossary_id)
 
 		self.ProjectList.grid(row=Row, column=3, columnspan=2, padx=5, pady=5, stick=W)
 
@@ -655,7 +655,7 @@ class DocumentTranslator(Frame):
 		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectDB'],filetypes = (("JSON files","*.json" ), ), )	
 		if filename != "":
 			LicensePath = self.CorrectPath(filename)
-			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'License_File', 'path', LicensePath, True)
+			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'license_file', 'path', LicensePath, True)
 			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LicensePath
 			self.LicensePath.set(LicensePath)
 		else:
@@ -667,7 +667,7 @@ class DocumentTranslator(Frame):
 		if filename != "":
 			NewTM = self.CorrectPath(filename)
 			self.TMPath.set(NewTM)
-			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'TranslationMemory', 'path', NewTM, True)
+			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'translation_memory', 'path', NewTM, True)
 			self.RenewMyTranslator()
 			self.Notice.set(self.LanguagePack.ToolTips['TMUpdated'])
 		else:
@@ -684,14 +684,14 @@ class DocumentTranslator(Frame):
 			with open(NewTM, 'wb') as pickle_file:
 				pickle.dump([], pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 			self.TMPath.set(NewTM)
-			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'TranslationMemory', 'path', NewTM, True)
+			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'translation_memory', 'path', NewTM, True)
 			self.RenewMyTranslator()
 
 	def SaveProjectKey(self, event):
-		Glossary_ID = self.Text_GlossaryID.get()
-		Glossary_ID = Glossary_ID.replace('\n', '')
-		self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Glossary_ID', 'value', Glossary_ID)
-		self.MyTranslator.GlossaryID = Glossary_ID
+		glossary_id = self.Text_glossary_id.get()
+		glossary_id = glossary_id.replace('\n', '')
+		self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'glossary_id', 'value', glossary_id)
+		self.MyTranslator.glossary_id = glossary_id
 		
 		self.RenewMyTranslator()
 
@@ -764,10 +764,10 @@ class DocumentTranslator(Frame):
 
 	def Btn_Execute_Creator_Script(self):
 		DB = self.Str_DB_Path.get()
-		Glossary_ID = self.Text_New_GlossaryID.get()
+		glossary_id = self.Text_New_glossary_id.get()
 		URI = self.Text_URI_ID.get()
 
-		self.Automation_Processor = Process(target=Function_Execute_Create_Script, args=(self.StatusQueue, DB, Glossary_ID, URI,))
+		self.Automation_Processor = Process(target=Function_Execute_Create_Script, args=(self.StatusQueue, DB, glossary_id, URI,))
 		self.Automation_Processor.start()
 		self.after(DELAY1, self.Wait_For_Automation_Creator_Processor)	
 
@@ -805,13 +805,13 @@ class DocumentTranslator(Frame):
 
 	def Btn_DB_Uploader_Execute_Script(self):
 		DB = self.Str_DB_Path.get()
-		Glossary_ID = self.ProjectList.get()
+		glossary_id = self.ProjectList.get()
 		
-		result = self.Confirm_Popup(Glossary_ID, 'Are you sure you want to replace the DB of '+ Glossary_ID + "?")
+		result = self.Confirm_Popup(glossary_id, 'Are you sure you want to replace the DB of '+ glossary_id + "?")
 		
 		if result == True:
 			
-			self.Automation_Processor = Process(target=Function_Execute_Script, args=(self.StatusQueue, DB, Glossary_ID,))
+			self.Automation_Processor = Process(target=Function_Execute_Script, args=(self.StatusQueue, DB, glossary_id,))
 			self.Automation_Processor.start()
 			self.after(DELAY1, self.Wait_For_Automation_Processor)	
 
@@ -880,11 +880,11 @@ class DocumentTranslator(Frame):
 		self.Configuration = self.AppConfig.Config
 		self.AppLanguage  = self.Configuration['Document_Translator']['app_lang']
 		
-		self.LicensePath.set(self.Configuration['License_File']['path'])
-		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = self.Configuration['License_File']['path']
+		self.LicensePath.set(self.Configuration['license_file']['path'])
+		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = self.Configuration['license_file']['path']
 
-		self.TMPath.set(self.Configuration['TranslationMemory']['path'])
-		self.GlossaryID = self.Configuration['Glossary_ID']['value']
+		self.TMPath.set(self.Configuration['translation_memory']['path'])
+		self.glossary_id = self.Configuration['glossary_id']['value']
 
 	def init_UI_setting(self):
 		self.Language.set(self.Configuration['Document_Translator']['target_lang'])
@@ -933,10 +933,10 @@ class DocumentTranslator(Frame):
 			to_language = 'en'
 			from_language = 'ko'
 
-		self.GlossaryID = self.Text_GlossaryID.get()
-		self.GlossaryID = self.GlossaryID.replace('\n', '')
+		self.glossary_id = self.Text_glossary_id.get()
+		self.glossary_id = self.glossary_id.replace('\n', '')
 		tm_path = self.TMPath.get()
-		self.TranslatorProcess = Process(target=GenerateTranslator, args=(self.MyTranslator_Queue, self.TMManager, from_language, to_language, self.GlossaryID, tm_path,))
+		self.TranslatorProcess = Process(target=GenerateTranslator, args=(self.MyTranslator_Queue, self.TMManager, from_language, to_language, self.glossary_id, tm_path,))
 		self.TranslatorProcess.start()
 		self.after(DELAY1, self.GetMyTranslator)
 		return
@@ -955,20 +955,20 @@ class DocumentTranslator(Frame):
 			#self.MyTranslator.Convert_Translation_Memory()
 			self.TranslateBtn.configure(state=NORMAL)
 
-			DBLength = len(self.MyTranslator.Dictionary)
+			DBLength = len(self.MyTranslator.dictionary)
 			self.DictionaryStatus.set(str(DBLength))
-			self.TMStatus.set(str(self.MyTranslator.TranslationMemorySize))
+			self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
-			glossary_list = [""] + self.MyTranslator.GlossaryList
-			self.Text_GlossaryID.set_completion_list(glossary_list)
+			glossary_list = [""] + self.MyTranslator.glossary_list
+			self.Text_glossary_id.set_completion_list(glossary_list)
 			self.ProjectList.set_completion_list(glossary_list)
 
-			if self.GlossaryID in self.MyTranslator.GlossaryList:
-				self.Text_GlossaryID.set(self.GlossaryID)
-				self.ProjectList.set(self.GlossaryID)
+			if self.glossary_id in self.MyTranslator.glossary_list:
+				self.Text_glossary_id.set(self.glossary_id)
+				self.ProjectList.set(self.glossary_id)
 			else:
-				self.Text_GlossaryID.set("")
-				self.ProjectList.set(self.GlossaryID)
+				self.Text_glossary_id.set("")
+				self.ProjectList.set(self.glossary_id)
 				#self.Error('No Valid Project selected, please update the project key and try again.')	
 			
 			if isinstance(self.MyTranslator.Version, str):
@@ -1286,7 +1286,7 @@ class DocumentTranslator(Frame):
 
 			if self.TMUpdate.get() == 1:
 				self.RenewMyTranslator()
-				#self.TMStatus.set(str(self.MyTranslator.TranslationMemorySize))
+				#self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
 class AutocompleteCombobox(Combobox):
 
@@ -1378,7 +1378,7 @@ class AutocompleteCombobox(Combobox):
 def SortDictionary(List):
 	return(sorted(List, key = lambda x: (len(x[1]), x[1]), reverse = True))
 
-def ImportTranslationMemory(TMPath):
+def Importtranslation_memory(TMPath):
 	if TMPath == None:
 		return []
 	elif os.path.isfile(TMPath):
@@ -1396,9 +1396,9 @@ def ImportTranslationMemory(TMPath):
 		return []
 
 # Function for Document Translator
-def GenerateTranslator(Mqueue, TMManager, from_language = 'ko', to_language = 'en', GlossaryID = "", tm_path= None,):	
+def GenerateTranslator(Mqueue, TMManager, from_language = 'ko', to_language = 'en', glossary_id = "", tm_path= None,):	
 	print("Generate my Translator")
-	MyTranslator = Translator(From_Language = from_language, To_Language = to_language, GlossaryID =  GlossaryID, TMManager = TMManager, TM_Path = tm_path, Tool = tool_name, ToolVersion = VerNum,)
+	MyTranslator = Translator(from_language = from_language, to_language = to_language, glossary_id =  glossary_id, tm_path = tm_path, used_tool = tool_name, tool_version = VerNum,)
 	Mqueue.put(MyTranslator)
 
 def Optimize(SourceDocument, StatusQueue):
@@ -1445,11 +1445,11 @@ def Optimize(SourceDocument, StatusQueue):
 ###########################################################################################
 
 ###########################################################################################
-def Function_Execute_Script(StatusQueue, DB_Path, Glossary_ID, **kwargs):
+def Function_Execute_Script(StatusQueue, DB_Path, glossary_id, **kwargs):
 
 	Output = Function_Create_CSV_DB(StatusQueue, DB_Path)
 	StatusQueue.put("CSV DB created:" + str(Output))
-	if Glossary_ID != '':
+	if glossary_id != '':
 		
 		client = logging.Client()
 		log_name = 'db-update'
@@ -1463,23 +1463,46 @@ def Function_Execute_Script(StatusQueue, DB_Path, Glossary_ID, **kwargs):
 			name = os.environ['COMPUTERNAME']
 		except:
 			name = 'Anonymous'	
+		# Update new format later
+		'''
+		data_object = {
+				'device': self.pc_name,
+				'project': self.glossary_id,
+				'tool': self.used_tool,
+				'tool_ver': self.tool_version,
+				'translator_ver': ver_num,
+				'api_usage': self.last_section_api_usage,
+				'tm_usage': self.last_section_tm_request,
+				'invalid_request': self.last_section_invalid_request,
+				'tm_size': self.translation_memory_size,
+				'tm_path': self.tm_path
+			}
+		if 	file_name != None:
+			data_object['file_name'] = file_name
 
-		text_log = account + ', ' + name + ', ' + Glossary_ID + ', ' + DB_Path
+		tracking_object = {
+			'user': self.user_name,
+			'details': data_object
+		}
+		
+		logger.log_struct(tracking_object)
+		'''
+		text_log = account + ', ' + name + ', ' + glossary_id + ', ' + DB_Path
 		logger.log_text(text_log)
 
-		myTranslator = Translator('ko', 'en', None, None, False, False, False, Glossary_ID, )
+		myTranslator = Translator('ko', 'en', None, None, False, False, False, glossary_id, )
 		
-		myTranslator.Update_Glob(Glossary_ID, Output)
+		myTranslator.update_glob(glossary_id, Output)
 
 		StatusQueue.put("DB updated.")
 
-def Function_Execute_Create_Script(StatusQueue, DB_Path, Glossary_ID, URI, **kwargs):
+def Function_Execute_Create_Script(StatusQueue, DB_Path, glossary_id, URI, **kwargs):
 
 	Output = Function_Create_CSV_DB(StatusQueue, DB_Path)
 	StatusQueue.put("CSV DB created:" + str(Output))
-	myTranslator = Translator('ko', 'en', None, None, False, False, False, Glossary_ID, )
+	myTranslator = Translator('ko', 'en', None, None, False, False, False, glossary_id, )
 	
-	myTranslator.Update_Glob(Glossary_ID, Output)	
+	myTranslator.Update_Glob(glossary_id, Output)	
 	StatusQueue.put("DB created.")
 
 def Function_Update_Glossary(self):
@@ -1652,12 +1675,12 @@ def OptimizeTM(SourceDocument, StatusQueue):
 			TranslatedName	= sourcename
 			output_file = Outputdir + '/' + TranslatedName + '_Optmized' + ext
 			'''
-			TranslationMemory = {}
-			TranslationMemory['EN'] = EN
-			TranslationMemory['KO'] = KO
+			translation_memory = {}
+			translation_memory['EN'] = EN
+			translation_memory['KO'] = KO
 
 			with open(File, 'wb') as pickle_file:
-				pickle.dump(TranslationMemory, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+				pickle.dump(translation_memory, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 # Function for processor	
@@ -1855,7 +1878,7 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 			ResultQueue.put(str(Result))
 		try:
 			mem_tm = len(MyTranslator.TMManager)
-			newTM = MyTranslator.AppendTranslationMemory()
+			newTM = MyTranslator.Appendtranslation_memory()
 			MyTranslator.send_tracking_record(file_name = baseName)
 			StatusQueue.put('Source: ' + str(baseName))
 			StatusQueue.put('TM usage: ' + str(MyTranslator.Last_Section_TM_Request))
@@ -1906,7 +1929,7 @@ def main():
 			from google.cloud import logging
 			AppConfig = ConfigLoader()
 			Configuration = AppConfig.Config
-			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = Configuration['License_File']['path']
+			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = Configuration['license_file']['path']
 			client = logging.Client()
 		except:
 			print('Fail to communicate with logging server')

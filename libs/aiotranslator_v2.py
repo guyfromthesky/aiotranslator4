@@ -29,8 +29,8 @@ from datetime import datetime
 Tool = "translator"
 rev = 4000
 a,b,c,d = list(str(rev))
-VerNum = a + '.' + b + '.' + c + chr(int(d)+97)
-Translatorversion = Tool + " " + VerNum
+ver_num = a + '.' + b + '.' + c + chr(int(d)+97)
+Translatorversion = Tool + " " + ver_num
 
 class Translator:
 	def __init__(self, 
@@ -39,12 +39,15 @@ class Translator:
 		source_language_predict = True, 
 		proactive_memory_translate=True, 
 		tm_update=True, 
-		glossary_Id = None, 
+		glossary_id = None, 
 		#temporary_tm = None,
 		tm_path = None,
 		#Tool that is currently use this libs
 		used_tool = 'writer',
 		tool_version = None,
+		bucket_id = 'nxvnbucket',
+		db_list_uri = 'config/db_list.csv',
+
 	):
 		
 		self.from_language = from_language
@@ -58,12 +61,15 @@ class Translator:
 		self.used_tool = used_tool
 		self.tool_version = tool_version
 
-		self.project_Id = None
+		self.project_id = None
 
-		self.project_bucket_Id = 'credible-bay-281107'
-		self.load_project_Id_from_json()
+		self.project_bucket_id = 'credible-bay-281107'
+		self.bucket_id = bucket_id
+		self.db_list_uri = db_list_uri
 
-		self.glossary_Id = glossary_Id
+		self.load_project_id_from_json()
+
+		self.glossary_id = glossary_id
 		self.location = "us-central1"
 
 
@@ -104,7 +110,7 @@ class Translator:
 		self.exception = []
 		self.temporary_tm = []
 		self.translation_memory = []
-		self.translation_memorySize = 0
+		self.translation_memory_size = 0
 		self.ko = []
 		self.en = []
 
@@ -198,44 +204,48 @@ class Translator:
 		try:
 			if self.OS == 'win':
 				try:
-					self.Pcname = os.environ['COMPUTERNAME']
+					self.pc_name = os.environ['COMPUTERNAME']
 				except:
-					self.Pcname = "Anonymous"
+					self.pc_name = "Anonymous"
 			else:
 				try:
-					self.Pcname = os.environ['LOGNAME']
+					self.pc_name = os.environ['LOGNAME']
 				except:
-					self.Pcname = "Anonymous"
+					self.pc_name = "Anonymous"
 		except:
-			self.Pcname = "Anonymous"				
+			self.pc_name = "Anonymous"				
 
 ######################################################################
 # Cloud function - DB handling
 ######################################################################
  	# Get the current Project of the current account
-	# The account ID is stored in the JSON file.
-	def load_project_Id_from_json(self):
+	# The account id is stored in the JSON file.
+	def load_project_id_from_json(self):
 		try:
 			License = os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
 			with open(License, 'r') as myfile:
 				data=myfile.read()
 			obj = json.loads(data)
-			self.project_Id = obj['project_id']
+			self.project_id = obj['project_id']
 		except:
-			self.project_Id = 'credible-bay-281107'
+			self.project_id = 'credible-bay-281107'
 
+	# Not use, consider remove later
+	# If the lib is run as a server, consider to use this function
 	def init_glossary(self):
 		self.Client = translate.TranslationServiceClient()	
-		self.Parent = f"projects/{self.project_Id}/locations/{self.location}"
-		self.Glossary = self.Client.glossary_path(self.project_Id, self.location, self.glossary_Id)
+		self.Parent = f"projects/{self.project_id}/locations/{self.location}"
+		self.Glossary = self.Client.glossary_path(self.project_id, self.location, self.glossary_id)
 		self.Glossary_Config = translate.TranslateTextGlossaryConfig(glossary=self.Glossary)
 
+	# Check and remove later
 	def get_time_stamp(self):
 		now = datetime.now()
 		year =  now.isocalendar()[0]
 		week =  now.isocalendar()[1]
 		return str(year) + "_" + str(week)
 
+	# Might use on DB uploader
 	def get_glossary_list(self):
 		print('Getting Glossary info')
 		self.glossary_list = []
@@ -246,6 +256,7 @@ class Translator:
 			if '_' not in Gloss:
 				self.glossary_list.append(Gloss)		
 
+
 	def load_request_log(self, log_file):
 
 		if not os.path.isfile(log_file):
@@ -254,29 +265,27 @@ class Translator:
 			try:
 				with open(log_file, 'rb') as pickle_load:
 					amount = pickle.load(pickle_load)
-					#print('loaded amount: ', amount)
 			except:
 				amount = 0
 		return amount
 
+	# Add counter to temp log file
 	def append_tm_request_logging(self, add_num=0):
-		
+
 		if add_num == 0:
 			return
-
 		log_file = self.tm_request_log	
 		amount = self.load_request_log(log_file)
 
 		amount += add_num
-		#print('Append tm usage:', add_num, amount )
 		try:
 			with open(log_file, 'wb') as pickle_file:
 				pickle.dump(amount, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 		except:
 			pass
 
+	# Add counter to temp log file
 	def append_invalid_request_logging(self, add_num=0):
-		
 		if add_num == 0:
 			return
 
@@ -291,6 +300,7 @@ class Translator:
 		except:
 			pass
 	
+	# Add counter to temp log file
 	def append_api_usage_logging(self, add_num=0):
 		log_file = self.tracking_log
 		if add_num == 0:
@@ -305,7 +315,7 @@ class Translator:
 		except:
 			pass
 	
-
+	# Send all tracking record to logging
 	def send_tracking_record(self,file_name = None):
 
 		self.last_section_api_usage = self.load_request_log(self.tracking_log)
@@ -329,28 +339,28 @@ class Translator:
 			'''
 			tracking_object = {
 				'user': self.user_name,
-				'device': self.Pcname,
-				'project': self.glossary_Id,
+				'device': self.pc_name,
+				'project': self.glossary_id,
 				'tool': self.Tool,
 				'tool_ver': self.tool_version,
-				'translator_ver': VerNum,
+				'translator_ver': ver_num,
 				'api_usage': self.last_section_api_usage,
 				'tm_usage': self.last_section_tm_request,
 				'invalid_request': self.last_section_invalid_request,
-				'tm_size': self.translation_memorySize,
+				'tm_size': self.translation_memory_size,
 				'tm_path': self.tm_path
 			}
 			'''
 			data_object = {
-				'device': self.Pcname,
-				'project': self.glossary_Id,
+				'device': self.pc_name,
+				'project': self.glossary_id,
 				'tool': self.used_tool,
 				'tool_ver': self.tool_version,
-				'translator_ver': VerNum,
+				'translator_ver': ver_num,
 				'api_usage': self.last_section_api_usage,
 				'tm_usage': self.last_section_tm_request,
 				'invalid_request': self.last_section_invalid_request,
-				'tm_size': self.translation_memorySize,
+				'tm_size': self.translation_memory_size,
 				'tm_path': self.tm_path
 			}
 			if 	file_name != None:
@@ -374,24 +384,16 @@ class Translator:
 				result = False
 		
 		return result
-
 	
-
 	# Very IMPORTANT function
 	# This function is used to sort the Database object (descending)
 	# Allow us to check the long word before the sort one:
 	# E.g. 'pine apple' will be perfer to lookup first, 
 	# if there is no 'pine apple' exist, we will looking for 'apple' in the sentence.
-	def Sortdictionary(self, List):
+	def sort_dictionary(self, List):
 		if self.from_language == 'ko':
-			#return(sorted(self.dictionary, key = lambda x: x[0], reverse = True))
-			#NewList = sorted(self.dictionary, key = lambda x: x[0], reverse = True)
-			#return(sorted(NewList, key = len, reverse=True))
 			return(sorted(List, key = lambda x: (len(x[0]), x[0]), reverse = True))
 		else:
-			#return(sorted(self.dictionary, key = lambda x: x[1], reverse = True))
-			#NewList = sorted(self.dictionary, key = lambda x: x[1], reverse = True)
-			#return(sorted(NewList, key = len, reverse=True))
 			return(sorted(List, key = lambda x: (len(x[1]), x[1]), reverse = True))
 
 ######################################################################
@@ -765,7 +767,7 @@ class Translator:
 			return
 		
 		try:	
-			if self.project_bucket_Id != self.project_Id:
+			if self.project_bucket_id != self.project_id:
 				translation = self.google_translate_v3(source_text)
 			else:
 				translation =  self.google_glossary_translate(source_text)
@@ -778,7 +780,7 @@ class Translator:
 
 			log_name = 'translator-error'
 			logger = client.logger(log_name)	
-			text_log = self.user_name + ', ' + self.Pcname + ', ' + self.glossary_Id + ', ' + str(e)
+			text_log = self.user_name + ', ' + self.pc_name + ', ' + self.glossary_id + ', ' + str(e)
 
 			try:
 				logger.log_text(text_log)
@@ -819,7 +821,7 @@ class Translator:
 		# Supported language codes: https://cloud.google.com/translate/docs/languages
 		
 		Client = translate.TranslationServiceClient()
-		Parent = f"projects/{self.project_Id}/locations/{self.location}"
+		Parent = f"projects/{self.project_id}/locations/{self.location}"
 
 		response = Client.translate_text(
 			request={
@@ -852,9 +854,9 @@ class Translator:
 		# Supported language codes: https://cloud.google.com/translate/docs/languages
 		
 		Client = translate.TranslationServiceClient()
-		Parent = f"projects/{self.project_bucket_Id}/locations/{self.location}"
-		#Glossary = Client.glossary_path(self.project_Id, "us-central1", self.glossary_Id)
-		Glossary = Client.glossary_path(self.project_bucket_Id, "us-central1", 'General-DB')
+		Parent = f"projects/{self.project_bucket_id}/locations/{self.location}"
+		#Glossary = Client.glossary_path(self.project_id, "us-central1", self.glossary_id)
+		Glossary = Client.glossary_path(self.project_bucket_id, "us-central1", 'General-DB')
 		#print('Glossary', Glossary)
 		Glossary_Config = translate.TranslateTextGlossaryConfig(glossary=Glossary)
 		
@@ -953,7 +955,7 @@ class Translator:
 		List = []
 		client = translate.TranslationServiceClient()
 
-		parent = f"projects/{self.project_Id}/locations/{self.location}"
+		parent = f"projects/{self.project_id}/locations/{self.location}"
 
 		for glossary in client.list_glossaries(parent=parent):
 			Gloss = glossary.name.split('/')[-1]
@@ -966,7 +968,7 @@ class Translator:
 		List = []
 		client = translate.TranslationServiceClient()
 
-		parent = f"projects/{self.project_bucket_Id}/locations/{self.location}"
+		parent = f"projects/{self.project_bucket_id}/locations/{self.location}"
 
 		for glossary in client.list_glossaries(parent=parent):
 			Gloss = glossary.name.split('/')[-1]
@@ -976,7 +978,7 @@ class Translator:
 	def get_glossary(self, glossary_id= None, timeout=180,):
 
 		client = translate.TranslationServiceClient()
-		name = client.glossary_path(self.project_Id, self.location, glossary_id)
+		name = client.glossary_path(self.project_id, self.location, glossary_id)
 		glossary = client.get_glossary(name = name)
 
 		return 	glossary
@@ -988,9 +990,9 @@ class Translator:
 		self.header = []
 		self.dictionary = []
 
-		bucket = cloud_client.get_bucket('nxvnbucket')
+		bucket = cloud_client.get_bucket(self.bucket_id)
 
-		blob = bucket.get_blob('config/db_list.csv')
+		blob = bucket.get_blob(self.db_list_uri)
 
 		listdb = blob.download_as_text()
 
@@ -1004,10 +1006,10 @@ class Translator:
 				if element == "" or element == None:
 					Valid = False
 			if Valid:
-				ID = str(data[0]).replace('\ufeff', '')
+				id = str(data[0]).replace('\ufeff', '')
 				URI = str(data[1])
-				self.glossary_list.append(ID)
-				self.glossary_data_list.append([ID, URI])
+				self.glossary_list.append(id)
+				self.glossary_data_list.append([id, URI])
 		try:
 			versioning = bucket.get_blob('config/latest_version')
 			myversion = versioning.download_as_text()
@@ -1042,7 +1044,7 @@ class Translator:
 		self.header = []
 		self.dictionary = []
 
-		bucket = cloud_client.get_bucket('nxvnbucket')
+		bucket = cloud_client.get_bucket(self.bucket_id)
 
 		blob = bucket.get_blob(file_uri)
 
@@ -1063,9 +1065,9 @@ class Translator:
 				if Valid:
 					tag = data[0].lower()
 					if tag == "info":
-						if data[1] == 'i_version':
+						if data[1] == 'version':
 							self.version = data[2]
-						elif data[1] == 'i_date':
+						elif data[1] == 'date':
 							self.update_day = data[2]
 					elif tag == "header":
 						self.header.append([data[1], data[2]])
@@ -1075,6 +1077,10 @@ class Translator:
 						self.en_dictionary.append([data[1], data[2]])
 					elif tag == "kr_only":
 						self.ko_dictionary.append([data[1], data[2]])
+					elif tag == "cn_only":
+						self.cn_dictionary.append([data[1], data[2]])
+					elif tag == "jp_only":
+						self.jp_dictionary.append([data[1], data[2]])
 					elif tag == "exception":
 						self.exception.append(data[1])
 						self.exception.append(data[2])
@@ -1082,13 +1088,13 @@ class Translator:
 						ko = data[1]
 						en = data[2].lower()
 						self.dictionary.append([ko, en])
-		self.dictionary = self.Sortdictionary(self.dictionary)
+		self.dictionary = self.sort_dictionary(self.dictionary)
 
 
 
 	def get_glossary_length(self, timeout=180,):
 		client = translate.TranslationServiceClient()
-		name = client.glossary_path(self.project_Id, self.location, self.glossary_Id)
+		name = client.glossary_path(self.project_id, self.location, self.glossary_id)
 		try:
 			glossary = client.get_glossary(name = name)
 			return glossary.entry_count
@@ -1101,16 +1107,14 @@ class Translator:
 			if glossary_id == gloss_id:
 				return gloss_data[1]
 		
-
+	# Create the glossary that use for glossary_translate
 	def create_glossary(self, input_uri= None, glossary_id=None, timeout=180,):
 
 		client = translate.TranslationServiceClient()
 		source_lang_code = "ko"
 		target_lang_code = "en"
 
-		#project_id = self.project_Id
-
-		name = client.glossary_path(self.project_Id, self.location, glossary_id)
+		name = client.glossary_path(self.project_id, self.location, glossary_id)
 		
 		language_codes_set = translate.types.Glossary.LanguageCodesSet(
 			language_codes=[source_lang_code, target_lang_code]
@@ -1124,18 +1128,19 @@ class Translator:
 			name=name, language_codes_set=language_codes_set, input_config=input_config
 		)
 
-		parent = f"projects/{self.project_Id}/locations/{self.location}"
+		parent = f"projects/{self.project_id}/locations/{self.location}"
 		operation = client.create_glossary(parent=parent, glossary=glossary)
 
 		result = operation.result(timeout)
 		print("Created: {}".format(result.name))
 		print("Input Uri: {}".format(result.input_config.gcs_source.input_uri))
 	
+	# Delete the glossary that use for glossary_translate
 	def delete_glossary(self, glossary_id= None, timeout=180,):
-		"""Delete a specific glossary based on the glossary ID."""
+		"""Delete a specific glossary based on the glossary id."""
 		client = translate.TranslationServiceClient()
 
-		name = client.glossary_path(self.project_Id, self.location, glossary_id)
+		name = client.glossary_path(self.project_id, self.location, glossary_id)
 
 		operation = client.delete_glossary(name=name)
 		result = operation.result(timeout)
@@ -1143,10 +1148,10 @@ class Translator:
 
 	def get_bucket_list(self):
 		print('Loading data from blob')
-		#print('self.glossary_Id', self.glossary_Id)
-		if self.glossary_Id not in [None, ""]:
+		#print('self.glossary_id', self.glossary_id)
+		if self.glossary_id not in [None, ""]:
 			try:
-				uri = self.get_glossary_path(self.glossary_Id)
+				uri = self.get_glossary_path(self.glossary_id)
 				print('URI:', uri)
 				print("Load DB from glob")
 				self.load_db_from_glob(uri)
@@ -1163,11 +1168,10 @@ class Translator:
 
 	def prepare_db_data(self):
 		print('Loading data from blob')
-		#print('self.glossary_Id', self.glossary_Id)
-		if self.glossary_Id not in [None, ""]:
+		#print('self.glossary_id', self.glossary_id)
+		if self.glossary_id not in [None, ""]:
 			try:
-				uri = self.get_glossary_path(self.glossary_Id)
-				
+				uri = self.get_glossary_path(self.glossary_id)
 				print('URI:', uri)
 				print("Load DB from glob")
 				self.load_db_from_glob(uri)
@@ -1184,18 +1188,24 @@ class Translator:
 
 ################################################################################################
 # Bucket manager
+# Backet is the storage that store DB
+# Main bucket that this tool use is "nxvnbucket"
+
 ################################################################################################
 
 	def update_bucket(self, glossary_id):
 		return
 
+	# Replace the DB file by the new one
+	# Need to rename the old DB file for backup purpose
+	# -> Update later
 	def update_glob(self, glossary_id, Upload_Path):
 		from google.cloud import storage
 		sclient = storage.Client()
 		
 		#gloss = self.get_glossary(glossary_id)
 
-		bucket = sclient.get_bucket('nxvnbucket')
+		bucket = sclient.get_bucket(self.bucket_id)
 		try:
 			blob_id = self.get_glossary_path(glossary_id)
 		except:
@@ -1205,8 +1215,10 @@ class Translator:
 		print('Uploading to blob')
 		blob.upload_from_filename(filename = Upload_Path)
 		#def create_glossary(self, input_uri= None, glossary_id=None, timeout=180,):
+
 		
-	def update_glossary(self, glossary_id, Upload_Path):
+	def update_glossary(self, glossary_id, upload_path):
+		
 		from google.cloud import storage
 		sclient = storage.Client()
 		
@@ -1214,7 +1226,7 @@ class Translator:
 		print('gloss', gloss)
 
 		print('Getting bucket')
-		bucket = sclient.get_bucket('nxvnbucket')
+		bucket = sclient.get_bucket(self.bucket_id)
 		try:
 			blob_id = self.get_glossary_path(glossary_id)
 		except:
@@ -1262,13 +1274,12 @@ class Translator:
 					all_tm = pickle.load(pickle_load)
 				if isinstance(all_tm, dict):
 					# TM format v4
-					if self.glossary_Id in all_tm:
+					if self.glossary_id in all_tm:
 						print('TM v4')
-						self.translation_memory = all_tm[self.glossary_Id]
+						self.translation_memory = all_tm[self.glossary_id]
 					# TM format v3
 					elif 'en' in all_tm:
 						print('TM v3')
-						#data_tuples = list(zip(all_tm['en'],all_tm['ko']))
 						
 						self.translation_memory = pd.DataFrame()
 						self.translation_memory['en'] = all_tm['en']
@@ -1287,8 +1298,8 @@ class Translator:
 				print("Error:", e)
 				print('Fail to load pickle file')
 				return
-		self.translation_memorySize = len(self.translation_memory)
-		print('Size of loaded TM', self.translation_memorySize)		
+		self.translation_memory_size = len(self.translation_memory)
+		print('Size of loaded TM', self.translation_memory_size)		
 
 	# Update TM from temporary_tm to pickle file
 	def append_translation_memory(self):
@@ -1302,9 +1313,9 @@ class Translator:
 						all_tm = pickle.load(pickle_load)
 					if isinstance(all_tm, dict):
 						# TM format v4
-						if self.glossary_Id in all_tm:
+						if self.glossary_id in all_tm:
 							print('TM v4 format')
-							self.translation_memory = all_tm[self.glossary_Id]
+							self.translation_memory = all_tm[self.glossary_id]
 						# TM format v3
 						elif 'en' in TM:
 							print('TM v3 format')
@@ -1325,7 +1336,7 @@ class Translator:
 				else:
 					self.translation_memory = self.temporary_tm
 
-				all_tm[self.glossary_Id] = self.translation_memory
+				all_tm[self.glossary_id] = self.translation_memory
 				
 				try:
 					with open(self.tm_path, 'wb') as pickle_file:
@@ -1347,7 +1358,7 @@ class Translator:
 					all_tm = pickle.load(pickle_load)
 				if isinstance(all_tm, dict):
 					# TM format v4
-					if self.glossary_Id in all_tm:
+					if self.glossary_id in all_tm:
 						print('TM v4 format')
 					elif 'en' in TM:
 						all_tm = {}
@@ -1358,13 +1369,12 @@ class Translator:
 				print('Fail to load tm')
 				all_tm = {}
 
-				
 			if isinstance(self.translation_memory, pd.DataFrame):
 				save_data = self.translation_memory.append(self.temporary_tm)
 			else:
 				save_data = self.temporary_tm
 
-			all_tm[self.glossary_Id] = save_data
+			all_tm[self.glossary_id] = save_data
 			
 			try:
 				with open(self.tm_path, 'wb') as pickle_file:
@@ -1378,6 +1388,7 @@ class Translator:
 				print("Error:", e)
 		
 		return 
+		
 	def refresh_translation_memory(self):
 		self.import_translation_memory()
 
@@ -1393,31 +1404,19 @@ class Translator:
 			new_row = {self.to_language: translated, self.from_language: Input}
 			self.temporary_tm = self.temporary_tm.append(new_row, ignore_index=True)
 
-	# Not use, update later
-	def simple_optmize(self):
-		count = 0
-		for text in self.en:
-			text = text.lower()
-			count+=1
-		for text in self.ko:
-			text = text.lower()
-			count+=1
-		self.Optmized = True
-		self.append_translation_memory()
-		print('Count:', count)
-		print('Done')
-
-	# Not use, update later
+	# Remove duplicated pair, lower string in the TM
 	def optimize_translation_memory(self):
 		print('Optimizing TM...')
 		print('Old TM:', len(self.translation_memory))
-		
+		self.import_translation_memory()
+
 		self.translation_memory = self.translation_memory.append(self.temporary_tm)
 		self.translation_memory.drop_duplicates(inplace=True)
-		
+
 		print('New TM:', len(self.translation_memory))
+
 		print('Optmize TM completed...')
-		#self.export_current_translation_memory()
+		self.export_current_translation_memory()
 
 	# Used in TM Manager tool
 	# to remove TM pair in the TM
@@ -1481,25 +1480,19 @@ class Translator:
 
 		return False
 
-	def translate_by_memory(self, source_text):
-		# Use the previous translate result to speed up the translation progress
-		translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
-		return translated
-
-
 #########################################################################
 # Toggle function
 #########################################################################
 	
-	def source_language_predictenable(self, Toggle = True):
+	def source_language_predict_enable(self, Toggle = True):
 		self.source_language_predict = Toggle
 		#print('Pridict mode: ', Toggle)	
 
-	def TMModeenable(self, Toggle = True):
+	def tm_translate_enable(self, Toggle = True):
 		#print('Obsoleted')
 		self.proactive_memory_translate = Toggle
 		#print('Translation Memory mode: ', Toggle)	
 
-	def tm_updateModeenable(self, Toggle = True):
+	def tm_update_anable(self, Toggle = True):
 		self.tm_update = Toggle
 	#	print('Translation Memory update mode: ', Toggle)		

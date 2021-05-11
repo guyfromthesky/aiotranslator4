@@ -136,13 +136,13 @@ class ConfigLoader:
 		config = configparser.ConfigParser()
 		config.read(config_path)
 
-		self.Init_Config_Option(config, 'License_Key', 'value', '')
-		self.Init_Config_Option(config, 'Glossary_ID', 'value', '')
+		self.Init_Config_Option(config, 'license_key', 'value', '')
+		self.Init_Config_Option(config, 'glossary_id', 'value', '')
 
-		self.Config_Load_Path(config, 'License_File')
-		self.Config_Load_Path(config, 'Database')
-		self.Config_Load_Path(config, 'TranslationMemory')	
-		self.Config_Load_Path(config, 'Exception')	
+		self.Config_Load_Path(config, 'license_file')
+		self.Config_Load_Path(config, 'database')
+		self.Config_Load_Path(config, 'translation_memory')	
+		self.Config_Load_Path(config, 'exception')	
 		
 		with open(config_path, 'w') as configfile:
 			config.write(configfile)
