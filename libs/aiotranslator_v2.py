@@ -252,7 +252,7 @@ class Translator:
 			amount = 0
 		else:
 			try:
-				with open(log_file, 'rb') as pickle_load:	COM
+				with open(log_file, 'rb') as pickle_load:
 					amount = pickle.load(pickle_load)
 					#print('loaded amount: ', amount)
 			except:
