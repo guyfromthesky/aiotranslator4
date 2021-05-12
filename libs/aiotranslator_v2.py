@@ -138,7 +138,7 @@ class Translator:
 		try:
 			self.load_bucket_list_from_glob()
 			self.prepare_db_data()
-		except exception as e:
+		except Exception  as e:
 			print("E:", e)
 			print('Fail to load db')
 
@@ -328,7 +328,7 @@ class Translator:
 		
 		try:
 			client = logging.Client()
-		except exception as e:
+		except Exception  as e:
 			print('exception:', e)
 			return False
 		
@@ -379,7 +379,7 @@ class Translator:
 					os.remove(self.tm_request_log)
 				if self.last_section_invalid_request > 0:
 					os.remove(self.invalid_request_log)	
-			except exception as e:
+			except Exception  as e:
 				print('exception:', e)
 				result = False
 		
@@ -503,7 +503,7 @@ class Translator:
 						count+= len(c)
 				elif isinstance(source_text, str):
 					count+= len(source_text)
-			except exception as e:
+			except Exception  as e:
 				print('Error message: ', e)
 				pass
 			#print('Append tm usage:', count)
@@ -516,7 +516,7 @@ class Translator:
 						count+= len(c)
 				elif isinstance(source_text, str):
 					count+= len(source_text)
-			except exception as e:
+			except Exception  as e:
 				print('Error message: ', e)
 				pass
 
@@ -709,7 +709,7 @@ class Translator:
 				try:
 					index_num = raw_source.index(text)
 					to_translate_index[index_num].append(i)
-				except exception as e:
+				except Exception  as e:
 					if self.to_language == 'ko':
 						pre_translate = self.koreanPreTranslate(text)
 					else:
@@ -730,7 +730,7 @@ class Translator:
 		if len(to_translate) > 0:
 			try:
 				translated = self.activated_translator(to_translate)
-			except exception as e:
+			except Exception  as e:
 				print('error:', e)
 				translated = []
 		
@@ -771,7 +771,7 @@ class Translator:
 				translation = self.google_translate_v3(source_text)
 			else:
 				translation =  self.google_glossary_translate(source_text)
-		except exception as e:
+		except Exception  as e:
 			print('error translation:', e)
 			try:
 				client = logging.Client()
@@ -1264,7 +1264,7 @@ class Translator:
 		return
 
 	def import_translation_memory(self):
-		print('Import TM from pickle file')
+		print('Import TM from pickle file', str(self.tm_path))
 		if not os.path.isfile(self.tm_path):
 			print('Pickle file not found')
 			return
@@ -1278,14 +1278,18 @@ class Translator:
 						print('TM v4')
 						self.translation_memory = all_tm[self.glossary_id]
 					# TM format v3
-					elif 'en' in all_tm:
-						print('TM v3')
-						
+					elif 'EN' in all_tm:
+						print('TM v3')		
 						self.translation_memory = pd.DataFrame()
-						self.translation_memory['en'] = all_tm['en']
+						self.translation_memory['en'] = all_tm['EN']
 						self.translation_memory['en'] = self.translation_memory['en'].str.lower()
-						self.translation_memory['ko'] = all_tm['ko']
+						self.translation_memory['ko'] = all_tm['KO']
 						self.translation_memory['ko'] = self.translation_memory['ko'].str.lower()
+					else:
+						print('Current TM format:')
+						print(type(all_tm))	
+						for key in all_tm:
+							print('key', key)	
 			
 				elif isinstance(all_tm, list):
 					print('TM v2')
@@ -1294,12 +1298,17 @@ class Translator:
 					for Pair in all_tm:
 						new_row = {'en': Pair[1], 'ko':Pair[0],}
 						self.translation_memory = self.translation_memory.append(new_row, ignore_index=True)
-			except exception as e:
+				else:
+					print('Current TM format:')
+					print(type(all_tm))		
+			except Exception  as e:
 				print("Error:", e)
 				print('Fail to load pickle file')
 				return
+		print('Size of loaded TM', len(self.translation_memory))			
+		self.translation_memory.drop_duplicates(inplace=True)
 		self.translation_memory_size = len(self.translation_memory)
-		print('Size of loaded TM', self.translation_memory_size)		
+		print('Size of optimized TM', self.translation_memory_size)		
 
 	# Update TM from temporary_tm to pickle file
 	def append_translation_memory(self):
@@ -1346,7 +1355,7 @@ class Translator:
 					self.init_temporary_tm()
 					print('Size TM in memory', len(self.temporary_tm))
 					return new_tm_size
-				except exception as e:
+				except Exception  as e:
 					print("Error:", e)
 		return new_tm_size
 	
@@ -1384,7 +1393,7 @@ class Translator:
 				self.init_temporary_tm()
 				
 				return
-			except exception as e:
+			except Exception  as e:
 				print("Error:", e)
 		
 		return 
@@ -1462,7 +1471,7 @@ class Translator:
 					#print('TM translate', translated)
 					return translated.iloc[0][self.from_language]
 
-		except exception as e:
+		except Exception  as e:
 			#print('Error message (TM):', e)
 			pass
 		
@@ -1474,7 +1483,7 @@ class Translator:
 					#print('Temporary TM translate', translated)
 					return translated.iloc[0][self.from_language]
 
-		except exception as e:
+		except Exception  as e:
 			#print('Error message(temporary TM):', e)
 			return False
 

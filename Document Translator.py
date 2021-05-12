@@ -8,7 +8,7 @@ import configparser
 #Regular expression handling
 import copy
 import multiprocessing
-#from multiprocessing import Process, Queue, Pool
+
 from multiprocessing import Process , Queue, Manager
 import queue 
 
@@ -54,6 +54,8 @@ from libs.documentprocessing import translateDocx, translateDPF, translateMsg
 from libs.documentprocessing import TranslatePresentation, translateWorkbook
 from libs.documentprocessing import ShowProgress
 
+from libs.version import get_version
+
 from google.cloud import logging
 import json
 
@@ -61,15 +63,11 @@ tool_display_name = "Document Translator"
 tool_name = 'document'
 rev = 4000
 
-a,b,c,d = list(str(rev))
-VerNum = a + '.' + b + '.' + c + chr(int(d)+97)
+ver_num = get_version(rev) 
 
-version = tool_display_name  + " " +  VerNum + " | " + "Translator lib " + TranslatorVersion
+version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
 DELAY1 = 20
-StatusLength = 120
-
-# Add a comment
 
 #**********************************************************************************
 # UI handle ***********************************************************************
@@ -119,6 +117,8 @@ class DocumentTranslator(Frame):
 		self.ButtonWidth = 20
 		self.HalfButtonWidth = 15
 
+		self.StatusLength = 120
+
 		self.LanguagePack = {}
 		self.init_App_Setting()
 
@@ -142,12 +142,6 @@ class DocumentTranslator(Frame):
 
 	# UI init
 	def initUI(self):
-		#print('Current app language: ', self.AppLanguage)
-		#if self.AppLanguage != 'kr':
-		#	from languagepack import LanguagePackEN as LanguagePack
-		#else:
-		#	from languagepack import LanguagePackKR as LanguagePack
-
 
 		self.parent.resizable(False, False)
 		self.parent.title(version)
@@ -162,12 +156,10 @@ class DocumentTranslator(Frame):
 		self.Debug = StringVar()
 		self.Progress = StringVar()
 		
+
 		self.Generate_MainTab_UI(self.MainTab)
 		self.Generate_TranslateSetting_UI(self.TranslateSetting)
-		#self.Generate_Excel_Option_UI(self.ExcelSetting)
 		self.Generate_Utility_UI(self.Utility)
-		#self.Generate_Comparison_UI(self.Comparison)
-		
 		self.Generate_TM_Manager_UI(self.TM_Manager)
 		self.Generate_DB_Uploader_UI(self.DB_Uploader)
 		self.Generate_Debugger_UI(self.Process)
@@ -179,11 +171,7 @@ class DocumentTranslator(Frame):
 		Label(Tab, textvariable=self.Progress, width= 40).grid(row=Row, column=1, columnspan=3, padx=5, pady=5, sticky=W)
 		Label(Tab, textvariable=self.Notice, justify=RIGHT).grid(row=Row, column=3, columnspan=8, padx=5, pady=5, sticky= E)
 
-		#**************New row#**************#
 		Row+=1
-		# Translator
-		
-		# Target language
 		Label(Tab, text=  self.LanguagePack.Label['Language'], width= 10, font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		self.Language = IntVar()	
 		Radiobutton(Tab, width= 10, text=  self.LanguagePack.Option['Hangul'], value=1, variable=self.Language).grid(row=Row, column=2, padx=0, pady=5, sticky=W)
@@ -202,16 +190,9 @@ class DocumentTranslator(Frame):
 		self.Text_glossary_id.grid(row=Row, column=5, columnspan=2, padx=5, pady=5, stick=W)
 		self.Text_glossary_id.bind("<<ComboboxSelected>>", self.SaveProjectKey)
 
-		#Label(Tab, text=  self.LanguagePack.Label['Translator'], width= 10, font='calibri 11 bold').grid(row=Row, column=4, padx=10, pady=5, sticky=W)
-		#self.TranslatorAgent = IntVar()	
-		#Radiobutton(Tab, width= 10, text=  self.LanguagePack.Option['Google'], value=1, variable=self.TranslatorAgent, command = self.SetTranslatorAgent).grid(row=Row, column=5, padx=0, pady=5, sticky=W)
-		#Radiobutton(Tab, width= 10, text=  self.LanguagePack.Option['Kakao'], value=2, variable=self.TranslatorAgent, command = self.SetTranslatorAgent).grid(row=Row, column=6, padx=0, pady=5, sticky=W)
-		#self.TranslatorAgent.set(1)
-		
 		Button(Tab, width = 20, text=  self.LanguagePack.Button['RenewDatabase'], command= self.RenewMyTranslator).grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=E)
 		Button(Tab, width = 20, text=  self.LanguagePack.Button['OpenOutput'], command= self.OpenOutput).grid(row=Row, column=9, columnspan=1, padx=5, pady=5, sticky=E)
 
-		#**************New row#**************#
 		Row+=1
 		Label(Tab, width= 10, text=  self.LanguagePack.Label['Source'], font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		self.CurrentSourceFile = StringVar()
@@ -294,7 +275,7 @@ class DocumentTranslator(Frame):
 		self.VersionStatus.set('-')
 
 		#Label(Tab, text='Update').grid(row=Row, column=3, padx=5, pady=5)
-		Label(Tab, textvariable=self.UpdateDay).grid(row=Row, column=3, padx=0, pady=5)
+		Label(Tab, textvariable=self.update_day).grid(row=Row, column=3, padx=0, pady=5)
 		self.VersionStatus.set('-')
 
 		#DictionaryLabel = Label(Tab, text=  self.LanguagePack.Label['Dictionary'])
@@ -368,9 +349,10 @@ class DocumentTranslator(Frame):
 	def Generate_Debugger_UI(self, Tab):	
 
 		Row = 1
-		#self.Debugger = Text(Tab, width=120, height=20, undo=True, wrap=WORD)
+		# Add clear console button.
 		self.Debugger = scrolledtext.ScrolledText(Tab, width=125, height=19, undo=True, wrap=WORD, )
 		self.Debugger.grid(row=Row, column=1, columnspan=20, padx=5, pady=5)
+
 
 	def Generate_TM_Manager_UI(self, Tab):
 		self.pair_list = []
@@ -404,10 +386,13 @@ class DocumentTranslator(Frame):
 
 		self.Treeview.Scrollable = True
 		self.Treeview['columns'] = ('status')
-		#self.Treeview.heading("#0", text='Hangul', anchor='w')
+
+		self.Treeview.heading("#0", text='index')
+		self.Treeview.column("#0", anchor='center', width=100)
+
 		self.Treeview.heading("#0", text='Hangul')
-		#self.Treeview.column("#0", anchor="w")
 		self.Treeview.column("#0", anchor='center', width=500)
+
 		self.Treeview.heading('status', text='English')
 		self.Treeview.column('status', anchor='center', width=500)
 
@@ -422,8 +407,8 @@ class DocumentTranslator(Frame):
 		styles = Style()
 		styles.configure('Treeview',rowheight=22)
 
-		self.Treeview.bind("<Delete>", self.Delete_Line)	
-		self.Treeview.bind("<Double-1>", self.DoubleRightClick)	
+		self.Treeview.bind("<Delete>", self.delete_treeview_line)	
+		self.Treeview.bind("<Double-1>", self.double_right_click_treeview)	
 
 		
 		#Row +=1
@@ -461,7 +446,7 @@ class DocumentTranslator(Frame):
 	def search_tm_event(self, event):
 		self.search_tm_list()
 
-	def Delete_Line(self, event):
+	def delete_treeview_line(self, event):
 		focused = self.Treeview.focus()
 		child = self.Treeview.item(focused)
 		text = child["text"]
@@ -477,7 +462,7 @@ class DocumentTranslator(Frame):
 		self.Treeview.delete(focused)
 		#self.save_app_config()
 
-	def DoubleRightClick(self, event):
+	def double_right_click_treeview(self, event):
 		focused = self.Treeview.focus()
 		child = self.Treeview.item(focused)
 		self.Debugger.insert("end", "\n")
@@ -491,15 +476,17 @@ class DocumentTranslator(Frame):
 
 	def load_tm_list(self):
 		self.remove_treeview()
-		tm_size = len(self.MyTranslator.EN)
+		tm_size = len(self.MyTranslator.translation_memory)
 		print('Total TM:', tm_size)
-		for i in range(tm_size):
-			en_str = self.MyTranslator.EN[i]
-			ko_str = self.MyTranslator.KO[i]
+		#for i in range(tm_size):
+		for index, pair in self.MyTranslator.translation_memory.iterrows():	
+			en_str = pair['en']
+			ko_str = pair['ko']
 			if ko_str != None:
 				#print("Pair:", ko_str, en_str)
 				try:
-					self.Treeview.insert('', 'end', text= str(ko_str), values=([str(en_str)]))
+					#self.Treeview.insert('', 'end', text= str(pair['ko']), values=([str(pair['en'])]))
+					self.Treeview.insert('', 'end', text= str(index), values=([str(ko_str), str(en_str)]))
 					#print('Inserted id:', id)
 				except:
 					pass	
@@ -509,18 +496,17 @@ class DocumentTranslator(Frame):
 		self.remove_treeview()
 		print("Text to search: ", text)
 		if text != None:
-			tm_size = len(self.MyTranslator.EN)
-			for i in range(tm_size):
-				en_str = self.MyTranslator.EN[i]
-				ko_str = self.MyTranslator.KO[i]
-				if text in en_str or text in ko_str:
-					if ko_str != None:
-						#print("Pair:", ko_str, en_str)
-						try:
-							self.Treeview.insert('', 'end', text= str(ko_str), values=([str(en_str)]))
-							#print('Inserted id:', id)
-						except:
-							pass	
+			try:
+				if len(self.MyTranslator.translation_memory) > 0:
+					#translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
+					result = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory[self.MyTranslator.from_language].str.match(text)]
+					if len(result) > 0:
+						for index, pair in result.iterrows():
+							#self.Treeview.insert('', 'end', text= str(pair['ko']), values=([str(pair['en'])]))
+							self.Treeview.insert('', 'end', text= str(index), values=([str(ko_str), str(en_str)]))
+			except Exception  as e:
+				#print('Error message (TM):', e)
+				pass
 
 	def remove_treeview(self):
 		for i in self.Treeview.get_children():
@@ -874,7 +860,7 @@ class DocumentTranslator(Frame):
 		self.TMStatus  = StringVar()
 		#self.HeaderStatus = StringVar()
 		self.VersionStatus  = StringVar()
-		self.UpdateDay = StringVar()
+		self.update_day = StringVar()
 
 		self.AppConfig = ConfigLoader()
 		self.Configuration = self.AppConfig.Config
@@ -971,13 +957,13 @@ class DocumentTranslator(Frame):
 				self.ProjectList.set(self.glossary_id)
 				#self.Error('No Valid Project selected, please update the project key and try again.')	
 			
-			if isinstance(self.MyTranslator.Version, str):
-				version = self.MyTranslator.Version[0:10]
+			if isinstance(self.MyTranslator.version, str):
+				version = self.MyTranslator.version[0:10]
 			else:
 				version = '-'
 
-			if isinstance(self.MyTranslator.UpdateDay, str):
-				Date = self.MyTranslator.UpdateDay[0:10]
+			if isinstance(self.MyTranslator.update_day, str):
+				Date = self.MyTranslator.update_day[0:10]
 			else:
 				Date = '-'
 
@@ -995,7 +981,7 @@ class DocumentTranslator(Frame):
 					return
 
 			self.VersionStatus.set(version)
-			self.UpdateDay.set(Date)
+			self.update_day.set(Date)
 			
 			self.Notice.set(self.LanguagePack.ToolTips['AppInitDone'])
 			self.TranslatorProcess.join()
@@ -1158,7 +1144,7 @@ class DocumentTranslator(Frame):
 			try:
 				Status = self.StatusQueue.get(0)
 				if Status != None:
-					SafeStatus = Status[0:StatusLength]
+					SafeStatus = Status[0:self.StatusLength]
 					self.Notice.set(SafeStatus)
 					self.Debugger.insert("end", "\n")
 					self.Debugger.insert("end", Status)
@@ -1191,7 +1177,7 @@ class DocumentTranslator(Frame):
 			try:
 				Status = self.StatusQueue.get(0)
 				if Status != None:
-					SafeStatus = Status[0:StatusLength]
+					SafeStatus = Status[0:self.StatusLength]
 					self.Notice.set(SafeStatus)
 					self.Debugger.insert("end", "\n")
 					self.Debugger.insert("end", Status)
@@ -1203,7 +1189,7 @@ class DocumentTranslator(Frame):
 			try:
 				Status = self.StatusQueue.get(0)
 				if Status != None:	
-					SafeStatus = Status[0:StatusLength]
+					SafeStatus = Status[0:self.StatusLength]
 					self.Notice.set(SafeStatus)
 					self.Debugger.insert("end", "\n")
 					self.Debugger.insert("end", Status)
@@ -1224,7 +1210,7 @@ class DocumentTranslator(Frame):
 			try:
 				Status = self.StatusQueue.get(0)
 				if Status != None:
-					SafeStatus = Status[0:StatusLength]
+					SafeStatus = Status[0:self.StatusLength]
 					self.Notice.set(SafeStatus)
 					self.Debugger.insert("end", "\n")
 					self.Debugger.insert("end", Status)
@@ -1243,7 +1229,7 @@ class DocumentTranslator(Frame):
 					Status = self.StatusQueue.get(0)
 					self.Progress.set("Progress: " + str(100) + '%')
 					if Status != None:	
-						SafeStatus = Status[0:StatusLength]
+						SafeStatus = Status[0:self.StatusLength]
 						self.Notice.set(SafeStatus)
 						self.Debugger.insert("end", "\n")
 						self.Debugger.insert("end", Status)
@@ -1398,7 +1384,7 @@ def Importtranslation_memory(TMPath):
 # Function for Document Translator
 def GenerateTranslator(Mqueue, TMManager, from_language = 'ko', to_language = 'en', glossary_id = "", tm_path= None,):	
 	print("Generate my Translator")
-	MyTranslator = Translator(from_language = from_language, to_language = to_language, glossary_id =  glossary_id, tm_path = tm_path, used_tool = tool_name, tool_version = VerNum,)
+	MyTranslator = Translator(from_language = from_language, to_language = to_language, glossary_id =  glossary_id, tm_path = tm_path, used_tool = tool_name, tool_version = ver_num,)
 	Mqueue.put(MyTranslator)
 
 def Optimize(SourceDocument, StatusQueue):
