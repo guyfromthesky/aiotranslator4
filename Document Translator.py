@@ -57,19 +57,19 @@ from libs.documentprocessing import ShowProgress
 from google.cloud import logging
 import json
 
-ToolDisplayName = "Document Translator"
+tool_display_name = "Document Translator"
 tool_name = 'document'
 rev = 4000
 
 a,b,c,d = list(str(rev))
 VerNum = a + '.' + b + '.' + c + chr(int(d)+97)
 
-version = ToolDisplayName  + " " +  VerNum + " | " + "Translator lib " + TranslatorVersion
+version = tool_display_name  + " " +  VerNum + " | " + "Translator lib " + TranslatorVersion
 
 DELAY1 = 20
 StatusLength = 120
 
-
+# Add a comment
 
 #**********************************************************************************
 # UI handle ***********************************************************************
