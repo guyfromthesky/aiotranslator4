@@ -36,7 +36,7 @@ from tkinter import Tk, Frame
 from tkinter import Menu, filedialog, messagebox, ttk
 from tkinter import Text
 from tkinter import IntVar, StringVar
-from tkinter import W, E, S, N, END, RIGHT, HORIZONTAL
+from tkinter import W, E, S, N, END, RIGHT, HORIZONTAL, NO, CENTER
 from tkinter import WORD, NORMAL, ACTIVE, INSERT
 from tkinter import DISABLED
 
@@ -385,20 +385,17 @@ class DocumentTranslator(Frame):
 		self.Treeview.configure(  yscrollcommand=verscrlbar.set)
 
 		self.Treeview.Scrollable = True
-		self.Treeview['columns'] = ('status')
+		self.Treeview['columns'] = ('index', 'KO', 'EN')
 
-		self.Treeview.heading("#0", text='index')
-		self.Treeview.column("#0", anchor='center', width=100)
+		self.Treeview.column('#0', width=0, stretch=NO)
+		self.Treeview.column('index', anchor=CENTER, width=75, stretch=NO)
+		self.Treeview.column('KO', anchor=CENTER, width=80)
+		self.Treeview.column('EN', anchor=CENTER, width=80)
 
-		self.Treeview.heading("#0", text='Hangul')
-		self.Treeview.column("#0", anchor='center', width=500)
-
-		self.Treeview.heading('status', text='English')
-		self.Treeview.column('status', anchor='center', width=500)
-
-		self.Treeview.tag_configure('pass', background= 'green')
-		self.Treeview.tag_configure('fail', background= 'red')
-		self.Treeview.tag_configure('na', background= '')
+		self.Treeview.heading('#0', text='', anchor=CENTER)
+		self.Treeview.heading('index', text='index', anchor=CENTER)
+		self.Treeview.heading('KO', text='KO', anchor=CENTER)
+		self.Treeview.heading('EN', text='EN', anchor=CENTER)
 
 		
 		
@@ -447,19 +444,21 @@ class DocumentTranslator(Frame):
 		self.search_tm_list()
 
 	def delete_treeview_line(self, event):
-		focused = self.Treeview.focus()
-		child = self.Treeview.item(focused)
-		text = child["text"]
+		selected = self.Treeview.selection()
+		to_remove = []
+		for child_obj in selected:
+			child = self.Treeview.item(child_obj)
+			tm_index = child['values'][0]
+			to_remove.append(tm_index)
+			self.Treeview.delete(child_obj)
+			
+		print('Current TM pair: ', len(self.MyTranslator.translation_memory))
 		try:
-			index = self.MyTranslator.KO.index(text)
-			print('Item to remove: ' + self.MyTranslator.KO[index] + " " + self.MyTranslator.EN[index])
-			self.removed_list.append(index)
-			self.MyTranslator.KO[index] = None
-			self.MyTranslator.EN[index] = None
+			self.MyTranslator.translation_memory = self.MyTranslator.translation_memory.drop(to_remove)
 		except Exception as e:
-			print('Error:', e)	
-		print(child["text"])
-		self.Treeview.delete(focused)
+			print('Error:', e)
+		
+		print('After removed TM pair: ', len(self.MyTranslator.translation_memory))
 		#self.save_app_config()
 
 	def double_right_click_treeview(self, event):
@@ -486,7 +485,7 @@ class DocumentTranslator(Frame):
 				#print("Pair:", ko_str, en_str)
 				try:
 					#self.Treeview.insert('', 'end', text= str(pair['ko']), values=([str(pair['en'])]))
-					self.Treeview.insert('', 'end', text= str(index), values=([str(ko_str), str(en_str)]))
+					self.Treeview.insert('', 'end', text= '', values=( index, str(ko_str), str(en_str)))
 					#print('Inserted id:', id)
 				except:
 					pass	
@@ -495,15 +494,19 @@ class DocumentTranslator(Frame):
 		text = self.search_text.get("1.0", END).replace("\n", "").replace(" ", "")
 		self.remove_treeview()
 		print("Text to search: ", text)
+		text = text.lower()
 		if text != None:
 			try:
 				if len(self.MyTranslator.translation_memory) > 0:
 					#translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
-					result = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory[self.MyTranslator.from_language].str.match(text)]
+					result_en = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory['en'].str.match(text)]
+					result_ko = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory['ko'].str.match(text)]
+					result = result_en.append(result_ko)
+					print('type', type(result), 'total', len(result))
 					if len(result) > 0:
 						for index, pair in result.iterrows():
 							#self.Treeview.insert('', 'end', text= str(pair['ko']), values=([str(pair['en'])]))
-							self.Treeview.insert('', 'end', text= str(index), values=([str(ko_str), str(en_str)]))
+							self.Treeview.insert('', 'end', text= '', values=(index, str(pair['ko']), str(pair['en'])))
 			except Exception  as e:
 				#print('Error message (TM):', e)
 				pass
@@ -515,10 +518,10 @@ class DocumentTranslator(Frame):
 
 	def save_tm(self):
 		print('Saving config')
-		self.MyTranslator.remove_tm_pair(self.removed_list)
-		UpdateProcess = Process(target=self.MyTranslator.remove_tm_pair, args=(self.removed_list,))
-		UpdateProcess.start()
-		self.removed_list = []
+		self.MyTranslator.export_current_translation_memory()
+		#UpdateProcess = Process(target=self.MyTranslator.remove_tm_pair, args=(self.removed_list,))
+		#UpdateProcess.start()
+		#self.removed_list = []
 
 	def Generate_Menu_UI(self):
 		menubar = Menu(self.parent) 
