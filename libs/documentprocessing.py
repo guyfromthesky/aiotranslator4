@@ -13,7 +13,7 @@ from datetime import datetime
 
 
 # Functions used for processor
-def CheckList(item, list):
+def check_list(item, list):
 	if list == [] or list == [""]:
 		return True
 	for text in list:
@@ -22,7 +22,7 @@ def CheckList(item, list):
 	return False
 
 # Functions used for processor
-def GenerateSheetList(SheetList, TranslateList):
+def generate_sheet_list(SheetList, TranslateList):
 	if TranslateList == [] or TranslateList == [""]:
 		return SheetList
 	#TotalSheet = len(SheetList)
@@ -83,7 +83,7 @@ def ShowProgress(Counter, TotalProcess):
 	return percent
 
 #Para Translate
-def paraTranslate(tasks_to_accomplish, tasks_that_are_done, Mytranslator):
+def para_translate(tasks_to_accomplish, tasks_that_are_done, MyTranslator):
 	while True:
 		#print('paraTranslate is running')
 		try:
@@ -96,7 +96,7 @@ def paraTranslate(tasks_to_accomplish, tasks_that_are_done, Mytranslator):
 				Task.Fail = 0
 				#print('Current text: ', ToTranslate)
 				SourceText = ToTranslate.split('\n')
-				Translated = Mytranslator.translate(SourceText)
+				Translated = MyTranslator.translate(SourceText)
 				#print('Para Translated', Translated)
 				i = 0
 				for string in Translated:
@@ -248,7 +248,7 @@ def translateWorkbook(ProgressQueue=None, ResultQueue=None, StatusQueue=None, My
 
 	current_task = 0
 
-	TranslateList = GenerateSheetList(SheetList, Sheet)	
+	TranslateList = generate_sheet_list(SheetList, Sheet)	
 	#StatusQueue.put('Translate List' + str(TranslateList))
 	for sheet in TranslateList:
 		ws = xlsx[sheet]
@@ -273,7 +273,7 @@ def translateWorkbook(ProgressQueue=None, ResultQueue=None, StatusQueue=None, My
 
 		StatusQueue.put('Pre-processing document...')
 		for sheet in xlsx:
-			if CheckList(sheet.title, TranslateList):
+			if check_list(sheet.title, TranslateList):
 				StatusQueue.put("Checking sheet: " + str(sheet.title))
 				for row in sheet.iter_rows():
 					for cell in row:
@@ -363,13 +363,13 @@ def translateWorkbook(ProgressQueue=None, ResultQueue=None, StatusQueue=None, My
 			StatusQueue.put('Translating sheet name...')
 			to_translate = []
 			for sheet in xlsx:
-				if CheckList(sheet.title, TranslateList):
+				if check_list(sheet.title, TranslateList):
 					CurrentSheetName = sheet.title
 					to_translate.append(CurrentSheetName)
 			translated = Mytranslator.translate(to_translate)
 			index = 0
 			for sheet in xlsx:
-				if CheckList(sheet.title, TranslateList):
+				if check_list(sheet.title, TranslateList):
 					try:
 						sheet.title = translated[index][0:29]
 					except:
