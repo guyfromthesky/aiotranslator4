@@ -22,31 +22,31 @@ def check_list(item, list):
 	return False
 
 # Functions used for processor
-def generate_sheet_list(SheetList, TranslateList):
-	if TranslateList == [] or TranslateList == [""]:
-		return SheetList
-	#TotalSheet = len(SheetList)
-	IndexList = []
-	for sheet in TranslateList:
+def generate_sheet_list(sheet_list, translate_list):
+	if translate_list == [] or translate_list == [""]:
+		return sheet_list
+	#TotalSheet = len(sheet_list)
+	index_list = []
+	for sheet in translate_list:
 		print("Sheet: ", sheet)
 		if sheet.isnumeric():
-			IndexList.append(int(sheet))
-		else:	
-			tempList = sheet.split('-')
-			#print('tempList: ', tempList)
-			#print('Len tempList: ', len(tempList))
+			index_list.append(int(sheet))
+		else:
+			temp_list = sheet.split('-')
+			#print('temp_list: ', temp_list)
+			#print('Len temp_list: ', len(temp_list))
 			invalid = False
-			if len(tempList) == 2:
-				for tempIndex in tempList:
-					#print("Item: ",  tempIndex)
-					if tempIndex.isnumeric() != True:
+			if len(temp_list) == 2:
+				for temp_index in temp_list:
+					#print("Item: ",  temp_index)
+					if temp_index.isnumeric() != True:
 						invalid = True
 			else:
 				invalid = True
 			if invalid == False:
 				
-				A = int(tempList[0])
-				B = int(tempList[1])
+				A = int(temp_list[0])
+				B = int(temp_list[1])
 				
 				if A < B:
 					Min = A
@@ -57,24 +57,24 @@ def generate_sheet_list(SheetList, TranslateList):
 				#print('Min max: ', Min, Max)
 				i = Min
 				while i >= Min and i <= Max:
-					IndexList.append(i)
+					index_list.append(i)
 					i+=1
 			else:
 				i = 0
-				for source in SheetList:
+				for source in sheet_list:
 					if source == sheet:
-						IndexList.append(i)		
+						index_list.append(i)		
 					i+=1
 
-	toReturn = []
+	to_return = []
 
 	i = 1
-	for toTranslate in SheetList:
-		for num in IndexList:
+	for to_translate in sheet_list:
+		for num in index_list:
 			if i == num:
-				toReturn.append(toTranslate)
+				to_return.append(to_translate)
 		i+=1
-	return toReturn
+	return to_return
 
 def ShowProgress(Counter, TotalProcess):
 	#os.system('CLS') 
@@ -83,7 +83,7 @@ def ShowProgress(Counter, TotalProcess):
 	return percent
 
 #Para Translate
-def para_translate(tasks_to_accomplish, tasks_that_are_done, MyTranslator):
+def paraTranslate(tasks_to_accomplish, tasks_that_are_done, MyTranslator):
 	while True:
 		#print('paraTranslate is running')
 		try:
@@ -151,10 +151,10 @@ class CellData:
 # pptx object
 # Add a Paragraph as a task with an address
 class TextFrameData:
-	def __init__(self, ParagraphsNum, RunsNum, String):
-		self.Paragraphs = ParagraphsNum
-		self.Runs = RunsNum
-		self.Text = String
+	def __init__(self, paragraphs_num, runs_num, string):
+		self.Paragraphs = paragraphs_num
+		self.Runs = runs_num
+		self.Text = string
 
 # docx object
 
@@ -171,24 +171,24 @@ class ParagraphsData:
 		self.Text = Text
 
 class TableData:
-	def __init__(self, ParagraphsNum, RunsNum, String):
-		self.Paragraphs = ParagraphsNum
-		self.Runs = RunsNum
-		self.Text = String
+	def __init__(self, paragraphs_num, runs_num, string):
+		self.Paragraphs = paragraphs_num
+		self.Runs = runs_num
+		self.Text = string
 
 class RunData:
-	def __init__(self, RunsNum, String):
-		self.Runs = RunsNum
-		self.Text = String
+	def __init__(self, runs_num, string):
+		self.Runs = runs_num
+		self.Text = string
 
 #Workbook handle
-def translateWorkbook(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytranslator=None, Options = {}):
+def translate_workbook(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
 	
 	from openpyxl import load_workbook, worksheet, Workbook
 	from openpyxl.styles import Font
 
 	if not 'SourceDocument' in Options:
-		StatusQueue.put('No source document input')
+		status_queue.put('No source document input')
 		return False
 	else:
 		SourceDocument = Options['SourceDocument']
@@ -196,10 +196,10 @@ def translateWorkbook(ProgressQueue=None, ResultQueue=None, StatusQueue=None, My
 	if not 'OutputDocument' in Options:
 		now = datetime.now()
 		timestamp = str(int(datetime.timestamp(now)))
-		Outputdir = os.path.dirname(SourceDocument)
-		baseName = os.path.basename(SourceDocument)
-		sourcename = os.path.splitext(baseName)[0]
-		OutputDocument = Outputdir + '/' + 'Translated_' + sourcename + '_' + timestamp + '.xlsx'
+		output_dir = os.path.dirname(SourceDocument)
+		base_name = os.path.basename(SourceDocument)
+		source_name = os.path.splitext(base_name)[0]
+		OutputDocument = output_dir + '/' + 'Translated_' + source_name + '_' + timestamp + '.xlsx'
 	else:
 		OutputDocument = Options['OutputDocument']
 
@@ -227,30 +227,30 @@ def translateWorkbook(ProgressQueue=None, ResultQueue=None, StatusQueue=None, My
 		if DataOnly:
 			xlsx = load_workbook(SourceDocument, data_only=True)
 		else:
-			xlsx = load_workbook(SourceDocument)	
+			xlsx = load_workbook(SourceDocument)
 	except Exception as e:
-		StatusQueue.put('Failed to load the document: ' + str(e))
+		status_queue.put('Failed to load the document: ' + str(e))
 		return e
 
-	StatusQueue.put('Estimating total task to do...')
-	ProgressQueue.put(0)
+	status_queue.put('Estimating total task to do...')
+	progress_queue.put(0)
 	#tasks_to_accomplish = Queue()
 	#tasks_that_are_done = Queue()
 	#processes = []
 	
-	TaskList = []
+	task_list = []
 
-	SheetList = []
+	sheet_list = []
 	for sheet in xlsx:
-		SheetList.append(sheet.title)
-	#StatusQueue.put('Sheet List' + str(SheetList))
-
+		sheet_list.append(sheet.title)
+	#status_queue.put('Sheet List' + str(sheet_list))
 
 	current_task = 0
 
-	TranslateList = generate_sheet_list(SheetList, Sheet)	
-	#StatusQueue.put('Translate List' + str(TranslateList))
-	for sheet in TranslateList:
+	# 
+	translate_list = generate_sheet_list(sheet_list, Sheet)	
+	#status_queue.put('Translate List' + str(translate_list))
+	for sheet in translate_list:
 		ws = xlsx[sheet]
 		for row in ws.iter_rows():
 			for cell in row:
@@ -262,24 +262,23 @@ def translateWorkbook(ProgressQueue=None, ResultQueue=None, StatusQueue=None, My
 	if current_task == 0:
 		print('Done')
 	else:
-			
-		StatusQueue.put('Total task: ' + str(TotalTask))
+		status_queue.put('Total task: ' + str(TotalTask))
 		percent = ShowProgress(Counter, TotalTask)
-		ProgressQueue.put(percent)		
+		progress_queue.put(percent)		
 		memory_translation = 0	
 		fail_request = 0
 		empty_cell = 0
-		StatusQueue.put('Checking task detail...')
+		status_queue.put('Checking task detail...')
 
-		StatusQueue.put('Pre-processing document...')
+		status_queue.put('Pre-processing document...')
 		for sheet in xlsx:
-			if check_list(sheet.title, TranslateList):
-				StatusQueue.put("Checking sheet: " + str(sheet.title))
+			if check_list(sheet.title, translate_list):
+				status_queue.put("Checking sheet: " + str(sheet.title))
 				for row in sheet.iter_rows():
 					for cell in row:
 						if cell.value != None:
 							current_string = str(cell.value)
-							result = Mytranslator.ValidateSourceText(current_string)
+							result = MyTranslator.ValidateSourceText(current_string)
 							if result == False:
 
 								fail_request+=1
@@ -293,47 +292,47 @@ def translateWorkbook(ProgressQueue=None, ResultQueue=None, StatusQueue=None, My
 								SheetName = sheet.title
 								CellAddress = cell.column_letter + str(cell.row)
 								Task = CellData(SheetName, CellAddress, ListString)
-								TaskList.append(Task)
+								task_list.append(Task)
 				Counter = fail_request + memory_translation
 				percent = ShowProgress(Counter, TotalTask)
-				ProgressQueue.put(percent)
+				progress_queue.put(percent)
 			else:
 				if SheetRemovalMode:
 					std = xlsx.get_sheet_by_name(sheet.title)
 					xlsx.remove_sheet(std)
 
-		StatusQueue.put('Empty cell: ' + str(empty_cell))
-		StatusQueue.put('Fail request: ' + str(fail_request))
-		StatusQueue.put('Translated by Memory: ' + str(memory_translation))
+		status_queue.put('Empty cell: ' + str(empty_cell))
+		status_queue.put('Fail request: ' + str(fail_request))
+		status_queue.put('Translated by Memory: ' + str(memory_translation))
 		RemainedTask = TotalTask-Counter	
-		StatusQueue.put('Remained task: ' + str(RemainedTask))
+		status_queue.put('Remained task: ' + str(RemainedTask))
 
 		Task_todo = []
 		
-		while len(TaskList) > 0:
+		while len(task_list) > 0:
 			Translated = []
 			TaskLength = 0
 			
 			while TaskLength < 2000:
-				if len(TaskList) > 0:
-					Input = TaskList[0].Text
+				if len(task_list) > 0:
+					Input = task_list[0].Text
 					if isinstance(Input, list):
 						TempLen = TaskLength
 						for tempString in Input:
 							TempLen += len(tempString)
 			
 					elif isinstance(Input, str):
-						TempLen = TaskLength + len(TaskList[0].Text)
+						TempLen = TaskLength + len(task_list[0].Text)
 						
 					if TempLen < 2000:
 						TaskLength = TempLen
-						Task_todo.append(TaskList[0])
-						del TaskList[0]
+						Task_todo.append(task_list[0])
+						del task_list[0]
 					else:
 						break	
 				else:
 					break
-			Translated = cell_translate(Mytranslator, Task_todo)
+			Translated = cell_translate(MyTranslator, Task_todo)
 			for task in Translated:
 				Return = task
 				NewSheet = Return.Sheet
@@ -349,33 +348,33 @@ def translateWorkbook(ProgressQueue=None, ResultQueue=None, StatusQueue=None, My
 				tempFont.name = 'Times New Roman'
 				cell.font = tempFont
 		
-			RemainedTask = len(TaskList)
+			RemainedTask = len(task_list)
 			Message = str(RemainedTask) + ' tasks remain....'
-			StatusQueue.put(Message)	
+			status_queue.put(Message)	
 
 			Counter = TotalTask - RemainedTask
 			percent = ShowProgress(Counter, TotalTask)
-			ProgressQueue.put(percent)
+			progress_queue.put(percent)
 			del Task_todo
 			Task_todo = []
 
 		if TranslateSheetName:
-			StatusQueue.put('Translating sheet name...')
+			status_queue.put('Translating sheet name...')
 			to_translate = []
 			for sheet in xlsx:
-				if check_list(sheet.title, TranslateList):
+				if check_list(sheet.title, translate_list):
 					CurrentSheetName = sheet.title
 					to_translate.append(CurrentSheetName)
-			translated = Mytranslator.translate(to_translate)
+			translated = MyTranslator.translate(to_translate)
 			index = 0
 			for sheet in xlsx:
-				if check_list(sheet.title, TranslateList):
+				if check_list(sheet.title, translate_list):
 					try:
 						sheet.title = translated[index][0:29]
 					except:
 						pass	
 					index+=1
-		StatusQueue.put('Exporting result....')	
+		status_queue.put('Exporting result....')	
 		print('Exporting file to ', OutputDocument)
 		
 		try:
@@ -385,23 +384,23 @@ def translateWorkbook(ProgressQueue=None, ResultQueue=None, StatusQueue=None, My
 			else:
 				return False	
 		except Exception as e:
-			StatusQueue.put('Failed to save the result: ' + str(e))
+			status_queue.put('Failed to save the result: ' + str(e))
 			return e
-	StatusQueue.put('No thing to do with this file.')	
+	status_queue.put('No thing to do with this file.')	
 
 
 #**********************************************************************************
 #pptx handle **********************************************************************
 #**********************************************************************************
 
-def TranslatePresentation(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytranslator=None, Options = {}):
+def TranslatePresentation(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
 	from pptx import Presentation
 	
 	
-	ProgressQueue.put(0)
+	progress_queue.put(0)
 	
 	if not 'SourceDocument' in Options:
-		StatusQueue.put('No source document input')
+		status_queue.put('No source document input')
 		return False
 	else:
 		SourceDocument = Options['SourceDocument']
@@ -409,10 +408,10 @@ def TranslatePresentation(ProgressQueue=None, ResultQueue=None, StatusQueue=None
 	if not 'OutputDocument' in Options:
 		now = datetime.now()
 		timestamp = str(int(datetime.timestamp(now)))
-		Outputdir = os.path.dirname(SourceDocument)
-		baseName = os.path.basename(SourceDocument)
-		sourcename, ext = os.path.splitext(baseName)
-		OutputDocument = Outputdir + '/' + 'Translated_' + sourcename + '_' + timestamp + ext
+		output_dir = os.path.dirname(SourceDocument)
+		base_name = os.path.basename(SourceDocument)
+		source_name, ext = os.path.splitext(base_name)
+		OutputDocument = output_dir + '/' + 'Translated_' + source_name + '_' + timestamp + ext
 	else:
 		OutputDocument = Options['OutputDocument']
 
@@ -423,7 +422,7 @@ def TranslatePresentation(ProgressQueue=None, ResultQueue=None, StatusQueue=None
 	
 	pptx = Presentation(SourceDocument)
 	print('Estimating total task to do...')
-	StatusQueue.put('Estimating total task to do...')
+	status_queue.put('Estimating total task to do...')
 
 
 	if Multiple == None:
@@ -451,7 +450,7 @@ def TranslatePresentation(ProgressQueue=None, ResultQueue=None, StatusQueue=None
 										total+= 1
 	TotalTask = total
 	print('Total task: ', TotalTask)
-	StatusQueue.put('Total task: ' + str(TotalTask))
+	status_queue.put('Total task: ' + str(TotalTask))
 	Counter = 0
 	
 	for slide in pptx.slides: 
@@ -467,7 +466,7 @@ def TranslatePresentation(ProgressQueue=None, ResultQueue=None, StatusQueue=None
 						if run.text == '':
 							if CurentText != '':
 								ListText = CurentText.split('\n')
-								Translated = Mytranslator.translate(ListText)
+								Translated = MyTranslator.translate(ListText)
 								Translated = "\n".join(Translated)
 								Translated = Translated.replace("\r\r\n", "\r\n")
 								paragraph.runs[FirstRun].text = Translated
@@ -480,14 +479,14 @@ def TranslatePresentation(ProgressQueue=None, ResultQueue=None, StatusQueue=None
 
 					if CurentText != '':
 						ListText = CurentText.split('\n')
-						Translated = Mytranslator.translate(ListText)
+						Translated = MyTranslator.translate(ListText)
 						Translated = "\n".join(Translated)
 						Translated = Translated.replace("\r\r\n", "\r\n")
 						paragraph.runs[FirstRun].text = Translated
 				
 					Counter+=1
 					percent = ShowProgress(Counter, TotalTask)
-					ProgressQueue.put(percent)
+					progress_queue.put(percent)
 
 			if shape.has_table:	
 				for row in shape.table.rows:
@@ -502,7 +501,7 @@ def TranslatePresentation(ProgressQueue=None, ResultQueue=None, StatusQueue=None
 								if run.text == '':
 									if CurentText != '':
 										ListText = CurentText.split('\n')
-										Translated = Mytranslator.translate(ListText)
+										Translated = MyTranslator.translate(ListText)
 										Translated = "\n".join(Translated)
 										Translated = Translated.replace("\r\r\n", "\r\n")
 										paragraph.runs[FirstRun].text = Translated
@@ -515,32 +514,32 @@ def TranslatePresentation(ProgressQueue=None, ResultQueue=None, StatusQueue=None
 
 							if CurentText != '':
 								ListText = CurentText.split('\n')
-								Translated = Mytranslator.translate(ListText)
+								Translated = MyTranslator.translate(ListText)
 								Translated = "\n".join(Translated)
 								Translated = Translated.replace("\r\r\n", "\r\n")
 								paragraph.runs[FirstRun].text = Translated
 
 							Counter+=1
 							percent = ShowProgress(Counter, TotalTask)
-							ProgressQueue.put(percent)
+							progress_queue.put(percent)
 
 	percent = ShowProgress(TotalTask, TotalTask)
 	print('percent: ', percent)
-	StatusQueue.put('Exporting document...')
+	status_queue.put('Exporting document...')
 	try:
 		pptx.save(OutputDocument)
 		if (os.path.isfile(OutputDocument)):
 			End = time.time()
 			Message = "Total time spend: " + str(int(End-Start)) + ' seconds.'
-			StatusQueue.put(Message)
+			status_queue.put(Message)
 			return True
 		else:
 			return False	
 	except Exception as e:
-		StatusQueue.put('Error message: ' + str(e))
+		status_queue.put('Error message: ' + str(e))
 		return e
 
-def translateFrametable(cell, Mytranslator, CurrentTask, TotalTask):
+def translateFrametable(cell, MyTranslator, CurrentTask, TotalTask):
 	from docx.shared import RGBColor
 
 	for paragraph in cell.text_frame.paragraphs:
@@ -556,7 +555,7 @@ def translateFrametable(cell, Mytranslator, CurrentTask, TotalTask):
 					#print('CurentText ', CurentText)
 					ListText = CurentText.split('\n')
 					#print('ListText ', ListText)
-					Translated = Mytranslator.translate(ListText)
+					Translated = MyTranslator.translate(ListText)
 					Translated = "\n".join(Translated)
 					#Translated = Translated.replace("\r\r\n", "\r\n")
 					#print('Translated ', Translated)
@@ -570,7 +569,7 @@ def translateFrametable(cell, Mytranslator, CurrentTask, TotalTask):
 			#print('CurentText ', CurentText)
 			ListText = CurentText.split('\n')
 			#print('ListText ', ListText)
-			Translated = Mytranslator.translate(ListText)
+			Translated = MyTranslator.translate(ListText)
 			Translated = "\r\n".join(Translated)
 			Translated = Translated.replace("\r\r\n", "\r\n")
 			#print('Translated ', Translated)
@@ -581,7 +580,7 @@ def translateFrametable(cell, Mytranslator, CurrentTask, TotalTask):
 	if cell.has_table:	
 		for row in cell.table.rows:
 			for newcell in row.cells:
-				newcell = translateFrametable(cell, Mytranslator, CurrentTask, TotalTask)
+				newcell = translateFrametable(cell, MyTranslator, CurrentTask, TotalTask)
 				total+= 1
 		print('Another table inside a table cell.')
 
@@ -619,16 +618,16 @@ def CheckParagraphStyle(paragraph, Debug = False):
 
 	return False
 
-def translateDocx(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytranslator=None, Options = {}):
+def translateDocx(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
 	import docx
 	
 	from docx.shared import RGBColor
 	print('Estimating total work to do...')
-	StatusQueue.put('Estimating total task to do...')
-	ProgressQueue.put(0)
+	status_queue.put('Estimating total task to do...')
+	progress_queue.put(0)
 	
 	if not 'SourceDocument' in Options:
-		StatusQueue.put('No source document input')
+		status_queue.put('No source document input')
 		return False
 	else:
 		SourceDocument = Options['SourceDocument']
@@ -636,10 +635,10 @@ def translateDocx(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytran
 	if not 'OutputDocument' in Options:
 		now = datetime.now()
 		timestamp = str(int(datetime.timestamp(now)))
-		Outputdir = os.path.dirname(SourceDocument)
-		baseName = os.path.basename(SourceDocument)
-		sourcename, ext = os.path.splitext(baseName)
-		OutputDocument = Outputdir + '/' + 'Translated_' + sourcename + '_' + timestamp + ext
+		output_dir = os.path.dirname(SourceDocument)
+		base_name = os.path.basename(SourceDocument)
+		source_name, ext = os.path.splitext(base_name)
+		OutputDocument = output_dir + '/' + 'Translated_' + source_name + '_' + timestamp + ext
 	else:
 		OutputDocument = Options['OutputDocument']
 
@@ -653,7 +652,7 @@ def translateDocx(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytran
 		TotalTask += 1
 	for table in Mydocx.tables:	
 		TotalTask += Estimatetables(table)
-	StatusQueue.put('Total task: ' + str(TotalTask))
+	status_queue.put('Total task: ' + str(TotalTask))
 
 	ParagraphDataList = []
 
@@ -715,7 +714,7 @@ def translateDocx(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytran
 			else:
 				break
 
-		Translated = cell_translate(Mytranslator, Task_todo)
+		Translated = cell_translate(MyTranslator, Task_todo)
 
 		for task in Translated:
 			Return = task
@@ -728,35 +727,35 @@ def translateDocx(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytran
 		RemainedTask = len(ParagraphDataList)
 		Counter += RemainedTask
 		percent = ShowProgress(Counter, TotalTask)
-		ProgressQueue.put(percent)
+		progress_queue.put(percent)
 		del Task_todo
 		Task_todo = []
 	
 	for table in Mydocx.tables:
 
-		result = translatetable(table, Mytranslator, Counter, TotalTask)
+		result = translatetable(table, MyTranslator, Counter, TotalTask)
 
 		table = result[0]
 		Counter = result[1]
 		percent = ShowProgress(Counter, TotalTask)
-		ProgressQueue.put(percent)
+		progress_queue.put(percent)
 
 	percent = ShowProgress(TotalTask, TotalTask)
-	ProgressQueue.put(percent)
-	StatusQueue.put('Exporting...')
+	progress_queue.put(percent)
+	status_queue.put('Exporting...')
 	print('Exporting')
 	try:
 		Mydocx.save(OutputDocument)
 		if (os.path.isfile(OutputDocument)):
 			End = time.time()
 			Message = "Total time spend: " + str(int(End-Start)) + ' seconds.'
-			StatusQueue.put(Message)
+			status_queue.put(Message)
 			return True
 		else:
-			StatusQueue.put('Fail to export file')
+			status_queue.put('Fail to export file')
 			return False
 	except Exception as e:
-		StatusQueue.put('Error message: ' + str(e))
+		status_queue.put('Error message: ' + str(e))
 		return e
 
 def Estimatetables(intable):
@@ -774,7 +773,7 @@ def Estimatetables(intable):
 				total+= Estimatetables(table)			
 	return total
 
-def translatetable(intable, Mytranslator, CurrentTask, TotalTask, TaskPool = 4):
+def translatetable(intable, MyTranslator, CurrentTask, TotalTask, TaskPool = 4):
 	from docx.shared import RGBColor
 
 	#tasks_to_accomplish = Queue()
@@ -795,7 +794,7 @@ def translatetable(intable, Mytranslator, CurrentTask, TotalTask, TaskPool = 4):
 							#print('CurentText ', CurentText)
 							ListText = CurentText.split('\n')
 							#print('ListText ', ListText)
-							Translated = Mytranslator.translate(ListText)
+							Translated = MyTranslator.translate(ListText)
 							Translated = "\n".join(Translated)
 							#Translated = Translated.replace("\r\r\n", "\r\n")
 							#print('Translated ', Translated)
@@ -809,7 +808,7 @@ def translatetable(intable, Mytranslator, CurrentTask, TotalTask, TaskPool = 4):
 					#print('CurentText ', CurentText)
 					ListText = CurentText.split('\n')
 					#print('ListText ', ListText)
-					Translated = Mytranslator.translate(ListText)
+					Translated = MyTranslator.translate(ListText)
 					Translated = "\n".join(Translated)
 					#Translated = Translated.replace("\r\r\n", "\r\n")
 					#print('Translated ', Translated)
@@ -819,7 +818,7 @@ def translatetable(intable, Mytranslator, CurrentTask, TotalTask, TaskPool = 4):
 				
 			for table in cell.tables:
 				print('Another table inside a table celll.')
-				translatetable(table, Mytranslator, CurrentTask, TotalTask)
+				translatetable(table, MyTranslator, CurrentTask, TotalTask)
 
 	return [intable, CurrentTask]
 
@@ -827,7 +826,7 @@ def translatetable(intable, Mytranslator, CurrentTask, TotalTask, TaskPool = 4):
 # UI handle ***********************************************************************
 #**********************************************************************************
 
-def translateDPF(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytranslator=None, Options = {}):
+def translateDPF(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
 	from pathlib import Path
 	from PyPDF2 import PdfFileReader
 
@@ -837,11 +836,11 @@ def translateDPF(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytrans
 	document = Document()
 
 	print('Estimating total work to do...')
-	StatusQueue.put('Estimating total task to do...')
-	ProgressQueue.put(0)
+	status_queue.put('Estimating total task to do...')
+	progress_queue.put(0)
 	
 	if not 'SourceDocument' in Options:
-		StatusQueue.put('No source document input')
+		status_queue.put('No source document input')
 		return False
 	else:
 		SourceDocument = Options['SourceDocument']
@@ -849,10 +848,10 @@ def translateDPF(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytrans
 	if not 'OutputDocument' in Options:
 		now = datetime.now()
 		timestamp = str(int(datetime.timestamp(now)))
-		Outputdir = os.path.dirname(SourceDocument)
-		baseName = os.path.basename(SourceDocument)
-		sourcename = os.path.splitext(baseName)[1]
-		OutputDocument = Outputdir + '/' + 'Translated_' + sourcename + '_' + timestamp + ".docx"
+		output_dir = os.path.dirname(SourceDocument)
+		base_name = os.path.basename(SourceDocument)
+		source_name = os.path.splitext(base_name)[1]
+		OutputDocument = output_dir + '/' + 'Translated_' + source_name + '_' + timestamp + ".docx"
 	else:
 		OutputDocument = Options['OutputDocument']
 
@@ -887,7 +886,7 @@ def translateDPF(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytrans
 		#SingleText =  ""
 
 		print('Text:', text)
-		translated = Mytranslator.translate(text)
+		translated = MyTranslator.translate(text)
 		#output_file.write(translated)
 		document.add_paragraph(translated)
 
@@ -896,13 +895,13 @@ def translateDPF(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytrans
 		if (os.path.isfile(OutputDocument+ '.docx')):
 			End = time.time()
 			Message = "Total time spend: " + str(int(End-Start)) + ' seconds.'
-			StatusQueue.put(Message)
+			status_queue.put(Message)
 			return True
 		else:
-			StatusQueue.put('Fail to export file')
+			status_queue.put('Fail to export file')
 			return False
 	except Exception as e:
-		StatusQueue.put('Error message: ' + str(e))
+		status_queue.put('Error message: ' + str(e))
 		return e
 	
 	'''
@@ -911,13 +910,13 @@ def translateDPF(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytrans
 		if (os.path.isfile(OutputDocument+ '.docx')):
 			End = time.time()
 			Message = "Total time spend: " + str(int(End-Start)) + ' seconds.'
-			StatusQueue.put(Message)
+			status_queue.put(Message)
 			return True
 		else:
-			StatusQueue.put('Fail to export file')
+			status_queue.put('Fail to export file')
 			return False
 	except Exception as e:
-		StatusQueue.put('Error message: ' + str(e))
+		status_queue.put('Error message: ' + str(e))
 		return 'Error message: ' + str(e)
 	'''
 
@@ -925,17 +924,17 @@ def translateDPF(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytrans
 # UI handle ***********************************************************************
 #**********************************************************************************
 
-def translateMsg(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytranslator=None, Options = {}):
+def translateMsg(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
 	from outlook_msg import Message
 	from docx import Document
 	from docx.shared import Inches
 
 	print('Estimating total work to do...')
-	StatusQueue.put('Estimating total task to do...')
-	ProgressQueue.put(0)
+	status_queue.put('Estimating total task to do...')
+	progress_queue.put(0)
 	
 	if not 'SourceDocument' in Options:
-		StatusQueue.put('No source document input')
+		status_queue.put('No source document input')
 		return False
 	else:
 		SourceDocument = Options['SourceDocument']
@@ -943,10 +942,10 @@ def translateMsg(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytrans
 	if not 'OutputDocument' in Options:
 		now = datetime.now()
 		timestamp = str(int(datetime.timestamp(now)))
-		Outputdir = os.path.dirname(SourceDocument)
-		baseName = os.path.basename(SourceDocument)
-		sourcename, ext = os.path.splitext(baseName)
-		OutputDocument = Outputdir + '/' + 'Translated_' + sourcename + '_' + timestamp + ext
+		output_dir = os.path.dirname(SourceDocument)
+		base_name = os.path.basename(SourceDocument)
+		source_name, ext = os.path.splitext(base_name)
+		OutputDocument = output_dir + '/' + 'Translated_' + source_name + '_' + timestamp + ext
 	else:
 		OutputDocument = Options['OutputDocument']
 
@@ -962,7 +961,7 @@ def translateMsg(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytrans
 
 	contents = msg.body
 	subject = msg.subject
-	translated = Mytranslator.translate(subject)	
+	translated = MyTranslator.translate(subject)	
 	document.add_heading(translated, 0)
 
 	para = contents.split('\n')
@@ -970,7 +969,7 @@ def translateMsg(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytrans
 	Counter = 0
 	for Par in para:
 		if Par not in ["", ' ', '\r', '\n']:
-			translated = Mytranslator.translate(Par)
+			translated = MyTranslator.translate(Par)
 			document.add_paragraph(translated)
 			Counter+=1
 			ShowProgress(Counter, TotalTask)
@@ -979,11 +978,11 @@ def translateMsg(ProgressQueue=None, ResultQueue=None, StatusQueue=None, Mytrans
 		if (os.path.isfile(OutputDocument+ '.docx')):
 			End = time.time()
 			Message = "Total time spend: " + str(int(End-Start)) + ' seconds.'
-			StatusQueue.put(Message)
+			status_queue.put(Message)
 			return True
 		else:
-			StatusQueue.put('Fail to export file')
+			status_queue.put('Fail to export file')
 			return False
 	except Exception as e:
-		StatusQueue.put('Error message: ' + str(e))
+		status_queue.put('Error message: ' + str(e))
 		return e
