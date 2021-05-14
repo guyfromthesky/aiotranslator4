@@ -76,16 +76,16 @@ def generate_sheet_list(sheet_list, translate_list):
 		i+=1
 	return to_return
 
-def ShowProgress(Counter, TotalProcess):
+def show_progress(cp, total_process):
 	#os.system('CLS') 
-	percent = int(1000 * Counter / TotalProcess)
-	#print("Current progress: " +  str(Counter) + '/ ' + str(TotalProcess))
+	percent = int(1000 * cp / total_process)
+	#print("Current progress: " +  str(cp) + '/ ' + str(total_process))
 	return percent
 
 #Para Translate
-def paraTranslate(tasks_to_accomplish, tasks_that_are_done, MyTranslator):
+def para_translate(tasks_to_accomplish, tasks_that_are_done, MyTranslator):
 	while True:
-		#print('paraTranslate is running')
+		#print('para_translate is running')
 		try:
 			Task = tasks_to_accomplish.get_nowait()
 		except queue.Empty:
@@ -245,27 +245,28 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 		sheet_list.append(sheet.title)
 	#status_queue.put('Sheet List' + str(sheet_list))
 
-	current_task = 0
+	current_task_count = 0
 
 	# 
 	translate_list = generate_sheet_list(sheet_list, Sheet)	
 	#status_queue.put('Translate List' + str(translate_list))
+	# Check if there's a value in the cell, number of task increases by 1
 	for sheet in translate_list:
 		ws = xlsx[sheet]
 		for row in ws.iter_rows():
 			for cell in row:
 				if cell.value != None:
-					current_task+=1
+					current_task_count+=1
 	
-	TotalTask = current_task
-	Counter = 0
-	if current_task == 0:
+	total_task_count = current_task_count
+	cp = 0
+	if current_task_count == 0:
 		print('Done')
 	else:
-		status_queue.put('Total task: ' + str(TotalTask))
-		percent = ShowProgress(Counter, TotalTask)
-		progress_queue.put(percent)		
-		memory_translation = 0	
+		status_queue.put('Total task: ' + str(total_task_count))
+		percent = show_progress(cp, total_task_count)
+		progress_queue.put(percent)
+		memory_translation = 0
 		fail_request = 0
 		empty_cell = 0
 		status_queue.put('Checking task detail...')
@@ -278,23 +279,21 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 					for cell in row:
 						if cell.value != None:
 							current_string = str(cell.value)
+							# ValidateSourceText in aiotranslator lib
 							result = MyTranslator.ValidateSourceText(current_string)
 							if result == False:
-
 								fail_request+=1
-
 							elif result != True:
-
 								cell.value = result
 								memory_translation+=1
 							else:
-								ListString = current_string.split('\n')
-								SheetName = sheet.title
-								CellAddress = cell.column_letter + str(cell.row)
-								Task = CellData(SheetName, CellAddress, ListString)
+								list_string = current_string.split('\n')
+								sheet_name = sheet.title
+								cell_address = cell.column_letter + str(cell.row)
+								Task = CellData(sheet_name, cell_address, list_string)
 								task_list.append(Task)
-				Counter = fail_request + memory_translation
-				percent = ShowProgress(Counter, TotalTask)
+				cp = fail_request + memory_translation
+				percent = show_progress(cp, total_task_count)
 				progress_queue.put(percent)
 			else:
 				if SheetRemovalMode:
@@ -304,8 +303,8 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 		status_queue.put('Empty cell: ' + str(empty_cell))
 		status_queue.put('Fail request: ' + str(fail_request))
 		status_queue.put('Translated by Memory: ' + str(memory_translation))
-		RemainedTask = TotalTask-Counter	
-		status_queue.put('Remained task: ' + str(RemainedTask))
+		remaining_task_count = total_task_count - cp	
+		status_queue.put('Remained task: ' + str(remaining_task_count))
 
 		Task_todo = []
 		
@@ -348,12 +347,12 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 				tempFont.name = 'Times New Roman'
 				cell.font = tempFont
 		
-			RemainedTask = len(task_list)
-			Message = str(RemainedTask) + ' tasks remain....'
+			remaining_task_count = len(task_list)
+			Message = str(remaining_task_count) + ' tasks remain....'
 			status_queue.put(Message)	
 
-			Counter = TotalTask - RemainedTask
-			percent = ShowProgress(Counter, TotalTask)
+			cp = total_task_count - remaining_task_count
+			percent = show_progress(cp, total_task_count)
 			progress_queue.put(percent)
 			del Task_todo
 			Task_todo = []
@@ -448,44 +447,44 @@ def TranslatePresentation(progress_queue=None, result_queue=None, status_queue=N
 								if string != None:
 									if isinstance(string, str) == True:
 										total+= 1
-	TotalTask = total
-	print('Total task: ', TotalTask)
-	status_queue.put('Total task: ' + str(TotalTask))
-	Counter = 0
+	total_task_count = total
+	print('Total task: ', total_task_count)
+	status_queue.put('Total task: ' + str(total_task_count))
+	cp = 0
 	
 	for slide in pptx.slides: 
 		for shape in slide.shapes:
 			if shape.has_text_frame:
 				for paragraph in shape.text_frame.paragraphs:
 					FirstRun = None
-					CurentText = ""
+					current_text = ""
 					for j in range(len(paragraph.runs)):
 						run = paragraph.runs[j]
 						if FirstRun == None:
 							FirstRun = j		
 						if run.text == '':
-							if CurentText != '':
-								ListText = CurentText.split('\n')
-								Translated = MyTranslator.translate(ListText)
+							if current_text != '':
+								list_text = current_text.split('\n')
+								Translated = MyTranslator.translate(list_text)
 								Translated = "\n".join(Translated)
 								Translated = Translated.replace("\r\r\n", "\r\n")
 								paragraph.runs[FirstRun].text = Translated
 								
 							FirstRun = None
-							CurentText = ""
+							current_text = ""
 						else:
-							CurentText += str(run.text)
+							current_text += str(run.text)
 							run.text = ""
 
-					if CurentText != '':
-						ListText = CurentText.split('\n')
-						Translated = MyTranslator.translate(ListText)
+					if current_text != '':
+						list_text = current_text.split('\n')
+						Translated = MyTranslator.translate(list_text)
 						Translated = "\n".join(Translated)
 						Translated = Translated.replace("\r\r\n", "\r\n")
 						paragraph.runs[FirstRun].text = Translated
 				
-					Counter+=1
-					percent = ShowProgress(Counter, TotalTask)
+					cp+=1
+					percent = show_progress(cp, total_task_count)
 					progress_queue.put(percent)
 
 			if shape.has_table:	
@@ -493,37 +492,37 @@ def TranslatePresentation(progress_queue=None, result_queue=None, status_queue=N
 					for cell in row.cells:
 						for paragraph in cell.text_frame.paragraphs:
 							FirstRun = None
-							CurentText = ""
+							current_text = ""
 							for j in range(len(paragraph.runs)):
 								run = paragraph.runs[j]
 								if FirstRun == None:
 									FirstRun = j		
 								if run.text == '':
-									if CurentText != '':
-										ListText = CurentText.split('\n')
-										Translated = MyTranslator.translate(ListText)
+									if current_text != '':
+										list_text = current_text.split('\n')
+										Translated = MyTranslator.translate(list_text)
 										Translated = "\n".join(Translated)
 										Translated = Translated.replace("\r\r\n", "\r\n")
 										paragraph.runs[FirstRun].text = Translated
 										
 									FirstRun = None
-									CurentText = ""
+									current_text = ""
 								else:
-									CurentText += str(run.text)
+									current_text += str(run.text)
 									run.text = ""
 
-							if CurentText != '':
-								ListText = CurentText.split('\n')
-								Translated = MyTranslator.translate(ListText)
+							if current_text != '':
+								list_text = current_text.split('\n')
+								Translated = MyTranslator.translate(list_text)
 								Translated = "\n".join(Translated)
 								Translated = Translated.replace("\r\r\n", "\r\n")
 								paragraph.runs[FirstRun].text = Translated
 
-							Counter+=1
-							percent = ShowProgress(Counter, TotalTask)
+							cp+=1
+							percent = show_progress(cp, total_task_count)
 							progress_queue.put(percent)
 
-	percent = ShowProgress(TotalTask, TotalTask)
+	percent = show_progress(total_task_count, total_task_count)
 	print('percent: ', percent)
 	status_queue.put('Exporting document...')
 	try:
@@ -539,37 +538,37 @@ def TranslatePresentation(progress_queue=None, result_queue=None, status_queue=N
 		status_queue.put('Error message: ' + str(e))
 		return e
 
-def translateFrametable(cell, MyTranslator, CurrentTask, TotalTask):
+def translateFrametable(cell, MyTranslator, CurrentTask, total_task_count):
 	from docx.shared import RGBColor
 
 	for paragraph in cell.text_frame.paragraphs:
 		FirstRun = None
-		CurentText = ""
+		current_text = ""
 		for j in range(len(paragraph.runs)):
 			run = paragraph.runs[j]
 			if FirstRun == None:
 				FirstRun = j		
 
 			if run.text == '':
-				if CurentText != '':
-					#print('CurentText ', CurentText)
-					ListText = CurentText.split('\n')
-					#print('ListText ', ListText)
-					Translated = MyTranslator.translate(ListText)
+				if current_text != '':
+					#print('current_text ', current_text)
+					list_text = current_text.split('\n')
+					#print('list_text ', list_text)
+					Translated = MyTranslator.translate(list_text)
 					Translated = "\n".join(Translated)
 					#Translated = Translated.replace("\r\r\n", "\r\n")
 					#print('Translated ', Translated)
 					paragraph.runs[FirstRun].text = Translated
 				FirstRun = None
-				CurentText = ""
+				current_text = ""
 			else:
-				CurentText += str(run.text)
+				current_text += str(run.text)
 				run.text = ""
-		if CurentText != '':
-			#print('CurentText ', CurentText)
-			ListText = CurentText.split('\n')
-			#print('ListText ', ListText)
-			Translated = MyTranslator.translate(ListText)
+		if current_text != '':
+			#print('current_text ', current_text)
+			list_text = current_text.split('\n')
+			#print('list_text ', list_text)
+			Translated = MyTranslator.translate(list_text)
 			Translated = "\r\n".join(Translated)
 			Translated = Translated.replace("\r\r\n", "\r\n")
 			#print('Translated ', Translated)
@@ -577,10 +576,10 @@ def translateFrametable(cell, MyTranslator, CurrentTask, TotalTask):
 
 		CurrentTask+=1
 
-	if cell.has_table:	
+	if cell.has_table:
 		for row in cell.table.rows:
 			for newcell in row.cells:
-				newcell = translateFrametable(cell, MyTranslator, CurrentTask, TotalTask)
+				newcell = translateFrametable(cell, MyTranslator, CurrentTask, total_task_count)
 				total+= 1
 		print('Another table inside a table cell.')
 
@@ -590,7 +589,7 @@ def translateFrametable(cell, MyTranslator, CurrentTask, TotalTask):
 #Docx handle **********************************************************************
 #**********************************************************************************
 
-def CheckParagraphStyle(paragraph, Debug = False):
+def check_paragraph_style(paragraph, Debug = False):
 	if len(paragraph.runs) <= 1:
 		return False
 	for i in range(len(paragraph.runs)):
@@ -646,69 +645,68 @@ def translateDocx(progress_queue=None, result_queue=None, status_queue=None, MyT
 	
 	Start = time.time()
 	
-	Counter = 0
-	TotalTask = 0
+	cp = 0
+	total_task_count = 0
 	for i in range(len(Mydocx.paragraphs)):
-		TotalTask += 1
+		total_task_count += 1
 	for table in Mydocx.tables:	
-		TotalTask += Estimatetables(table)
-	status_queue.put('Total task: ' + str(TotalTask))
+		total_task_count += estimate_table(table)
+	status_queue.put('Total task: ' + str(total_task_count))
 
-	ParagraphDataList = []
+	paragraph_data_list = []
 
 	for i in range(len(Mydocx.paragraphs)):
 		paragraph = Mydocx.paragraphs[i]
 		if paragraph.text != '':
 			#print('TempText', paragraph.text)
 			FirstRun = None
-			CurentText = ""
+			current_text = ""
 			for j in range(len(paragraph.runs)):
 				run = paragraph.runs[j]
 				if FirstRun == None:
 					FirstRun = j		
 
 				if run.text == '':
-					if CurentText != '':
-						ParagraphData = ParagraphsData(i, FirstRun, CurentText)
-						ParagraphDataList.append(ParagraphData)
+					if current_text != '':
+						ParagraphData = ParagraphsData(i, FirstRun, current_text)
+						paragraph_data_list.append(ParagraphData)
 					FirstRun = None
-					CurentText = ""
+					current_text = ""
 				else:
-					CurentText += str(run.text)
+					current_text += str(run.text)
 					run.text = ""
 			
-			if CurentText != '':
-				ParagraphData = ParagraphsData(i, FirstRun, CurentText)
-				ParagraphDataList.append(ParagraphData)
+			if current_text != '':
+				ParagraphData = ParagraphsData(i, FirstRun, current_text)
+				paragraph_data_list.append(ParagraphData)
 			#('Adding:', ParagraphData.Text)
 	
 
-	RemainedTask = len(ParagraphDataList)
+	RemainedTask = len(paragraph_data_list)
 	Task_todo = []
 	print('RemainedTask', RemainedTask)
 	
 	
-	
-	while len(ParagraphDataList) > 0:
+	while len(paragraph_data_list) > 0:
 		Translated = []
 		TaskLength = 0
 			
 		while TaskLength < 2000:
-			if len(ParagraphDataList) > 0:
-				Input = ParagraphDataList[0].Text
+			if len(paragraph_data_list) > 0:
+				Input = paragraph_data_list[0].Text
 				if isinstance(Input, list):
 					TempLen = TaskLength
 					for tempString in Input:
 						TempLen += len(tempString)
 		
 				elif isinstance(Input, str):
-					TempLen = TaskLength + len(ParagraphDataList[0].Text)
+					TempLen = TaskLength + len(paragraph_data_list[0].Text)
 					
 				if TempLen < 2000:
 					TaskLength = TempLen
 					#print("TempLen", TempLen)
-					Task_todo.append(ParagraphDataList[0])
-					del ParagraphDataList[0]
+					Task_todo.append(paragraph_data_list[0])
+					del paragraph_data_list[0]
 				else:
 					break	
 			else:
@@ -724,23 +722,23 @@ def translateDocx(progress_queue=None, result_queue=None, status_queue=None, MyT
 			Mydocx.paragraphs[Current_Par].runs[Current_Run].text = Current_Text
 
 		
-		RemainedTask = len(ParagraphDataList)
-		Counter += RemainedTask
-		percent = ShowProgress(Counter, TotalTask)
+		RemainedTask = len(paragraph_data_list)
+		cp += RemainedTask
+		percent = show_progress(cp, total_task_count)
 		progress_queue.put(percent)
 		del Task_todo
 		Task_todo = []
 	
 	for table in Mydocx.tables:
 
-		result = translatetable(table, MyTranslator, Counter, TotalTask)
+		result = translatetable(table, MyTranslator, cp, total_task_count)
 
 		table = result[0]
-		Counter = result[1]
-		percent = ShowProgress(Counter, TotalTask)
+		cp = result[1]
+		percent = show_progress(cp, total_task_count)
 		progress_queue.put(percent)
 
-	percent = ShowProgress(TotalTask, TotalTask)
+	percent = show_progress(total_task_count, total_task_count)
 	progress_queue.put(percent)
 	status_queue.put('Exporting...')
 	print('Exporting')
@@ -758,7 +756,7 @@ def translateDocx(progress_queue=None, result_queue=None, status_queue=None, MyT
 		status_queue.put('Error message: ' + str(e))
 		return e
 
-def Estimatetables(intable):
+def estimate_table(intable):
 	total = 0
 	for row in intable.rows:
 		for cell in row.cells:
@@ -770,10 +768,10 @@ def Estimatetables(intable):
 						if not runtext.isdigit():
 							total+= 1
 			for table in cell.tables:
-				total+= Estimatetables(table)			
+				total+= estimate_table(table)			
 	return total
 
-def translatetable(intable, MyTranslator, CurrentTask, TotalTask, TaskPool = 4):
+def translatetable(intable, MyTranslator, CurrentTask, total_task_count, TaskPool = 4):
 	from docx.shared import RGBColor
 
 	#tasks_to_accomplish = Queue()
@@ -783,32 +781,32 @@ def translatetable(intable, MyTranslator, CurrentTask, TotalTask, TaskPool = 4):
 		for cell in row.cells:
 			for paragraph in cell.paragraphs:
 				FirstRun = None
-				CurentText = ""
+				current_text = ""
 				for j in range(len(paragraph.runs)):
 					run = paragraph.runs[j]
 					if FirstRun == None:
 						FirstRun = j		
 
 					if run.text == '':
-						if CurentText != '':
-							#print('CurentText ', CurentText)
-							ListText = CurentText.split('\n')
-							#print('ListText ', ListText)
-							Translated = MyTranslator.translate(ListText)
+						if current_text != '':
+							#print('current_text ', current_text)
+							list_text = current_text.split('\n')
+							#print('list_text ', list_text)
+							Translated = MyTranslator.translate(list_text)
 							Translated = "\n".join(Translated)
 							#Translated = Translated.replace("\r\r\n", "\r\n")
 							#print('Translated ', Translated)
 							paragraph.runs[FirstRun].text = Translated
 						FirstRun = None
-						CurentText = ""
+						current_text = ""
 					else:
-						CurentText += str(run.text)
+						current_text += str(run.text)
 						run.text = ""
-				if CurentText != '':
-					#print('CurentText ', CurentText)
-					ListText = CurentText.split('\n')
-					#print('ListText ', ListText)
-					Translated = MyTranslator.translate(ListText)
+				if current_text != '':
+					#print('current_text ', current_text)
+					list_text = current_text.split('\n')
+					#print('list_text ', list_text)
+					Translated = MyTranslator.translate(list_text)
 					Translated = "\n".join(Translated)
 					#Translated = Translated.replace("\r\r\n", "\r\n")
 					#print('Translated ', Translated)
@@ -818,7 +816,7 @@ def translatetable(intable, MyTranslator, CurrentTask, TotalTask, TaskPool = 4):
 				
 			for table in cell.tables:
 				print('Another table inside a table celll.')
-				translatetable(table, MyTranslator, CurrentTask, TotalTask)
+				translatetable(table, MyTranslator, CurrentTask, total_task_count)
 
 	return [intable, CurrentTask]
 
@@ -951,8 +949,8 @@ def translateMsg(progress_queue=None, result_queue=None, status_queue=None, MyTr
 
 	Start = time.time()
 	
-	Counter = 0
-	TotalTask = 0
+	cp = 0
+	total_task_count = 0
 
 	document = Document()
 
@@ -965,14 +963,14 @@ def translateMsg(progress_queue=None, result_queue=None, status_queue=None, MyTr
 	document.add_heading(translated, 0)
 
 	para = contents.split('\n')
-	TotalTask += len(para)
-	Counter = 0
+	total_task_count += len(para)
+	cp = 0
 	for Par in para:
 		if Par not in ["", ' ', '\r', '\n']:
 			translated = MyTranslator.translate(Par)
 			document.add_paragraph(translated)
-			Counter+=1
-			ShowProgress(Counter, TotalTask)
+			cp+=1
+			show_progress(cp, total_task_count)
 	try:
 		document.save(OutputDocument + '.docx')
 		if (os.path.isfile(OutputDocument+ '.docx')):
