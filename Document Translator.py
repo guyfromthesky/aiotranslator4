@@ -50,9 +50,9 @@ import webbrowser
 from libs.aiotranslator_v2 import Translator
 from libs.aiotranslator_v2 import ver_num as TranslatorVersion
 from libs.aioconfigmanager import ConfigLoader
-from libs.documentprocessing import translateDocx, translateDPF, translateMsg
-from libs.documentprocessing import TranslatePresentation, translateWorkbook
-from libs.documentprocessing import ShowProgress
+from libs.documentprocessing import translate-docx, translate_msg
+from libs.documentprocessing import translate_presentation, translate_workbook
+from libs.documentprocessing import show_progress
 
 from libs.version import get_version
 
@@ -388,7 +388,7 @@ class DocumentTranslator(Frame):
 		self.Treeview['columns'] = ('index', 'KO', 'EN')
 
 		self.Treeview.column('#0', width=0, stretch=NO)
-		self.Treeview.column('index', anchor=CENTER, width=75, stretch=NO)
+		self.Treeview.column('index', anchor=CENTER, width=0, stretch=NO)
 		self.Treeview.column('KO', anchor=CENTER, width=80)
 		self.Treeview.column('EN', anchor=CENTER, width=80)
 
@@ -663,7 +663,7 @@ class DocumentTranslator(Frame):
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 			
 
-	def SaveNewTM(self):
+	def SaveNewTM(self):	
 		filename = filedialog.asksaveasfilename(title = "Select file", filetypes = (("Translation Memory", "*.pkl"),),)
 		filename = self.CorrectExt(filename, "pkl")
 		if filename == "":
@@ -1810,9 +1810,9 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 		Options['SourceDocument'] = newPath
 		Options['OutputDocument'] = output_file
 		if ext == '.docx':
-			#Result = translateDocx(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
+			#Result = translate_docx(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:
-				Result = translateDocx(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
+				Result = translate_docx(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
 				print(ErrorMsg)
@@ -1820,24 +1820,26 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 				Result = str(e)
 				
 		elif ext in ['.xlsx', '.xlsm']:
-			#Result = translateWorkbook(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
+			#Result = translate_workbook(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:
-				Result = translateWorkbook(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
+				Result = translate_workbook(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
 				print(ErrorMsg)
 				StatusQueue.put(str(e))
 				Result = str(e)
 		elif ext == '.msg':
-			#Result = translateMsg(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
+			#Result = translate_msg(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:
-				Result = translateMsg(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
+				Result = translate_msg(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
 				print(ErrorMsg)
 				StatusQueue.put(str(e))
 				Result = str(e)
+		'''
 		elif ext == '.pdf':
+			not use
 			#Result = translateDPF(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:
 				Result = translateDPF(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
@@ -1846,11 +1848,11 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 				print(ErrorMsg)
 				StatusQueue.put(str(e))
 				Result = str(e)
-		
+		'''
 		elif ext == '.pptx':
-			#Result = TranslatePresentation(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
+			#Result = translate_presentation(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:
-				Result = TranslatePresentation(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
+				Result = translate_presentation(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
 				StatusQueue.put(str(e))

@@ -392,7 +392,7 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 #pptx handle **********************************************************************
 #**********************************************************************************
 
-def TranslatePresentation(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
+def translate_presentation(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
 	from pptx import Presentation
 	
 	
@@ -617,7 +617,7 @@ def check_paragraph_style(paragraph, Debug = False):
 
 	return False
 
-def translateDocx(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
+def translate_docx(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
 	import docx
 	
 	from docx.shared import RGBColor
@@ -731,7 +731,7 @@ def translateDocx(progress_queue=None, result_queue=None, status_queue=None, MyT
 	
 	for table in Mydocx.tables:
 
-		result = translatetable(table, MyTranslator, cp, total_task_count)
+		result = translate_table(table, MyTranslator, cp, total_task_count)
 
 		table = result[0]
 		cp = result[1]
@@ -771,7 +771,7 @@ def estimate_table(intable):
 				total+= estimate_table(table)			
 	return total
 
-def translatetable(intable, MyTranslator, CurrentTask, total_task_count, TaskPool = 4):
+def translate_table(intable, MyTranslator, CurrentTask, total_task_count, TaskPool = 4):
 	from docx.shared import RGBColor
 
 	#tasks_to_accomplish = Queue()
@@ -816,7 +816,7 @@ def translatetable(intable, MyTranslator, CurrentTask, total_task_count, TaskPoo
 				
 			for table in cell.tables:
 				print('Another table inside a table celll.')
-				translatetable(table, MyTranslator, CurrentTask, total_task_count)
+				translate_table(table, MyTranslator, CurrentTask, total_task_count)
 
 	return [intable, CurrentTask]
 
@@ -824,7 +824,7 @@ def translatetable(intable, MyTranslator, CurrentTask, total_task_count, TaskPoo
 # UI handle ***********************************************************************
 #**********************************************************************************
 
-def translateDPF(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
+def translate_pdf(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
 	from pathlib import Path
 	from PyPDF2 import PdfFileReader
 
@@ -922,7 +922,7 @@ def translateDPF(progress_queue=None, result_queue=None, status_queue=None, MyTr
 # UI handle ***********************************************************************
 #**********************************************************************************
 
-def translateMsg(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
+def translate_msg(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
 	from outlook_msg import Message
 	from docx import Document
 	from docx.shared import Inches
