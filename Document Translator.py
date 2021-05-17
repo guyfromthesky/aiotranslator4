@@ -682,10 +682,13 @@ class DocumentTranslator(Frame):
 		self.renew_my_translator()
 
 	def OpenOutput(self):
-		Source = self.ListFile[0]
-		Outputdir = os.path.dirname(Source)
-		BasePath = str(os.path.abspath(Outputdir))
-		subprocess.Popen('explorer ' + BasePath)
+		if len(self.ListFile) > 0:
+			Source = self.ListFile[0]
+			Outputdir = os.path.dirname(Source)
+			BasePath = str(os.path.abspath(Outputdir))
+			subprocess.Popen('explorer ' + BasePath)
+		else:
+			self.Error('No file selected')	
 		
 	def BtnLoadDocument(self):
 		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectSource'],filetypes = (("All type files","*.docx *.xlsx *.xlsm *.pptx *.msg"), ("Workbook files","*.xlsx *.xlsm"), ("Document files","*.docx"), ("Presentation files","*.pptx"), ("Email files","*.msg"), ("PDF files","*.pdf")), multiple = True)	
