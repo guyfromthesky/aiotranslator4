@@ -2,14 +2,15 @@
 import sys, getopt
 import os
 import string
+#Regular expression handling
 import re
 
-import configparser
-#Regular expression handling
+#import configparser
+# Deep copy object
 import copy
-import multiprocessing
-
-from multiprocessing import Process , Queue, Manager
+# Multi-process support
+#import multiprocessing
+from multiprocessing import Process , Queue, Manager, freeze_support
 import queue 
 
 from urllib.parse import urlparse
@@ -50,9 +51,8 @@ import webbrowser
 from libs.aiotranslator_v2 import Translator
 from libs.aiotranslator_v2 import ver_num as TranslatorVersion
 from libs.aioconfigmanager import ConfigLoader
-from libs.documentprocessing import translate-docx, translate_msg
+from libs.documentprocessing import translate_docx, translate_msg
 from libs.documentprocessing import translate_presentation, translate_workbook
-from libs.documentprocessing import show_progress
 
 from libs.version import get_version
 
@@ -62,62 +62,61 @@ import json
 tool_display_name = "Document Translator"
 tool_name = 'document'
 rev = 4000
-
 ver_num = get_version(rev) 
-
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
-DELAY1 = 20
+DELAY = 20
 
 #**********************************************************************************
 # UI handle ***********************************************************************
 #**********************************************************************************
 
 class DocumentTranslator(Frame):
-	def __init__(self, Root, ProcessQueue = None, ResultQueue = None, StatusQueue = None,
-	MyTranslatorQueue = None, MyDB_Queue = None, MyTranslatorAgent = None, TMManager = None, ):
+	def __init__(self, Root, process_queue = None, result_queue = None, status_queue = None,
+	my_translator_queue = None, my_db_queue = None, my_translator_agent = None, tm_manager = None, ):
 		
 		Frame.__init__(self, Root) 
 		#super().__init__()
 		self.parent = Root 
 
 		# Queue
-		self.ProcessQueue = ProcessQueue
-		self.ResultQueue = ResultQueue
-		self.StatusQueue = StatusQueue
-		self.MyTranslator_Queue = MyTranslatorQueue
-		self.MyDB_Queue = MyDB_Queue
-		self.TMManager = TMManager
+		self.ProcessQueue = process_queue
+		self.ResultQueue = result_queue
+		self.StatusQueue = status_queue
+		self.MyTranslator_Queue = my_translator_queue
+		self.MyDB_Queue = my_db_queue
+		# Shared memory between UI process and Translator proccess.
+		# Unlike Queue.Queue(), Queue.Manager() support sharing object type. 
+		self.TMManager = tm_manager
 		# Translator Class
 		self.MyTranslator = None
-		self.MyTranslatorAgent = MyTranslatorAgent
+		self.MyTranslatorAgent = my_translator_agent
 		
+
 		self.Usage = 0
-
 		self.Options = {}
-
 		# Temporary Data
 		self.ListFile = []
 		# Tool option
 		self.SourcePatch = ""
 		self.LastDocument = ""
-		self.ShallowMode = ""
+		#self.ShallowMode = ""
 		self.SourceLanguage = ""
 		self.Translator = ""
-		self.TurboMode = ""
+		#self.TurboMode = ""
 		self.to_language = ""
 		self.from_language = ""
-		self.Shallow = True	
+		#self.Shallow = True	
 		self.AppLanguage = "en"
 		
 		self.GlossaryList = []
 
 		self.My_DB = None
 
-		self.ButtonWidth = 20
-		self.HalfButtonWidth = 15
+		self.BUTTON_WIDTH = 20
+		self.HALF_BUTTON_WIDTH = 15
 
-		self.StatusLength = 120
+		self.STATUS_LENGTH = 120
 
 		self.LanguagePack = {}
 		self.init_App_Setting()
@@ -136,7 +135,7 @@ class DocumentTranslator(Frame):
 
 		#Create Translator
 		if self.LicensePath.get() != "":
-			self.GenerateTranslatorEngine()
+			self.generate_translator_engine()
 		else:
 			self.Error('No license selected, please select the key in Translate setting.')	
 
@@ -190,15 +189,15 @@ class DocumentTranslator(Frame):
 		self.Text_glossary_id.grid(row=Row, column=5, columnspan=2, padx=5, pady=5, stick=W)
 		self.Text_glossary_id.bind("<<ComboboxSelected>>", self.SaveProjectKey)
 
-		Button(Tab, width = 20, text=  self.LanguagePack.Button['RenewDatabase'], command= self.RenewMyTranslator).grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=E)
-		Button(Tab, width = 20, text=  self.LanguagePack.Button['OpenOutput'], command= self.OpenOutput).grid(row=Row, column=9, columnspan=1, padx=5, pady=5, sticky=E)
+		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['RenewDatabase'], command= self.renew_my_translator).grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=E)
+		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['OpenOutput'], command= self.OpenOutput).grid(row=Row, column=9, columnspan=1, padx=5, pady=5, sticky=E)
 
 		Row+=1
 		Label(Tab, width= 10, text=  self.LanguagePack.Label['Source'], font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		self.CurrentSourceFile = StringVar()
 		self.TextFilePath = Entry(Tab,width = 120, text= self.LanguagePack.ToolTips['SelectSource'], state="readonly", textvariable=self.CurrentSourceFile)
 		self.TextFilePath.grid(row=Row, column=2, columnspan=7, padx=5, pady=5, sticky=E)
-		Button(Tab, width = 20, text=  self.LanguagePack.Button['Browse'], command= self.BtnLoadDocument).grid(row=Row, column=9, columnspan=1, padx=5, pady=5, sticky=E)
+		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.BtnLoadDocument).grid(row=Row, column=9, columnspan=1, padx=5, pady=5, sticky=E)
 		
 		Row += 1
 		Label(Tab, text=  self.LanguagePack.Label['ToolOptions']).grid(row=Row, column=1, padx=5, pady=5, sticky= W)
@@ -300,7 +299,7 @@ class DocumentTranslator(Frame):
 		Label(Tab, text= self.LanguagePack.Label['LicensePath']).grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		self.TextLicensePath = Entry(Tab,width = 120, state="readonly", textvariable=self.LicensePath)
 		self.TextLicensePath.grid(row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
-		Button(Tab, width = self.HalfButtonWidth, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
+		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
 
 		
 		#Row += 1
@@ -308,7 +307,7 @@ class DocumentTranslator(Frame):
 		#self.TextFilePath = Entry(Tab, width = 120, text="Select your document", state="readonly", textvariable=self.DictionaryPath.get())
 		#self.TextFilePath.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=W)
 		##Button(Tab, width = 20, text=  self.LanguagePack.Button['Browse'], command= self.BtnLoadDocument).grid(row=Row, column=9, columnspan=2, padx=5, pady=5, sticky=E)
-		#Button(Tab, width = self.HalfButtonWidth, text= self.LanguagePack.Button['Save'], command= self.SaveProjectKey).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
+		#Button(Tab, width = self.HALF_BUTTON_WIDTH, text= self.LanguagePack.Button['Save'], command= self.SaveProjectKey).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
 
 	def Generate_Utility_UI(self, Tab):
 		# Utility option
@@ -326,24 +325,24 @@ class DocumentTranslator(Frame):
 		Label(Tab, text=  self.LanguagePack.Label['FixTM']).grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky= W)
 		self.TextRawTMPath = Entry(Tab,width = 100, state="readonly", textvariable=self.RawTMSource)
 		self.TextRawTMPath.grid(row=Row, column=3, columnspan=4, padx=4, pady=5, sticky=W)
-		Button(Tab, width = self.HalfButtonWidth, text=  self.LanguagePack.Button['Browse'], command= self.BtnLoadRawTM).grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=E)
-		Button(Tab, width = self.HalfButtonWidth, text=  self.LanguagePack.Button['Execute'], command= self.BtnOptimizeTM).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=W)
+		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.BtnLoadRawTM).grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=E)
+		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Execute'], command= self.BtnOptimizeTM).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=W)
 	
 		Row += 1
 		self.RawSource = StringVar()
 		Label(Tab, text=  self.LanguagePack.Label['OptimizeDatafile']).grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky= W)
 		self.TextRawSourcePath = Entry(Tab,width = 100, state="readonly", textvariable=self.RawSource)
 		self.TextRawSourcePath.grid(row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
-		Button(Tab, width = self.HalfButtonWidth, text=  self.LanguagePack.Button['Browse'], command= self.BtnLoadRawSource).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
-		Button(Tab, width = self.HalfButtonWidth, text=  self.LanguagePack.Button['Execute'], command= self.BtnOptimizeXLSX).grid(row=Row, column=10, columnspan=2,padx=5, pady=5, sticky=W)
+		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.BtnLoadRawSource).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
+		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Execute'], command= self.BtnOptimizeXLSX).grid(row=Row, column=10, columnspan=2,padx=5, pady=5, sticky=W)
 		'''
 		Row += 1
 		self.TMSource = StringVar()
 		Label(Tab, text=  self.LanguagePack.Label['MergeTM']).grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky= W)
 		self.TextTMSourcePath = Entry(Tab,width = 100, state="readonly", textvariable=self.TMSource)
 		self.TextTMSourcePath.grid(row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
-		Button(Tab, width = self.HalfButtonWidth, text=  self.LanguagePack.Button['Browse'], command= self.BtnBrowseTMSource).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
-		Button(Tab, width = self.HalfButtonWidth, text=  self.LanguagePack.Button['Save'], command= self.BtnMergeTM).grid(row=Row, column=10, columnspan=2,padx=5, pady=5, sticky=W)		
+		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.BtnBrowseTMSource).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
+		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Save'], command= self.BtnMergeTM).grid(row=Row, column=10, columnspan=2,padx=5, pady=5, sticky=W)		
 		'''
 
 	def Generate_Debugger_UI(self, Tab):	
@@ -361,15 +360,15 @@ class DocumentTranslator(Frame):
 		Row = 1
 		Label(Tab, width = 100, text= "").grid(row=Row, column=1, columnspan=Max_Size, padx=5, pady=5, sticky = (N,S,W,E))
 		Row += 1
-		self.search_text = Text(Tab, width = (125- self.HalfButtonWidth*3), height=1) #
+		self.search_text = Text(Tab, width = (125- self.HALF_BUTTON_WIDTH*3), height=1) #
 		self.search_text.grid(row=Row, column=1, columnspan=Max_Size-4, padx=5, pady=5, stick=W)
 
 		#self.search_text.bind("<Enter>", self.search_tm_event)
 
-		print('Btn size', self.HalfButtonWidth)
-		Button(Tab, text= self.LanguagePack.Button['Load'], width= self.HalfButtonWidth, command= self.load_tm_list).grid(row=Row, column=Max_Size-3, sticky=E)
-		Button(Tab, text= self.LanguagePack.Button['Save'], width= self.HalfButtonWidth, command= self.save_tm).grid(row=Row, column=Max_Size-2, sticky=E)
-		Button(Tab, width = self.HalfButtonWidth, text=  self.LanguagePack.Button['Search'] , command= self.search_tm_list).grid(row=Row, column=Max_Size-1,sticky=E)
+		print('Btn size', self.HALF_BUTTON_WIDTH)
+		Button(Tab, text= self.LanguagePack.Button['Load'], width= self.HALF_BUTTON_WIDTH, command= self.load_tm_list).grid(row=Row, column=Max_Size-3, sticky=E)
+		Button(Tab, text= self.LanguagePack.Button['Save'], width= self.HALF_BUTTON_WIDTH, command= self.save_tm).grid(row=Row, column=Max_Size-2, sticky=E)
+		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Search'] , command= self.search_tm_list).grid(row=Row, column=Max_Size-1,sticky=E)
 		Row +=1
 		#self.Debugger = Text(Tab, width=120, height=20, undo=True, wrap=WORD)
 		#self.List = scrolledtext.ScrolledText(Tab, width=125, height=20, undo=True, wrap=WORD, )
@@ -397,8 +396,6 @@ class DocumentTranslator(Frame):
 		self.Treeview.heading('KO', text='KO', anchor=CENTER)
 		self.Treeview.heading('EN', text='EN', anchor=CENTER)
 
-		
-		
 		verscrlbar.grid(row=Row, column=Max_Size,  sticky = (N,S,E))
 		Tab.grid_columnconfigure(Max_Size, weight=0, pad=0)
 		styles = Style()
@@ -420,7 +417,7 @@ class DocumentTranslator(Frame):
 		Label(Tab, text=  self.LanguagePack.Label['MainDB']).grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky= W)
 		self.Entry_Old_File_Path = Entry(Tab,width = 130, state="readonly", textvariable=self.Str_DB_Path)
 		self.Entry_Old_File_Path.grid(row=Row, column=3, columnspan=6, padx=4, pady=5, sticky=E)
-		Button(Tab, width = self.HalfButtonWidth, text=  self.LanguagePack.Button['Browse'], command= self.Btn_DB_Uploader_Browse_DB_File).grid(row=Row, column=9, columnspan=2, padx=5, pady=5, sticky=E)
+		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.Btn_DB_Uploader_Browse_DB_File).grid(row=Row, column=9, columnspan=2, padx=5, pady=5, sticky=E)
 		
 		Row += 1
 		Label(Tab, text= self.LanguagePack.Label['ProjectKey']).grid(row=Row, column=1, padx=5, pady=5, sticky=W)
@@ -433,7 +430,7 @@ class DocumentTranslator(Frame):
 
 		self.ProjectList.grid(row=Row, column=3, columnspan=2, padx=5, pady=5, stick=W)
 
-		Button(Tab, width = self.HalfButtonWidth, text=  self.LanguagePack.Button['Execute'], command= self.Btn_DB_Uploader_Execute_Script).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
+		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Execute'], command= self.Btn_DB_Uploader_Execute_Script).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
 
 		Row += 1
 		self.Debugger = Text(Tab, width=125, height=14, undo=True, wrap=WORD, )
@@ -657,7 +654,7 @@ class DocumentTranslator(Frame):
 			NewTM = self.CorrectPath(filename)
 			self.TMPath.set(NewTM)
 			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'translation_memory', 'path', NewTM, True)
-			self.RenewMyTranslator()
+			self.renew_my_translator()
 			self.Notice.set(self.LanguagePack.ToolTips['TMUpdated'])
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
@@ -674,7 +671,7 @@ class DocumentTranslator(Frame):
 				pickle.dump([], pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 			self.TMPath.set(NewTM)
 			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'translation_memory', 'path', NewTM, True)
-			self.RenewMyTranslator()
+			self.renew_my_translator()
 
 	def SaveProjectKey(self, event):
 		glossary_id = self.Text_glossary_id.get()
@@ -682,7 +679,7 @@ class DocumentTranslator(Frame):
 		self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'glossary_id', 'value', glossary_id)
 		self.MyTranslator.glossary_id = glossary_id
 		
-		self.RenewMyTranslator()
+		self.renew_my_translator()
 
 	def OpenOutput(self):
 		Source = self.ListFile[0]
@@ -758,7 +755,7 @@ class DocumentTranslator(Frame):
 
 		self.Automation_Processor = Process(target=Function_Execute_Create_Script, args=(self.StatusQueue, DB, glossary_id, URI,))
 		self.Automation_Processor.start()
-		self.after(DELAY1, self.Wait_For_Automation_Creator_Processor)	
+		self.after(DELAY, self.Wait_For_Automation_Creator_Processor)	
 
 	def Wait_For_Automation_Creator_Processor(self):
 		if (self.Automation_Processor.is_alive()):
@@ -779,7 +776,7 @@ class DocumentTranslator(Frame):
 					self.Debugger.insert("end", Status)
 			except queue.Empty:
 				pass	
-			self.after(DELAY1, self.Wait_For_Automation_Creator_Processor)
+			self.after(DELAY, self.Wait_For_Automation_Creator_Processor)
 		else:
 			try:
 				Status = self.StatusQueue.get(0)
@@ -802,7 +799,7 @@ class DocumentTranslator(Frame):
 			
 			self.Automation_Processor = Process(target=Function_Execute_Script, args=(self.StatusQueue, DB, glossary_id,))
 			self.Automation_Processor.start()
-			self.after(DELAY1, self.Wait_For_Automation_Processor)	
+			self.after(DELAY, self.Wait_For_Automation_Processor)	
 
 	def Wait_For_Automation_Processor(self):
 		if (self.Automation_Processor.is_alive()):
@@ -823,7 +820,7 @@ class DocumentTranslator(Frame):
 					self.Debugger.insert("end", Status)
 			except queue.Empty:
 				pass	
-			self.after(DELAY1, self.Wait_For_Automation_Processor)
+			self.after(DELAY, self.Wait_For_Automation_Processor)
 		else:
 			try:
 				Status = self.StatusQueue.get(0)
@@ -891,16 +888,12 @@ class DocumentTranslator(Frame):
 		except:
 			self.Usage = 0
 
-		
-
-	
-
-	def RenewMyTranslator(self):
+	def renew_my_translator(self):
 		self.MyTranslator = None
 		del self.My_DB
 		self.My_DB = None
 		self.TranslateBtn.configure(state=DISABLED)
-		self.GenerateTranslatorEngine()
+		self.generate_translator_engine()
 
 	def Stop(self):
 		try:
@@ -913,7 +906,7 @@ class DocumentTranslator(Frame):
 		self.Notice.set('Translate Process has been stop')
 		return
 
-	def GenerateTranslatorEngine(self):
+	def generate_translator_engine(self):
 		self.Notice.set(self.LanguagePack.ToolTips['AppInit'])
 		if self.Language.get() == 1:
 			to_language = 'ko'
@@ -927,7 +920,7 @@ class DocumentTranslator(Frame):
 		tm_path = self.TMPath.get()
 		self.TranslatorProcess = Process(target=GenerateTranslator, args=(self.MyTranslator_Queue, self.TMManager, from_language, to_language, self.glossary_id, tm_path,))
 		self.TranslatorProcess.start()
-		self.after(DELAY1, self.GetMyTranslator)
+		self.after(DELAY, self.GetMyTranslator)
 		return
 
 	def GetMyTranslator(self):
@@ -936,7 +929,7 @@ class DocumentTranslator(Frame):
 			self.MyTranslator = self.MyTranslator_Queue.get_nowait()
 			print('Get Translator',time.time()- st)
 		except queue.Empty:
-			self.after(DELAY1, self.GetMyTranslator)
+			self.after(DELAY, self.GetMyTranslator)
 
 		#print("self.MyTranslator: ", self.MyTranslator)	
 		if self.MyTranslator != None:	
@@ -1133,28 +1126,28 @@ class DocumentTranslator(Frame):
 		#Multiple, TranslateFileName, TranslateSheetName, FixCorruptFileName, Sheet, DataMode, SheetRemovalMode, TMUpdateMode, SkipMode, TMTranslate,LastDocument, ))
 		self.TranslatorProcess = Process(target=execute_document_translate, args=(self.MyTranslator, self.ProcessQueue ,self.ResultQueue, self.StatusQueue, self.Options,))
 		self.TranslatorProcess.start()
-		self.after(DELAY1, self.GetCompleteStatus)
+		self.after(DELAY, self.GetCompleteStatus)
 
 	def BtnOptimizeXLSX(self):
 		SourceDocument = self.RawFile
 
 		self.p4 = Process(target=Optimize, args=(SourceDocument, self.StatusQueue,))
 		self.p4.start()
-		self.after(DELAY1, self.GetOptimizeStatus)	
+		self.after(DELAY, self.GetOptimizeStatus)	
 
 	def GetOptimizeStatus(self):
 		if (self.p4.is_alive()):
 			try:
 				Status = self.StatusQueue.get(0)
 				if Status != None:
-					SafeStatus = Status[0:self.StatusLength]
+					SafeStatus = Status[0:self.STATUS_LENGTH]
 					self.Notice.set(SafeStatus)
 					self.Debugger.insert("end", "\n")
 					self.Debugger.insert("end", Status)
 					self.Debugger.yview(END)
 			except queue.Empty:
 				pass	
-			self.after(DELAY1, self.GetOptimizeStatus)
+			self.after(DELAY, self.GetOptimizeStatus)
 		else:
 			try:
 				Status = self.StatusQueue.get(0)
@@ -1173,26 +1166,26 @@ class DocumentTranslator(Frame):
 
 		self.p4 = Process(target=OptimizeTM, args=(SourceDocument, self.StatusQueue,))
 		self.p4.start()
-		self.after(DELAY1, self.GetOptimizeTMStatus)	
+		self.after(DELAY, self.GetOptimizeTMStatus)	
 
 	def GetOptimizeTMStatus(self):
 		if (self.p4.is_alive()):
 			try:
 				Status = self.StatusQueue.get(0)
 				if Status != None:
-					SafeStatus = Status[0:self.StatusLength]
+					SafeStatus = Status[0:self.STATUS_LENGTH]
 					self.Notice.set(SafeStatus)
 					self.Debugger.insert("end", "\n")
 					self.Debugger.insert("end", Status)
 					self.Debugger.yview(END)
 			except queue.Empty:
 				pass	
-			self.after(DELAY1, self.GetOptimizeStatus)
+			self.after(DELAY, self.GetOptimizeStatus)
 		else:
 			try:
 				Status = self.StatusQueue.get(0)
 				if Status != None:	
-					SafeStatus = Status[0:self.StatusLength]
+					SafeStatus = Status[0:self.STATUS_LENGTH]
 					self.Notice.set(SafeStatus)
 					self.Debugger.insert("end", "\n")
 					self.Debugger.insert("end", Status)
@@ -1213,7 +1206,7 @@ class DocumentTranslator(Frame):
 			try:
 				Status = self.StatusQueue.get(0)
 				if Status != None:
-					SafeStatus = Status[0:self.StatusLength]
+					SafeStatus = Status[0:self.STATUS_LENGTH]
 					self.Notice.set(SafeStatus)
 					self.Debugger.insert("end", "\n")
 					self.Debugger.insert("end", Status)
@@ -1222,7 +1215,7 @@ class DocumentTranslator(Frame):
 			except queue.Empty:
 				pass		
 
-			self.after(DELAY1, self.GetCompleteStatus)
+			self.after(DELAY, self.GetCompleteStatus)
 		else:
 			try:
 				Result = self.ResultQueue.get(0)		
@@ -1232,7 +1225,7 @@ class DocumentTranslator(Frame):
 					Status = self.StatusQueue.get(0)
 					self.Progress.set("Progress: " + str(100) + '%')
 					if Status != None:	
-						SafeStatus = Status[0:self.StatusLength]
+						SafeStatus = Status[0:self.STATUS_LENGTH]
 						self.Notice.set(SafeStatus)
 						self.Debugger.insert("end", "\n")
 						self.Debugger.insert("end", Status)
@@ -1274,7 +1267,7 @@ class DocumentTranslator(Frame):
 					break
 
 			if self.TMUpdate.get() == 1:
-				self.RenewMyTranslator()
+				self.renew_my_translator()
 				#self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
 class AutocompleteCombobox(Combobox):
@@ -1837,9 +1830,9 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 				print(ErrorMsg)
 				StatusQueue.put(str(e))
 				Result = str(e)
-		'''
+		
 		elif ext == '.pdf':
-			not use
+			#not use
 			#Result = translateDPF(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:
 				Result = translateDPF(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
@@ -1848,7 +1841,7 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 				print(ErrorMsg)
 				StatusQueue.put(str(e))
 				Result = str(e)
-		'''
+		
 		elif ext == '.pptx':
 			#Result = translate_presentation(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:
@@ -1909,8 +1902,8 @@ def main():
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
 
 	try:
-		DocumentTranslator(root, ProcessQueue = ProcessQueue, ResultQueue = ResultQueue, StatusQueue = StatusQueue
-		, MyTranslatorQueue = MyTranslatorQueue, MyDB_Queue = MyDB, TMManager = TMManager)
+		DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue,status_queue = StatusQueue
+		, my_translator_queue = MyTranslatorQueue, my_db_queue = MyDB, tm_manager = TMManager)
 		root.mainloop()
 		
 	except Exception as e:
@@ -1949,6 +1942,6 @@ def main():
 
 if __name__ == '__main__':
 	if sys.platform.startswith('win'):
-		multiprocessing.freeze_support()
+		freeze_support()
 	
 	main()
