@@ -991,9 +991,9 @@ class DocumentTranslator(Frame):
 
 	def TMTranslateModeToggle(self):
 		if self.TMTranslate.get() == 1:
-			self.MyTranslator.TMModeEnable(True)
+			self.MyTranslator.tm_translate_enable(True)
 		else:
-			self.MyTranslator.TMModeEnable(False)
+			self.MyTranslator.tm_translate_enable(False)
 
 	def GetOptions(self):
 		#Get and set language
@@ -1006,11 +1006,11 @@ class DocumentTranslator(Frame):
 			self.Options['LanguageName'] = self.LanguagePack.Option['English']
 			self.Options['from_language'] = 'ko'
 		
-		self.MyTranslator.SetTargetLanguage(self.Options['to_language'])
-		self.MyTranslator.SetSourceLanguage(self.Options['from_language'])
+		self.MyTranslator.set_target_language(self.Options['to_language'])
+		self.MyTranslator.set_source_language(self.Options['from_language'])
 		self.Notice.set(self.LanguagePack.ToolTips['SetLanguage'] + self.Options['LanguageName'])
 		#Set translator engine
-		self.MyTranslator.SetTranslatorAgent(self.MyTranslatorAgent)
+		self.MyTranslator.set_translator_agent(self.MyTranslatorAgent)
 
 		
 		#Add Subscription key
@@ -1018,15 +1018,15 @@ class DocumentTranslator(Frame):
 
 		#Set TM Update Mode
 		if self.TMUpdate.get() == 1:
-			self.MyTranslator.TMUpdateModeEnable(True)
+			self.MyTranslator.tm_update_anable(True)
 		else:
-			self.MyTranslator.TMUpdateModeEnable(False)
+			self.MyTranslator.tm_update_anable(False)
 
 		#Set Predict mode 
 		if self.TurboTranslate.get() == 1:
-			self.MyTranslator.PredictModeEnable(True)
+			self.MyTranslator.source_language_predict_enable(True)
 		else:
-			self.MyTranslator.PredictModeEnable(False)
+			self.MyTranslator.source_language_predict_enable(False)
 
 		#Set Data Mode
 		if self.DataOnly.get() == 1:
@@ -1746,14 +1746,14 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 
 
 	Preflix = ""
-	Preflix	+= MyTranslator.To_Language.upper() + '_'
+	Preflix	+= MyTranslator.to_language.upper() + '_'
 	
 	Result = False
 
 	if Options['TMUpdateMode']:
 			#print(MyTranslator.LanguagePack.ToolTips['TMUpdating']) 
 			#MyTranslator.ProactiveTMTranslate = False
-			MyTranslator.TMUpdate = True
+			MyTranslator.tm_update_anable = True
 	try:
 		ProgressQueue.get_nowait()
 	except queue.Empty:
@@ -1865,12 +1865,12 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 			ResultQueue.put(str(Result))
 		try:
 			mem_tm = len(MyTranslator.TMManager)
-			newTM = MyTranslator.Appendtranslation_memory()
+			newTM = MyTranslator.append_translation_memory()
 			MyTranslator.send_tracking_record(file_name = baseName)
 			StatusQueue.put('Source: ' + str(baseName))
-			StatusQueue.put('TM usage: ' + str(MyTranslator.Last_Section_TM_Request))
-			StatusQueue.put('API usage: ' + str(MyTranslator.Last_Section_API_Usage))
-			StatusQueue.put('Invalid request: ' + str(MyTranslator.Last_Section_Invalid_Request))
+			StatusQueue.put('TM usage: ' + str(MyTranslator.last_section_tm_request))
+			StatusQueue.put('API usage: ' + str(MyTranslator.last_section_api_usage))
+			StatusQueue.put('Invalid request: ' + str(MyTranslator.last_section_invalid_request))
 			StatusQueue.put('TM In-memory: ' + str(mem_tm))
 			StatusQueue.put('TM append this section: ' + str(newTM))
 			#StatusQueue.put('TM In-memory: ' + str(len(MyTranslator.TMManager)))
