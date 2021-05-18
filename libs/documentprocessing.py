@@ -23,6 +23,10 @@ def check_list(item, list):
 
 # Functions used for processor
 def generate_sheet_list(sheet_list, translate_list):
+	"""
+	Function returns a sheet index List.
+	Translate classified sheets by name or sheet index (min-max)
+	"""
 	if translate_list == [] or translate_list == [""]:
 		return sheet_list
 	#TotalSheet = len(sheet_list)
@@ -43,6 +47,8 @@ def generate_sheet_list(sheet_list, translate_list):
 						invalid = True
 			else:
 				invalid = True
+			# Decide which sheet index is the lowest and highest to select the index between
+			# Ex: 2,4 -> Translate from sheet 2 to sheet 4
 			if invalid == False:
 				
 				A = int(temp_list[0])
@@ -58,13 +64,13 @@ def generate_sheet_list(sheet_list, translate_list):
 				i = Min
 				while i >= Min and i <= Max:
 					index_list.append(i)
-					i+=1
+					i += 1
 			else:
 				i = 0
 				for source in sheet_list:
 					if source == sheet:
 						index_list.append(i)		
-					i+=1
+					i += 1
 
 	to_return = []
 
@@ -74,6 +80,7 @@ def generate_sheet_list(sheet_list, translate_list):
 			if i == num:
 				to_return.append(to_translate)
 		i+=1
+	
 	return to_return
 
 def show_progress(cp, total_process):
@@ -92,29 +99,28 @@ def para_translate(tasks_to_accomplish, tasks_that_are_done, MyTranslator):
 			break
 		else:
 			if Task != None:
-				ToTranslate = Task.Text
+				text_to_translate = Task.Text
 				Task.Fail = 0
-				#print('Current text: ', ToTranslate)
-				SourceText = ToTranslate.split('\n')
-				Translated = MyTranslator.translate(SourceText)
+				#print('Current text: ', text_to_translate)
+				source_texts = text_to_translate.split('\n')
+				translated_text = MyTranslator.translate(source_texts)
 				#print('Para Translated', Translated)
 				i = 0
-				for string in Translated:
+				for string in translated_text:
 					if string == False:
-						Translated[i] = SourceText[i]
+						translated_text[i] = source_texts[i]
 						#print('Fail to translate....')
-						Task.Fail+=1
-						i+=1
+						Task.Fail += 1
+						i += 1
 			
-				Merged = "\n".join(Translated)
-				Task.Text = Merged
+				merged_text = "\n".join(translated_text)
+				Task.Text = merged_text
 				tasks_that_are_done.put(Task)
 			else:
 				tasks_that_are_done.put(None)
 	return True
 
 def cell_translate(MyTranslator, tasks_to_accomplish):
-
 	List = []
 	Length = []
 	for task in tasks_to_accomplish:
