@@ -189,42 +189,48 @@ class RunData:
 
 #Workbook handle
 def translate_workbook(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
-	
+	""" How Document Translator tool proccesses the translation in Excel file """
+
 	from openpyxl import load_workbook, worksheet, Workbook
 	from openpyxl.styles import Font
 
-	if not 'SourceDocument' in Options:
+	if 'SourceDocument' not in Options:
 		status_queue.put('No source document input')
 		return False
 	else:
 		SourceDocument = Options['SourceDocument']
 
-	if not 'OutputDocument' in Options:
+	if 'OutputDocument' not in Options:
 		now = datetime.now()
 		timestamp = str(int(datetime.timestamp(now)))
 		output_dir = os.path.dirname(SourceDocument)
-		base_name = os.path.basename(SourceDocument)
-		source_name = os.path.splitext(base_name)[0]
+		base_name = os.path.basename(SourceDocument) # File name
+		source_name = os.path.splitext(base_name)[0] # File extension
 		OutputDocument = output_dir + '/' + 'Translated_' + source_name + '_' + timestamp + '.xlsx'
 	else:
 		OutputDocument = Options['OutputDocument']
 
-	if not 'TranslateSheetName' in Options:
+	### TOOL OPTIONS START ###
+	# Check if an option is selected
+	if 'TranslateSheetName' not in Options:
 		TranslateSheetName = True
 	else:
 		TranslateSheetName = Options['TranslateSheetName']
 
-	if not 'Sheet' in Options:
+	if 'Sheet' not in Options:
 		Sheet = []
 	else:
 		Sheet = Options['Sheet']
+	### TOOL OPTIONS END ###
 
-	if not 'DataOnly' in Options:
+	### TRANSLATE OPTIONS START ###
+	# Check if an option is selected
+	if 'DataOnly' not in Options:
 		DataOnly = True
 	else:
 		DataOnly = Options['DataOnly']
 
-	if not 'SheetRemovalMode' in Options:
+	if 'SheetRemovalMode' not in Options:
 		SheetRemovalMode = False
 	else:
 		SheetRemovalMode = Options['SheetRemovalMode']
@@ -237,6 +243,7 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 	except Exception as e:
 		status_queue.put('Failed to load the document: ' + str(e))
 		return e
+	### TRANSLATE OPTIONS END ###
 
 	status_queue.put('Estimating total task to do...')
 	progress_queue.put(0)
