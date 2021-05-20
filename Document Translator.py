@@ -365,7 +365,7 @@ class DocumentTranslator(Frame):
 
 		#self.search_text.bind("<Enter>", self.search_tm_event)
 
-		print('Btn size', self.HALF_BUTTON_WIDTH)
+		#print('Btn size', self.HALF_BUTTON_WIDTH)
 		Button(Tab, text= self.LanguagePack.Button['Load'], width= self.HALF_BUTTON_WIDTH, command= self.load_tm_list).grid(row=Row, column=Max_Size-3, sticky=E)
 		Button(Tab, text= self.LanguagePack.Button['Save'], width= self.HALF_BUTTON_WIDTH, command= self.save_tm).grid(row=Row, column=Max_Size-2, sticky=E)
 		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Search'] , command= self.search_tm_list).grid(row=Row, column=Max_Size-1,sticky=E)
@@ -1432,8 +1432,11 @@ def Optimize(SourceDocument, StatusQueue):
 ###########################################################################################
 def Function_Execute_Script(StatusQueue, DB_Path, glossary_id, **kwargs):
 
-	Output = Function_Create_CSV_DB(StatusQueue, DB_Path)
-	StatusQueue.put("CSV DB created:" + str(Output))
+	#Output = Function_Create_CSV_DB(StatusQueue, DB_Path)
+	Output = function_create_db_data(StatusQueue, DB_Path)
+
+	
+	#StatusQueue.put("CSV DB created:" + str(Output))
 	if glossary_id != '':
 		
 		client = logging.Client()
@@ -1494,12 +1497,17 @@ def Function_Update_Glossary(self):
 
 	return
 
-def Function_Create_CSV_DB(
+
+# Load the DB from xlsx file and return DB object:
+# db_object['info'] = @dict
+# db_object['db'] = @dict
+
+def function_create_db_data(
 		StatusQueue, DB_Path, **kwargs
 ):
 	from openpyxl import load_workbook, worksheet, Workbook
 	import csv
-	
+
 	DatabasePath = DB_Path
 
 	Outputdir = os.path.dirname(DatabasePath)
@@ -1513,76 +1521,115 @@ def Function_Create_CSV_DB(
 	RowCount = 0
 
 	if DatabasePath != None:
+		
 		if (os.path.isfile(DatabasePath)):
 			xlsx = load_workbook(DatabasePath)
 			DictList = []
-			Dict = []
+			#Dict = []
+			
+			db_object = {}
+			db_object['info'] = {}
+			db_object['db'] = {}
 			with open(output_file_csv, 'w', newline='', encoding='utf_8_sig') as csv_file:
 				writer = csv.writer(csv_file, delimiter=',')
-				writer.writerow(['Description', 'ko', 'en'])
+				writer.writerow(['Description', 'ko', 'en', 'cn', 'jp'])
+				
 				for sheet in xlsx:
 					sheetname = sheet.title.lower()
 					
-					if sheetname not in SpecialSheets:	
-					
-						EN_Coll = ""
-						KR_Coll = ""
+					if sheetname not in SpecialSheets:
+						# init loop
+						list_col = {}
+						list_col['EN'] = ""
+						list_col['KO'] = ''
+						list_col['CN'] = ''
+						list_col['JP'] = ''
+						
+						start_row = 0
+
 						database = None
 						ws = xlsx[sheet.title]
-						for row in ws.iter_rows():
-							for cell in row:
-								if cell.value == "KO":
-									KR_Coll = cell.column_letter
-									KR_Row = cell.row
-									database = ws
-								elif cell.value == "EN":
-									EN_Coll = cell.column_letter
-								if KR_Coll != "" and EN_Coll != "":
-									DictList.append(sheet.title)
-									break	
-							if database!=  None:
-								break		
+						
+						db_object['db'][sheetname] = []
 
+						for row in ws.iter_rows():
+							language_count = 0
+							for cell in row:
+								cell_value = cell.value
+								
+								if cell_value in list_col:
+									list_col[cell_value] = cell.column_letter
+									start_row = cell.row
+								language_count = len(list_col)
+							if language_count > 1:
+								database = ws
+								DictList.append(sheet.title)
+								break	
+							
 						if database != None:
 							
-							for i in range(KR_Row, database.max_row): 
-								KRAddress = KR_Coll + str(i+1)
-								ENAddress = EN_Coll + str(i+1)
-								KRCell = database[KRAddress]
-								KRValue = KRCell.value
-								ENCell = database[ENAddress]
-								ENValue = ENCell.value
-								if KRValue in [None, 'KO'] or ENValue in [None, 'EN']:
-									continue
-								elif KRValue not in  ["", 'KO'] and ENValue not in ["", 'EN']:
-									KRValue = KRCell.value.replace('\r', '').replace('\n', '')
-									ENValue = ENCell.value.replace('\r', '').replace('\n', '')
-									if sheetname != 'header':
-										ENValue = ENValue.lower()
-									writer.writerow([sheetname, KRValue, ENValue])
-									RowCount+=1
+							for i in range(start_row, database.max_row): 
+								db_entry = {}
+
+								for language in list_col:
+									if list_col[language] != '':
+											
+										cell_adress = list_col[language] + str(i+1)
+										raw_cell_value = database[cell_adress].value
+	
+										if raw_cell_value != None:
+											cell_value = raw_cell_value.replace('\r', '').replace('\n', '')	
+
+											if sheetname != 'header':
+												cell_value = cell_value.lower()
+											cell_value = basse64_encode(cell_value)
+											#print('Encrypt value: ', cell_value)
+										db_entry[language] = cell_value
+									else:
+										db_entry[language] = ''
+								print('db_entry', sheetname,  db_entry)		
+								writer.writerow([sheetname, db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP']])
+								#db_object['db'][sheetname].append(db_entry)
+								
 					elif sheetname == 'info':
 						ws = xlsx[sheet.title]
 						for row in ws.iter_rows():
 							for cell in row:
-								if cell.value == "i_version":
+								info_entry = {}	
+								if cell.value == "version":
 									temp_Col = chr(ord(cell.column_letter) + 1)
 									temp_Row = cell.row
 									temp_Add = temp_Col + str(temp_Row)	
 									temp_Cel = ws[temp_Add]
 									temp_Val = temp_Cel.value
-									writer.writerow(['info', 'i_version', temp_Val])
-								elif cell.value == "i_date":
-									temp_Col = chr(ord(cell.column_letter) + 1)
-									temp_Row = cell.row
-									temp_Add = temp_Col + str(temp_Row)	
-									temp_Cel = ws[temp_Add]
-									temp_Val = temp_Cel.value
-									writer.writerow(['info', 'i_date', temp_Val])
+									info_entry['version'] = temp_Val
+									writer.writerow(['info', 'version', temp_Val])
 
-		StatusQueue.put("Successfully load dictionary from: " +  str(DictList))
+								elif cell.value == "date":
+									temp_Col = chr(ord(cell.column_letter) + 1)
+									temp_Row = cell.row
+									temp_Add = temp_Col + str(temp_Row)	
+									temp_Cel = ws[temp_Add]
+									temp_Val = temp_Cel.value
+									writer.writerow(['info', 'date', temp_Val])
+						#db_object['info'] = info_entry
+
+		#StatusQueue.put("Successfully load dictionary from: " +  str(DictList))
 
 	return output_file_csv
+
+def basse64_encode(string_to_encode):
+
+	raw_encoded_string =  str(base64.b64encode(string_to_encode.encode('utf-8')))
+	encoded_string = re.findall(r'b\'(.+?)\'', raw_encoded_string)[0]
+	
+	return encoded_string
+
+def base64_decode(string_to_decode):
+	
+	decoded_string = base64.b64decode(string_to_decode).decode('utf-8')
+	
+	return
 
 
 ###########################################################################################
@@ -1800,7 +1847,10 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 					TranslatedName = Newsourcename
 			else:
 				TranslatedName	= Newsourcename
-			output_file = Outputdir + '/' + Preflix + TranslatedName + '_' + timestamp + ext
+			if '.xls' not in ext:
+				output_file = Outputdir + '/' + Preflix + TranslatedName + '_' + timestamp + ext
+			else:
+				output_file = Outputdir + '/' + Preflix + TranslatedName + '_' + timestamp + '.xlsx'
 			#print('Output file name: ', output_file)
 		
 		Options['SourceDocument'] = newPath
@@ -1808,7 +1858,7 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 		if ext == '.docx':
 			#Result = translate_docx(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:
-				Result = translate_docx(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
+				Result = translate_docx(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
 				print(ErrorMsg)
@@ -1818,7 +1868,7 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 		elif ext in ['.xlsx', '.xlsm']:
 			#Result = translate_workbook(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:
-				Result = translate_workbook(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
+				Result = translate_workbook(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
 				print(ErrorMsg)
@@ -1827,7 +1877,7 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 		elif ext == '.msg':
 			#Result = translate_msg(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:
-				Result = translate_msg(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
+				Result = translate_msg(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
 				print(ErrorMsg)
@@ -1838,7 +1888,7 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 			#not use
 			#Result = translateDPF(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:
-				Result = translateDPF(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
+				Result = translateDPF(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
 				print(ErrorMsg)

@@ -89,32 +89,31 @@ class Translator:
 
 		self.SpecialSheets = ['kr_only', 'en_only', 'name']
 
+		self.supported_language = ['ko', 'en', 'cn', 'jp']
 		
 		self.init_temporary_tm()
 
 		# The multi-language DB.
 		# Used to translate from A -> B and vice versa
-		self.dictionary = []
+		self.dictionary = pd.DataFrame()
 		# The DB that only be used to translate from korean to other language
-		self.ko_dictionary = []
+		self.ko_dictionary = pd.DataFrame()
 		# The DB that only be used to translate from english to other language.
-		self.en_dictionary = []
+		self.en_dictionary = pd.DataFrame()
 		# The DB that only be used to translate from Chinese to other language.
-		self.cn_dictionary = []
+		self.cn_dictionary = pd.DataFrame()
 		# The DB that only be used to translate from Japanese to other language.
-		self.jp_dictionary = []
+		self.jp_dictionary = pd.DataFrame()
 
-		self.header = []
-		self.name = []
+		self.header = pd.DataFrame()
+		self.name = pd.DataFrame()
 		
 		self.exception = []
-		self.temporary_tm = []
-		self.translation_memory = []
+		self.temporary_tm = pd.DataFrame()
+		self.translation_memory = pd.DataFrame()
 		self.translation_memory_size = 0
 		self.ko = []
 		self.en = []
-
-		self.header = None
 		
 		self.exception_Char = string.punctuation + string.digits
 		self.accepted_char = string.punctuation 
@@ -390,11 +389,14 @@ class Translator:
 	# Allow us to check the long word before the sort one:
 	# E.g. 'pine apple' will be perfer to lookup first, 
 	# if there is no 'pine apple' exist, we will looking for 'apple' in the sentence.
-	def sort_dictionary(self, List):
+	def sort_dataframe_dictionary(self, List):
 		if self.from_language == 'ko':
-			return(sorted(List, key = lambda x: (len(x[0]), x[0]), reverse = True))
+			List.sort_values(by=['ko'], ascending = False, inplace = True)
+			
 		else:
-			return(sorted(List, key = lambda x: (len(x[1]), x[1]), reverse = True))
+			List.sort_values(by=['en'], ascending = False, inplace = True)
+		
+		return List
 
 ######################################################################
 # Pre-translate function
@@ -525,7 +527,7 @@ class Translator:
 		return result
 		
 
-	def englishPreTranslate(self, source_text):
+	def english_pre_translate(self, source_text):
 		#print('english pre-translate')
 		# Use for Translating KR -> en
 		# Add 2 space to the dict to prevent the en character and ko character merge into 1
@@ -533,9 +535,10 @@ class Translator:
 		RawText = source_text
 		LowerCase_text = source_text
 		
-		temp_dict = self.dictionary + self.ko_dictionary
+		temp_dict = self.dictionary.append(self.ko_dictionary)
 
 		for pair in temp_dict:
+
 			# Old is en text in the dict
 			Old = pair[0].strip()
 			
@@ -609,14 +612,14 @@ class Translator:
 		#print('RawText', RawText)
 		return RawText
 
-	def koreanPreTranslate(self, input):
+	def korean_pre_translate(self, input):
 		# Use for Translating en -> KR
 		# It's a litle complicated....
 		# To cover some special case can happen.
 		RawText = input
 		source_text = RawText.lower()
 			
-		temp_dict = self.dictionary + self.en_dictionary
+		temp_dict = self.dictionary.append(self.en_dictionary)
 	
 		for pair in temp_dict:
 			# Old is en text in the dict
@@ -711,9 +714,9 @@ class Translator:
 					to_translate_index[index_num].append(i)
 				except Exception  as e:
 					if self.to_language == 'ko':
-						pre_translate = self.koreanPreTranslate(text)
-					else:
-						pre_translate = self.englishPreTranslate(text)
+						pre_translate = self.korean_pre_translate(text)
+					elif self.to_language == 'en':
+						pre_translate = self.english_pre_translate(text)
 					
 					raw_source.append(text)
 					to_translate.append(pre_translate)
@@ -987,8 +990,8 @@ class Translator:
 
 		#translate_client = translate.TranslationServiceClient()
 		cloud_client = storage.Client()
-		self.header = []
-		self.dictionary = []
+		#self.header = pd.DataFrame()
+		#self.dictionary = pd.DataFrame()
 
 		bucket = cloud_client.get_bucket(self.bucket_id)
 
@@ -1041,8 +1044,11 @@ class Translator:
 		print('Load db from:' , file_uri)
 		#translate_client = translate.TranslationServiceClient()
 		cloud_client = storage.Client()
-		self.header = []
-		self.dictionary = []
+		#self.header = pd.DataFrame()
+		#self.dictionary = pd.DataFrame()
+
+		source_language_index = self.supported_language.index(self.from_language)
+		target_language_index = self.supported_language.index(self.to_language)
 
 		bucket = cloud_client.get_bucket(self.bucket_id)
 
@@ -1052,44 +1058,70 @@ class Translator:
 		
 		mydb = listdb.split('\r\n')
 
-		for pair in mydb:	
-			data = pair.split(',')
-			if len(data) == 3:
-			#	pass
-			#	print(data)
-			#else:
-				Valid = True
-				for element in data:
-					if element == "" or element == None:
-						Valid = False
-				if Valid:
-					tag = data[0].lower()
-					if tag == "info":
-						if data[1] == 'version':
-							self.version = data[2]
-						elif data[1] == 'date':
-							self.update_day = data[2]
-					elif tag == "header":
-						self.header.append([data[1], data[2]])
-					elif tag == "name":
-						self.name.append([data[1], data[2]])		
-					elif tag == "en_only":
-						self.en_dictionary.append([data[1], data[2]])
-					elif tag == "kr_only":
-						self.ko_dictionary.append([data[1], data[2]])
-					elif tag == "cn_only":
-						self.cn_dictionary.append([data[1], data[2]])
-					elif tag == "jp_only":
-						self.jp_dictionary.append([data[1], data[2]])
-					elif tag == "exception":
-						self.exception.append(data[1])
-						self.exception.append(data[2])
-					else:
-						ko = data[1]
-						en = data[2].lower()
-						self.dictionary.append([ko, en])
-		self.dictionary = self.sort_dictionary(self.dictionary)
+		for pair_index in range(1, len(mydb)-1):
 
+			pair = mydb[pair_index]
+
+			data = pair.split(',')
+			tag = data[0].lower()
+
+			for index in range(1, len(data)):
+				data[index]  = self.base64_decode(data[index])
+		
+			if tag == "info":
+				if data[1] == 'version':
+					self.version = data[2]
+				elif data[1] == 'date':
+					self.update_day = data[2]
+				continue
+			
+			if data[source_language_index] == '':
+				continue
+			if data[target_language_index] == '':
+				continue
+
+			if tag == "header":
+				new_row = {self.from_language: data[source_language_index], self.to_language: data[target_language_index]}
+				self.header = self.header.append(new_row, ignore_index=True)
+			elif tag == "name":
+				new_row = {self.from_language: data[source_language_index], self.to_language: data[target_language_index]}
+				self.name = self.name.append(new_row, ignore_index=True)	
+			elif tag == "en_only":
+				if self.from_language != 'en':
+					continue
+
+				new_row = {self.from_language: data[source_language_index], self.to_language: data[target_language_index]}
+				self.en_dictionary = self.en_dictionary.append(new_row, ignore_index=True)	
+
+			elif tag == "kr_only":
+				if self.from_language != 'ko':
+					continue
+				new_row = {self.from_language: data[source_language_index], self.to_language: data[target_language_index]}
+				self.ko_dictionary = self.ko_dictionary.append(new_row, ignore_index=True)	
+				
+			elif tag == "cn_only":
+				if self.from_language != 'cn':
+					continue
+				new_row = {self.from_language: data[source_language_index], self.to_language: data[target_language_index]}
+				self.cn_dictionary = self.cn_dictionary.append(new_row, ignore_index=True)	
+
+			elif tag == "jp_only":
+				if self.from_language != 'jp':
+					continue
+				new_row = {self.from_language: data[source_language_index], self.to_language: data[target_language_index]}
+				self.jp_dictionary = self.jp_dictionary.append(new_row, ignore_index=True)	
+
+			elif tag == "exception":
+				for index in range(1, len(data)):
+					self.exception.append(data[index])
+			else:
+				new_row = {self.from_language: data[source_language_index], self.to_language: data[target_language_index]}
+				self.dictionary = self.dictionary.append(new_row, ignore_index=True)
+		
+		if len(self.dictionary) > 0:
+			self.dictionary.sort_values(by=[self.from_language], ascending = False, inplace = True)
+		#print('dict', self.dictionary)
+		print('Dict: ', len(self.dictionary))
 
 
 	def get_glossary_length(self, timeout=180,):
@@ -1153,13 +1185,13 @@ class Translator:
 			try:
 				uri = self.get_glossary_path(self.glossary_id)
 				print('URI:', uri)
-				print("Load DB from glob")
+				#print("Load DB from glob")
 				self.load_db_from_glob(uri)
-			except:
-				pass
+			except Exception as e:
+				print('Error:', e)
 		else:
-			self.dictionary = []
-			self.header = []
+			self.dictionary = pd.DataFrame()
+			self.header = pd.DataFrame()
 
 		if self.proactive_memory_translate:
 			#self.import_translation_memory()
@@ -1175,16 +1207,30 @@ class Translator:
 				print('URI:', uri)
 				print("Load DB from glob")
 				self.load_db_from_glob(uri)
-			except:
-				pass
+			except Exception as e:
+				print('Error:', e)
+
 		else:
-			self.dictionary = []
-			self.header = []
+			self.dictionary = pd.DataFrame()
+			self.header = pd.DataFrame()
 
 		if self.proactive_memory_translate:
 			#self.import_translation_memory()
 			self.import_translation_memory()
 
+	# Store the DB in base64 format for csv format friendly
+	def basse64_encode(self, string_to_encode):
+
+		raw_encoded_string =  str(base64.b64encode(Path_Value.encode('utf-8')))
+		encoded_string = re.findall(r'b\'(.+?)\'', raw_encoded_string)[0]
+		
+		return encoded_string
+
+	def base64_decode(self, string_to_decode):
+		
+		decoded_string = base64.b64decode(string_to_decode).decode('utf-8')
+		
+		return decoded_string
 
 ################################################################################################
 # Bucket manager
@@ -1198,7 +1244,7 @@ class Translator:
 
 	# Replace the DB file by the new one
 	# Need to rename the old DB file for backup purpose
-	# -> Update later
+	# 	-> Update later
 	def update_glob(self, glossary_id, Upload_Path):
 		from google.cloud import storage
 		sclient = storage.Client()
@@ -1216,6 +1262,36 @@ class Translator:
 		blob.upload_from_filename(filename = Upload_Path)
 		#def create_glossary(self, input_uri= None, glossary_id=None, timeout=180,):
 
+	# Upload DB to bucket
+	# DB file will be converted into base64 format
+	# 
+	def upload_glob_from_object(self, glossary_id, db_object):
+		from google.cloud import storage
+		sclient = storage.Client()
+		
+		#gloss = self.get_glossary(glossary_id)
+
+		bucket = sclient.get_bucket(self.bucket_id)
+		try:
+			blob_id = self.get_glossary_path(glossary_id)
+		except:
+			return False	
+		
+		blob = bucket.blob(blob_id)
+		print('Uploading to blob')
+		
+		#db_object = {}
+		#db_object['info'] = {}
+		#db_object['db'] = {}
+		List = []
+		# Info:
+		version = db_object['info']['version']
+		date = db_object['info']['date']
+		
+		List.append()
+		blob.upload_from_filename(filename = Upload_Path)
+		
+		return
 		
 	def update_glossary(self, glossary_id, upload_path):
 		
