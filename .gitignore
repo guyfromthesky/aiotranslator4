@@ -1,3 +1,7 @@
 .vscode
 __pycache__
+libs\__pycache__
+obsolete
+compile
+test files
 *.pyc

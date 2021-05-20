@@ -93,32 +93,17 @@ class Translator:
 		
 		self.init_temporary_tm()
 
-		# The multi-language DB.
-		# Used to translate from A -> B and vice versa
-		self.dictionary = pd.DataFrame()
-		# The DB that only be used to translate from korean to other language
-		self.ko_dictionary = pd.DataFrame()
-		# The DB that only be used to translate from english to other language.
-		self.en_dictionary = pd.DataFrame()
-		# The DB that only be used to translate from Chinese to other language.
-		self.cn_dictionary = pd.DataFrame()
-		# The DB that only be used to translate from Japanese to other language.
-		self.jp_dictionary = pd.DataFrame()
+		self.init_db_data()
 
-		self.header = pd.DataFrame()
-		self.name = pd.DataFrame()
-		
-		self.exception = []
 		self.temporary_tm = pd.DataFrame()
 		self.translation_memory = pd.DataFrame()
 		self.translation_memory_size = 0
-		self.ko = []
-		self.en = []
-		
+
 		self.exception_Char = string.punctuation + string.digits
 		self.accepted_char = string.punctuation 
 		self.printable = string.printable
 		
+		# Flag for user who is banned.
 		self.banned = False
 
 		# Get user name of the Windows account
@@ -141,9 +126,11 @@ class Translator:
 			print("E:", e)
 			print('Fail to load db')
 
+		# Send tracking record from previous run to logging server.
 		tracking_result = self.send_tracking_record()
 		print('Tracking status:', tracking_result)
 
+		# Init tracking request
 		self.last_section_tm_request = 0
 		self.last_section_invalid_request = 0
 		self.last_section_api_usage = 0
@@ -151,6 +138,24 @@ class Translator:
 ######################################################################################################
 # INIT FUNCTION
 ######################################################################################################
+	def init_db_data(self):
+		# The multi-language DB.
+		self.all_db = pd.DataFrame()
+		# Used to translate from A -> B and vice versa
+		self.dictionary = []
+		# The DB that only be used to translate from korean to other language
+		self.ko_dictionary = []
+		# The DB that only be used to translate from english to other language.
+		self.en_dictionary = []
+		# The DB that only be used to translate from Chinese to other language.
+		self.cn_dictionary = []
+		# The DB that only be used to translate from Japanese to other language.
+		self.jp_dictionary = []
+
+		self.header = []
+		self.name = []
+		self.exception = []
+	
 	def init_config_path(self):
 		if sys.platform.startswith('win'):
 			self.config_path = os.environ['APPDATA']
@@ -535,7 +540,8 @@ class Translator:
 		RawText = source_text
 		LowerCase_text = source_text
 		
-		temp_dict = self.dictionary.append(self.ko_dictionary)
+		temp_dict = self.dictionary + self.ko_dictionary
+		#print('Temp dict for Korean translate', len(temp_dict))
 
 		for pair in temp_dict:
 
@@ -619,8 +625,9 @@ class Translator:
 		RawText = input
 		source_text = RawText.lower()
 			
-		temp_dict = self.dictionary.append(self.en_dictionary)
-	
+		temp_dict = self.dictionary + self.en_dictionary
+		#print('Temp dict for English translate', len(temp_dict))
+
 		for pair in temp_dict:
 			# Old is en text in the dict
 			Old = pair[1].strip()
@@ -929,7 +936,8 @@ class Translator:
 			Temp = self.to_language
 			self.to_language = TargetLangauge	
 			self.from_language = Temp
-		self.to_language = TargetLangauge		
+		self.to_language = TargetLangauge	
+		self.update_db_from_dataframe()
 
 	def set_source_language(self, source_language):
 		if source_language != self.from_language:
@@ -1075,54 +1083,47 @@ class Translator:
 					self.update_day = data[2]
 				continue
 			
-			if data[source_language_index] == '':
-				continue
-			if data[target_language_index] == '':
-				continue
+			new_row = {'tag': data[0], 'ko': data[1], 'en': data[2], 'cn': data[3], 'jp': data[4]}
+			self.all_db = self.all_db.append(new_row, ignore_index=True)
+		'''
+			
+		'''
+		print('dict', len(self.all_db))
+		self.update_db_from_dataframe()
 
-			if tag == "header":
-				new_row = {self.from_language: data[source_language_index], self.to_language: data[target_language_index]}
-				self.header = self.header.append(new_row, ignore_index=True)
-			elif tag == "name":
-				new_row = {self.from_language: data[source_language_index], self.to_language: data[target_language_index]}
-				self.name = self.name.append(new_row, ignore_index=True)	
-			elif tag == "en_only":
-				if self.from_language != 'en':
-					continue
-
-				new_row = {self.from_language: data[source_language_index], self.to_language: data[target_language_index]}
-				self.en_dictionary = self.en_dictionary.append(new_row, ignore_index=True)	
-
-			elif tag == "kr_only":
-				if self.from_language != 'ko':
-					continue
-				new_row = {self.from_language: data[source_language_index], self.to_language: data[target_language_index]}
-				self.ko_dictionary = self.ko_dictionary.append(new_row, ignore_index=True)	
-				
-			elif tag == "cn_only":
-				if self.from_language != 'cn':
-					continue
-				new_row = {self.from_language: data[source_language_index], self.to_language: data[target_language_index]}
-				self.cn_dictionary = self.cn_dictionary.append(new_row, ignore_index=True)	
-
-			elif tag == "jp_only":
-				if self.from_language != 'jp':
-					continue
-				new_row = {self.from_language: data[source_language_index], self.to_language: data[target_language_index]}
-				self.jp_dictionary = self.jp_dictionary.append(new_row, ignore_index=True)	
-
-			elif tag == "exception":
-				for index in range(1, len(data)):
-					self.exception.append(data[index])
-			else:
-				new_row = {self.from_language: data[source_language_index], self.to_language: data[target_language_index]}
-				self.dictionary = self.dictionary.append(new_row, ignore_index=True)
+	def update_db_from_dataframe(self):
+		#Create header list:
+		header = self.all_db[self.all_db["tag"] == 'header'][[self.to_language, self.from_language]]
+		self.header = header.values.tolist()
+		#Create name list:
+		name = self.all_db[self.all_db["tag"] == 'name'][[self.to_language, self.from_language]]
+		self.name = name.values.tolist()
 		
-		if len(self.dictionary) > 0:
-			self.dictionary.sort_values(by=[self.from_language], ascending = False, inplace = True)
-		#print('dict', self.dictionary)
-		print('Dict: ', len(self.dictionary))
-
+		if self.from_language == 'en':
+			#Create en_only list:
+			en_dictionary = self.all_db[self.all_db["tag"] == 'en_only'][[self.to_language, self.from_language]]
+			self.en_dictionary = en_dictionary.values.tolist()
+		elif self.from_language == 'ko':
+			#Create kr_only list:
+			ko_dictionary = self.all_db[self.all_db["tag"] == 'kr_only'][[self.to_language, self.from_language]]
+			self.ko_dictionary = ko_dictionary.values.tolist()
+		elif self.from_language == 'cn':
+			#Create cn_only list:
+			cn_dictionary = self.all_db[self.all_db["tag"] == 'cn_only'][[self.to_language, self.from_language]]
+			self.cn_dictionary = cn_dictionary.values.tolist()
+		elif self.from_language == 'jp':
+			#Create jp_only list:
+			jp_dictionary = self.all_db[self.all_db["tag"] == 'jp_only'][[self.to_language, self.from_language]]
+			self.jp_dictionary = jp_dictionary.values.tolist()
+		
+		#Create exception list:
+		exception_for_source_language = self.all_db[self.all_db["tag"] == 'exception'][[self.to_language]].values.tolist()
+		exception_for_target_language = self.all_db[self.all_db["tag"] == 'exception'][[self.from_language]].values.tolist()
+		self.exception = exception_for_source_language + exception_for_target_language
+	
+		#Create jp_only list:
+		normal_dict = self.all_db[~self.all_db["tag"].isin(['header', 'name', 'en_only', 'kr_only', 'cn_only', 'jp_only', 'exception' ])][[self.to_language, self.from_language]]
+		self.dictionary = normal_dict.values.tolist()
 
 	def get_glossary_length(self, timeout=180,):
 		client = translate.TranslationServiceClient()
@@ -1190,8 +1191,8 @@ class Translator:
 			except Exception as e:
 				print('Error:', e)
 		else:
-			self.dictionary = pd.DataFrame()
-			self.header = pd.DataFrame()
+			self.dictionary = []
+			self.header = []
 
 		if self.proactive_memory_translate:
 			#self.import_translation_memory()
@@ -1211,8 +1212,8 @@ class Translator:
 				print('Error:', e)
 
 		else:
-			self.dictionary = pd.DataFrame()
-			self.header = pd.DataFrame()
+			self.dictionary = []
+			self.header = []
 
 		if self.proactive_memory_translate:
 			#self.import_translation_memory()

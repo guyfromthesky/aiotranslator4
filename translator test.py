@@ -15,14 +15,14 @@ import pickle
 AppConfig = ConfigLoader()
 Configuration = AppConfig.Config
 AppLanguage  = Configuration['Document_Translator']['app_lang']
-tm = Configuration['TranslationMemory']['path']
-print(Configuration['License_File']['path'])
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = Configuration['License_File']['path']
+tm = Configuration['translation_memory']['path']
+print(Configuration['license_file']['path'])
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = Configuration['license_file']['path']
 
-GlossaryID = Configuration['Glossary_ID']['value']
+GlossaryID = Configuration['glossary_id']['value']
 print(tm)
 
-MyTranslator = Translator(From_Language = 'en', To_Language = 'ko', GlossaryID =  GlossaryID, ProactiveTMTranslate= True, TM_Path=tm)
+MyTranslator = Translator(from_language = 'ko', to_language = 'en', glossary_id =  GlossaryID, proactive_memory_translate= True, tm_path=tm)
 #MyTranslator.temporary_tm = MyTranslator.TranslationMemory
 #MyTranslator.temporary_tm['en'] = MyTranslator.temporary_tm['en']
 #MyTranslator.append_translation_memory()
@@ -36,7 +36,7 @@ print(translated)
 '''
 
 #text = MyTranslator.TranslationMemory[MyTranslator.TranslationMemory[MyTranslator.From_Language].str.match(source_text)]
-print(len(MyTranslator.TranslationMemory))
+#print(len(MyTranslator.TranslationMemory))
 #text = MyTranslator.TranslationMemory.loc[MyTranslator.TranslationMemory[MyTranslator.From_Language] == source_text]
 
 #print(text)
