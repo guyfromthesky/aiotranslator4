@@ -5,3 +5,4 @@ obsolete
 compile
 test files
 *.pyc
+*.pyc
