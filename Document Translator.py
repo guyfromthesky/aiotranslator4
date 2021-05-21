@@ -173,8 +173,8 @@ class DocumentTranslator(Frame):
 		Row+=1
 		Label(Tab, text=  self.LanguagePack.Label['Language'], width= 10, font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		self.Language = IntVar()	
-		Radiobutton(Tab, width= 10, text=  self.LanguagePack.Option['Hangul'], value=1, variable=self.Language).grid(row=Row, column=2, padx=0, pady=5, sticky=W)
-		Radiobutton(Tab, width= 10, text=  self.LanguagePack.Option['English'], value=2, variable=self.Language).grid(row=Row, column=3, padx=0, pady=5, sticky=W)
+		Radiobutton(Tab, width= 10, text=  self.LanguagePack.Option['Hangul'], value=1, variable=self.Language, command= self.set_target_language).grid(row=Row, column=2, padx=0, pady=5, sticky=W)
+		Radiobutton(Tab, width= 10, text=  self.LanguagePack.Option['English'], value=2, variable=self.Language, command= self.set_target_language).grid(row=Row, column=3, padx=0, pady=5, sticky=W)
 
 				
 		Label(Tab, text= self.LanguagePack.Label['ProjectKey']).grid(row=Row, column=4, padx=5, pady=5, sticky=W)
@@ -898,6 +898,13 @@ class DocumentTranslator(Frame):
 		self.TranslateBtn.configure(state=DISABLED)
 		self.generate_translator_engine()
 
+	def set_target_language(self):
+		if self.Language.get() == 1:
+			to_language = 'ko'
+		else:
+			to_language = 'en'
+		self.MyTranslator.set_target_language(to_language)	
+
 	def Stop(self):
 		try:
 			if self.TranslatorProcess.is_alive():
@@ -1587,7 +1594,6 @@ def function_create_db_data(
 										db_entry[language] = cell_value
 									else:
 										db_entry[language] = ''
-								print('db_entry', sheetname,  db_entry)		
 								writer.writerow([sheetname, db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP']])
 								#db_object['db'][sheetname].append(db_entry)
 								
@@ -1619,7 +1625,8 @@ def function_create_db_data(
 	return output_file_csv
 
 def basse64_encode(string_to_encode):
-
+	if string_to_encode == '':
+		return string_to_encode
 	raw_encoded_string =  str(base64.b64encode(string_to_encode.encode('utf-8')))
 	encoded_string = re.findall(r'b\'(.+?)\'', raw_encoded_string)[0]
 	
@@ -1914,7 +1921,7 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 		else:
 			ResultQueue.put(str(Result))
 		try:
-			mem_tm = len(MyTranslator.TMManager)
+			mem_tm = len(MyTranslator.temporary_tm)
 			newTM = MyTranslator.append_translation_memory()
 			MyTranslator.send_tracking_record(file_name = baseName)
 			StatusQueue.put('Source: ' + str(baseName))
@@ -1958,7 +1965,7 @@ def main():
 		DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue,status_queue = StatusQueue
 		, my_translator_queue = MyTranslatorQueue, my_db_queue = MyDB, tm_manager = TMManager)
 		root.mainloop()
-		
+		print('Root is terminated.')
 	except Exception as e:
 		root.withdraw()
 
