@@ -301,24 +301,11 @@ class DocumentTranslator(Frame):
 		self.TextLicensePath.grid(row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
 		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
 
-		
-		#Row += 1
-		#Label(Tab, width = 30, text= self.LanguagePack.Label['DBSourcePath']).grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky=W)
-		#self.TextFilePath = Entry(Tab, width = 120, text="Select your document", state="readonly", textvariable=self.DictionaryPath.get())
-		#self.TextFilePath.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=W)
-		##Button(Tab, width = 20, text=  self.LanguagePack.Button['Browse'], command= self.BtnLoadDocument).grid(row=Row, column=9, columnspan=2, padx=5, pady=5, sticky=E)
-		#Button(Tab, width = self.HALF_BUTTON_WIDTH, text= self.LanguagePack.Button['Save'], command= self.SaveProjectKey).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
 
 	def Generate_Utility_UI(self, Tab):
 		# Utility option
 		Row = 1
 		Label(Tab, textvariable=self.Notice).grid(row=Row, column=1, columnspan = 10, padx=5, pady=5, sticky= W)
-		#Row += 1
-		#self.DocxCompare = IntVar()
-		#DocxCompareBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['DocxCompare'], variable = self.DocxCompare, command= None)
-		#DocxCompareBtn.grid(row=Row, column=1,padx=5, pady=5, sticky=W)
-		#DocxCompareBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['TMPrepare']))
-		#self.DocxCompare.set(0)
 		
 		Row += 1
 		self.RawTMSource = StringVar()
@@ -328,23 +315,6 @@ class DocumentTranslator(Frame):
 		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.BtnLoadRawTM).grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=E)
 		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Execute'], command= self.BtnOptimizeTM).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=W)
 	
-		Row += 1
-		self.RawSource = StringVar()
-		Label(Tab, text=  self.LanguagePack.Label['OptimizeDatafile']).grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky= W)
-		self.TextRawSourcePath = Entry(Tab,width = 100, state="readonly", textvariable=self.RawSource)
-		self.TextRawSourcePath.grid(row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
-		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.BtnLoadRawSource).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
-		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Execute'], command= self.BtnOptimizeXLSX).grid(row=Row, column=10, columnspan=2,padx=5, pady=5, sticky=W)
-		'''
-		Row += 1
-		self.TMSource = StringVar()
-		Label(Tab, text=  self.LanguagePack.Label['MergeTM']).grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky= W)
-		self.TextTMSourcePath = Entry(Tab,width = 100, state="readonly", textvariable=self.TMSource)
-		self.TextTMSourcePath.grid(row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
-		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.BtnBrowseTMSource).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
-		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Save'], command= self.BtnMergeTM).grid(row=Row, column=10, columnspan=2,padx=5, pady=5, sticky=W)		
-		'''
-
 	def Generate_Debugger_UI(self, Tab):	
 
 		Row = 1
@@ -515,10 +485,9 @@ class DocumentTranslator(Frame):
 
 	def save_tm(self):
 		print('Saving config')
-		self.MyTranslator.export_current_translation_memory()
-		#UpdateProcess = Process(target=self.MyTranslator.remove_tm_pair, args=(self.removed_list,))
-		#UpdateProcess.start()
-		#self.removed_list = []
+		UpdateProcess = Process(target=self.MyTranslator.export_current_translation_memory, args=(self.removed_list,))
+		UpdateProcess.start()
+		self.removed_list = []
 
 	def Generate_Menu_UI(self):
 		menubar = Menu(self.parent) 
@@ -740,58 +709,6 @@ class DocumentTranslator(Frame):
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 		return
 
-	def Btn_Browse_Glossary_File(self):
-			
-		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectSource'],filetypes = (("Workbook files", "*.svg"), ), multiple = False)	
-		if filename != "":
-			self.DB_Path = self.CorrectPath(filename)
-			self.Str_DB_Path.set(self.DB_Path)
-			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
-		else:
-			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
-		return
-
-	def Btn_Execute_Creator_Script(self):
-		DB = self.Str_DB_Path.get()
-		glossary_id = self.Text_New_glossary_id.get()
-		URI = self.Text_URI_ID.get()
-
-		self.Automation_Processor = Process(target=Function_Execute_Create_Script, args=(self.StatusQueue, DB, glossary_id, URI,))
-		self.Automation_Processor.start()
-		self.after(DELAY, self.Wait_For_Automation_Creator_Processor)	
-
-	def Wait_For_Automation_Creator_Processor(self):
-		if (self.Automation_Processor.is_alive()):
-			'''
-			try:
-				percent = self.ProcessQueue.get(0)
-				self.CompareProgressbar["value"] = percent
-				self.progressbar.update()
-				#self.Progress.set("Progress: " + str(percent/10) + '%')
-			except queue.Empty:
-				pass	
-			'''
-			try:
-				Status = self.StatusQueue.get(0)
-				if Status != None:
-					self.Notice.set(Status)
-					self.Debugger.insert("end", "\n\r")
-					self.Debugger.insert("end", Status)
-			except queue.Empty:
-				pass	
-			self.after(DELAY, self.Wait_For_Automation_Creator_Processor)
-		else:
-			try:
-				Status = self.StatusQueue.get(0)
-				if Status != None:	
-					self.Notice.set('Compare complete')
-					print(Status)
-					self.Debugger.insert("end", "\n\r")
-					self.Debugger.insert("end", Status)
-			except queue.Empty:
-				pass
-			self.Wait_For_Automation_Creator_Processor.terminate()
-
 	def Btn_DB_Uploader_Execute_Script(self):
 		DB = self.Str_DB_Path.get()
 		glossary_id = self.ProjectList.get()
@@ -802,19 +719,11 @@ class DocumentTranslator(Frame):
 			
 			self.Automation_Processor = Process(target=Function_Execute_Script, args=(self.StatusQueue, DB, glossary_id,))
 			self.Automation_Processor.start()
-			self.after(DELAY, self.Wait_For_Automation_Processor)	
+			self.after(DELAY, self.Wait_For_Uploader_Processor)	
 
-	def Wait_For_Automation_Processor(self):
+	def Wait_For_Uploader_Processor(self):
 		if (self.Automation_Processor.is_alive()):
-			'''
-			try:
-				percent = self.ProcessQueue.get(0)
-				self.CompareProgressbar["value"] = percent
-				self.progressbar.update()
-				#self.Progress.set("Progress: " + str(percent/10) + '%')
-			except queue.Empty:
-				pass	
-			'''
+
 			try:
 				Status = self.StatusQueue.get(0)
 				if Status != None:
@@ -823,7 +732,7 @@ class DocumentTranslator(Frame):
 					self.Debugger.insert("end", Status)
 			except queue.Empty:
 				pass	
-			self.after(DELAY, self.Wait_For_Automation_Processor)
+			self.after(DELAY, self.Wait_For_Uploader_Processor)
 		else:
 			try:
 				Status = self.StatusQueue.get(0)
@@ -1138,38 +1047,6 @@ class DocumentTranslator(Frame):
 		self.TranslatorProcess.start()
 		self.after(DELAY, self.GetCompleteStatus)
 
-	def BtnOptimizeXLSX(self):
-		SourceDocument = self.RawFile
-
-		self.p4 = Process(target=Optimize, args=(SourceDocument, self.StatusQueue,))
-		self.p4.start()
-		self.after(DELAY, self.GetOptimizeStatus)	
-
-	def GetOptimizeStatus(self):
-		if (self.p4.is_alive()):
-			try:
-				Status = self.StatusQueue.get(0)
-				if Status != None:
-					SafeStatus = Status[0:self.STATUS_LENGTH]
-					self.Notice.set(SafeStatus)
-					self.Debugger.insert("end", "\n")
-					self.Debugger.insert("end", Status)
-					self.Debugger.yview(END)
-			except queue.Empty:
-				pass	
-			self.after(DELAY, self.GetOptimizeStatus)
-		else:
-			try:
-				Status = self.StatusQueue.get(0)
-				if Status != None:	
-					SafeStatus = Status[0:StatusLength]
-					self.Notice.set(SafeStatus)
-					self.Debugger.insert("end", "\n")
-					self.Debugger.insert("end", Status)
-					self.Debugger.yview(END)
-			except queue.Empty:
-				pass
-			self.p4.terminate()
 
 	def BtnOptimizeTM(self):
 		SourceDocument = self.RawTMFile
@@ -1491,18 +1368,6 @@ def Function_Execute_Script(StatusQueue, DB_Path, glossary_id, **kwargs):
 
 		StatusQueue.put("DB updated.")
 
-def Function_Execute_Create_Script(StatusQueue, DB_Path, glossary_id, URI, **kwargs):
-
-	Output = Function_Create_CSV_DB(StatusQueue, DB_Path)
-	StatusQueue.put("CSV DB created:" + str(Output))
-	myTranslator = Translator('ko', 'en', None, None, False, False, False, glossary_id, )
-	
-	myTranslator.Update_Glob(glossary_id, Output)	
-	StatusQueue.put("DB created.")
-
-def Function_Update_Glossary(self):
-
-	return
 
 
 # Load the DB from xlsx file and return DB object:
