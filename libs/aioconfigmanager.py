@@ -136,6 +136,10 @@ class ConfigLoader:
 		config = configparser.ConfigParser()
 		config.read(config_path)
 
+		self.Init_Config_Option(config, 'bucket_id', 'value', 'nxvnbucket')
+		self.Init_Config_Option(config, 'db_list_uri', 'value', 'config/db_list.csv')
+		self.Init_Config_Option(config, 'project_bucket_id', 'value', 'credible-bay-281107')
+
 		self.Init_Config_Option(config, 'license_key', 'value', '')
 		self.Init_Config_Option(config, 'glossary_id', 'value', '')
 
@@ -147,19 +151,24 @@ class ConfigLoader:
 		with open(config_path, 'w') as configfile:
 			config.write(configfile)
 	
+	# Function will load the value from selected option.
+	# If value does not exist, return the default value
 	def Init_Config_Option(self, Config_Obj, Section, Option, Default_Value):
+		# Config does not exist
 		if not Section in self.Config:
 			self.Config[Section] = {}
-
+		# Config does not have that section
 		if not Config_Obj.has_section(Section):
 			Config_Obj.add_section(Section)
 			Config_Obj.set(Section, Option, str(Default_Value))
 			self.Config[Section][Option] = Default_Value
+		# Config have that section
 		else:
-				
+			# The section does not have that option
 			if not Config_Obj.has_option(Section, Option):
 				Config_Obj.set(Section, Option, str(Default_Value))
 				self.Config[Section][Option] = Default_Value
+			# The section have that option
 			else:
 				Value = Config_Obj[Section][Option]
 				if Value.isnumeric():

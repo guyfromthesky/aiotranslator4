@@ -37,7 +37,7 @@ class Translator:
 		from_language = 'auto', 
 		to_language = 'en', 
 		source_language_predict = True, 
-		proactive_memory_translate=True, 
+		proactive_memory_translate = True, 
 		tm_update=True, 
 		glossary_id = None, 
 		#temporary_tm = None,
@@ -47,6 +47,7 @@ class Translator:
 		tool_version = None,
 		bucket_id = 'nxvnbucket',
 		db_list_uri = 'config/db_list.csv',
+		project_bucket_id = 'credible-bay-281107',
 
 	):
 		
@@ -63,7 +64,8 @@ class Translator:
 
 		self.project_id = None
 
-		self.project_bucket_id = 'credible-bay-281107'
+		# App online config
+		self.project_bucket_id = project_bucket_id
 		self.bucket_id = bucket_id
 		self.db_list_uri = db_list_uri
 

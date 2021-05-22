@@ -45,7 +45,7 @@ from tkinter import colorchooser
 from tkinter import scrolledtext 
 from tkinter import simpledialog
 
-
+# Web redirect
 import webbrowser
 
 from libs.aiotranslator_v2 import Translator
@@ -783,6 +783,10 @@ class DocumentTranslator(Frame):
 
 		self.TMPath.set(self.Configuration['translation_memory']['path'])
 		self.glossary_id = self.Configuration['glossary_id']['value']
+		
+		self.bucket_id = self.Configuration['bucket_id']['value']
+		self.db_list_uri = self.Configuration['db_list_uri']['value']
+		self.project_bucket_id = self.Configuration['project_bucket_id']['value']
 
 	def init_UI_setting(self):
 		self.Language.set(self.Configuration['Document_Translator']['target_lang'])
@@ -837,7 +841,9 @@ class DocumentTranslator(Frame):
 		self.glossary_id = self.Text_glossary_id.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
 		tm_path = self.TMPath.get()
-		self.TranslatorProcess = Process(target=GenerateTranslator, args=(self.MyTranslator_Queue, self.TMManager, from_language, to_language, self.glossary_id, tm_path,))
+		self.TranslatorProcess = Process(target=GenerateTranslator, args=(self.MyTranslator_Queue, 
+			self.TMManager, from_language, to_language, self.glossary_id, tm_path,
+			self.bucket_id, self.db_list_uri, self.project_bucket_id,))
 		self.TranslatorProcess.start()
 		self.after(DELAY, self.GetMyTranslator)
 		return
@@ -1265,9 +1271,25 @@ def Importtranslation_memory(TMPath):
 		return []
 
 # Function for Document Translator
-def GenerateTranslator(Mqueue, TMManager, from_language = 'ko', to_language = 'en', glossary_id = "", tm_path= None,):	
+def GenerateTranslator(Mqueue, TMManager, 
+		from_language = 'ko', 
+		to_language = 'en', 
+		glossary_id = "", 
+		tm_path= None, 
+		bucket_id = 'nxvnbucket',
+		db_list_uri = 'config/db_list.csv',
+		project_bucket_id = 'credible-bay-281107'):	
+	
 	print("Generate my Translator")
-	MyTranslator = Translator(from_language = from_language, to_language = to_language, glossary_id =  glossary_id, tm_path = tm_path, used_tool = tool_name, tool_version = ver_num,)
+	MyTranslator = Translator(	from_language = from_language, 
+								to_language = to_language, 
+								glossary_id =  glossary_id, 
+								tm_path = tm_path, 
+								used_tool = tool_name, 
+								tool_version = ver_num,
+								bucket_id = bucket_id,
+								db_list_uri = db_list_uri,
+								project_bucket_id = project_bucket_id)
 	Mqueue.put(MyTranslator)
 
 def Optimize(SourceDocument, StatusQueue):
