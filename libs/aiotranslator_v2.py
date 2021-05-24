@@ -1490,11 +1490,10 @@ class Translator:
 			except:
 				print('Fail to load tm')
 				all_tm = {}
-
-			if isinstance(self.translation_memory, pd.DataFrame):
-				save_data = self.translation_memory.append(self.temporary_tm)
-			else:
-				save_data = self.temporary_tm
+			
+			for Pair in temporary_tm:
+				save_data = self.translation_memory.append(Pair, ignore_index=True)
+			
 			save_data = save_data.reindex()
 			all_tm[self.glossary_id] = save_data
 			
