@@ -40,7 +40,7 @@ class Translator:
 		proactive_memory_translate = True, 
 		tm_update=True, 
 		glossary_id = None, 
-		#temporary_tm = None,
+		temporary_tm = None,
 		tm_path = None,
 		#Tool that is currently use this libs
 		used_tool = 'writer',
@@ -48,7 +48,7 @@ class Translator:
 		bucket_id = 'nxvnbucket',
 		db_list_uri = 'config/db_list.csv',
 		project_bucket_id = 'credible-bay-281107',
-
+		**kwargs
 	):
 		
 		self.from_language = from_language
