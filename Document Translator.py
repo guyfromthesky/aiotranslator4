@@ -636,7 +636,8 @@ class DocumentTranslator(Frame):
 		else:
 			NewTM = self.CorrectPath(filename)
 			with open(NewTM, 'wb') as pickle_file:
-				pickle.dump([], pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+				# New TM format.
+				pickle.dump({}, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 			self.TMPath.set(NewTM)
 			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'translation_memory', 'path', NewTM, True)
 			self.renew_my_translator()
@@ -840,10 +841,18 @@ class DocumentTranslator(Frame):
 		self.glossary_id = self.Text_glossary_id.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
 		tm_path = self.TMPath.get()
-		self.TranslatorProcess = Process(target=GenerateTranslator, args=(self.MyTranslator_Queue, 
-			self.TMManager, from_language, to_language, self.glossary_id, tm_path,
-			self.bucket_id, self.db_list_uri, self.project_bucket_id,))
-		self.TranslatorProcess.start()
+		print('Start new process: Generate Translator')
+		self.TranslatorProcess = Process(	target=GenerateTranslator, 
+											kwargs={	'my_translator_queue' : self.MyTranslator_Queue, 
+														'tm_manager' : self.TMManager, 
+														'from_language' : from_language, 
+														'to_language' : to_language, 
+														'glossary_id' : self.glossary_id, 
+														'tm_path' : tm_path,
+														'bucket_id' : self.bucket_id, 
+														'db_list_uri' : self.db_list_uri, 
+														'project_bucket_id' : self.project_bucket_id,},)
+		self.TranslatorProcess.start()										
 		self.after(DELAY, self.GetMyTranslator)
 		return
 
@@ -1270,26 +1279,33 @@ def Importtranslation_memory(TMPath):
 		return []
 
 # Function for Document Translator
-def GenerateTranslator(Mqueue, TMManager, 
-		from_language = 'ko', 
-		to_language = 'en', 
-		glossary_id = "", 
-		tm_path= None, 
-		bucket_id = 'nxvnbucket',
-		db_list_uri = 'config/db_list.csv',
-		project_bucket_id = 'credible-bay-281107'):	
+def GenerateTranslator(
+	my_translator_queue = None, 
+	tm_manager = None, 
+	from_language = 'ko', 
+	to_language = 'en', 
+	glossary_id = "", 
+	tm_path= None, 
+	bucket_id = 'nxvnbucket',
+	db_list_uri = 'config/db_list.csv',
+	project_bucket_id = 'credible-bay-281107'
+):	
 	
-	print("Generate my Translator")
+	#print("Generate my Translator")
+	#saved_args = locals()
+	#print('Input arg: ', saved_args)
 	MyTranslator = Translator(	from_language = from_language, 
 								to_language = to_language, 
 								glossary_id =  glossary_id, 
+								temporary_tm = tm_manager,
 								tm_path = tm_path, 
 								used_tool = tool_name, 
 								tool_version = ver_num,
 								bucket_id = bucket_id,
 								db_list_uri = db_list_uri,
-								project_bucket_id = project_bucket_id)
-	Mqueue.put(MyTranslator)
+								project_bucket_id = project_bucket_id
+	)
+	my_translator_queue.put(MyTranslator)
 
 def Optimize(SourceDocument, StatusQueue):
 	from openpyxl import load_workbook, worksheet, Workbook
@@ -1425,7 +1441,7 @@ def function_create_db_data(
 			db_object['db'] = {}
 			with open(output_file_csv, 'w', newline='', encoding='utf_8_sig') as csv_file:
 				writer = csv.writer(csv_file, delimiter=',')
-				writer.writerow(['Description', 'ko', 'en', 'cn', 'jp'])
+				writer.writerow(['Description', 'ko', 'en', 'cn', 'jp', 'vi'])
 				
 				for sheet in xlsx:
 					sheetname = sheet.title.lower()
@@ -1437,7 +1453,8 @@ def function_create_db_data(
 						list_col['KO'] = ''
 						list_col['CN'] = ''
 						list_col['JP'] = ''
-						
+						list_col['VI'] = ''
+
 						start_row = 0
 
 						database = None
@@ -1480,7 +1497,7 @@ def function_create_db_data(
 										db_entry[language] = cell_value
 									else:
 										db_entry[language] = ''
-								writer.writerow([sheetname, db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP']])
+								writer.writerow([sheetname, db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP'], db_entry['VI']])
 								#db_object['db'][sheetname].append(db_entry)
 								
 					elif sheetname == 'info':
@@ -1519,7 +1536,6 @@ def basse64_encode(string_to_encode):
 	return encoded_string
 
 def base64_decode(string_to_decode):
-	
 	decoded_string = base64.b64decode(string_to_decode).decode('utf-8')
 	
 	return
@@ -1664,7 +1680,6 @@ def ValidateKoreanSource(string):
 	return False
 
 
-
 def ValidateURL(string):
 	
 	Result = urlparse(string)
@@ -1781,7 +1796,7 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 			#not use
 			#Result = translateDPF(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:
-				Result = translateDPF(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
+				Result = translateDPF(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
 				print(ErrorMsg)
@@ -1791,7 +1806,7 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 		elif ext == '.pptx':
 			#Result = translate_presentation(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:
-				Result = translate_presentation(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
+				Result = translate_presentation(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
 				StatusQueue.put(str(e))
@@ -1833,6 +1848,57 @@ def fixed_map(style, option):
 	return [elm for elm in style.map('Treeview', query_opt=option) if
 	  elm[:2] != ('!disabled', '!selected')]
 
+def send_fail_request(error_message):
+	try:
+		from google.cloud import logging
+		AppConfig = ConfigLoader()
+		Configuration = AppConfig.Config
+		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = Configuration['license_file']['path']
+		client = logging.Client()
+	except:
+		print('Fail to communicate with logging server')
+		print("error message:", e)
+		messagebox.showinfo(title='Critical error', message=e)
+		return
+
+	log_name = 'critical-error'
+	logger = client.logger(log_name)
+	
+	try:
+		if self.OS == 'win':
+			try:
+				user_name = os.getlogin()
+			except:
+				user_name = os.environ['COMPUTERNAME']
+		else:
+			try:
+				user_name = os.environ['LOGNAME']
+			except:
+				user_name = "Anonymous"
+	except:
+		user_name = "Anonymous"
+
+	data_object = {
+		'user': user_name,
+		'tool': 'Document Translator',
+		'tool_ver': self.tool_version,
+		'translator_ver': ver_num,
+		'error_message': str(e)
+	}
+
+	tracking_object = {
+		'user': self.user_name,
+		'details': data_object
+	}
+	
+	try:
+		logger.log_struct(tracking_object)
+	except Exception  as e:
+		print('exception:', e)
+		result = False
+
+	return
+		
 def main():
 	ProcessQueue = Queue()
 	ResultQueue = Queue()
@@ -1855,34 +1921,9 @@ def main():
 	except Exception as e:
 		root.withdraw()
 
-		try:
-			from google.cloud import logging
-			AppConfig = ConfigLoader()
-			Configuration = AppConfig.Config
-			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = Configuration['license_file']['path']
-			client = logging.Client()
-		except:
-			print('Fail to communicate with logging server')
-			print("error message:", e)
-			messagebox.showinfo(title='Critical error', message=e)
-			return
-
-		log_name = 'critical-error'
-		logger = client.logger(log_name)
-		try:
-			name = os.environ['COMPUTERNAME']
-		except:
-			print('Fail to get computer name')
-			name = 'Anonymous'
-
-		text_log = name + ', ' + str(e) + ', ' + version
-
-		try:
-			logger.log_text(text_log)
-		except:
-			print('Docuement tool: Fail to send log to server.')
-			return
-		print("error message:", e)	
+		send_fail_request(e)
+		
+		print("Error message:", e)	
 		messagebox.showinfo(title='Critical error', message=e)
 
 

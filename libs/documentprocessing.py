@@ -132,7 +132,11 @@ def cell_translate(MyTranslator, tasks_to_accomplish):
 		elif isinstance(Input, str):
 			Length.append(1)
 			List.append(Input)
+
+	#print('Translate cell: ', List)
 	Result = MyTranslator.translate(List)
+	#print('Result translate cell: ', Result)
+	
 	#for i in range(len(List)):
 	#	print(List[i], ":", Result[i])
 
@@ -141,6 +145,9 @@ def cell_translate(MyTranslator, tasks_to_accomplish):
 		temp_result = Result[current_index:current_index+Length[i]]
 		tasks_to_accomplish[i].Text = temp_result
 		current_index+=Length[i]
+	
+	#print('tasks_to_accomplish', tasks_to_accomplish)
+	
 	return tasks_to_accomplish
 
 
@@ -318,7 +325,7 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 		status_queue.put('Translated by Memory: ' + str(memory_translation))
 		remaining_task_count = total_task_count - cp	
 		status_queue.put('Remained task: ' + str(remaining_task_count))
-
+		
 		Task_todo = []
 		
 		while len(task_list) > 0:
@@ -344,7 +351,9 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 						break	
 				else:
 					break
+		
 			Translated = cell_translate(MyTranslator, Task_todo)
+			
 			for task in Translated:
 				Return = task
 				NewSheet = Return.Sheet
@@ -373,11 +382,13 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 		if TranslateSheetName:
 			status_queue.put('Translating sheet name...')
 			to_translate = []
+			#print('Translate list: ', translate_list)
 			for sheet in xlsx:
 				if check_list(sheet.title, translate_list):
 					CurrentSheetName = sheet.title
 					to_translate.append(CurrentSheetName)
 			translated = MyTranslator.translate(to_translate)
+			#print('Translate translated list: ', translated)
 			index = 0
 			for sheet in xlsx:
 				if check_list(sheet.title, translate_list):
@@ -536,7 +547,7 @@ def translate_presentation(progress_queue=None, result_queue=None, status_queue=
 							progress_queue.put(percent)
 
 	percent = show_progress(total_task_count, total_task_count)
-	print('percent: ', percent)
+	progress_queue.put(percent)
 	status_queue.put('Exporting document...')
 	try:
 		pptx.save(OutputDocument)
@@ -697,8 +708,8 @@ def translate_docx(progress_queue=None, result_queue=None, status_queue=None, My
 
 	RemainedTask = len(paragraph_data_list)
 	Task_todo = []
-	print('RemainedTask', RemainedTask)
-	
+	#print('RemainedTask', RemainedTask)
+	#print('paragraph_data_list', paragraph_data_list)
 	
 	while len(paragraph_data_list) > 0:
 		Translated = []

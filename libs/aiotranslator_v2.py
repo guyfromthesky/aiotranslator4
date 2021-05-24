@@ -42,7 +42,7 @@ class Translator:
 		glossary_id = None, 
 		temporary_tm = None,
 		tm_path = None,
-		#Tool that is currently use this libs
+		# Tool that is currently use this libs
 		used_tool = 'writer',
 		tool_version = None,
 		bucket_id = 'nxvnbucket',
@@ -74,7 +74,6 @@ class Translator:
 		self.glossary_id = glossary_id
 		self.location = "us-central1"
 
-
 		self.glossary_list = []	
 		self.glossary_data_list = []
 		
@@ -91,13 +90,12 @@ class Translator:
 
 		#self.SpecialSheets = ['kr_only', 'en_only', 'name']
 		self.special_tag = ['header', 'name', 'en_only', 'kr_only', 'cn_only', 'jp_only', 'exception']
-		self.supported_language = ['ko', 'en', 'cn', 'jp']
+		self.supported_language = ['ko', 'en', 'cn', 'jp', 'vi']
 		
-		self.init_temporary_tm()
-
 		self.init_db_data()
 
-		self.temporary_tm = pd.DataFrame()
+		self.temporary_tm = temporary_tm
+
 		self.translation_memory = pd.DataFrame()
 		self.translation_memory_size = 0
 
@@ -123,6 +121,7 @@ class Translator:
 
 		try:
 			current_time = datetime.now()
+			print('Load bucket from glob')
 			self.load_bucket_list_from_glob()
 			print('Total time to load bucket list:', str(datetime.now() - current_time))
 			current_time = datetime.now()
@@ -191,8 +190,8 @@ class Translator:
 		return path
 	
 	def init_temporary_tm(self):
-		self.temporary_tm	= pd.DataFrame(columns=['en','ko', 'cn', 'jp'])
-		#self.temporary_tm = self.temporary_tm.append({'en': np.nan,'ko': np.nan, 'cn': np.nan, 'jp': np.nan}, ignore_index=True)
+		self.temporary_tm[:]	
+
 
 	def get_user_name(self):
 		try:
@@ -535,17 +534,19 @@ class Translator:
 		#print('Temp dict for Korean translate', len(temp_dict))
 
 		for pair in temp_dict:
-
+			#print('pair', pair)
 			# Old is en text in the dict
-			Old = pair[0].strip()
+			Old = pair[1].strip()
 			
 			# New is the KR text we want to replace with
-			New = " " + pair[1].strip() + " "
+			New = " " + pair[0].strip() + " "
 			#New = pair[1].strip()
 			# IF there is the defined text in the sentence
 			StartFind = 0
 			while LowerCase_text.find(Old, StartFind) != -1:
-				#print('english pretrans')
+				#print('LowerCase_text', LowerCase_text)
+				#print('Old', Old)
+				#print('StartFind', StartFind)
 				# Find the location of the text in the sentence
 				location = int(LowerCase_text.find(Old, StartFind))
 				# And the text length
@@ -597,11 +598,13 @@ class Translator:
 					else:
 						#print('ORD', ord(NextChar))
 						#print('Invalid NextChar char: \'', NextChar, '\'')
-						continue
+						break
+						
 				else:
 					#rint('ORD', ord(FirstChar))
 					#print('Invalid 1st char: \'', FirstChar, '\'')
-					continue
+					break
+	
 				LowerCase_text = RawText	
 		# Remove the space from both side of the text
 		# The space that we've add above.
@@ -610,6 +613,7 @@ class Translator:
 		return RawText
 
 	def korean_pre_translate(self, input):
+		print('korean_pre_translate')
 		# Use for Translating en -> KR
 		# It's a litle complicated....
 		# To cover some special case can happen.
@@ -683,12 +687,15 @@ class Translator:
 	# Translator main function.
 	# All the text will be passed into this function.
 	def translate(self, Input):
+		#print('Translate:', Input)
 		if isinstance(Input, list):
 			source_text = Input
 		elif isinstance(Input, str):
 			source_text = [Input]
 		else:
 			return False
+
+		#print('source_text', source_text)
 
 		raw_source = []
 		to_translate = []
@@ -711,15 +718,25 @@ class Translator:
 					index_num = raw_source.index(text)
 					to_translate_index[index_num].append(i)
 				except Exception  as e:
+					#print('Exception: ', e)
 					if self.to_language == 'ko':
-						pre_translate = self.korean_pre_translate(text)
+						pre_translate = self.korean_pre_translate(text)	
 					elif self.to_language == 'en':
 						pre_translate = self.english_pre_translate(text)
 					
+					elif self.to_language == 'cn':
+						pre_translate = self.english_pre_translate(text)
+						
+					elif self.to_language == 'jp':
+						pre_translate = self.english_pre_translate(text)
+					else:	
+					#elif self.to_language == 'vi':
+						pre_translate = self.english_pre_translate(text)
+					#print('pre_translate', pre_translate)
 					raw_source.append(text)
 					to_translate.append(pre_translate)
 					to_translate_index.append([i])
-
+					#print('Append done')
 				#raw_source.append(text)
 				#to_translate.append(pre_translate)
 				#to_translate_index.append(i)
@@ -727,7 +744,10 @@ class Translator:
 				#translated by memory
 				translation[i] = validation
 
+		#print('source_text', source_text)
 		#print('to_translate', to_translate)
+		#print('translation', translation)
+
 		if len(to_translate) > 0:
 			try:
 				translated = self.activated_translator(to_translate)
@@ -738,6 +758,8 @@ class Translator:
 		else:
 			translated = []	
 
+		#print('translated', translated)
+
 		for i in range(len(translated)):
 			for index_number in to_translate_index[i]:
 				translation[index_number] = translated[i]
@@ -745,13 +767,17 @@ class Translator:
 			if self.tm_update == True:
 				#print('Append TM: ', translated[i], raw_source[i] )
 				self.generate_temporary_tm(str_translated = translated[i], str_input = raw_source[i])
-	
+
+		
+		
 		if isinstance(Input, str):
 			return translation[0]
 		else:
 			return translation
 	
 	def activated_translator(self, source_text):
+		#print('Active translator')
+		
 		count = 0
 		try:
 			if isinstance(source_text, list):
@@ -759,6 +785,8 @@ class Translator:
 					count+= len(c)
 			elif isinstance(source_text, str):
 				count+= len(source_text)
+			#elif isinstance(source_text, int):
+			#	return source_text
 			else:
 				return False
 		except:
@@ -781,12 +809,30 @@ class Translator:
 
 			log_name = 'translator-error'
 			logger = client.logger(log_name)	
-			text_log = self.user_name + ', ' + self.pc_name + ', ' + self.glossary_id + ', ' + str(e)
+			
+			data_object = {
+				'user': self.user_name,
+				'device': self.pc_name,
+				'project': self.glossary_id,
+				'tool': self.used_tool,
+				'tool_ver': self.tool_version,
+				'translator_ver': ver_num,
+				'tm_size': self.translation_memory_size,
+				'tm_path': self.tm_path,
+				'error_message': str(e),
+			}
 
+			tracking_object = {
+				'user': self.user_name,
+				'details': data_object
+			}
+			
 			try:
-				logger.log_text(text_log)
-			except:
-				pass
+				logger.log_struct(tracking_object)
+			except Exception  as e:
+				print('exception:', e)
+				result = False
+		
 			translation = False
 		#print('translation', translation)
 		if translation != False:
@@ -1039,37 +1085,45 @@ class Translator:
 		# Please note that from translator V4, DB is store in base64 encoded format.
 		new_list_db = list(map(lambda x: self.base64_decode_list(x), list_db))
 		# Load DB as DataFrame
-		self.all_db = pd.DataFrame(columns=['tag', 'ko', 'en', 'cn', 'jp'], data=new_list_db)
+		db_columns = ['tag'] + self.supported_language
+
+		self.all_db = pd.DataFrame(columns=db_columns, data=new_list_db)
 		self.update_db_from_dataframe()
 
 	# Filter DB and store in suitable variable
 	def update_db_from_dataframe(self):
 		#Create header list:
 		header = self.all_db[self.all_db["tag"] == 'header'][[self.from_language, self.to_language]]
+		header = header.drop_duplicates()
 		self.header = header.values.tolist()
 		self.header = self.sort_dictionary(self.header)
 		#Create name list:
 		name = self.all_db[self.all_db["tag"] == 'name'][[self.from_language, self.to_language]]
+		name = name.drop_duplicates()
 		self.name = name.values.tolist()
 		self.name = self.sort_dictionary(self.name)
 		if self.from_language == 'en':
 			#Create en_only list:
 			en_dictionary = self.all_db[self.all_db["tag"] == 'en_only'][[self.from_language, self.to_language]]
+			en_dictionary = en_dictionary.drop_duplicates()
 			self.en_dictionary = en_dictionary.values.tolist()
 			self.en_dictionary = self.sort_dictionary(self.en_dictionary)
 		elif self.from_language == 'ko':
 			#Create kr_only list:
 			ko_dictionary = self.all_db[self.all_db["tag"] == 'kr_only'][[self.from_language, self.to_language]]
+			ko_dictionary = ko_dictionary.drop_duplicates()
 			self.ko_dictionary = ko_dictionary.values.tolist()
 			self.ko_dictionary = self.sort_dictionary(self.ko_dictionary)
 		elif self.from_language == 'cn':
 			#Create cn_only list:
 			cn_dictionary = self.all_db[self.all_db["tag"] == 'cn_only'][[self.from_language, self.to_language]]
+			cn_dictionary = cn_dictionary.drop_duplicates()
 			self.cn_dictionary = cn_dictionary.values.tolist()
 			self.cn_dictionary = self.sort_dictionary(self.cn_dictionary)
 		elif self.from_language == 'jp':
 			#Create jp_only list:
 			jp_dictionary = self.all_db[self.all_db["tag"] == 'jp_only'][[self.from_language, self.to_language]]
+			jp_dictionary = jp_dictionary.drop_duplicates()
 			self.jp_dictionary = jp_dictionary.values.tolist()
 			self.jp_dictionary = self.sort_dictionary(self.jp_dictionary)
 		#Create exception list:
@@ -1079,6 +1133,7 @@ class Translator:
 		
 		#Create normal dict list:
 		dictionary = self.all_db[self.all_db["tag"] == 'dictionary'][[self.from_language, self.to_language]]
+		dictionary = dictionary.drop_duplicates()
 		self.dictionary = dictionary.values.tolist()
 		self.dictionary = self.sort_dictionary(self.dictionary)
 		#print(self.dictionary)
@@ -1099,8 +1154,10 @@ class Translator:
 			gloss_id = gloss_data[0]
 			if glossary_id == gloss_id:
 				return gloss_data[1]
-		
+
+
 	# Create the glossary that use for glossary_translate
+	# Currently not use
 	def create_glossary(self, input_uri= None, glossary_id=None, timeout=180,):
 
 		client = translate.TranslationServiceClient()
@@ -1187,23 +1244,32 @@ class Translator:
 	def base64_decode(self, string_to_decode):
 		if string_to_decode in ['', None] :
 			return ''
-		return base64.b64decode(string_to_decode).decode('utf-8')
-		
+		try:
+			return base64.b64decode(string_to_decode).decode('utf-8')
+		except:
+			return string_to_decode
 	
+	# Decode the DB from base64 format and fill empty element (by '') to the list.
+	# All tag are not listed in the special_tag will be considered as 'dictionary'
 	def base64_decode_list(self, list_string_to_decode):
 		#print('list_string_to_decode', list_string_to_decode)
-		if len(list_string_to_decode) != 5:
-			return [['Invalid', None, None, None, None]]
-		decode = lambda x: self.base64_decode(x)
-		decoded_list = list(map(decode, list_string_to_decode[1:]))
+		DataFrame_len = len(self.supported_language) + 1
+
 		if list_string_to_decode[0] not in self.special_tag:
 			tag = 'dictionary'
 		else:
 			tag = list_string_to_decode[0]
 
+		decode = lambda x: self.base64_decode(x)
+		decoded_list = list(map(decode, list_string_to_decode[1:]))
+
 		decoded_list.insert(0, tag)
-	
-		return decoded_list
+
+		# Fill empty elements:
+		missing_element_count = DataFrame_len - len(decoded_list)
+		return_list = decoded_list + [""] * (missing_element_count)
+
+		return return_list
 
 ################################################################################################
 # Bucket manager
@@ -1389,10 +1455,8 @@ class Translator:
 					print('Fail to load tm')
 					all_tm = {}
 					
-				if isinstance(self.translation_memory, pd.DataFrame):
-					self.translation_memory = self.translation_memory.append(self.temporary_tm)
-				else:
-					self.translation_memory = self.temporary_tm
+				for Pair in temporary_tm:
+					self.translation_memory = self.translation_memory.append(Pair, ignore_index=True)
 
 				all_tm[self.glossary_id] = self.translation_memory
 				
@@ -1447,20 +1511,32 @@ class Translator:
 		
 		return 
 		
+	def create_new_tm_file(self, new_tm_file):
+	
+		while True:
+			all_tm = {}
+			all_tm[self.glossary_id] = None
+			try:
+				with open(new_tm_file, 'wb') as pickle_file:
+					print("Updating pickle file....", new_tm_file)
+					pickle.dump(all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)			
+				return
+			except Exception  as e:
+				print("Error:", e)
+		return 
+
 	def refresh_translation_memory(self):
 		self.import_translation_memory()
 
+	# Temporary TM is a list of dict
+	# {self.to_language: translated, self.from_language: Input}
 	# Add a KR-en pair into TM
 	def generate_temporary_tm(self, str_translated = "", str_input = ""):
+		#print('Generate temporary tm')
 		translated = str_translated.lower()
 		Input = str_input.lower()
-		if self.from_language in self.temporary_tm:
-			if Input not in self.temporary_tm[self.from_language]:	
-				new_row = {self.to_language: translated, self.from_language: Input}
-				self.temporary_tm = self.temporary_tm.append(new_row, ignore_index=True)
-		else:
-			new_row = {self.to_language: translated, self.from_language: Input}
-			self.temporary_tm = self.temporary_tm.append(new_row, ignore_index=True)
+		new_row = {self.to_language: translated, self.from_language: Input}
+		self.temporary_tm.append(new_row)
 
 	# Remove duplicated pair, lower string in the TM
 	def optimize_translation_memory(self):
@@ -1544,14 +1620,14 @@ class Translator:
 			#print('Error message (TM):', e)
 			pass
 		
+		# new_row = {self.to_language: translated, self.from_language: Input}
+		# self.temporary_tm = self.temporary_tm.append(new_row)
+		
 		try:
 			if len(self.temporary_tm) > 0:
-				#translated = self.temporary_tm[self.to_language].where(self.temporary_tm[self.from_language] == source_text)[0]
-				translated = self.temporary_tm.loc[self.temporary_tm[self.from_language] == source_text]
-				if len(translated) > 0:
-					#print('Temporary TM translate', translated)
-					return translated.iloc[0][self.from_language]
-
+				for pair in self.temporary_tm:
+					if pair[self.from_language] == Source_Text:
+						return pair[self.to_language]
 		except Exception  as e:
 			#print('Error message(temporary TM):', e)
 			return False
