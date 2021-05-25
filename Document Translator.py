@@ -175,11 +175,13 @@ class DocumentTranslator(Frame):
 		self.source_language = StringVar()
 
 		self.source_language_select = OptionMenu(Tab, self.source_language, *self.language_list, command = self.set_source_language)
+		self.source_language_select.config(width=self.HALF_BUTTON_WIDTH)
 		self.source_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
 
 		self.target_language = StringVar()
 
 		self.target_language_select = OptionMenu(Tab, self.target_language, *self.language_list, command = self.set_target_language)
+		self.target_language_select.config(width=self.HALF_BUTTON_WIDTH)
 		self.target_language_select.grid(row=Row, column=3, padx=0, pady=5, sticky=W)
 
 		'''
@@ -363,19 +365,19 @@ class DocumentTranslator(Frame):
 		verscrlbar = Scrollbar(Tab, orient ="vertical", command = self.Treeview.yview)
 		#verscrlbar.pack(side ='right', fill ='x') 
 		self.Treeview.configure(  yscrollcommand=verscrlbar.set)
-
+	
 		self.Treeview.Scrollable = True
-		self.Treeview['columns'] = ('index', 'KO', 'EN')
+		self.Treeview['columns'] = ('index', 'Source', 'Target')
 
 		self.Treeview.column('#0', width=0, stretch=NO)
 		self.Treeview.column('index', anchor=CENTER, width=0, stretch=NO)
-		self.Treeview.column('KO', anchor=CENTER, width=80)
-		self.Treeview.column('EN', anchor=CENTER, width=80)
+		self.Treeview.column('Source', anchor=CENTER, width=80)
+		self.Treeview.column('Target', anchor=CENTER, width=80)
 
 		self.Treeview.heading('#0', text='', anchor=CENTER)
 		self.Treeview.heading('index', text='index', anchor=CENTER)
-		self.Treeview.heading('KO', text='KO', anchor=CENTER)
-		self.Treeview.heading('EN', text='EN', anchor=CENTER)
+		self.Treeview.heading('Source', text='Source', anchor=CENTER)
+		self.Treeview.heading('Target', text='Target', anchor=CENTER)
 
 		verscrlbar.grid(row=Row, column=Max_Size,  sticky = (N,S,E))
 		Tab.grid_columnconfigure(Max_Size, weight=0, pad=0)
@@ -457,13 +459,13 @@ class DocumentTranslator(Frame):
 		print('Total TM:', tm_size)
 		#for i in range(tm_size):
 		for index, pair in self.MyTranslator.translation_memory.iterrows():	
-			en_str = pair['en']
-			ko_str = pair['ko']
-			if ko_str != None:
+			from_str = pair[self.MyTranslator.from_language]
+			to_str = pair[self.MyTranslator.to_language]
+			if from_str != None:
 				#print("Pair:", ko_str, en_str)
 				try:
 					#self.Treeview.insert('', 'end', text= str(pair['ko']), values=([str(pair['en'])]))
-					self.Treeview.insert('', 'end', text= '', values=( index, str(ko_str), str(en_str)))
+					self.Treeview.insert('', 'end', text= '', values=( index, str(to_str), str(from_str)))
 					#print('Inserted id:', id)
 				except:
 					pass	
@@ -477,14 +479,14 @@ class DocumentTranslator(Frame):
 			try:
 				if len(self.MyTranslator.translation_memory) > 0:
 					#translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
-					result_en = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory['en'].str.match(text)]
-					result_ko = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory['ko'].str.match(text)]
-					result = result_en.append(result_ko)
-					print('type', type(result), 'total', len(result))
+					result_from = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory[self.MyTranslator.from_language].str.match(text)]
+					result_to = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory[self.MyTranslator.to_language].str.match(text)]
+					result = result_from.append(result_to)
+					#print('type', type(result), 'total', len(result))
 					if len(result) > 0:
 						for index, pair in result.iterrows():
 							#self.Treeview.insert('', 'end', text= str(pair['ko']), values=([str(pair['en'])]))
-							self.Treeview.insert('', 'end', text= '', values=(index, str(pair['ko']), str(pair['en'])))
+							self.Treeview.insert('', 'end', text= '', values=(index, str(pair[self.MyTranslator.to_language]), str(pair[self.MyTranslator.from_language])))
 			except Exception  as e:
 				#print('Error message (TM):', e)
 				pass
@@ -826,13 +828,21 @@ class DocumentTranslator(Frame):
 		self.generate_translator_engine()
 
 	def set_target_language(self, target_language):
-		to_language = self.language_id_list[self.language_list.index(target_language)]
+		index = self.language_list.index(target_language)
+		to_language = self.language_id_list[index]
+		
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', index)
+
 		self.MyTranslator.set_target_language(to_language)
 		self.DictionaryStatus.set(str(len(self.MyTranslator.dictionary)))
 		self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
 	def set_source_language(self, source_language):
-		from_language = self.language_id_list[self.language_list.index(source_language)]
+		index = self.language_list.index(source_language)
+		from_language = self.language_id_list[index]
+
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_lang', index)
+
 		self.MyTranslator.set_source_language(from_language)	
 		self.DictionaryStatus.set(str(len(self.MyTranslator.dictionary)))
 		self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
@@ -1360,56 +1370,62 @@ def Optimize(SourceDocument, StatusQueue):
 ###########################################################################################
 def Function_Execute_Script(StatusQueue, DB_Path, glossary_id, **kwargs):
 
-	#Output = Function_Create_CSV_DB(StatusQueue, DB_Path)
 	Output = function_create_db_data(StatusQueue, DB_Path)
 
-	
-	#StatusQueue.put("CSV DB created:" + str(Output))
+	StatusQueue.put("CSV DB created:" + str(Output))
 	if glossary_id != '':
 		
+		MyTranslator = Translator(	from_language = 'en', 
+									to_language = 'ko', 
+									glossary_id =  glossary_id, 
+									temporary_tm = None,
+									tm_path = None, 
+									used_tool = 'Document Translator', 
+									tool_version = ver_num,)
+		MyTranslator.backup_and_update_glob(glossary_id, Output)
+		
+		print('Logging data')
+
 		client = logging.Client()
+		
 		log_name = 'db-update'
+
 		logger = client.logger(log_name)
-		try:
-			account = os.getlogin()
-		except:
-			account = 'Anonymous'
 		
 		try:
-			name = os.environ['COMPUTERNAME']
+			if sys.platform.startswith('win') == 'win':
+				try:
+					user_name = os.getlogin()
+				except:
+					user_name = os.environ['COMPUTERNAME']
+			else:
+				try:
+					user_name = os.environ['LOGNAME']
+				except:
+					user_name = "Anonymous"
 		except:
-			name = 'Anonymous'	
-		# Update new format later
-		'''
+			user_name = "Anonymous"
+
 		data_object = {
-				'device': self.pc_name,
-				'project': self.glossary_id,
-				'tool': self.used_tool,
-				'tool_ver': self.tool_version,
-				'translator_ver': ver_num,
-				'api_usage': self.last_section_api_usage,
-				'tm_usage': self.last_section_tm_request,
-				'invalid_request': self.last_section_invalid_request,
-				'tm_size': self.translation_memory_size,
-				'tm_path': self.tm_path
-			}
-		if 	file_name != None:
-			data_object['file_name'] = file_name
+			'tool': 'Document Translator',
+			'translator_ver': ver_num,
+			'glossary_id': glossary_id,
+			'db_file': str(Output)
+		}
 
 		tracking_object = {
-			'user': self.user_name,
+			'user': user_name,
 			'details': data_object
 		}
 		
-		logger.log_struct(tracking_object)
-		'''
-		text_log = account + ', ' + name + ', ' + glossary_id + ', ' + DB_Path
-		logger.log_text(text_log)
-
-		myTranslator = Translator('ko', 'en', None, None, False, False, False, glossary_id, )
+		try:
+			logger.log_struct(tracking_object)
+		except Exception  as e:
+			print('exception:', e)
+			result = False
 		
-		myTranslator.update_glob(glossary_id, Output)
-
+		
+		
 		StatusQueue.put("DB updated.")
 
 
@@ -1871,7 +1887,7 @@ def send_fail_request(error_message):
 	logger = client.logger(log_name)
 	
 	try:
-		if self.OS == 'win':
+		if sys.platform.startswith('win') == 'win':
 			try:
 				user_name = os.getlogin()
 			except:

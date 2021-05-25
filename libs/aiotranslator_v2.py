@@ -42,7 +42,7 @@ Translatorversion = Tool + " " + ver_num
 
 class Translator:
 	def __init__(self, 
-		from_language = 'auto', 
+		from_language = 'ko', 
 		to_language = 'en', 
 		source_language_predict = True, 
 		proactive_memory_translate = True, 
@@ -198,7 +198,10 @@ class Translator:
 		return path
 	
 	def init_temporary_tm(self):
-		self.temporary_tm[:]	
+		if self.temporary_tm != None:
+			self.temporary_tm[:]
+		else:
+			self.temporary_tm = []	
 
 
 	def get_user_name(self):
@@ -1020,9 +1023,7 @@ class Translator:
 		cloud_client = storage.Client()
 
 		bucket = cloud_client.get_bucket(self.bucket_id)
-
 		blob = bucket.get_blob(self.db_list_uri)
-
 		listdb = blob.download_as_text()
 
 		mydb = listdb.split('\r\n')
@@ -1257,7 +1258,9 @@ class Translator:
 				print('URI:', uri)
 				print("Load DB from glob:", uri)
 				self.load_db_from_glob(uri)
+				print('Loading done!')
 			except Exception as e:
+				#self.load_db_from_glob(uri)
 				print('[Error] prepare_db_data:', e)
 
 		else:
@@ -1333,7 +1336,31 @@ class Translator:
 		print('Uploading to blob')
 		blob.upload_from_filename(filename = Upload_Path)
 		#def create_glossary(self, input_uri= None, glossary_id=None, timeout=180,):
+	
+	# Replace the DB file by the new one
+	# Need to rename the old DB file for backup purpose
+	# 	-> Update later
+	def backup_and_update_glob(self, glossary_id, Upload_Path):
+		from google.cloud import storage
+		sclient = storage.Client()
+		
+		#gloss = self.get_glossary(glossary_id)
 
+		bucket = sclient.get_bucket(self.bucket_id)
+		try:
+			blob_id = self.get_glossary_path(glossary_id)
+		except:
+			return False	
+		current_timestamp  = self.get_time_stamp()
+		blob = bucket.blob(blob_id)
+		blob_name, ext = os.path.splitext(blob_id)
+		new_blob = blob_name + "_" + current_timestamp + ext
+		print('Backup blob to: ', new_blob)
+		bucket.copy_blob(blob, bucket, new_blob)
+		print('Uploading to blob')
+		blob.upload_from_filename(filename = Upload_Path)
+		print('Uploading done.')
+		#def create_glossary(self, input_uri= None, glossary_id=None, timeout=180,):
 	# Upload DB to bucket
 	# DB file will be converted into base64 format
 	# 
@@ -1407,7 +1434,7 @@ class Translator:
 			if os.path.isfile(tm_path):
 				self.tm_path = self.correct_path_os(tm_path)
 				return
-		if self.used_tool == writer:
+		if self.used_tool == 'writer':
 			self.tm_path = None
 			return
 		tm_path = self.config_path + '\\AIO Translator\\Local.pkl'
@@ -1592,7 +1619,6 @@ class Translator:
 	# {self.to_language: translated, self.from_language: Input}
 	# Add a KR-en pair into TM
 	def generate_temporary_tm(self, str_translated = "", str_input = ""):
-		#print('Generate temporary tm')
 		translated = str_translated.lower()
 		Input = str_input.lower()
 		new_row = {self.to_language: translated, self.from_language: Input}
