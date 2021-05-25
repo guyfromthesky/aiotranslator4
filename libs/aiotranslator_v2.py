@@ -32,6 +32,14 @@ a,b,c,d = list(str(rev))
 ver_num = a + '.' + b + '.' + c + chr(int(d)+97)
 Translatorversion = Tool + " " + ver_num
 
+# self.temporary_tm: @Manager.List
+# If the translator is run in multiple process, the temporary 
+# TM can be share with this feature.
+# self.tm_path: @String
+# Location of TM file.
+# When the translator is created, the TM will be loaded.
+
+
 class Translator:
 	def __init__(self, 
 		from_language = 'auto', 
@@ -89,14 +97,14 @@ class Translator:
 		self.init_logging_file()
 
 		#self.SpecialSheets = ['kr_only', 'en_only', 'name']
-		self.special_tag = ['header', 'name', 'en_only', 'kr_only', 'cn_only', 'jp_only', 'exception']
+		self.special_tag = ['header', 'name', 'en_only', 'kr_only', 'cn_only', 'jp_only', 'vi_only', 'exception']
 		self.supported_language = ['ko', 'en', 'cn', 'jp', 'vi']
 		
 		self.init_db_data()
 
 		self.temporary_tm = temporary_tm
 
-		self.translation_memory = pd.DataFrame()
+		self.translation_memory = None
 		self.translation_memory_size = 0
 
 		self.exception_Char = string.punctuation + string.digits
@@ -1373,10 +1381,18 @@ class Translator:
 			if os.path.isfile(tm_path):
 				self.tm_path = self.correct_path_os(tm_path)
 				return
+		if self.used_tool == writer:
+			self.tm_path = None
+			return
 		tm_path = self.config_path + '\\AIO Translator\\Local.pkl'
 		self.tm_path = self.correct_path_os(tm_path)
 		return
 
+	def init_translation_memory(self):
+		self.translation_memory = pd.DataFrame(columns=self.supported_language)	
+
+	# Load TM detail from pickle file.
+	# The TM support all supported languages (en, ko, jp, cn, vi)
 	def import_translation_memory(self):
 		print('Import TM from pickle file', str(self.tm_path))
 		if not os.path.isfile(self.tm_path):
@@ -1396,20 +1412,21 @@ class Translator:
 					elif 'EN' in all_tm:
 						# Please note that from V3 and below, the TM only have 2 languages.
 						print('TM v3')		
-						self.translation_memory = pd.DataFrame()
+						self.init_translation_memory()
+
 						self.translation_memory['en'] = all_tm['EN']
 						self.translation_memory['en'] = self.translation_memory['en'].str.lower()
 						self.translation_memory['ko'] = all_tm['KO']
 						self.translation_memory['ko'] = self.translation_memory['ko'].str.lower()
 					else:
 						print('No TM for this ProjectID')
-						self.translation_memory = pd.DataFrame()
-	
-			
+						self.init_translation_memory()
+
 				elif isinstance(all_tm, list):
 					print('TM v2')
 					# Consider drop support
-					self.translation_memory = pd.DataFrame()
+					self.init_translation_memory()
+					
 					for Pair in all_tm:
 						new_row = {'en': Pair[1], 'ko':Pair[0],}
 						self.translation_memory = self.translation_memory.append(new_row, ignore_index=True)
@@ -1443,20 +1460,31 @@ class Translator:
 						# TM format v3
 						elif 'en' in TM:
 							print('TM v3 format')
+
+							self.init_translation_memory()
+
 							self.translation_memory = pd.DataFrame({'en': all_tm['en'],'ko': all_tm['ko']})
 			
 					elif isinstance(all_tm, list):
 						print('TM v2 format')
-						self.translation_memory = pd.DataFrame()
+						self.init_translation_memory()
+
 						for Pair in all_tm:
 							new_row = {'en': Pair[1], 'ko':Pair[0]}
 						self.translation_memory = self.translation_memory.append(new_row, ignore_index=True)
 				except:
 					print('Fail to load tm')
 					all_tm = {}
-					
-				for Pair in temporary_tm:
-					self.translation_memory = self.translation_memory.append(Pair, ignore_index=True)
+				if self.translation_memory.empty:
+					self.init_translation_memory()
+
+				for Pair in self.temporary_tm:
+					try:
+						self.translation_memory = self.append_tm_dataframe(self.translation_memory, Pair)
+					except Exception as e:
+						print('Append TM DF error:', e)	
+
+					#self.translation_memory = self.translation_memory.append(Pair, ignore_index=True)
 
 				all_tm[self.glossary_id] = self.translation_memory
 				
@@ -1512,16 +1540,15 @@ class Translator:
 		
 	def create_new_tm_file(self, new_tm_file):
 	
-		while True:
-			all_tm = {}
-			all_tm[self.glossary_id] = None
-			try:
-				with open(new_tm_file, 'wb') as pickle_file:
-					print("Updating pickle file....", new_tm_file)
-					pickle.dump(all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)			
-				return
-			except Exception  as e:
-				print("Error:", e)
+		all_tm = {}
+		all_tm[self.glossary_id] = None
+		try:
+			with open(new_tm_file, 'wb') as pickle_file:
+				print("Updating pickle file....", new_tm_file)
+				pickle.dump(all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)			
+			return
+		except Exception  as e:
+			print("Error:", e)
 		return 
 
 	def refresh_translation_memory(self):
@@ -1632,6 +1659,33 @@ class Translator:
 			return False
 
 		return False
+
+	def append_tm_dataframe(self, dataframe, pair, ):
+		print(dataframe)
+		# pair: @dict
+		index_value = pair[self.from_language]
+		append_value = pair[self.to_language]
+
+		index = dataframe.index
+
+		if self.from_language in dataframe.columns:
+			condition = dataframe[self.from_language] == index_value
+
+
+		indices = index[condition]
+		indices_list = indices.tolist()
+		#print('indices_list', indices_list)
+
+		if len(indices_list) == 0:
+			dataframe = dataframe.append({self.from_language: index_value, self.to_language: append_value}, ignore_index=True)
+			return dataframe
+		else:
+			append_indices = indices_list[0]
+			if pd.isna(dataframe[self.to_language][append_indices]):
+				dataframe[self.to_language][append_indices] = append_value
+				return dataframe
+			else:
+				return dataframe
 
 #########################################################################
 # Toggle function
