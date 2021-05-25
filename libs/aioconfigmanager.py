@@ -107,7 +107,10 @@ class ConfigLoader:
 			self.Config[Section] = {}
 
 		self.Init_Config_Option(config, Section, 'app_lang', 2)
+		
 		self.Init_Config_Option(config, Section, 'target_lang', 2)
+		self.Init_Config_Option(config, Section, 'source_lang', 2)
+
 		self.Init_Config_Option(config, Section, 'speed_mode', 0)
 		self.Init_Config_Option(config, Section, 'value_only', 0)
 		self.Init_Config_Option(config, Section, 'file_name_correct', 1)

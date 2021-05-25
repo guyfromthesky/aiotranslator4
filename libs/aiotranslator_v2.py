@@ -695,6 +695,8 @@ class Translator:
 	# Translator main function.
 	# All the text will be passed into this function.
 	def translate(self, Input):
+		if self.to_language == self.from_language:
+			return Input
 		#print('Translate:', Input)
 		if isinstance(Input, list):
 			source_text = Input
@@ -804,10 +806,9 @@ class Translator:
 			return
 		
 		try:	
-			if self.project_bucket_id != self.project_id:
-				translation = self.google_translate_v3(source_text)
-			else:
-				translation =  self.google_glossary_translate(source_text)
+			
+			translation = self.google_translate_v3(source_text)
+		
 		except Exception  as e:
 			print('error translation:', e)
 			try:
@@ -856,8 +857,15 @@ class Translator:
 				return pair[1]
 		return False
 
+	def correct_language_code(self, language_code):
+		if language_code == 'jp':
+			return 'ja'
+		if language_code == 'cn':
+			return 'zh-TW'
+		return language_code
+
 	def google_translate_v3(self, source_text):
-		#print('Translate with GoogleAPItranslate')
+		print('Translate with GoogleAPItranslate')
 		"""Translates a given text using a glossary."""
 		ToTranslate = []
 		
@@ -870,12 +878,15 @@ class Translator:
 		
 		Client = translate.TranslationServiceClient()
 		Parent = f"projects/{self.project_id}/locations/{self.location}"
-
+		target_language_code = self.correct_language_code(self.to_language)
+		print('target_language_code', target_language_code)
+		source_language_code = self.correct_language_code(self.from_language)
+		print('source_language_code', source_language_code)
 		response = Client.translate_text(
 			request={
 				"contents": ToTranslate,
-				"target_language_code": self.to_language,
-				"source_language_code": self.from_language,
+				"target_language_code": target_language_code,
+				"source_language_code": source_language_code,
 				"parent": Parent,
 			}
 		)
@@ -934,23 +945,26 @@ class Translator:
 	def set_subscription_key(self, SubscriptionKey):
 		self.SubscriptionKey = SubscriptionKey	
 
-	def set_target_language(self, TargetLangauge):
-		if TargetLangauge != self.to_language:
-			print('Set target lang to:', TargetLangauge)
-			Temp = self.to_language
-			self.to_language = TargetLangauge	
-			self.from_language = Temp
-		self.to_language = TargetLangauge	
-		self.update_db_from_dataframe()
-
+	def set_target_language(self, target_language):
+		if target_language != self.to_language:
+			print('Set target lang to:', target_language)
+			self.to_language = target_language	
+			self.update_db_from_dataframe()
+			self.import_translation_memory()
 
 	def set_source_language(self, source_language):
 		if source_language != self.from_language:
 			print('Set source lang to:', source_language)
-			Temp = self.from_language
 			self.from_language = source_language	
-			self.to_language = Temp
 			self.update_db_from_dataframe()
+			self.import_translation_memory()
+
+	def set_language_pair(self, source_language, target_language):
+		if source_language != target_language:
+			self.from_language = source_language
+			self.to_language = target_language
+			self.update_db_from_dataframe()
+			self.import_translation_memory()
 
 	def swap_language(self):
 		Temp = self.from_language
@@ -1100,52 +1114,64 @@ class Translator:
 
 	# Filter DB and store in suitable variable
 	def update_db_from_dataframe(self):
-		#Create header list:
-		header = self.all_db[self.all_db["tag"] == 'header'][[self.from_language, self.to_language]]
-		header = header.drop_duplicates()
-		self.header = header.values.tolist()
-		self.header = self.sort_dictionary(self.header)
-		#Create name list:
-		name = self.all_db[self.all_db["tag"] == 'name'][[self.from_language, self.to_language]]
-		name = name.drop_duplicates()
-		self.name = name.values.tolist()
-		self.name = self.sort_dictionary(self.name)
-		if self.from_language == 'en':
-			#Create en_only list:
-			en_dictionary = self.all_db[self.all_db["tag"] == 'en_only'][[self.from_language, self.to_language]]
-			en_dictionary = en_dictionary.drop_duplicates()
-			self.en_dictionary = en_dictionary.values.tolist()
-			self.en_dictionary = self.sort_dictionary(self.en_dictionary)
-		elif self.from_language == 'ko':
-			#Create kr_only list:
-			ko_dictionary = self.all_db[self.all_db["tag"] == 'kr_only'][[self.from_language, self.to_language]]
-			ko_dictionary = ko_dictionary.drop_duplicates()
-			self.ko_dictionary = ko_dictionary.values.tolist()
-			self.ko_dictionary = self.sort_dictionary(self.ko_dictionary)
-		elif self.from_language == 'cn':
-			#Create cn_only list:
-			cn_dictionary = self.all_db[self.all_db["tag"] == 'cn_only'][[self.from_language, self.to_language]]
-			cn_dictionary = cn_dictionary.drop_duplicates()
-			self.cn_dictionary = cn_dictionary.values.tolist()
-			self.cn_dictionary = self.sort_dictionary(self.cn_dictionary)
-		elif self.from_language == 'jp':
-			#Create jp_only list:
-			jp_dictionary = self.all_db[self.all_db["tag"] == 'jp_only'][[self.from_language, self.to_language]]
-			jp_dictionary = jp_dictionary.drop_duplicates()
-			self.jp_dictionary = jp_dictionary.values.tolist()
-			self.jp_dictionary = self.sort_dictionary(self.jp_dictionary)
-		#Create exception list:
-		exception_for_source_language = self.all_db[self.all_db["tag"] == 'exception'][[self.to_language]].values.tolist()
-		exception_for_target_language = self.all_db[self.all_db["tag"] == 'exception'][[self.from_language]].values.tolist()
-		self.exception = exception_for_source_language + exception_for_target_language
-		
-		#Create normal dict list:
-		dictionary = self.all_db[self.all_db["tag"] == 'dictionary'][[self.from_language, self.to_language]]
-		dictionary = dictionary.drop_duplicates()
-		self.dictionary = dictionary.values.tolist()
-		self.dictionary = self.sort_dictionary(self.dictionary)
-		#print(self.dictionary)
-
+		#print("prepare new DB: ", "Source language: ", self.from_language, 'Target language: ', self.to_language,)
+		# Drop N/A value
+		if self.from_language != self.to_language:
+			all_db = self.all_db[~self.all_db[self.from_language].isin([''])][['tag', self.from_language, self.to_language]]
+			all_db = all_db[~all_db[self.to_language].isin([''])][['tag', self.from_language, self.to_language]]
+			#all_db = self.all_db.dropna(subset=[self.from_language])[['tag', self.from_language, self.to_language]]
+			#all_db = all_db.dropna(subset=[self.to_language])[['tag', self.from_language, self.to_language]]
+			
+			
+			#print('all_db', all_db)
+			#Create header list:
+			header = all_db[all_db["tag"] == 'header'][[self.from_language, self.to_language]]
+			header = header.drop_duplicates()
+			self.header = header.values.tolist()
+			self.header = self.sort_dictionary(self.header)
+			#Create name list:
+			name = all_db[all_db["tag"] == 'name'][[self.from_language, self.to_language]]
+			name = name.drop_duplicates()
+			self.name = name.values.tolist()
+			self.name = self.sort_dictionary(self.name)
+			if self.from_language == 'en':
+				#Create en_only list:
+				en_dictionary = all_db[all_db["tag"] == 'en_only'][[self.from_language, self.to_language]]
+				en_dictionary = en_dictionary.drop_duplicates()
+				self.en_dictionary = en_dictionary.values.tolist()
+				self.en_dictionary = self.sort_dictionary(self.en_dictionary)
+			elif self.from_language == 'ko':
+				#Create kr_only list:
+				ko_dictionary = all_db[all_db["tag"] == 'kr_only'][[self.from_language, self.to_language]]
+				ko_dictionary = ko_dictionary.drop_duplicates()
+				self.ko_dictionary = ko_dictionary.values.tolist()
+				self.ko_dictionary = self.sort_dictionary(self.ko_dictionary)
+			elif self.from_language == 'cn':
+				#Create cn_only list:
+				cn_dictionary = all_db[all_db["tag"] == 'cn_only'][[self.from_language, self.to_language]]
+				cn_dictionary = cn_dictionary.drop_duplicates()
+				self.cn_dictionary = cn_dictionary.values.tolist()
+				self.cn_dictionary = self.sort_dictionary(self.cn_dictionary)
+			elif self.from_language == 'jp':
+				#Create jp_only list:
+				jp_dictionary = all_db[all_db["tag"] == 'jp_only'][[self.from_language, self.to_language]]
+				jp_dictionary = jp_dictionary.drop_duplicates()
+				self.jp_dictionary = jp_dictionary.values.tolist()
+				self.jp_dictionary = self.sort_dictionary(self.jp_dictionary)
+			#Create exception list:
+			exception_for_source_language = all_db[all_db["tag"] == 'exception'][[self.to_language]].values.tolist()
+			exception_for_target_language = all_db[all_db["tag"] == 'exception'][[self.from_language]].values.tolist()
+			self.exception = exception_for_source_language + exception_for_target_language
+			
+			#Create normal dict list:
+			dictionary = all_db[all_db["tag"] == 'dictionary'][[self.from_language, self.to_language]]
+			dictionary = dictionary.drop_duplicates()
+			self.dictionary = dictionary.values.tolist()
+			self.dictionary = self.sort_dictionary(self.dictionary)
+			#print("Dict: ", len(self.dictionary))
+			#print("Dict: ", len(self.dictionary))
+		else:
+			self.dictionary = []
 
 
 	def get_glossary_length(self, timeout=180,):
@@ -1394,7 +1420,11 @@ class Translator:
 	# Load TM detail from pickle file.
 	# The TM support all supported languages (en, ko, jp, cn, vi)
 	def import_translation_memory(self):
-		print('Import TM from pickle file', str(self.tm_path))
+		#print('Import TM from pickle file', str(self.tm_path))
+
+		self.init_temporary_tm()
+		self.init_translation_memory()
+
 		if not os.path.isfile(self.tm_path):
 			print('Pickle file not found')
 			return
@@ -1412,7 +1442,6 @@ class Translator:
 					elif 'EN' in all_tm:
 						# Please note that from V3 and below, the TM only have 2 languages.
 						print('TM v3')		
-						self.init_translation_memory()
 
 						self.translation_memory['en'] = all_tm['EN']
 						self.translation_memory['en'] = self.translation_memory['en'].str.lower()
@@ -1420,12 +1449,10 @@ class Translator:
 						self.translation_memory['ko'] = self.translation_memory['ko'].str.lower()
 					else:
 						print('No TM for this ProjectID')
-						self.init_translation_memory()
 
 				elif isinstance(all_tm, list):
 					print('TM v2')
 					# Consider drop support
-					self.init_translation_memory()
 					
 					for Pair in all_tm:
 						new_row = {'en': Pair[1], 'ko':Pair[0],}
@@ -1437,15 +1464,22 @@ class Translator:
 				print("Error:", e)
 				print('Fail to load pickle file')
 				return
-		print('Size of loaded TM', len(self.translation_memory))			
-		self.translation_memory.drop_duplicates(inplace=True)
-		self.translation_memory_size = len(self.translation_memory)
-		print('Size of optimized TM', self.translation_memory_size)		
+
+		if self.from_language != self.to_language:
+			self.translation_memory = self.translation_memory.dropna(subset=[self.from_language])
+			self.translation_memory = self.translation_memory.dropna(subset=[self.to_language])
+			#self.translation_memory = self.translation_memory[~self.translation_memory[self.to_language].isin([pd.NA])][[self.from_language, self.to_language]]
+			self.translation_memory = self.translation_memory[[self.from_language, self.to_language]]
+			self.translation_memory.drop_duplicates(inplace=True)
+		else:
+			self.init_translation_memory()
+
+		self.translation_memory_size = len(self.translation_memory)	
 
 	# Update TM from temporary_tm to pickle file
 	def append_translation_memory(self):
 		new_tm_size = len(self.temporary_tm)
-		print('Size of temporary TM: ', new_tm_size)
+		#print('Size of temporary TM: ', new_tm_size)
 
 		if len(self.temporary_tm) > 0:
 			while True:
@@ -1661,7 +1695,7 @@ class Translator:
 		return False
 
 	def append_tm_dataframe(self, dataframe, pair, ):
-		print(dataframe)
+		#print(dataframe)
 		# pair: @dict
 		index_value = pair[self.from_language]
 		append_value = pair[self.to_language]

@@ -28,7 +28,7 @@ import unicodedata
 #from urllib.parse import urlparse
 
 #GUI
-from tkinter.ttk import Entry, Combobox, Label, Treeview, Scrollbar
+from tkinter.ttk import Entry, Combobox, Label, Treeview, Scrollbar, OptionMenu
 from tkinter.ttk import Radiobutton, Checkbutton, Button
 from tkinter.ttk import Progressbar, Style
 
@@ -89,7 +89,6 @@ class DocumentTranslator(Frame):
 		self.TMManager = tm_manager
 		# Translator Class
 		self.MyTranslator = None
-		self.MyTranslatorAgent = my_translator_agent
 		
 
 		self.Usage = 0
@@ -108,9 +107,10 @@ class DocumentTranslator(Frame):
 		#self.Shallow = True	
 		self.AppLanguage = "en"
 		
+		self.language_id_list = ['', 'ko', 'en', 'cn', 'jp', 'vi']
+		self.language_list = ['', 'Hangul', 'English', 'Chinese', 'Japanese', 'Vietnamese']
+		
 		self.GlossaryList = []
-
-		self.My_DB = None
 
 		self.BUTTON_WIDTH = 20
 		self.HALF_BUTTON_WIDTH = 15
@@ -171,10 +171,22 @@ class DocumentTranslator(Frame):
 
 		Row+=1
 		Label(Tab, text=  self.LanguagePack.Label['Language'], width= 10, font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+
+		self.source_language = StringVar()
+
+		self.source_language_select = OptionMenu(Tab, self.source_language, *self.language_list, command = self.set_source_language)
+		self.source_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
+
+		self.target_language = StringVar()
+
+		self.target_language_select = OptionMenu(Tab, self.target_language, *self.language_list, command = self.set_target_language)
+		self.target_language_select.grid(row=Row, column=3, padx=0, pady=5, sticky=W)
+
+		'''
 		self.Language = IntVar()	
 		Radiobutton(Tab, width= 10, text=  self.LanguagePack.Option['Hangul'], value=1, variable=self.Language, command= self.set_target_language).grid(row=Row, column=2, padx=0, pady=5, sticky=W)
 		Radiobutton(Tab, width= 10, text=  self.LanguagePack.Option['English'], value=2, variable=self.Language, command= self.set_target_language).grid(row=Row, column=3, padx=0, pady=5, sticky=W)
-
+		'''
 				
 		Label(Tab, text= self.LanguagePack.Label['ProjectKey']).grid(row=Row, column=4, padx=5, pady=5, sticky=W)
 		self.Text_glossary_id = AutocompleteCombobox(Tab)
@@ -558,7 +570,7 @@ class DocumentTranslator(Frame):
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'app_lang', language)
 
 	def save_app_config(self):
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', self.Language.get())
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', self.target_language.get())
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'speed_mode', self.TurboTranslate.get())
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'value_only', self.DataOnly.get())
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'file_name_correct', self.TranslateFileName.get())
@@ -789,7 +801,10 @@ class DocumentTranslator(Frame):
 		self.project_bucket_id = self.Configuration['project_bucket_id']['value']
 
 	def init_UI_setting(self):
-		self.Language.set(self.Configuration['Document_Translator']['target_lang'])
+
+		self.target_language.set(self.language_list[self.Configuration['Document_Translator']['target_lang']])
+		self.source_language.set(self.language_list[self.Configuration['Document_Translator']['source_lang']])
+		
 		self.TurboTranslate.set(self.Configuration['Document_Translator']['speed_mode'])
 		self.DataOnly.set(self.Configuration['Document_Translator']['value_only'])
 		self.FixCorruptFileName.set(self.Configuration['Document_Translator']['file_name_correct'])
@@ -806,18 +821,24 @@ class DocumentTranslator(Frame):
 
 	def renew_my_translator(self):
 		self.MyTranslator = None
-		del self.My_DB
-		self.My_DB = None
+
 		self.TranslateBtn.configure(state=DISABLED)
 		self.generate_translator_engine()
 
-	def set_target_language(self):
-		if self.Language.get() == 1:
-			to_language = 'ko'
-		else:
-			to_language = 'en'
-		self.MyTranslator.set_target_language(to_language)	
+	def set_target_language(self, target_language):
+		to_language = self.language_id_list[self.language_list.index(target_language)]
+		self.MyTranslator.set_target_language(to_language)
+		self.DictionaryStatus.set(str(len(self.MyTranslator.dictionary)))
+		self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
+	def set_source_language(self, source_language):
+		from_language = self.language_id_list[self.language_list.index(source_language)]
+		self.MyTranslator.set_source_language(from_language)	
+		self.DictionaryStatus.set(str(len(self.MyTranslator.dictionary)))
+		self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
+
+
+	
 	def Stop(self):
 		try:
 			if self.TranslatorProcess.is_alive():
@@ -831,12 +852,9 @@ class DocumentTranslator(Frame):
 
 	def generate_translator_engine(self):
 		self.Notice.set(self.LanguagePack.ToolTips['AppInit'])
-		if self.Language.get() == 1:
-			to_language = 'ko'
-			from_language = 'en'
-		else:
-			to_language = 'en'
-			from_language = 'ko'
+
+		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
+		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
 
 		self.glossary_id = self.Text_glossary_id.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
@@ -845,8 +863,8 @@ class DocumentTranslator(Frame):
 		self.TranslatorProcess = Process(	target=GenerateTranslator, 
 											kwargs={	'my_translator_queue' : self.MyTranslator_Queue, 
 														'tm_manager' : self.TMManager, 
-														'from_language' : from_language, 
-														'to_language' : to_language, 
+														'from_language' : source_language, 
+														'to_language' : target_language, 
 														'glossary_id' : self.glossary_id, 
 														'tm_path' : tm_path,
 														'bucket_id' : self.bucket_id, 
@@ -927,21 +945,10 @@ class DocumentTranslator(Frame):
 
 	def GetOptions(self):
 		#Get and set language
-		if self.Language.get() == 1:
-			self.Options['to_language'] = 'ko'
-			self.Options['LanguageName'] = self.LanguagePack.Option['Hangul']
-			self.Options['from_language'] = 'en'
-		else:
-			self.Options['to_language'] = 'en'
-			self.Options['LanguageName'] = self.LanguagePack.Option['English']
-			self.Options['from_language'] = 'ko'
-		
-		self.MyTranslator.set_target_language(self.Options['to_language'])
-		self.MyTranslator.set_source_language(self.Options['from_language'])
-		self.Notice.set(self.LanguagePack.ToolTips['SetLanguage'] + self.Options['LanguageName'])
-		#Set translator engine
-		self.MyTranslator.set_translator_agent(self.MyTranslatorAgent)
+		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
+		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
 
+		self.MyTranslator.set_language_pair(target_language = target_language, source_language = source_language)
 		
 		#Add Subscription key
 		#self.MyTranslator.SetSubscriptionKey(self.SubscriptionKey)	
@@ -1769,8 +1776,7 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 				Result = translate_docx(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
-				print(ErrorMsg)
-				StatusQueue.put(str(e))
+				StatusQueue.put(str(ErrorMsg))
 				Result = str(e)
 				
 		elif ext in ['.xlsx', '.xlsm']:
@@ -1779,8 +1785,7 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 				Result = translate_workbook(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
-				print(ErrorMsg)
-				StatusQueue.put(str(e))
+				StatusQueue.put(str(ErrorMsg))
 				Result = str(e)
 		elif ext == '.msg':
 			#Result = translate_msg(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
@@ -1788,8 +1793,8 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 				Result = translate_msg(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
-				print(ErrorMsg)
-				StatusQueue.put(str(e))
+
+				StatusQueue.put(str(ErrorMsg))
 				Result = str(e)
 		
 		elif ext == '.pdf':
@@ -1799,8 +1804,8 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 				Result = translateDPF(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
-				print(ErrorMsg)
-				StatusQueue.put(str(e))
+
+				StatusQueue.put(str(ErrorMsg))
 				Result = str(e)
 		
 		elif ext == '.pptx':
@@ -1809,8 +1814,8 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 				Result = translate_presentation(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
-				StatusQueue.put(str(e))
-				print(ErrorMsg)
+				StatusQueue.put(str(ErrorMsg))
+
 				Result = str(e)
 
 		if Result == True:
@@ -1820,7 +1825,8 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 			StatusQueue.put('Total time spent: ' + str(Total) + ' second.')
 			StatusQueue.put('Translated file: ' + Preflix + ' ' + TranslatedName + '_' + timestamp + ext)
 		else:
-			ResultQueue.put(str(Result))
+			Message = 'Fail to translate document, details: \n' + Result
+			ResultQueue.put(str(Message))
 		try:
 			mem_tm = len(MyTranslator.temporary_tm)
 			newTM = MyTranslator.append_translation_memory()
@@ -1879,15 +1885,13 @@ def send_fail_request(error_message):
 		user_name = "Anonymous"
 
 	data_object = {
-		'user': user_name,
 		'tool': 'Document Translator',
-		'tool_ver': self.tool_version,
 		'translator_ver': ver_num,
-		'error_message': str(e)
+		'error_message': str(error_message)
 	}
 
 	tracking_object = {
-		'user': self.user_name,
+		'user': user_name,
 		'details': data_object
 	}
 	
