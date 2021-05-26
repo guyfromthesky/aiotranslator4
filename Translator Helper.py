@@ -87,10 +87,10 @@ class MyTranslatorHelper(Frame):
 
 		self.return_text = TranslationQueue
 
-		self.SOURCE_WIDTH = 62
+		self.SOURCE_WIDTH = 68
 		self.BUTTON_SIZE = 20
 		self.HALF_BUTTON_SIZE = 15
-		self.ROW_SIZE = 20
+		self.ROW_SIZE = 23
 
 		self.str_test_version = ""
 		self.str_test_info = ""
@@ -171,7 +171,7 @@ class MyTranslatorHelper(Frame):
 		#self.TMEditor = ttk.Frame(TAB_CONTROL)
 		#TAB_CONTROL.add(self.TMEditor, text=self.LanguagePack.Tab['TMEditor'])
 
-		TAB_CONTROL.pack(expand=1, fill="both")	
+		TAB_CONTROL.pack(expand= True, fill="both")	
 
 	def Generate_Menu_UI(self):
 		menubar = Menu(self.parent) 
@@ -203,6 +203,7 @@ class MyTranslatorHelper(Frame):
 		self.parent.config(menu = menubar) 
 
 	def Generate_BugWriter_UI(self, Tab):
+
 		Row=1
 		#Label(self.BugWriter, text="Translator: ").grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		#self.TranslatorAgent = IntVar()	
@@ -211,8 +212,8 @@ class MyTranslatorHelper(Frame):
 		#self.TranslatorAgent.set(1)
 		#self.LanguagePack.Label['Language']
 		Label(Tab, text= 'Source', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
-		Label(Tab, text= 'Target', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 2, padx=5, pady=5, stick=E+W)
-		Label(Tab, text= 'Target', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 3, padx=5, pady=5, stick=E+W)
+		Label(Tab, text= 'Main Target', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 2, padx=5, pady=5, stick=E+W)
+		Label(Tab, text= 'Primary Target', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 3, padx=5, pady=5, stick=E+W)
 		
 		Row += 1
 
@@ -354,31 +355,43 @@ class MyTranslatorHelper(Frame):
 
 		self.RenewTranslatorMain = Button(Tab, text=self.LanguagePack.Button['RenewDatabase'], command= self.RenewMyTranslator, state=DISABLED)
 		self.RenewTranslatorMain.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
+
+		#Tab.update()
+		#print("frame size after update: ", Tab.winfo_width(), Tab.winfo_height())
 		
 	def Generate_SimpleTranslator_UI(self, Tab):
 
+		
 		Row=1
 		Label(Tab, textvariable=self.Notice).grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=E)
-		#New Row
-		Row +=1
-		Label(Tab, text=self.LanguagePack.Label['SourceText'], width=10).grid(row=Row, column=1, columnspan = 5, padx=10, pady=0)
-		Label(Tab, text=self.LanguagePack.Label['TargetText'], width=10).grid(row=Row, column=6, columnspan = 5, padx=10, pady=0)
-		#New Row
 
-		
+		Row +=1
+		Label(Tab, text=self.LanguagePack.Label['SourceText'], width=10).grid(row=Row, column=1, columnspan = 5, padx=5, pady=0)
+		Label(Tab, text=self.LanguagePack.Label['TargetText'], width=10).grid(row=Row, column=6, columnspan = 5, padx=5, pady=0)
+		#New Row
 
 		Row +=1
 		self.SourceText = CustomText(Tab, width = self.SOURCE_WIDTH, height=self.ROW_SIZE, undo=True) 
-		#self.SourceText.tag_configure('blue', foreground="#0e2433")
-		self.SourceText.tag_configure('blue', foreground= "blue")
-		
-		self.SourceText.grid(row=Row, column=1, columnspan=5, rowspan=self.ROW_SIZE, padx=15, pady=10, sticky=N+S+E+W)
+		self.SourceText.grid(row=Row, column=1, columnspan=5, rowspan=self.ROW_SIZE, padx=5, pady=5, sticky=E+W)
 		self.SourceText.bind("<Double-Return>", self.BindTranslate)
 		self.SourceText.bind("<Double-Tab>", self.BindSwap)
-		self.TargetText = Text(Tab, width = self.SOURCE_WIDTH, height=10, undo=True) #
-		self.TargetText.grid(row = Row, column=6, columnspan=5, rowspan=self.ROW_SIZE, padx=15, pady=10, sticky=N+S+E+W)
+
+
+		self.TargetText = Text(Tab, width = self.SOURCE_WIDTH, height=self.ROW_SIZE, undo=True) #
+		self.TargetText.grid(row = Row, column=6, columnspan=5, rowspan=self.ROW_SIZE, padx=5, pady=5, sticky=E+W)
 		Row +=self.ROW_SIZE
+		
 		Row +=1
+		Label(Tab, text= 'Source', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
+		
+		self.simple_source_language = StringVar()
+		self.simple_source_language_select = OptionMenu(Tab, self.simple_source_language, *self.language_list, command = self.set_source_language)
+		self.simple_source_language_select.config(width=self.HALF_BUTTON_SIZE)
+		self.simple_source_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
+		self.simple_source_language.set('Hangul')
+
+
+
 		Button(Tab, text=self.LanguagePack.Button['Swap'], width = 20, command= self.Swap).grid(row=Row, column=5, columnspan=2, padx=0, pady=5)	
 		
 		#self.RenewTranslatorButton(Tab, text=self.LanguagePack.Button['RenewDatabase'], width = self.BUTTON_SIZE, command= self.RenewMyTranslator).grid(row = Row, column=8, padx=10, pady=5)
@@ -386,36 +399,48 @@ class MyTranslatorHelper(Frame):
 		self.RenewTranslator.grid(row = Row, column=8, padx=10, pady=5)
 		
 		self.TranslateBtn = Button(Tab, text=self.LanguagePack.Button['Translate'], width = self.BUTTON_SIZE, command= self.Translate, state=DISABLED)
-		self.TranslateBtn.grid(row=Row, column=10, columnspan=1,pady=5)		
+		self.TranslateBtn.grid(row=Row, column=10, pady=5)		
 		#New Row
 		Row +=1
-		Label(Tab, text=self.LanguagePack.Label['TargetLanguage'], width= 20).grid(row = Row, column = 1, padx=5, pady=10)
+
 		
-		self.SimpleTranslatorLanguage = IntVar()	
-		Radiobutton(Tab, text=self.LanguagePack.Option['Hangul'], value=1, variable=self.SimpleTranslatorLanguage, command = None).grid(row = Row, column=2, padx=5, pady=10)	
-		Radiobutton(Tab, text=self.LanguagePack.Option['English'], value=2, variable=self.SimpleTranslatorLanguage, command = None).grid(row = Row, column=3, padx=5, pady=10)
-		self.SimpleTranslatorLanguage.set(2)
+		Label(Tab, text= 'Main Target', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
 		
+		self.simple_target_language = StringVar()
+		self.simple_target_language_select = OptionMenu(Tab, self.simple_target_language, *self.language_list, command = self.set_target_language)
+		self.simple_target_language_select.config(width=self.HALF_BUTTON_SIZE)
+		self.simple_target_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
+		self.simple_target_language.set('English')
+
+
 		Button(Tab, text=self.LanguagePack.Button['Bilingual'], width = self.BUTTON_SIZE, command= self.BtnBilingual).grid(row = Row, column=8, padx=10, pady=5)
 		self.Translate_bilingual_Btn = Button(Tab, text=self.LanguagePack.Button['TranslateAndBilingual'], width = self.BUTTON_SIZE, command= self.BtnTranslateAndBilingual)
 		self.Translate_bilingual_Btn.grid(row = Row, column=10, padx=10, pady=5)
+	
 		Row+=1
-		Row+=1
+		Label(Tab, text= 'Primary Target', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
+		
+		secondary_language_list = self.language_list + ['']
+
+		self.simple_secondary_target_language = StringVar()
+		self.simple_secondary_target_language_select = OptionMenu(Tab, self.simple_secondary_target_language, *secondary_language_list, command = self.set_secondary_target_language)
+		self.simple_secondary_target_language_select.config(width=self.HALF_BUTTON_SIZE)
+		self.simple_secondary_target_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
+		self.simple_secondary_target_language.set('Japanese')
+
+
 		DictionaryLabelB = Label(Tab, text=self.LanguagePack.Label['Database'])
-		DictionaryLabelB.grid(row=Row, column=1, padx=5, pady=5)
+		DictionaryLabelB.grid(row=Row, column=3, padx=5, pady=5)
 		#DictionaryLabelB.bind("<Enter>", lambda event : self.Notice.set( self.LanguagePack.Label['Database'] + ': ' + self.DictionaryPath.get()))
 		
-		Label(Tab, textvariable=self.DictionaryStatus).grid(row=Row, column=2, padx=0, pady=5, sticky=W)
+		Label(Tab, textvariable=self.DictionaryStatus).grid(row=Row, column=4, padx=0, pady=5, sticky=W)
 		self.DictionaryStatus.set('0')
 
 		Button(Tab, text=self.LanguagePack.Button['Copy'], width = self.BUTTON_SIZE, command= self.BtnCopy).grid(row = Row, column=10, padx=10, pady=5)
 
 		#Tab.update()
-		#Tab.minsize(self.SimpleTranslator.winfo_width(), self.SimpleTranslator.winfo_height())
-		#self.parent.bind("<Configure>", self.UpdateSize)
-
-		#Simple Translator UI
-
+		#print("frame size after update: ", Tab.winfo_width(), Tab.winfo_height())
+		
 	def Generate_TranslateSetting_UI(self, Tab):
 		Row = 1
 		Label(Tab, textvariable=self.Notice).grid(row=Row, column=1, columnspan = 10, padx=5, pady=5, sticky= W)
@@ -453,7 +478,8 @@ class MyTranslatorHelper(Frame):
 
 		self.SourceTM = Text(Tab, width = self.SOURCE_WIDTH, height=1, undo=True) 
 		self.SourceTM.grid(row=Row, column=2, columnspan=7, rowspan=self.ROW_SIZE, padx=5, pady=0, sticky=W)
-		#self.SourceTM.bind("<Double-Return>", lambda event : self.Notice.set(self.BtnTMTranslate()))
+
+
 
 	
 
@@ -607,19 +633,6 @@ class MyTranslatorHelper(Frame):
 		self.SourceText.configure(width = iWidth, height = iHeight)
 		self.TargetText.configure(width = iWidth, height = iHeight)
 
-
-	def SetLanguage(self):
-		if self.SimpleTranslatorLanguage.get() == 1:
-			to_language = 'ko'
-			from_language = 'en'
-			self.Notice.set(self.LanguagePack.ToolTips['AppLanuageUpdate'] +'Hangul')
-		else:
-			to_language = 'en'
-			from_language = 'ko'
-			self.Notice.set(self.LanguagePack.ToolTips['AppLanuageUpdate'] + 'English')
-		
-		self.MyTranslator.set_language_pair(source_language = from_language, target_language = to_language)
-
 	def set_secondary_target_language(self, target_language):
 		if target_language == "":
 			index = 6
@@ -753,11 +766,12 @@ class MyTranslatorHelper(Frame):
 			return
 			
 		self.Notice.set(self.LanguagePack.ToolTips['Translating'])
-		if self.SimpleTranslatorLanguage.get() == 1:
-			self.MyTranslator.set_language_pair(source_language = 'en', target_language = 'ko')
 
-		else:
-			self.MyTranslator.set_language_pair(source_language = 'ko', target_language = 'en')
+		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
+		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
+
+		self.MyTranslator.set_language_pair(target_language = target_language, source_language = source_language)
+
 
 		SourceText = self.SourceText.get("1.0", END)
 		try:
@@ -805,75 +819,6 @@ class MyTranslatorHelper(Frame):
 				pass
 
 	#Execute function
-	def BtnTMTranslate(self):
-		self.Notice.set(self.LanguagePack.ToolTips['Translating'])
-		self.CurrentPair = None
-		if self.SimpleTranslatorLanguage.get() == 1:
-			x = 1
-			y = 0
-		else:
-			x = 0
-			y = 1
-
-		self.CurrentPair = None
-		SourceText = self.SourceTM.get("1.0", END)
-		self.TargetTM.delete("1.0", END)
-
-		try:
-			SourceText = SourceText.split('\n')
-		except:
-			pass
-		Translated = []
-		for Text in SourceText:
-	
-			for pair in self.MyTranslator.translation_memory:
-				if pair[x] == Text:
-					Translated.append(pair[y])
-					self.CurrentPair = pair
-					self.Notice.set(self.LanguagePack.ToolTips['TMResultFound'])
-					break
-
-		if(self.CurrentPair == None):
-			self.Notice.set(self.LanguagePack.ToolTips['TMResultNotFound'])
-		Show = "\n".join(Translated)
-		print('CurrentPair: ', self.CurrentPair)
-		self.TargetTM.insert("end", Show)
-
-	#Execute function
-	def BtnRegularSearch(self):
-		self.Notice.set(self.LanguagePack.ToolTips['Translating'])
-
-		if self.SimpleTranslatorLanguage.get() == 1:
-			x = 1
-			y = 0
-		else:
-			x = 0
-			y = 1
-
-		SourceText = self.SourceTM.get("1.0", END)
-		self.TargetTM.delete("1.0", END)
-
-		try:
-			SourceText = SourceText.split('\n')
-		except:
-			pass
-		Translated = []
-		for Text in SourceText:
-			if Text != "":
-				for pair in self.MyTranslator.translation_memory:
-					if pair[x].find(Text) != -1:
-						Translated.append(pair[y])
-
-		
-		#print('CurrentPair: ', self.CurrentPair)
-		
-		if len(Translated) < 1:
-			self.Notice.set(self.LanguagePack.ToolTips['TMResultNotFound'])
-		else:
-			Show = "\n".join(Translated)
-			self.TargetTM.insert("end", Show)	
-		return
-
 	def BtnCopy(self):
 		Translated = self.TargetText.get("1.0", END)
 		Translated = Translated.replace('\r', '')
@@ -904,11 +849,10 @@ class MyTranslatorHelper(Frame):
 		self.Notice.set(self.LanguagePack.ToolTips['Translating'])
 		self.TargetText.delete("1.0", END)
 
-		if self.SimpleTranslatorLanguage.get() == 1:
-			self.MyTranslator.set_language_pair(source_language = 'en', target_language = 'ko')
+		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
+		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
 
-		else:
-			self.MyTranslator.set_language_pair(source_language = 'ko', target_language = 'en')
+		self.MyTranslator.set_language_pair(target_language = target_language, source_language = source_language)
 
 		SourceText = self.SourceText.get("1.0", END)
 		try:
@@ -963,14 +907,17 @@ class MyTranslatorHelper(Frame):
 		self.TargetText.insert("end", SourceText)
 		self.SourceText.insert("end", Translated)
 		
-		if self.SimpleTranslatorLanguage.get() == 1:
-			self.SimpleTranslatorLanguage.set(2)
-			self.Notice.set(self.LanguagePack.ToolTips['LanguageSet'] + 'English')
-		else:
-			self.SimpleTranslatorLanguage.set(1)
-			self.Notice.set(self.LanguagePack.ToolTips['LanguageSet'] + 'Hangul')
+		target_language_index = self.language_list.index(self.simple_target_language.get())
+		source_language_index = self.language_list.index(self.simple_source_language.get())
 
-		self.MyTranslator.swap_language()
+		target_language = self.language_id_list[target_language_index]
+		source_language = self.language_id_list[source_language_index]
+		
+		self.simple_target_language.set(self.language_list[source_language_index])
+		self.simple_source_language.set(self.language_list[target_language_index])
+		
+		self.MyTranslator.set_language_pair(target_language = source_language, source_language = target_language)
+
 		return
 
 	def BindTranslate(self,event):
@@ -987,6 +934,10 @@ class MyTranslatorHelper(Frame):
 		self.secondary_target_language_select.configure(state=DISABLED)
 		self.target_language_select.configure(state=DISABLED)
 		self.source_language_select.configure(state=DISABLED)
+
+		self.simple_secondary_target_language_select.configure(state=DISABLED)
+		self.simple_target_language_select.configure(state=DISABLED)
+		self.simple_source_language_select.configure(state=DISABLED)
 		
 		self.text_glossary_id.configure(state=DISABLED)
 
@@ -1003,6 +954,10 @@ class MyTranslatorHelper(Frame):
 		self.secondary_target_language_select.configure(state=NORMAL)
 		self.target_language_select.configure(state=NORMAL)
 		self.source_language_select.configure(state=NORMAL)
+
+		self.simple_secondary_target_language_select.configure(state=NORMAL)
+		self.simple_target_language_select.configure(state=NORMAL)
+		self.simple_source_language_select.configure(state=NORMAL)
 
 		self.text_glossary_id.configure(state=NORMAL)
 

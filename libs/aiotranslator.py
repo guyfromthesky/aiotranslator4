@@ -543,7 +543,12 @@ class Translator:
 		RawText = source_text
 		LowerCase_text = source_text
 		
-		temp_dict = self.dictionary + self.ko_dictionary
+		if self.to_language == 'en':
+			temp_dict = self.dictionary + self.en_dictionary
+		elif self.to_language == 'vi':	
+			temp_dict = self.dictionary + self.vi_dictionary
+		else:
+			temp_dict= self.dictionary 
 		#print('Temp dict for Korean translate', len(temp_dict))
 
 		for pair in temp_dict:
@@ -632,8 +637,14 @@ class Translator:
 		# To cover some special case can happen.
 		RawText = input
 		source_text = RawText.lower()
-			
-		temp_dict = self.dictionary + self.en_dictionary
+		if self.to_language == 'ko':
+			temp_dict = self.dictionary + self.ko_dictionary
+		elif self.to_language == 'cn':	
+			temp_dict = self.dictionary + self.cn_dictionary
+		elif self.to_language == 'jp':	
+			temp_dict = self.dictionary + self.jp_dictionary	
+		else:
+			temp_dict= self.dictionary 
 		#print('Temp dict for English translate', len(temp_dict))
 
 		for pair in temp_dict:
@@ -734,19 +745,11 @@ class Translator:
 					to_translate_index[index_num].append(i)
 				except Exception  as e:
 					#print('Exception: ', e)
-					if self.to_language == 'ko':
+					if self.to_language in ['ko', 'cn', 'jp']:
 						pre_translate = self.korean_pre_translate(text)	
-					elif self.to_language == 'en':
+					elif self.to_language in ['en', 'vi']:
 						pre_translate = self.english_pre_translate(text)
 					
-					elif self.to_language == 'cn':
-						pre_translate = self.english_pre_translate(text)
-						
-					elif self.to_language == 'jp':
-						pre_translate = self.english_pre_translate(text)
-					else:	
-					#elif self.to_language == 'vi':
-						pre_translate = self.english_pre_translate(text)
 					#print('pre_translate', pre_translate)
 					raw_source.append(text)
 					to_translate.append(pre_translate)
