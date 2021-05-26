@@ -1297,20 +1297,17 @@ def Importtranslation_memory(TMPath):
 
 # Function for Document Translator
 def GenerateTranslator(
-	my_translator_queue = None, 
-	tm_manager = None, 
-	from_language = 'ko', 
-	to_language = 'en', 
-	glossary_id = "", 
-	tm_path= None, 
-	bucket_id = 'nxvnbucket',
-	db_list_uri = 'config/db_list.csv',
-	project_bucket_id = 'credible-bay-281107'
-):	
+		my_translator_queue = None, 
+		tm_manager = None, 
+		from_language = 'ko', 
+		to_language = 'en', 
+		glossary_id = "", 
+		tm_path= None, 
+		bucket_id = 'nxvnbucket',
+		db_list_uri = 'config/db_list.csv',
+		project_bucket_id = 'credible-bay-281107'
+	):	
 	
-	#print("Generate my Translator")
-	#saved_args = locals()
-	#print('Input arg: ', saved_args)
 	MyTranslator = Translator(	from_language = from_language, 
 								to_language = to_language, 
 								glossary_id =  glossary_id, 

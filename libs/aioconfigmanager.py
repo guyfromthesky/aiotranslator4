@@ -70,6 +70,11 @@ class ConfigLoader:
 			self.Config[Section] = {}
 
 		self.Init_Config_Option(config, Section, 'app_lang', 2)
+
+		self.Init_Config_Option(config, Section, 'target_lang', 2)
+		self.Init_Config_Option(config, Section, 'source_lang', 3)
+		self.Init_Config_Option(config, Section, 'secondary_target_lang', 5)
+
 		self.Init_Config_Option(config, Section, 'test_info_inable', 1)
 		self.Init_Config_Option(config, Section, 'use_simple_template', 0)
 		self.Init_Config_Option(config, Section, 'usage', 0)
@@ -232,7 +237,7 @@ class ConfigLoader:
 			return Default_Value
 
 		Config_Obj = configparser.ConfigParser()
-		Config_Obj.read(Config_Path)
+		Config_Obj.read(config_path)
 
 		if not Config_Obj.has_section(Section):
 			return Default_Value

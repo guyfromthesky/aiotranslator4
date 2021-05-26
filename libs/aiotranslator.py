@@ -46,7 +46,7 @@ class Translator:
 		to_language = 'en', 
 		source_language_predict = True, 
 		proactive_memory_translate = True, 
-		tm_update=True, 
+		tm_update = True, 
 		glossary_id = None, 
 		temporary_tm = None,
 		tm_path = None,
@@ -163,6 +163,8 @@ class Translator:
 		self.cn_dictionary = []
 		# The DB that only be used to translate from Japanese to other language.
 		self.jp_dictionary = []
+		# The DB that only be used to translate from Vietnamese to other language.
+		self.vi_dictionary = []
 
 		self.header = []
 		self.name = []
@@ -974,6 +976,7 @@ class Translator:
 		self.from_language = self.to_language	
 		self.to_language = Temp
 		self.update_db_from_dataframe()
+		self.import_translation_memory()
 
 	def set_translator_agent(self, TranslatorAgent):
 		self.TranslatorAgent = TranslatorAgent
@@ -1115,6 +1118,9 @@ class Translator:
 
 	# Filter DB and store in suitable variable
 	def update_db_from_dataframe(self):
+		if self.from_language not in self.all_db or self.to_language not in self.all_db:
+			self.init_db_data()
+			return
 		#print("prepare new DB: ", "Source language: ", self.from_language, 'Target language: ', self.to_language,)
 		# Drop N/A value
 		if self.from_language != self.to_language:
@@ -1172,7 +1178,8 @@ class Translator:
 			#print("Dict: ", len(self.dictionary))
 			#print("Dict: ", len(self.dictionary))
 		else:
-			self.dictionary = []
+			self.init_db_data()
+			#self.dictionary = []
 
 
 	def get_glossary_length(self, timeout=180,):
@@ -1273,7 +1280,7 @@ class Translator:
 
 	# Store the DB in base64 format for csv format friendly
 	def basse64_encode(self, string_to_encode):
-		raw_encoded_string =  str(base64.b64encode(Path_Value.encode('utf-8')))
+		raw_encoded_string =  str(base64.b64encode(string_to_encode.encode('utf-8')))
 		encoded_string = re.findall(r'b\'(.+?)\'', raw_encoded_string)[0]
 		
 		return encoded_string
@@ -1361,39 +1368,10 @@ class Translator:
 		blob.upload_from_filename(filename = Upload_Path)
 		print('Uploading done.')
 		#def create_glossary(self, input_uri= None, glossary_id=None, timeout=180,):
-	# Upload DB to bucket
-	# DB file will be converted into base64 format
-	# 
-	def upload_glob_from_object(self, glossary_id, db_object):
-		from google.cloud import storage
-		sclient = storage.Client()
 		
-		#gloss = self.get_glossary(glossary_id)
 
-		bucket = sclient.get_bucket(self.bucket_id)
-		try:
-			blob_id = self.get_glossary_path(glossary_id)
-		except:
-			return False	
-		
-		blob = bucket.blob(blob_id)
-		print('Uploading to blob')
-		
-		#db_object = {}
-		#db_object['info'] = {}
-		#db_object['db'] = {}
-		List = []
-		# Info:
-		version = db_object['info']['version']
-		date = db_object['info']['date']
-		
-		List.append()
-		blob.upload_from_filename(filename = Upload_Path)
-		
-		return
-		
+
 	def update_glossary(self, glossary_id, upload_path):
-		
 		from google.cloud import storage
 		sclient = storage.Client()
 		
@@ -1414,7 +1392,7 @@ class Translator:
 		bucket.delete_blob(blob_name = blob_id)
 		
 		print('Uploading to blob')
-		blob.upload_from_filename(filename = Upload_Path)
+		blob.upload_from_filename(filename = upload_path)
 		#def create_glossary(self, input_uri= None, glossary_id=None, timeout=180,):
 		print('Create glossary')
 		self.create_glossary(input_uri= gloss.input_config.gcs_source.input_uri, glossary_id=glossary_id)
@@ -1429,7 +1407,7 @@ class Translator:
 
 	# Get the tm's path.
 	# if tm is invalid, use local tm instead
-	def init_tm_path(self, tm_path):
+	def init_tm_path(self, tm_path = None):
 		if tm_path != None:
 			if os.path.isfile(tm_path):
 				self.tm_path = self.correct_path_os(tm_path)
@@ -1451,7 +1429,8 @@ class Translator:
 
 		self.init_temporary_tm()
 		self.init_translation_memory()
-
+		if self.tm_path == None:
+			return
 		if not os.path.isfile(self.tm_path):
 			print('Pickle file not found')
 			return
@@ -1519,7 +1498,7 @@ class Translator:
 							print('TM v4 format')
 							self.translation_memory = all_tm[self.glossary_id]
 						# TM format v3
-						elif 'en' in TM:
+						elif 'en' in all_tm:
 							print('TM v3 format')
 
 							self.init_translation_memory()
@@ -1571,7 +1550,7 @@ class Translator:
 					# TM format v4
 					if self.glossary_id in all_tm:
 						print('TM v4 format')
-					elif 'en' in TM:
+					elif 'en' in all_tm:
 						all_tm = {}
 		
 				elif isinstance(all_tm, list):
@@ -1580,7 +1559,7 @@ class Translator:
 				print('Fail to load tm')
 				all_tm = {}
 			
-			for Pair in temporary_tm:
+			for Pair in self.temporary_tm:
 				save_data = self.translation_memory.append(Pair, ignore_index=True)
 			
 			save_data = save_data.reindex()
@@ -1657,7 +1636,7 @@ class Translator:
 					# TM format v4
 					if self.glossary_id in all_tm:
 						print('TM v4 format')
-					elif 'en' in TM:
+					elif 'en' in all_tm:
 						all_tm = {}
 		
 				elif isinstance(all_tm, list):
@@ -1712,7 +1691,7 @@ class Translator:
 		try:
 			if len(self.temporary_tm) > 0:
 				for pair in self.temporary_tm:
-					if pair[self.from_language] == Source_Text:
+					if pair[self.from_language] == source_text:
 						return pair[self.to_language]
 		except Exception  as e:
 			#print('Error message(temporary TM):', e)
