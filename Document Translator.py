@@ -47,8 +47,8 @@ from tkinter import simpledialog
 # Web redirect
 import webbrowser
 
-from libs.aiotranslator_v2 import Translator
-from libs.aiotranslator_v2 import ver_num as TranslatorVersion
+from libs.aiotranslator import Translator
+from libs.aiotranslator import ver_num as TranslatorVersion
 from libs.aioconfigmanager import ConfigLoader
 from libs.documentprocessing import translate_docx, translate_msg
 from libs.documentprocessing import translate_presentation, translate_workbook
@@ -1812,18 +1812,7 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 
 				StatusQueue.put(str(ErrorMsg))
 				Result = str(e)
-		
-		elif ext == '.pdf':
-			#not use
-			#Result = translateDPF(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
-			try:
-				Result = translateDPF(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
-			except Exception as e:
-				ErrorMsg = ('Error message: ' + str(e))
 
-				StatusQueue.put(str(ErrorMsg))
-				Result = str(e)
-		
 		elif ext == '.pptx':
 			#Result = translate_presentation(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:
@@ -1879,8 +1868,8 @@ def send_fail_request(error_message):
 		client = logging.Client()
 	except:
 		print('Fail to communicate with logging server')
-		print("error message:", e)
-		messagebox.showinfo(title='Critical error', message=e)
+		print("error message:", error_message)
+		messagebox.showinfo(title='Critical error', message=error_message)
 		return
 
 	log_name = 'critical-error'

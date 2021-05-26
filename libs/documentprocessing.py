@@ -604,7 +604,7 @@ def translateFrametable(cell, MyTranslator, CurrentTask, total_task_count):
 		for row in cell.table.rows:
 			for newcell in row.cells:
 				newcell = translateFrametable(cell, MyTranslator, CurrentTask, total_task_count)
-				total+= 1
+				CurrentTask+= 1
 		print('Another table inside a table cell.')
 
 	return [newcell, CurrentTask]
@@ -850,7 +850,7 @@ def translate_table(intable, MyTranslator, CurrentTask, total_task_count, TaskPo
 
 def translate_pdf(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
 	from pathlib import Path
-	from PyPDF2 import PdfFileReader
+	#from PyPDF2 import PdfFileReader
 
 	from docx import Document
 	from docx.shared import Inches

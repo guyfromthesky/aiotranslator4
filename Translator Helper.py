@@ -45,23 +45,26 @@ import queue
 import webbrowser
 
 from libs.aiotranslator import Translator
-from libs.aiotranslator import VerNum as TranslatorVersion
-from openpyxl import load_workbook, worksheet, Workbook
+from libs.aiotranslator import ver_num as TranslatorVersion
 from libs.aioconfigmanager import ConfigLoader
 
-#from PyInstaller.utils.hooks import collect_data_files
-#datas = collect_data_files('grpc')
+from libs.version import get_version
 
-ToolDisplayName = "Translator Helper"
+from openpyxl import load_workbook, worksheet, Workbook
+
+from google.cloud import logging
+import json
+
+tool_display_name = "Translator Helper"
 tool_name = 'writer'
-rev = 3209
+rev = 4000
+ver_num = get_version(rev) 
+version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
-a,b,c,d = list(str(rev))
-VerNum = a + '.' + b + '.' + c + chr(int(d)+97)
+DELAY = 20
 
-version = ToolDisplayName  + " " +  VerNum + " | " + "Translator lib " + TranslatorVersion
-section = "TranslatorHelper"
-DELAY1 = 25
+
+
 
 #**********************************************************************************
 # UI handle ***********************************************************************
@@ -95,8 +98,6 @@ class MyTranslatorHelper(Frame):
 		self.HeaderList = ['']
 		self.HeaderA = ""
 		self.HeaderB = ""
-		#self.HeaderAKR = ""
-		#self.HeaderBKR = ""
 
 		self.ButtonWidth = 20
 		self.HalfButtonWidth = 15
@@ -621,13 +622,13 @@ class MyTranslatorHelper(Frame):
 		#self.TranslatorProcess = Process(target=GenerateTranslator, args=(self.MyTranslator_Queue, self.TMManager, from_language, to_language, self.GlossaryID,))
 		self.TranslatorProcess = Process(target=GenerateTranslator, args=(self.MyTranslator_Queue, self.TMManager, from_language, to_language, self.GlossaryID,))
 		self.TranslatorProcess.start()
-		self.after(DELAY1, self.GetMyTranslator)
+		self.after(DELAY, self.GetMyTranslator)
 		
 	def GetMyTranslator(self):
 		try:
 			self.MyTranslator = self.MyTranslator_Queue.get_nowait()
 		except queue.Empty:
-			self.after(DELAY1, self.GetMyTranslator)
+			self.after(DELAY, self.GetMyTranslator)
 
 		if self.MyTranslator != None:
 			self.Notice.set(self.LanguagePack.ToolTips['AppInitDone'])
@@ -655,7 +656,7 @@ class MyTranslatorHelper(Frame):
 			except:
 				db_count = 0
 			
-			self.DictionaryStatus.set(db)
+			self.DictionaryStatus.set(db_count)
 			glossary_list = [""] + self.MyTranslator.GlossaryList
 			self.Text_GlossaryID.set_completion_list(glossary_list)
 			
@@ -726,11 +727,11 @@ class MyTranslatorHelper(Frame):
 		
 		self.p3 = Process(target=SimpleTranslate, args=(self.ReturnedText, self.MyTranslator, SourceText,))
 		self.p3.start()
-		self.after(DELAY1, self.GetCompleteStatus)
+		self.after(DELAY, self.GetCompleteStatus)
 
 	def GetCompleteStatus(self):
 		if (self.p3.is_alive()):
-			self.after(DELAY1, self.GetCompleteStatus)
+			self.after(DELAY, self.GetCompleteStatus)
 		else:
 			try:
 				Translated = self.ReturnedText.get()
@@ -871,12 +872,12 @@ class MyTranslatorHelper(Frame):
 			pass
 		self.SimpleTranslator = Process(target=SimpleTranslate, args=(self.ReturnedText, self.MyTranslator, SourceText,))
 		self.SimpleTranslator.start()
-		self.after(DELAY1, self.Generate_Bilingual_Text)
+		self.after(DELAY, self.Generate_Bilingual_Text)
 		return
 		
 	def Generate_Bilingual_Text(self):
 		if (self.SimpleTranslator.is_alive()):
-			self.after(DELAY1, self.Generate_Bilingual_Text)
+			self.after(DELAY, self.Generate_Bilingual_Text)
 			return
 		else:
 			try:
@@ -1016,12 +1017,12 @@ class MyTranslatorHelper(Frame):
 		self.strSourceTitle = self.TextTitle.get("1.0", END).replace('\r\n', '')
 		self.Title_Translate = Process(target=TranslateTitle, args=(self.title, self.strSourceTitle, self.MyTranslator,))
 		self.Title_Translate.start()
-		self.after(DELAY1, self.TextTitleGet)
+		self.after(DELAY, self.TextTitleGet)
 		return
 
 	def TextTitleGet(self):
 		if (self.Title_Translate.is_alive()):
-			self.after(DELAY1, self.TextTitleGet)
+			self.after(DELAY, self.TextTitleGet)
 			return
 		else:
 			try:
@@ -1124,14 +1125,14 @@ class MyTranslatorHelper(Frame):
 		self.BugWriter = Process(target=Translate_Simple, args=(self.report, To_Translate, Simple_Template, self.MyTranslator,))
 		self.BugWriter.start()
 
-		self.after(DELAY1, self.GetBugDetails)
+		self.after(DELAY, self.GetBugDetails)
 
 	def GetBugDetails(self):
 
 		self.Notice.set(self.LanguagePack.ToolTips['ClipboardRemoved'])
 
 		if (self.BugWriter.is_alive()):
-			self.after(DELAY1, self.GetBugDetails)
+			self.after(DELAY, self.GetBugDetails)
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['GeneratedBugReport'])
 			self.BugWriter.join()
@@ -1436,7 +1437,7 @@ class AutocompleteCombobox(Combobox):
 def GenerateTranslator(Mqueue, TMManager, from_language = 'ko', to_language = 'en', GlossaryID = "", tm_path= None,):	
 	
 	MyTranslator = Translator(From_Language = from_language, To_Language = to_language, GlossaryID =  GlossaryID, 
-		TMManager = TMManager, PredictMode = True, ProactiveTMTranslate=True, Tool = tool_name, ToolVersion = VerNum, TMUpdate=True, )
+		TMManager = TMManager, PredictMode = True, ProactiveTMTranslate=True, Tool = tool_name, ToolVersion = ver_num, TMUpdate=True, )
 	#MyTranslator = Translator(from_language, to_language, GlossaryID =  GlossaryID, TMManager = TMManager, TM_Path = tm_path,)
 	print('Put to Queue')
 	Mqueue.put(MyTranslator)
@@ -1740,7 +1741,6 @@ def MainLoop():
 
 		try:
 			logger.log_text(text_log)
-			os.remove(self.tracking_log)	
 		except:
 			print('Fail to send log to server.')
 			
