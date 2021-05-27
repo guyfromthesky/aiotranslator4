@@ -18,18 +18,17 @@ import pyperclip
 
 #from tkinter import *
 #from tkinter.ttk import *
-from tkinter.ttk import Entry, Combobox, Label, Style, Treeview, Scrollbar
-from tkinter.ttk import Radiobutton, Checkbutton, Button, OptionMenu, Notebook
+from tkinter.ttk import Entry, Label, Style
+from tkinter.ttk import Checkbutton, Button, OptionMenu, Notebook
 
 from tkinter import Tk, Frame, Toplevel
 from tkinter import Menu, filedialog, messagebox
 from tkinter import Text
 from tkinter import IntVar, StringVar
-from tkinter import W, E, S, N, END
-from tkinter import WORD, NORMAL, ACTIVE, INSERT
+from tkinter import W, E, S, N, END, Y, BOTH, TOP
+from tkinter import WORD, NORMAL
 from tkinter import DISABLED
-from tkinter import scrolledtext 
-from tkinter import PhotoImage
+
 #from tkinter import filedialog
 #from tkinter import messagebox
 #from tkinter import ttk
@@ -46,6 +45,8 @@ import webbrowser
 
 from libs.aiotranslator import Translator
 from libs.aiotranslator import ver_num as TranslatorVersion
+from libs.aiotranslator import generate_translator
+
 from libs.aioconfigmanager import ConfigLoader
 
 from libs.aioconfigmanager import ConfigLoader
@@ -53,6 +54,7 @@ from libs.aioconfigmanager import ConfigLoader
 from libs.grammercheck import LanguageTool
 
 from libs.version import get_version
+from libs.tkinter_extension import AutocompleteCombobox, BottomPanel
 
 #from openpyxl import load_workbook, worksheet, Workbook
 
@@ -81,6 +83,7 @@ class MyTranslatorHelper(Frame):
 				language_tool_enable = False,):
 
 		Frame.__init__(self, parent)
+		self.pack(expand=Y, fill=BOTH)
 		main_frame = Frame(self)
 		sub_frame = Frame(self)
 		
@@ -125,12 +128,16 @@ class MyTranslatorHelper(Frame):
 		self.report_details = None
 
 		self.LanguagePack = LanguagePack
-
+		
 		self.init_ui()
+		# NOTICE
+		self.create_buttom_panel()
 		self.init_UI_setting()
+		
 		#self.LoadTempReport()
 
 		self.generate_translator_engine()
+
 		
 	# Menu function
 	def Error(self, ErrorText):
@@ -158,8 +165,11 @@ class MyTranslatorHelper(Frame):
 		#self.Generate_TMEditor_UI(self.TMEditor)
 
 		#self.Init_Translator_Config
+	def create_buttom_panel(self):
+		BottomPanel(self)
 
 	def Generate_Tab_UI(self):
+		
 		TAB_CONTROL = Notebook(self.parent)
 		
 		#Tab1
@@ -181,8 +191,7 @@ class MyTranslatorHelper(Frame):
 		#Tab5
 		#self.TMEditor = ttk.Frame(TAB_CONTROL)
 		#TAB_CONTROL.add(self.TMEditor, text=self.LanguagePack.Tab['TMEditor'])
-
-		TAB_CONTROL.pack(expand= True, fill="both")	
+		TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
 
 	def Generate_Menu_UI(self):
 		menubar = Menu(self.parent) 
@@ -335,12 +344,12 @@ class MyTranslatorHelper(Frame):
 
 		
 		self.GetReportBtn = Button(Tab, text=self.LanguagePack.Button['GetReport'], width=10, command= self.confirm_report_grammar, state=DISABLED)
-		self.GetReportBtn.grid(row=Row, column=10, padx=0, pady=5, stick=W+E)
+		self.GetReportBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 
 		Row+=1
-		self.TextReproduceSteps = Text(Tab, width=60, height=7, undo=True, wrap=WORD)
+		self.TextReproduceSteps = Text(Tab, width=50, height=7, undo=True, wrap=WORD)
 		self.TextReproduceSteps.grid(row=Row, column=1, columnspan=5, rowspan=7, padx=5, pady=5, stick=W+E)
-		self.TextShouldBe = Text(Tab, width=60, height=7, undo=True, wrap=WORD) 
+		self.TextShouldBe = Text(Tab, width=50, height=7, undo=True, wrap=WORD) 
 		self.TextShouldBe.grid(row=Row, column=6, columnspan=5, padx=5, pady=5, stick=W+E)
 		Row+=7
 
@@ -382,7 +391,7 @@ class MyTranslatorHelper(Frame):
 		#New Row
 
 		Row +=1
-		self.SourceText = CustomText(Tab, width = self.SOURCE_WIDTH, height=self.ROW_SIZE, undo=True) 
+		self.SourceText = Text(Tab, width = self.SOURCE_WIDTH, height=self.ROW_SIZE, undo=True) 
 		self.SourceText.grid(row=Row, column=1, columnspan=5, rowspan=self.ROW_SIZE, padx=5, pady=5, sticky=E+W)
 		self.SourceText.bind("<Double-Return>", self.BindTranslate)
 		self.SourceText.bind("<Double-Tab>", self.BindSwap)
@@ -400,8 +409,6 @@ class MyTranslatorHelper(Frame):
 		self.simple_source_language_select.config(width=self.HALF_BUTTON_SIZE)
 		self.simple_source_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
 		self.simple_source_language.set('Hangul')
-
-
 
 		Button(Tab, text=self.LanguagePack.Button['Swap'], width = 20, command= self.Swap).grid(row=Row, column=5, columnspan=2, padx=0, pady=5)	
 		
@@ -681,24 +688,26 @@ class MyTranslatorHelper(Frame):
 
 	def generate_translator_engine(self):
 		self.Notice.set(self.LanguagePack.ToolTips['AppInit'])
-		#if self.source_language.get() == 1:
-
+	
 		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
 
 		self.glossary_id = self.text_glossary_id.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
 		print('Start new process: Generate Translator')
-		self.TranslatorProcess = Process(	target=GenerateTranslator, 
-											kwargs={	'my_translator_queue' : self.MyTranslator_Queue, 
+		self.TranslatorProcess = Process(	target = generate_translator,
+											kwargs= {	'my_translator_queue' : self.MyTranslator_Queue, 
 														'temporary_tm' : self.tm_manager, 
 														'from_language' : source_language, 
 														'to_language' : target_language, 
 														'glossary_id' : self.glossary_id, 
+														'used_tool' : tool_name,
 														'tm_path' : None,
 														'bucket_id' : self.bucket_id, 
 														'db_list_uri' : self.db_list_uri, 
-														'project_bucket_id' : self.project_bucket_id,},)
+														'project_bucket_id' : self.project_bucket_id,
+													},
+										)
 		self.TranslatorProcess.start()										
 		self.after(DELAY, self.GetMyTranslator)
 		return	
@@ -1053,7 +1062,7 @@ class MyTranslatorHelper(Frame):
 		self.Notice.set(self.LanguagePack.ToolTips['GenerateBugTitle'])
 		self.strSourceTitle = self.TextTitle.get("1.0", END).replace('\n', '')
 		self.strSourceTitle = self.TextTitle.get("1.0", END).replace('\r\n', '')
-		self.Title_Translate = Process(target=TranslateTitle, args=(self.title, self.strSourceTitle, self.MyTranslator,))
+		self.Title_Translate = Process(target=SimpleTranslate, args=(self.title, self.MyTranslator, self.strSourceTitle,))
 		self.Title_Translate.start()
 		self.after(DELAY, self.TextTitleGet)
 		return
@@ -1427,99 +1436,10 @@ class CustomText(Text):
 			#self.mark_set("matchEnd", "%s+%sc" % (index, count.get()))
 			self.tag_add(tag, "matchStart", "matchEnd")
 
-class AutocompleteCombobox(Combobox):
-
-	def set_completion_list(self, completion_list):
-		"""Use our completion list as our drop down selection menu, arrows move through menu."""
-		self._completion_list = sorted(completion_list, key=str.lower) # Work with a sorted list
-		self._hits = []
-		self._hit_index = 0
-		self.position = 0
-		self.bind('<KeyRelease>', self.handle_keyrelease)
-		self['values'] = self._completion_list  # Setup our popup menu
-		#self._w = 10
-		self.delete(0,END)	
-
-	def Set_Entry_Width(self, width):
-		self.configure(width=width)
-
-	def Set_DropDown_Width(self, width):
-		print('Change size: ', width)
-		style = Style()
-		style.configure('TCombobox', postoffset=(0,0,width,0))
-		self.configure(style='TCombobox')
-
-	def autofill(self, delta=0):
-		"""autocomplete the Combobox, delta may be 0/1/-1 to cycle through possible hits"""
-		if delta: # need to delete selection otherwise we would fix the current position
-			self.delete(self.position, END)
-		else: # set position to end so selection starts where textentry ended
-			self.position = len(self.get())
-		# collect hits
-		_hits = []
-		for element in self._completion_list:
-			if self.get().lower() in element: # Match case insensitively
-				_hits.append(element)
-		# if we have a new hit list, keep this in mind
-		if _hits != self._hits:
-			self._hit_index = 0
-			self._hits=_hits
-		# only allow cycling if we are in a known hit list
-		if _hits == self._hits and self._hits:
-			self._hit_index = (self._hit_index + delta) % len(self._hits)
-		# now finally perform the auto completion
-		'''
-		if self._hits:
-			self.delete(0,END)
-			self.insert(0,self._hits[self._hit_index])
-			self.select_range(self.position,END)
-		'''
-
-	def autocomplete(self, delta=0):
-		"""autocomplete the Combobox, delta may be 0/1/-1 to cycle through possible hits"""
-		if delta: # need to delete selection otherwise we would fix the current position
-			self.delete(self.position, END)
-		else: # set position to end so selection starts where textentry ended
-			self.position = len(self.get())
-		# collect hits
-		_hits = []
-		for element in self._completion_list:
-			if element.lower().startswith(self.get().lower()): # Match case insensitively
-				_hits.append(element)
-		# if we have a new hit list, keep this in mind
-		if _hits != self._hits:
-			self._hit_index = 0
-			self._hits=_hits
-		# only allow cycling if we are in a known hit list
-		if _hits == self._hits and self._hits:
-			self._hit_index = (self._hit_index + delta) % len(self._hits)
-		# now finally perform the auto completion
-		if self._hits:
-			self.delete(0,END)
-			self.insert(0,self._hits[self._hit_index])
-			self.select_range(self.position,END)
-
-	def handle_keyrelease(self, event):
-		"""event handler for the keyrelease event on this widget"""
-		if event.keysym == "BackSpace":
-			self.delete(self.index(INSERT), END)
-			self.position = self.index(END)
-		if event.keysym == "Left":
-			if self.position < self.index(END): # delete the selection
-				self.delete(self.position, END)
-			else:
-				self.position = self.position-1 # delete one character
-				self.delete(self.position, END)
-		if event.keysym == "Right":
-			self.position = self.index(END) # go to end (no selection)
-		if len(event.keysym) == 1:
-			self.autocomplete()
-			#self.autofill()
-
 class ConfirmationPopup:
 	def __init__(self, master, dif_dict):
 		self.master = master
-		
+		self.master.geometry("400x350+300+300")
 		self.vars = []
 		row = 1
 		for string_index in range(len(dif_dict)- 1):
@@ -1532,7 +1452,7 @@ class ConfirmationPopup:
 			row += 1
 		Button(self.master, width = 20, text= 'Decline All').grid(row=row, column=1, columnspan=1, padx=5, pady=5, sticky=E)
 		Button(self.master, width = 20, text= 'Confirm').grid(row=row, column=2, columnspan=1, padx=5, pady=5, sticky=E)
-		
+
 # Function for Document Translator
 def GenerateTranslator(
 		my_translator_queue = None, 
@@ -1567,11 +1487,6 @@ def SimpleTranslate(queue, MyTranslator, Text):
 	except Exception as e:
 		Error = ['Error to translate:' + str(e)]
 		queue.put(Error)
-	
-#Bug Writer Get title
-def TranslateTitle(qin, Text, MyTranslator):
-	Translated = MyTranslator.translate(Text)
-	qin.put(Translated)
 
 def correct_sentence(result_manager, sentence_list):
 	
@@ -1887,6 +1802,7 @@ def MainLoop():
 	tm_manager = MyManager.list()
 	
 	language_tool_enable = False
+	global language_tool
 	try:
 		language_tool = LanguageTool('en')
 		language_tool_enable = True

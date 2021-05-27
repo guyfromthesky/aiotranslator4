@@ -1765,3 +1765,27 @@ class Translator:
 	def tm_update_anable(self, Toggle = True):
 		self.tm_update = Toggle
 	#	print('Translation Memory update mode: ', Toggle)		
+
+# Function for Document Translator
+def generate_translator(
+		my_translator_queue = None, 
+		temporary_tm = None, 
+		from_language = 'ko', 
+		to_language = 'en', 
+		glossary_id = None,
+		used_tool = None,
+		tm_path= None, 
+		bucket_id = 'nxvnbucket',
+		db_list_uri = 'config/db_list.csv',
+		project_bucket_id = 'credible-bay-281107'):	
+	MyTranslator = Translator(	from_language = from_language, 
+								to_language = to_language, 
+								glossary_id =  glossary_id, 
+								temporary_tm = temporary_tm,
+								tm_path = tm_path, 
+								used_tool = used_tool, 
+								tool_version = ver_num,
+								bucket_id = bucket_id,
+								db_list_uri = db_list_uri,
+								project_bucket_id = project_bucket_id)
+	my_translator_queue.put(MyTranslator)
