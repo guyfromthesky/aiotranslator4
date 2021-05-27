@@ -1379,7 +1379,7 @@ def Function_Execute_Script(StatusQueue, DB_Path, glossary_id, **kwargs):
 									tm_path = None, 
 									used_tool = 'Document Translator', 
 									tool_version = ver_num,)
-		MyTranslator.backup_and_update_glob(glossary_id, Output)
+		MyTranslator.backup_and_update_blob(glossary_id, Output)
 		
 		print('Logging data')
 

@@ -19,10 +19,10 @@ import pyperclip
 #from tkinter import *
 #from tkinter.ttk import *
 from tkinter.ttk import Entry, Combobox, Label, Style, Treeview, Scrollbar
-from tkinter.ttk import Radiobutton, Checkbutton, Button, OptionMenu
+from tkinter.ttk import Radiobutton, Checkbutton, Button, OptionMenu, Notebook
 
-from tkinter import Tk, Frame
-from tkinter import Menu, filedialog, messagebox, ttk
+from tkinter import Tk, Frame, Toplevel
+from tkinter import Menu, filedialog, messagebox
 from tkinter import Text
 from tkinter import IntVar, StringVar
 from tkinter import W, E, S, N, END
@@ -48,9 +48,13 @@ from libs.aiotranslator import Translator
 from libs.aiotranslator import ver_num as TranslatorVersion
 from libs.aioconfigmanager import ConfigLoader
 
+from libs.aioconfigmanager import ConfigLoader
+
+from libs.grammercheck import LanguageTool
+
 from libs.version import get_version
 
-from openpyxl import load_workbook, worksheet, Workbook
+#from openpyxl import load_workbook, worksheet, Workbook
 
 from google.cloud import logging
 import json
@@ -63,9 +67,6 @@ version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + Tran
 
 DELAY = 20
 
-
-
-
 #**********************************************************************************
 # UI handle ***********************************************************************
 #**********************************************************************************
@@ -75,19 +76,27 @@ class MyTranslatorHelper(Frame):
 				parent = None, 
 				TranslationQueue = None, 
 				MyTranslator_Queue = None, 
-				tm_manager = None,):
+				tm_manager = None,
+				grammar_check_result = None,
+				language_tool_enable = False,):
 
 		Frame.__init__(self, parent)
+		main_frame = Frame(self)
+		sub_frame = Frame(self)
 		
 		self.parent = parent
 		self.MyTranslator_Queue = MyTranslator_Queue
 		self.MyTranslator = None
 
+		self.language_tool_enable = language_tool_enable
+		self.grammar_check_result = grammar_check_result
 		self.tm_manager = tm_manager
-
 		self.return_text = TranslationQueue
 
-		self.SOURCE_WIDTH = 68
+		self.grammar_check_list = []
+		self.grammar_corrected_list = []
+
+		self.SOURCE_WIDTH = 70
 		self.BUTTON_SIZE = 20
 		self.HALF_BUTTON_SIZE = 15
 		self.ROW_SIZE = 23
@@ -112,6 +121,8 @@ class MyTranslatorHelper(Frame):
 			from libs.languagepack import LanguagePackEN as LanguagePack
 		else:
 			from libs.languagepack import LanguagePackKR as LanguagePack
+
+		self.report_details = None
 
 		self.LanguagePack = LanguagePack
 
@@ -149,18 +160,18 @@ class MyTranslatorHelper(Frame):
 		#self.Init_Translator_Config
 
 	def Generate_Tab_UI(self):
-		TAB_CONTROL = ttk.Notebook(self.parent)
+		TAB_CONTROL = Notebook(self.parent)
 		
 		#Tab1
-		self.BugWriter = ttk.Frame(TAB_CONTROL)
+		self.BugWriter = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.BugWriter, text=self.LanguagePack.Tab['BugWriter'])
 		
 		#Tab2
-		self.SimpleTranslator = ttk.Frame(TAB_CONTROL)
+		self.SimpleTranslator = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.SimpleTranslator, text=self.LanguagePack.Tab['SimpleTranslator'])
 
 		#Tab3
-		self.TranslateSetting = ttk.Frame(TAB_CONTROL)
+		self.TranslateSetting = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.TranslateSetting, text=  self.LanguagePack.Tab['Translator'])
 
 		#Tab4
@@ -319,12 +330,12 @@ class MyTranslatorHelper(Frame):
 		
 		
 		Row+=1
-		Label(Tab, width=10, text=self.LanguagePack.Label['Steps']).grid(row=Row, column=1, columnspan=2, padx=5, pady=5, stick=W)
-		Label(Tab, width=10, text=self.LanguagePack.Label['Expected']).grid(row=Row, column=6, columnspan=2, padx=0, pady=5, stick=W)
+		Label(Tab, width=10, text=self.LanguagePack.Label['Steps']).grid(row=Row, column=1, columnspan=2, padx=0, pady=0, stick=W)
+		Label(Tab, width=10, text=self.LanguagePack.Label['Expected']).grid(row=Row, column=6, columnspan=2, padx=0, pady=0, stick=W)
 
 		
-		self.GetReportBtn = Button(Tab, text=self.LanguagePack.Button['GetReport'], width=10, command= self.GenerateReportCSS, state=DISABLED)
-		self.GetReportBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
+		self.GetReportBtn = Button(Tab, text=self.LanguagePack.Button['GetReport'], width=10, command= self.confirm_report_grammar, state=DISABLED)
+		self.GetReportBtn.grid(row=Row, column=10, padx=0, pady=5, stick=W+E)
 
 		Row+=1
 		self.TextReproduceSteps = Text(Tab, width=60, height=7, undo=True, wrap=WORD)
@@ -366,8 +377,8 @@ class MyTranslatorHelper(Frame):
 		Label(Tab, textvariable=self.Notice).grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=E)
 
 		Row +=1
-		Label(Tab, text=self.LanguagePack.Label['SourceText'], width=10).grid(row=Row, column=1, columnspan = 5, padx=5, pady=0)
-		Label(Tab, text=self.LanguagePack.Label['TargetText'], width=10).grid(row=Row, column=6, columnspan = 5, padx=5, pady=0)
+		Label(Tab, text=self.LanguagePack.Label['SourceText']).grid(row=Row, column=1, columnspan = 5, padx=5, pady=0)
+		Label(Tab, text=self.LanguagePack.Label['TargetText']).grid(row=Row, column=6, columnspan = 5, padx=5, pady=0)
 		#New Row
 
 		Row +=1
@@ -378,10 +389,10 @@ class MyTranslatorHelper(Frame):
 
 
 		self.TargetText = Text(Tab, width = self.SOURCE_WIDTH, height=self.ROW_SIZE, undo=True) #
-		self.TargetText.grid(row = Row, column=6, columnspan=5, rowspan=self.ROW_SIZE, padx=5, pady=5, sticky=E+W)
-		Row +=self.ROW_SIZE
+		self.TargetText.grid(row = Row, column=6, columnspan=5, rowspan=self.ROW_SIZE, padx=5, pady=5, sticky=E)
 		
-		Row +=1
+		Row +=self.ROW_SIZE
+
 		Label(Tab, text= 'Source', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
 		
 		self.simple_source_language = StringVar()
@@ -396,10 +407,10 @@ class MyTranslatorHelper(Frame):
 		
 		#self.RenewTranslatorButton(Tab, text=self.LanguagePack.Button['RenewDatabase'], width = self.BUTTON_SIZE, command= self.RenewMyTranslator).grid(row = Row, column=8, padx=10, pady=5)
 		self.RenewTranslator = Button(Tab, text=self.LanguagePack.Button['RenewDatabase'], width = self.BUTTON_SIZE, command= self.RenewMyTranslator, state=DISABLED)
-		self.RenewTranslator.grid(row = Row, column=8, padx=10, pady=5)
+		self.RenewTranslator.grid(row = Row, column=8, padx=5, pady=5, sticky=E)
 		
 		self.TranslateBtn = Button(Tab, text=self.LanguagePack.Button['Translate'], width = self.BUTTON_SIZE, command= self.Translate, state=DISABLED)
-		self.TranslateBtn.grid(row=Row, column=10, pady=5)		
+		self.TranslateBtn.grid(row=Row, column=10, padx=5, pady=5, sticky=E)		
 		#New Row
 		Row +=1
 
@@ -413,9 +424,9 @@ class MyTranslatorHelper(Frame):
 		self.simple_target_language.set('English')
 
 
-		Button(Tab, text=self.LanguagePack.Button['Bilingual'], width = self.BUTTON_SIZE, command= self.BtnBilingual).grid(row = Row, column=8, padx=10, pady=5)
+		Button(Tab, text=self.LanguagePack.Button['Bilingual'], width = self.BUTTON_SIZE, command= self.BtnBilingual).grid(row = Row, column=8, padx=5, pady=5, sticky=E)
 		self.Translate_bilingual_Btn = Button(Tab, text=self.LanguagePack.Button['TranslateAndBilingual'], width = self.BUTTON_SIZE, command= self.BtnTranslateAndBilingual)
-		self.Translate_bilingual_Btn.grid(row = Row, column=10, padx=10, pady=5)
+		self.Translate_bilingual_Btn.grid(row = Row, column=10, padx=5, pady=5, sticky=E)
 	
 		Row+=1
 		Label(Tab, text= 'Primary Target', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
@@ -436,7 +447,7 @@ class MyTranslatorHelper(Frame):
 		Label(Tab, textvariable=self.DictionaryStatus).grid(row=Row, column=4, padx=0, pady=5, sticky=W)
 		self.DictionaryStatus.set('0')
 
-		Button(Tab, text=self.LanguagePack.Button['Copy'], width = self.BUTTON_SIZE, command= self.BtnCopy).grid(row = Row, column=10, padx=10, pady=5)
+		Button(Tab, text=self.LanguagePack.Button['Copy'], width = self.BUTTON_SIZE, command= self.BtnCopy).grid(row = Row, column=10, padx=5, pady=5, sticky=E)
 
 		#Tab.update()
 		#print("frame size after update: ", Tab.winfo_width(), Tab.winfo_height())
@@ -462,7 +473,7 @@ class MyTranslatorHelper(Frame):
 		Label(Tab, textvariable=self.Notice).grid(row=Row, column=1, columnspan = 10, padx=5, pady=5, sticky= W)
 		
 		Row += 1
-		Label(Tab, text="Data table lookup: ", width= 20, font='calibri 11 bold').grid(row=Row, column=1, padx=10, pady=5, sticky=W)
+		Label(Tab, text="Data table lookup: ", width= 20, font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		
 		Row += 1
 		Label(Tab, text='Source Data: ', width= 20, font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
@@ -473,7 +484,7 @@ class MyTranslatorHelper(Frame):
 		Button(Tab, width = 20, text=  self.LanguagePack.Button['Browse'], command= self.SelectDataTableSource).grid(row=Row, column=9, columnspan=2, padx=5, pady=5, sticky=E)
 
 		Row +=1
-		Label(Tab, text="ID: ", width=10).grid(row=Row, column=1, columnspan = 5, padx=10, pady=0, sticky= W)
+		Label(Tab, text="ID: ", width=10).grid(row=Row, column=1, columnspan = 5, padx=5, pady=0, sticky= W)
 		#Label(Tab, text="Target: ", width=10).grid(row=Row, column=6, columnspan = 5, padx=10, pady=0)
 
 		self.SourceTM = Text(Tab, width = self.SOURCE_WIDTH, height=1, undo=True) 
@@ -593,6 +604,7 @@ class MyTranslatorHelper(Frame):
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 
 	def SaveNewTM(self):
+
 		filename = filedialog.asksaveasfilename(title = "Select file", filetypes = (("Translation Memory", "*.pkl"),),)
 		filename = self.CorrectExt(filename, "pkl")
 		if filename == "":
@@ -621,6 +633,11 @@ class MyTranslatorHelper(Frame):
 			newPath = self.CorrectPath(Outputdir + '/'+ sourcename + '.' + ext)
 			return newPath
 
+	def create_new_window(self, dif_dict, _class):
+		self.new = Toplevel(self.master)
+
+		_class(self.new, dif_dict)
+	
 	#I dont know why I put it here
 	def UpdateSize(self,event):
 		
@@ -1109,22 +1126,7 @@ class MyTranslatorHelper(Frame):
 	#END
 
 	#GUI function
-	def GenerateReportCSS(self):
-		self.Notice.set(self.LanguagePack.ToolTips['GenerateBugReport'])
-		pyperclip.copy("")
-
-		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
-		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
-		secondary_target_language = self.language_id_list[self.language_list.index(self.secondary_target_language.get())]
-		if secondary_target_language == "":
-			secondary_target_language = None
-		print('source_language', source_language)
-		print('target_language', target_language)
-		print('secondary_target_language', secondary_target_language)
-
-		self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
-
-
+	def collect_report_elements(self):
 		TextTestServer = self.TextServer.get("1.0", END).replace('\n', '')
 		TextTestClient = self.TextClient.get("1.0", END).replace('\n', '')
 
@@ -1142,14 +1144,32 @@ class MyTranslatorHelper(Frame):
 		To_Translate['TextShouldBe'] = self.TextShouldBe.get("1.0", END)
 		To_Translate['TextReproduceSteps'] = self.TextReproduceSteps.get("1.0", END)
 
-		Simple_Template = self.UseSimpleTemplate.get()
+		
 
 		To_Translate['TextTestReport'] = self.TextTestReport.get("1.0", END)
 		To_Translate['TextShouldBe'] = self.TextShouldBe.get("1.0", END)
 		To_Translate['TextReproduceSteps'] = self.TextReproduceSteps.get("1.0", END)
+		self.report_details = To_Translate
 
+	def prepare_translator_language(self):
+		return
 
-		self.BugWriter = Process(target=Translate_Simple, args=(To_Translate, Simple_Template, self.MyTranslator, secondary_target_language))
+	def GenerateReportCSS(self):
+		self.Notice.set(self.LanguagePack.ToolTips['GenerateBugReport'])
+
+		pyperclip.copy("")
+
+		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
+		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
+		secondary_target_language = self.language_id_list[self.language_list.index(self.secondary_target_language.get())]
+		if secondary_target_language == "":
+			secondary_target_language = None
+
+		self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
+		
+		Simple_Template = self.UseSimpleTemplate.get()
+
+		self.BugWriter = Process(target=Translate_Simple, args=(self.report_details, Simple_Template, self.MyTranslator, secondary_target_language))
 		self.BugWriter.start()
 
 		self.after(DELAY, self.GetBugDetails)
@@ -1163,6 +1183,43 @@ class MyTranslatorHelper(Frame):
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['GeneratedBugReport'])
 			self.BugWriter.join()
+
+	def confirm_report_grammar(self):
+		if not self.language_tool_enable:
+			self.GenerateReportCSS()
+		
+		self.Notice.set('Checking grammar from the report')
+		self.collect_report_elements()
+		#print('report_details', self.report_details)
+		
+		self.grammar_check_list = []
+		for dict_key in self.report_details:
+			if dict_key != 'TextTestVersion':
+				if self.report_details[dict_key] != None:	
+					self.grammar_check_list.append(self.report_details[dict_key])
+
+		self.Grammar_Check = Process(target= correct_sentence, args=(self.grammar_check_result, self.grammar_check_list))
+		self.Grammar_Check.start()
+		self.after(DELAY, self.get_grammar_confirmation)
+
+		
+
+	def get_grammar_confirmation(self):
+
+		self.grammar_check_result[:]
+		if (self.Grammar_Check.is_alive()):
+			self.after(DELAY, self.get_grammar_confirmation)
+		else:
+
+			self.grammar_corrected_list = self.grammar_check_result
+			if len(self.grammar_corrected_list) > 0:
+				self.create_new_window(self.grammar_corrected_list, ConfirmationPopup)
+			else:
+				self.Notice.set('Grammar check is Passed.')
+	
+			self.Grammar_Check.join()
+			self.GenerateReportCSS()
+			
 
 	def SaveReport(self):
 		TextTitle = self.TextTitle.get("1.0", END)			
@@ -1370,7 +1427,6 @@ class CustomText(Text):
 			#self.mark_set("matchEnd", "%s+%sc" % (index, count.get()))
 			self.tag_add(tag, "matchStart", "matchEnd")
 
-
 class AutocompleteCombobox(Combobox):
 
 	def set_completion_list(self, completion_list):
@@ -1459,7 +1515,24 @@ class AutocompleteCombobox(Combobox):
 		if len(event.keysym) == 1:
 			self.autocomplete()
 			#self.autofill()
-				
+
+class ConfirmationPopup:
+	def __init__(self, master, dif_dict):
+		self.master = master
+		
+		self.vars = []
+		row = 1
+		for string_index in range(len(dif_dict)- 1):
+			sentence = dif_dict[string_index]['old']
+			corrected_sentence = dif_dict[string_index]['new']
+			show_text = sentence + "\t-->\t" + corrected_sentence
+			self.vars.append(IntVar())
+			l = Checkbutton(self.master, text= show_text, variable=self.vars[string_index]).grid(row = row, column = 1, padx=5, pady=5, stick=W)
+			self.vars[string_index].set(1)
+			row += 1
+		Button(self.master, width = 20, text= 'Decline All').grid(row=row, column=1, columnspan=1, padx=5, pady=5, sticky=E)
+		Button(self.master, width = 20, text= 'Confirm').grid(row=row, column=2, columnspan=1, padx=5, pady=5, sticky=E)
+		
 # Function for Document Translator
 def GenerateTranslator(
 		my_translator_queue = None, 
@@ -1500,6 +1573,21 @@ def TranslateTitle(qin, Text, MyTranslator):
 	Translated = MyTranslator.translate(Text)
 	qin.put(Translated)
 
+def correct_sentence(result_manager, sentence_list):
+	
+	for paragraph in sentence_list:
+		sentences = language_tool.sentence_split(paragraph)
+		for sentence in sentences:
+			sub_sentences = sentence.split('\n')
+			for sub_sentence in sub_sentences:
+				if sub_sentence != "":
+					corrected_sentence = language_tool.correct(sub_sentence)
+					if sub_sentence != corrected_sentence:
+						result_obj = {'old': sub_sentence, 'new': corrected_sentence}
+						result_manager.append(result_obj)
+
+	print('result_manager', result_manager)
+	return
 #Bug Writer 
 def Translate_Simple(Object, simple_template, my_translator, secondary_target_language = None):
 
@@ -1791,16 +1879,19 @@ def fixed_map(style, option):
 	  elm[:2] != ('!disabled', '!selected')]
 
 def MainLoop():
-	report_queue = Queue()
-	step_queue = Queue()
-	info_queue = Queue()
-	title_queue = Queue()
-	csscode_queue = Queue()
+
 	MyTranslator = Queue()
-	MyDB = Queue()
 	return_text = Queue()
 	MyManager = Manager()
+	grammar_check_result = MyManager.list()
 	tm_manager = MyManager.list()
+	
+	language_tool_enable = False
+	try:
+		language_tool = LanguageTool('en')
+		language_tool_enable = True
+	except Exception as error_message:
+		print('Error: ', error_message)
 
 	root = Tk()
 
@@ -1809,7 +1900,7 @@ def MainLoop():
 	#root.geometry("400x350+300+300")
 	
 	try:
-		MyTranslatorHelper(root, return_text, MyTranslator, tm_manager = tm_manager,)
+		MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 		root.mainloop()
 	except Exception as e:
 		

@@ -1324,33 +1324,53 @@ class Translator:
 # Main bucket that this tool use is "nxvnbucket"
 ################################################################################################
 
-	def update_bucket(self, glossary_id):
-		return
-
 	# Replace the DB file by the new one
 	# Need to rename the old DB file for backup purpose
 	# 	-> Update later
-	def update_glob(self, glossary_id, Upload_Path):
+	def upload_blob(self, blob_id, upload_path):
+		
 		from google.cloud import storage
 		sclient = storage.Client()
 		
-		#gloss = self.get_glossary(glossary_id)
+		print('Get bucket...')
+		current_time = datetime.now()
+		bucket = sclient.get_bucket(self.bucket_id)	
+		print('Total time to get bucket:', str(datetime.now() - current_time))
+		print('Get blob...')
+		current_time = datetime.now()
+		blob = bucket.blob(blob_id)
+		print('Total time to get blob:', str(datetime.now() - current_time))
 
-		bucket = sclient.get_bucket(self.bucket_id)
-		try:
-			blob_id = self.get_glossary_path(glossary_id)
-		except:
-			return False	
+		print('Upload to blob')
+		current_time = datetime.now()
+		blob.upload_from_filename(filename = upload_path)
+		print('Total time to upload file:', str(datetime.now() - current_time))
+		
+	def download_blob(self, blob_id, download_path):
+
+		from google.cloud import storage
+		sclient = storage.Client()
+		current_time = datetime.now()
+		print('Get bucket...')
+		current_time = datetime.now()
+		bucket = sclient.get_bucket(self.bucket_id)	
+		
+		
+		print('Get blob...')
 		
 		blob = bucket.blob(blob_id)
-		print('Uploading to blob')
-		blob.upload_from_filename(filename = Upload_Path)
-		#def create_glossary(self, input_uri= None, glossary_id=None, timeout=180,):
-	
+		print('Total time to get blob:', str(datetime.now() - current_time))
+
+		print('Download blob to')
+		current_time = datetime.now()
+		download_file = blob.download_as_text()
+		print('Total time to download blob:', str(datetime.now() - current_time))
+		#print('download_file:', download_file)
+
 	# Replace the DB file by the new one
 	# Need to rename the old DB file for backup purpose
 	# 	-> Update later
-	def backup_and_update_glob(self, glossary_id, Upload_Path):
+	def backup_and_update_blob(self, glossary_id, Upload_Path):
 		from google.cloud import storage
 		sclient = storage.Client()
 		
