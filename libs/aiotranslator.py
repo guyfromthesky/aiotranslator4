@@ -1115,7 +1115,7 @@ class Translator:
 		new_list_db = list(map(lambda x: self.base64_decode_list(x), list_db))
 		# Load DB as DataFrame
 		db_columns = ['tag'] + self.supported_language
-
+		
 		self.all_db = pd.DataFrame(columns=db_columns, data=new_list_db)
 		self.update_db_from_dataframe()
 

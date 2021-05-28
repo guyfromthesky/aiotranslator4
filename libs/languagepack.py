@@ -185,6 +185,8 @@ class LanguagePackEN:
 	Tab['TMManager'] = "TM Manager"
 	Tab['DBUploader'] = "DB Uploader"
 
+	Tab['DBSeacher'] = "Search"
+
 	ToolTips = {}
 
 	ToolTips['UpdateTMFile'] = "Update the new translate result to TM file."
@@ -429,6 +431,8 @@ class LanguagePackKR:
 
 	Tab['TMManager'] = "TM 관리자"
 	Tab['DBUploader'] = "DB 업 로더"
+
+	Tab['DBSeacher'] = "검색"
 
 	ToolTips = {}
 
