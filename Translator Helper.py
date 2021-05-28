@@ -14,20 +14,25 @@ import datetime
 from datetime import date
 import time
 #function difination
-import pyperclip
-
+# Copy to clipboard
+#import pyperclip
+from pyperclip import copy
 #from tkinter import *
 #from tkinter.ttk import *
 from tkinter.ttk import Entry, Label, Style
 from tkinter.ttk import Checkbutton, Button, OptionMenu, Notebook
-
 from tkinter import Tk, Frame, Toplevel
+# Widget type
 from tkinter import Menu, filedialog, messagebox
 from tkinter import Text
+# Variable type
 from tkinter import IntVar, StringVar
-from tkinter import W, E, S, N, END, Y, BOTH, TOP
-from tkinter import WORD, NORMAL
-from tkinter import DISABLED
+# Wrap type
+from tkinter import WORD
+# sticky state
+from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, BOTTOM
+# Config state
+from tkinter import DISABLED, NORMAL
 
 #from tkinter import filedialog
 #from tkinter import messagebox
@@ -54,7 +59,7 @@ from libs.aioconfigmanager import ConfigLoader
 from libs.grammercheck import LanguageTool
 
 from libs.version import get_version
-from libs.tkinter_extension import AutocompleteCombobox, BottomPanel
+from libs.tkinter_extension import AutocompleteCombobox
 
 #from openpyxl import load_workbook, worksheet, Workbook
 
@@ -83,10 +88,8 @@ class MyTranslatorHelper(Frame):
 				language_tool_enable = False,):
 
 		Frame.__init__(self, parent)
-		self.pack(expand=Y, fill=BOTH)
-		main_frame = Frame(self)
-		sub_frame = Frame(self)
-		
+		self.pack(side=TOP, expand=Y, fill=X)
+
 		self.parent = parent
 		self.MyTranslator_Queue = MyTranslator_Queue
 		self.MyTranslator = None
@@ -129,13 +132,13 @@ class MyTranslatorHelper(Frame):
 
 		self.LanguagePack = LanguagePack
 		
-		self.init_ui()
-		# NOTICE
 		self.create_buttom_panel()
+		self.init_ui()
+		
 		self.init_UI_setting()
 		
 		#self.LoadTempReport()
-
+		
 		self.generate_translator_engine()
 
 		
@@ -166,11 +169,14 @@ class MyTranslatorHelper(Frame):
 
 		#self.Init_Translator_Config
 	def create_buttom_panel(self):
-		BottomPanel(self)
-
-	def Generate_Tab_UI(self):
+		self.bottom_panel = BottomPanel(self)
 		
-		TAB_CONTROL = Notebook(self.parent)
+	def Generate_Tab_UI(self):
+		demoPanel = Frame(self, name='demo')
+		demoPanel.pack(side=TOP, fill=BOTH, expand=Y)
+		TAB_CONTROL = Notebook(demoPanel, name='notebook')
+
+		#TAB_CONTROL = Notebook(self.parent)
 		
 		#Tab1
 		self.BugWriter = Frame(TAB_CONTROL)
@@ -354,7 +360,7 @@ class MyTranslatorHelper(Frame):
 		Row+=7
 
 		Row+=1
-
+		'''
 		Label(Tab, text='Version').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		Label(Tab, textvariable=self.VersionStatus).grid(row=Row, column=2, padx=0, pady=5, sticky=W)
 		self.VersionStatus.set('-')
@@ -375,7 +381,7 @@ class MyTranslatorHelper(Frame):
 
 		self.RenewTranslatorMain = Button(Tab, text=self.LanguagePack.Button['RenewDatabase'], command= self.RenewMyTranslator, state=DISABLED)
 		self.RenewTranslatorMain.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
-
+		'''
 		#Tab.update()
 		#print("frame size after update: ", Tab.winfo_width(), Tab.winfo_height())
 		
@@ -410,55 +416,46 @@ class MyTranslatorHelper(Frame):
 		self.simple_source_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
 		self.simple_source_language.set('Hangul')
 
-		Button(Tab, text=self.LanguagePack.Button['Swap'], width = 20, command= self.Swap).grid(row=Row, column=5, columnspan=2, padx=0, pady=5)	
+
+
+		Button(Tab, text=self.LanguagePack.Button['Swap'], width = 20, command= self.Swap).grid(row=Row, column=3, columnspan=2, padx=0, pady=5)	
 		
-		#self.RenewTranslatorButton(Tab, text=self.LanguagePack.Button['RenewDatabase'], width = self.BUTTON_SIZE, command= self.RenewMyTranslator).grid(row = Row, column=8, padx=10, pady=5)
-		self.RenewTranslator = Button(Tab, text=self.LanguagePack.Button['RenewDatabase'], width = self.BUTTON_SIZE, command= self.RenewMyTranslator, state=DISABLED)
-		self.RenewTranslator.grid(row = Row, column=8, padx=5, pady=5, sticky=E)
-		
+		Button(Tab, text=self.LanguagePack.Button['Copy'], width = self.BUTTON_SIZE, command= self.BtnCopy).grid(row = Row, column=8, padx=5, pady=5, sticky=E)
+
 		self.TranslateBtn = Button(Tab, text=self.LanguagePack.Button['Translate'], width = self.BUTTON_SIZE, command= self.Translate, state=DISABLED)
 		self.TranslateBtn.grid(row=Row, column=10, padx=5, pady=5, sticky=E)		
-		#New Row
+
 		Row +=1
 
-		
 		Label(Tab, text= 'Main Target', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
 		
 		self.simple_target_language = StringVar()
 		self.simple_target_language_select = OptionMenu(Tab, self.simple_target_language, *self.language_list, command = self.set_target_language)
 		self.simple_target_language_select.config(width=self.HALF_BUTTON_SIZE)
 		self.simple_target_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
-		self.simple_target_language.set('English')
-
-
-		Button(Tab, text=self.LanguagePack.Button['Bilingual'], width = self.BUTTON_SIZE, command= self.BtnBilingual).grid(row = Row, column=8, padx=5, pady=5, sticky=E)
-		self.Translate_bilingual_Btn = Button(Tab, text=self.LanguagePack.Button['TranslateAndBilingual'], width = self.BUTTON_SIZE, command= self.BtnTranslateAndBilingual)
-		self.Translate_bilingual_Btn.grid(row = Row, column=10, padx=5, pady=5, sticky=E)
-	
-		Row+=1
-		Label(Tab, text= 'Primary Target', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
+		self.simple_target_language.set('English')		
+		
+		Label(Tab, text= 'Primary Target', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 3, padx=5, pady=5, stick=E+W)
 		
 		secondary_language_list = self.language_list + ['']
 
 		self.simple_secondary_target_language = StringVar()
 		self.simple_secondary_target_language_select = OptionMenu(Tab, self.simple_secondary_target_language, *secondary_language_list, command = self.set_secondary_target_language)
 		self.simple_secondary_target_language_select.config(width=self.HALF_BUTTON_SIZE)
-		self.simple_secondary_target_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
+		self.simple_secondary_target_language_select.grid(row=Row, column=4, padx=0, pady=5, sticky=W)
 		self.simple_secondary_target_language.set('Japanese')
 
-
-		DictionaryLabelB = Label(Tab, text=self.LanguagePack.Label['Database'])
-		DictionaryLabelB.grid(row=Row, column=3, padx=5, pady=5)
-		#DictionaryLabelB.bind("<Enter>", lambda event : self.Notice.set( self.LanguagePack.Label['Database'] + ': ' + self.DictionaryPath.get()))
+		Button(Tab, text=self.LanguagePack.Button['Bilingual'], width = self.BUTTON_SIZE, command= self.BtnBilingual).grid(row = Row, column=8, padx=5, pady=5, sticky=E)
+		Button(Tab, text=self.LanguagePack.Button['Bilingual'], width = self.BUTTON_SIZE, command= self.BtnBilingual).grid(row = Row, column=10, padx=5, pady=5, sticky=E)
 		
-		Label(Tab, textvariable=self.DictionaryStatus).grid(row=Row, column=4, padx=0, pady=5, sticky=W)
-		self.DictionaryStatus.set('0')
-
-		Button(Tab, text=self.LanguagePack.Button['Copy'], width = self.BUTTON_SIZE, command= self.BtnCopy).grid(row = Row, column=10, padx=5, pady=5, sticky=E)
-
-		#Tab.update()
-		#print("frame size after update: ", Tab.winfo_width(), Tab.winfo_height())
+		#self.Translate_bilingual_Btn = Button(Tab, text=self.LanguagePack.Button['TranslateAndBilingual'], width = self.BUTTON_SIZE, command= self.BtnTranslateAndBilingual)
+		#self.Translate_bilingual_Btn.grid(row = Row, column=10, padx=5, pady=5, sticky=E)
 		
+		
+		Row+=1		
+		
+
+
 	def Generate_TranslateSetting_UI(self, Tab):
 		Row = 1
 		Label(Tab, textvariable=self.Notice).grid(row=Row, column=1, columnspan = 10, padx=5, pady=5, sticky= W)
@@ -848,7 +845,7 @@ class MyTranslatorHelper(Frame):
 	def BtnCopy(self):
 		Translated = self.TargetText.get("1.0", END)
 		Translated = Translated.replace('\r', '')
-		pyperclip.copy(Translated)
+		copy(Translated)
 		self.Notice.set(self.LanguagePack.ToolTips['Copied'])
 		return
 
@@ -861,12 +858,12 @@ class MyTranslatorHelper(Frame):
 		Translated = self.TargetText.get("1.0", END)
 		Translated = Translated.replace('\r\n', '\n')
 		Bilingual = Translated + "\r\n" + "================================================" + "\r\n" + SourceText
-		pyperclip.copy(Bilingual)
+		copy(Bilingual)
 		self.Notice.set(self.LanguagePack.ToolTips['Copied'])
 		return
 
 	def BtnTranslateAndBilingual(self):
-		pyperclip.copy("")
+		copy("")
 		try:
 			if (self.SimpleTranslator.is_alive()):
 				self.SimpleTranslator.terminate()
@@ -908,7 +905,7 @@ class MyTranslatorHelper(Frame):
 				SourceText = SourceText.replace('\r\n', '\n')
 				
 				Bilingual = Show + "\r\n" + "================================================" + "\r\n" + SourceText
-				pyperclip.copy(Bilingual)
+				copy(Bilingual)
 				self.Notice.set(self.LanguagePack.ToolTips['Copied'])
 				self.SimpleTranslator.join()
 			except queue.Empty:
@@ -954,8 +951,9 @@ class MyTranslatorHelper(Frame):
 		self.GetTitleBtn.configure(state=DISABLED)
 		self.GetReportBtn.configure(state=DISABLED)
 		self.TranslateBtn.configure(state=DISABLED)
-		self.RenewTranslator.configure(state=DISABLED)
-		self.RenewTranslatorMain.configure(state=DISABLED)
+		#self.RenewTranslator.configure(state=DISABLED)
+		#self.RenewTranslatorMain.configure(state=DISABLED)
+		self.bottom_panel.RenewTranslatorMain.configure(state=DISABLED)
 
 		self.secondary_target_language_select.configure(state=DISABLED)
 		self.target_language_select.configure(state=DISABLED)
@@ -967,15 +965,16 @@ class MyTranslatorHelper(Frame):
 		
 		self.text_glossary_id.configure(state=DISABLED)
 
-		self.Translate_bilingual_Btn.configure(state=DISABLED)
+		#self.Translate_bilingual_Btn.configure(state=DISABLED)
 		self.TranslateBtn.configure(state=DISABLED)
 
 	def enable_btn(self):
 		self.GetTitleBtn.configure(state=NORMAL)
 		self.GetReportBtn.configure(state=NORMAL)
 		self.TranslateBtn.configure(state=NORMAL)
-		self.RenewTranslator.configure(state=NORMAL)
-		self.RenewTranslatorMain.configure(state=NORMAL)
+		#self.RenewTranslator.configure(state=NORMAL)
+		#self.RenewTranslatorMain.configure(state=NORMAL)
+		self.bottom_panel.RenewTranslatorMain.configure(state=NORMAL)
 
 		self.secondary_target_language_select.configure(state=NORMAL)
 		self.target_language_select.configure(state=NORMAL)
@@ -987,7 +986,7 @@ class MyTranslatorHelper(Frame):
 
 		self.text_glossary_id.configure(state=NORMAL)
 
-		self.Translate_bilingual_Btn.configure(state=NORMAL)
+		#self.Translate_bilingual_Btn.configure(state=NORMAL)
 		self.TranslateBtn.configure(state=NORMAL)
 
 	def RenewMyTranslator(self):
@@ -1051,7 +1050,7 @@ class MyTranslatorHelper(Frame):
 		self.ResetTestReport()
 
 	def GetTitle(self):
-		pyperclip.copy("")
+		copy("")
 
 		if self.source_language.get() == 1:
 			self.MyTranslator.set_language_pair(source_language = 'ko', target_language = 'en')
@@ -1107,7 +1106,7 @@ class MyTranslatorHelper(Frame):
 
 				Title = TargetHeader + " "  +  self.TargetTitle + " | " + SourceHeader  + " " +  self.strSourceTitle
 				
-				pyperclip.copy(str(Title))
+				copy(str(Title))
 				self.Notice.set(self.LanguagePack.ToolTips['GeneratedBugTitle'])
 				self.Title_Translate.join()
 			except queue.Empty:
@@ -1166,7 +1165,7 @@ class MyTranslatorHelper(Frame):
 	def GenerateReportCSS(self):
 		self.Notice.set(self.LanguagePack.ToolTips['GenerateBugReport'])
 
-		pyperclip.copy("")
+		copy("")
 
 		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
@@ -1453,31 +1452,38 @@ class ConfirmationPopup:
 		Button(self.master, width = 20, text= 'Decline All').grid(row=row, column=1, columnspan=1, padx=5, pady=5, sticky=E)
 		Button(self.master, width = 20, text= 'Confirm').grid(row=row, column=2, columnspan=1, padx=5, pady=5, sticky=E)
 
-# Function for Document Translator
-def GenerateTranslator(
-		my_translator_queue = None, 
-		temporary_tm = None, 
-		from_language = 'ko', 
-		to_language = 'en', 
-		glossary_id = "", 
-		tm_path= None, 
-		bucket_id = 'nxvnbucket',
-		db_list_uri = 'config/db_list.csv',
-		project_bucket_id = 'credible-bay-281107'
-	):	
+class BottomPanel(Frame):
+	def __init__(self, master):
+		Frame.__init__(self, master) 
+		self.pack(side=BOTTOM, fill=X)          # resize with parent
+		
+		# separator widget
+		#Separator(orient=HORIZONTAL).grid(in_=self, row=0, column=1, sticky=E+W, pady=5)
+		Row = 1
+		Label(text='Version', width=15).grid(in_=self, row=Row, column=1, padx=5, pady=5, sticky=W)
+		Label(textvariable=master.VersionStatus, width=15).grid(in_=self, row=Row, column=2, padx=0, pady=5, sticky=W)
+		master.VersionStatus.set('-')
+
+		Label(text='Update', width=15).grid(in_=self, row=Row, column=3, padx=5, pady=5)
+		Label(textvariable=master.UpdateDay, width=15).grid(in_=self, row=Row, column=4, padx=0, pady=5)
+		master.VersionStatus.set('-')
 	
-	MyTranslator = Translator(	from_language = from_language, 
-								to_language = to_language, 
-								glossary_id =  glossary_id, 
-								temporary_tm = temporary_tm,
-								tm_path = tm_path, 
-								used_tool = tool_name, 
-								tool_version = ver_num,
-								bucket_id = bucket_id,
-								db_list_uri = db_list_uri,
-								project_bucket_id = project_bucket_id
-	)
-	my_translator_queue.put(MyTranslator)
+		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
+		DictionaryLabelA.grid(in_=self, row=Row, column=5, padx=5, pady=5)
+		
+		Label(textvariable=master.DictionaryStatus, width=15).grid(in_=self, row=Row, column=6, padx=0, pady=5)
+		master.DictionaryStatus.set('0')
+
+		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self, row=Row, column=7, padx=5, pady=5)
+		Label(textvariable=master.HeaderStatus, width=15).grid(in_=self, row=Row, column=8, padx=0, pady=5)
+		master.HeaderStatus.set('0')
+
+		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=20, command= master.RenewMyTranslator, state=DISABLED)
+		self.RenewTranslatorMain.grid(in_=self, row=Row, column=10, columnspan=9, padx=10, pady=5, stick=E)
+		
+		
+		self.rowconfigure(0, weight=1)
+		self.columnconfigure(0, weight=1)
 
 #Simple Translator
 def SimpleTranslate(queue, MyTranslator, Text):
@@ -1640,7 +1646,7 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 	CssText += strReprodSteps
 	CssText += strShouldBe
 	print('Copy to clipboard')
-	pyperclip.copy(CssText)
+	copy(CssText)
 
 def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = None):
 		

@@ -138,13 +138,3 @@ class CustomText(Text):
 			#self.mark_set("matchEnd", "%s+%sc" % (index, count.get()))
 			self.tag_add(tag, "matchStart", "matchEnd")
 
-class BottomPanel(Frame):
-	def __init__(self, master):
-		Frame.__init__(self, master) 
-		self.pack(side=BOTTOM, fill=X)          # resize with parent
-		
-		# separator widget
-		Separator(orient=HORIZONTAL).grid(in_=self, row=98, column=1, sticky=E+W, pady=5)
-		Label(text="Status bar").grid(in_=self, row=99, column=1, sticky=E+W, pady=5)
-		#self.rowconfigure(0, weight=1)
-		#self.columnconfigure(0, weight=1)
