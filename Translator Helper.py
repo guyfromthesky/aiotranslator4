@@ -2,9 +2,7 @@
 import sys
 import os
 import re
-#import signal
-import configparser
-import string
+
 #Regular expression handling
 
 #Object copy, handle excel style
@@ -12,10 +10,9 @@ import copy
 #Get timestamp
 import datetime
 from datetime import date
-import time
+#import time
 #function difination
 # Copy to clipboard
-#import pyperclip
 from pyperclip import copy
 #from tkinter import *
 #from tkinter.ttk import *
@@ -38,7 +35,6 @@ from tkinter import DISABLED, NORMAL
 #from tkinter import messagebox
 #from tkinter import ttk
 
-import base64
 import configparser
 import multiprocessing
 from multiprocessing import Queue, Process, Manager
@@ -48,7 +44,6 @@ import queue
 
 import webbrowser
 
-from libs.aiotranslator import Translator
 from libs.aiotranslator import ver_num as TranslatorVersion
 from libs.aiotranslator import generate_translator
 
@@ -105,7 +100,7 @@ class MyTranslatorHelper(Frame):
 		self.SOURCE_WIDTH = 70
 		self.BUTTON_SIZE = 20
 		self.HALF_BUTTON_SIZE = 15
-		self.ROW_SIZE = 23
+		self.ROW_SIZE = 24
 
 		self.str_test_version = ""
 		self.str_test_info = ""
@@ -242,16 +237,11 @@ class MyTranslatorHelper(Frame):
 	def Generate_BugWriter_UI(self, Tab):
 
 		Row=1
-		#Label(self.BugWriter, text="Translator: ").grid(row=Row, column=1, padx=5, pady=5, sticky=W)
-		#self.TranslatorAgent = IntVar()	
-		#Radiobutton(self.BugWriter, width=10, text='Google', value=1, variable=self.TranslatorAgent, command = self.SetTranslatorAgent).grid(row=Row, column=2, padx=5, pady=5)
-		#Radiobutton(self.BugWriter, width=10, text='Kakao', value=2, variable=self.TranslatorAgent, command = self.SetTranslatorAgent).grid(row=Row, column=3, padx=5, pady=5)
-		#self.TranslatorAgent.set(1)
-		#self.LanguagePack.Label['Language']
 		Label(Tab, text= 'Source', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
 		Label(Tab, text= 'Main Target', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 2, padx=5, pady=5, stick=E+W)
 		Label(Tab, text= 'Primary Target', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 3, padx=5, pady=5, stick=E+W)
-		
+		Label(Tab, textvariable=self.Notice).grid(row=Row, column=4, columnspan=7, padx=5, pady=5, stick=E)
+
 		Row += 1
 
 		self.source_language = StringVar()
@@ -278,9 +268,9 @@ class MyTranslatorHelper(Frame):
 
 		self.text_glossary_id.bind("<<ComboboxSelected>>", self._save_project_key)
 		#Button(Tab, width = self.HALF_BUTTON_SIZE, text= self.LanguagePack.Button['Save'], command= self._save_project_key).grid(row=Row, column=7, padx=5, pady=5, sticky=E)
-
-		Label(Tab, textvariable=self.Notice).grid(row=Row, column=6, columnspan=5, padx=5, pady=5, stick=E)
-
+		self.GetTitleBtn = Button(Tab, text=self.LanguagePack.Button['GetTitle'], width=10, command=self.GetTitle, state=DISABLED)
+		self.GetTitleBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
+		
 		Row+=1
 		Label(Tab, text=self.LanguagePack.Label['BugTitle']).grid(row=Row, column = 1, padx=5, pady=5, stick=W)
 
@@ -317,9 +307,10 @@ class MyTranslatorHelper(Frame):
 
 		Button(Tab, text=self.LanguagePack.Button['Reset'], width=10, command= self.ResetTestReport).grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
 
-		self.GetTitleBtn = Button(Tab, text=self.LanguagePack.Button['GetTitle'], width=10, command=self.GetTitle, state=DISABLED)
-		self.GetTitleBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 
+
+		self.GetReportBtn = Button(Tab, text=self.LanguagePack.Button['GetReport'], width=10, command= self.confirm_report_grammar, state=DISABLED)
+		self.GetReportBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 		Row+=1
 		Label(Tab, text=self.LanguagePack.Label['Client']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
 
@@ -357,41 +348,14 @@ class MyTranslatorHelper(Frame):
 		Label(Tab, width=10, text=self.LanguagePack.Label['Expected']).grid(row=Row, column=6, columnspan=2, padx=0, pady=0, stick=W)
 
 		
-		self.GetReportBtn = Button(Tab, text=self.LanguagePack.Button['GetReport'], width=10, command= self.confirm_report_grammar, state=DISABLED)
-		self.GetReportBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
+		
 
 		Row+=1
 		self.TextReproduceSteps = Text(Tab, width=50, height=7, undo=True, wrap=WORD)
 		self.TextReproduceSteps.grid(row=Row, column=1, columnspan=5, rowspan=7, padx=5, pady=5, stick=W+E)
 		self.TextShouldBe = Text(Tab, width=50, height=7, undo=True, wrap=WORD) 
 		self.TextShouldBe.grid(row=Row, column=6, columnspan=5, padx=5, pady=5, stick=W+E)
-		Row+=7
-
-		Row+=1
-		'''
-		Label(Tab, text='Version').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
-		Label(Tab, textvariable=self.VersionStatus).grid(row=Row, column=2, padx=0, pady=5, sticky=W)
-		self.VersionStatus.set('-')
-
-		Label(Tab, text='Update').grid(row=Row, column=3, padx=5, pady=5)
-		Label(Tab, textvariable=self.UpdateDay).grid(row=Row, column=4, padx=0, pady=5)
-		self.VersionStatus.set('-')
 	
-		DictionaryLabelA = Label(Tab, text=self.LanguagePack.Label['Database'])
-		DictionaryLabelA.grid(row=Row, column=5, padx=5, pady=5)
-		Label(Tab, textvariable=self.DictionaryStatus).grid(row=Row, column=6, padx=0, pady=5)
-		self.DictionaryStatus.set('0')
-
-		Label(Tab, text=self.LanguagePack.Label['Header']).grid(row=Row, column=7, padx=5, pady=5)
-		Label(Tab, textvariable=self.HeaderStatus).grid(row=Row, column=8, padx=0, pady=5)
-		self.HeaderStatus.set('0')
-
-
-		self.RenewTranslatorMain = Button(Tab, text=self.LanguagePack.Button['RenewDatabase'], command= self.RenewMyTranslator, state=DISABLED)
-		self.RenewTranslatorMain.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
-		'''
-		#Tab.update()
-		#print("frame size after update: ", Tab.winfo_width(), Tab.winfo_height())
 		
 	def Generate_SimpleTranslator_UI(self, Tab):
 
@@ -455,7 +419,7 @@ class MyTranslatorHelper(Frame):
 		Button(Tab, text= 'Trilingual Copy', width = self.BUTTON_SIZE, command= self.btn_trilingual).grid(row = Row, column=8, padx=5, pady=5)
 		
 		Button(Tab, text=self.LanguagePack.Button['Bilingual'], width = self.BUTTON_SIZE, command= self.btn_bilingual).grid(row = Row, column=9, padx=5, pady=5, sticky=E)
-		self.dual_translate = Button(Tab, text= 'Dual Translate', width = self.BUTTON_SIZE, command= self.dual_translate)
+		self.dual_translate = Button(Tab, text= 'Dual Translate', width = self.BUTTON_SIZE, command= self.dual_translate, state=DISABLED)
 		self.dual_translate.grid(row = Row, column=10, padx=0, pady=5, sticky=E)
 		#self.Translate_bilingual_Btn = Button(Tab, text=self.LanguagePack.Button['TranslateAndBilingual'], width = self.BUTTON_SIZE, command= self.BtnTranslateAndBilingual)
 		#self.Translate_bilingual_Btn.grid(row = Row, column=10, padx=5, pady=5, sticky=E)
@@ -1023,6 +987,7 @@ class MyTranslatorHelper(Frame):
 		self.GetTitleBtn.configure(state=DISABLED)
 		self.GetReportBtn.configure(state=DISABLED)
 		self.TranslateBtn.configure(state=DISABLED)
+		self.dual_translate.configure(state=DISABLED)
 		#self.RenewTranslator.configure(state=DISABLED)
 		#self.RenewTranslatorMain.configure(state=DISABLED)
 		self.bottom_panel.RenewTranslatorMain.configure(state=DISABLED)
@@ -1044,6 +1009,7 @@ class MyTranslatorHelper(Frame):
 		self.GetTitleBtn.configure(state=NORMAL)
 		self.GetReportBtn.configure(state=NORMAL)
 		self.TranslateBtn.configure(state=NORMAL)
+		self.dual_translate.configure(state=NORMAL)
 		#self.RenewTranslator.configure(state=NORMAL)
 		#self.RenewTranslatorMain.configure(state=NORMAL)
 		self.bottom_panel.RenewTranslatorMain.configure(state=NORMAL)
@@ -1070,8 +1036,8 @@ class MyTranslatorHelper(Frame):
 
 		self.HeaderOptionA.set_completion_list([])
 		self.HeaderOptionB.set_completion_list([])
-		self.SearchBox.set_completion_list([])
-
+		
+		self.search_entry.set_completion_list([])
 		self.HeaderStatus.set('0')
 
 		self.generate_translator_engine()
@@ -1092,10 +1058,9 @@ class MyTranslatorHelper(Frame):
 		'''
 		#print('Autolist', Autolist)
 		#set_completion_list
-		#self.SearchBox.autocompleteList = Autolist
+
 		self.search_entry.set_completion_list(Autolist)
-		#self.SearchBox.set_completion_list(Autolist)
-		#self.SearchBox.specialList = SpecialList
+
 
 
 

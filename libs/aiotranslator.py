@@ -2,34 +2,39 @@
 import re
 import base64
 #http request and parser
-import html.parser
-import urllib.request
-import urllib.parse
+from html import unescape
+# Unuseds
+# import urllib.request
+#import urllib.parse
 from urllib.parse import urlparse
 import html
-import requests, uuid, json
+# Unused
+# import requests, uuid, 
+import json
 
 from google.cloud import translate_v3 as translate
 from google.cloud import storage
 from google.cloud import logging
 
 import pandas as pd
-import numpy as np
+#import numpy as np
 
 #System lib
 import os
-import sys, getopt
+import sys
 import unicodedata
 import string
 
 import pickle
-import time
+# Unused
+#import time
 from datetime import datetime
+
+from libs.version import get_version
 
 Tool = "translator"
 rev = 4000
-a,b,c,d = list(str(rev))
-ver_num = a + '.' + b + '.' + c + chr(int(d)+97)
+ver_num = get_version(rev)
 Translatorversion = Tool + " " + ver_num
 
 # self.temporary_tm: @Manager.List
@@ -901,7 +906,7 @@ class Translator:
 
 		ListReturn = []
 		for translation in response.translations:
-			ListReturn.append(html.unescape(translation.translated_text))
+			ListReturn.append(unescape(translation.translated_text))
 
 		return ListReturn
 
@@ -939,7 +944,7 @@ class Translator:
 		ListReturn = []
 		#print('response', response)
 		for translation in response.glossary_translations:
-			ListReturn.append(html.unescape(translation.translated_text))
+			ListReturn.append(unescape(translation.translated_text))
 
 		#print('ListReturn', ListReturn)
 		return ListReturn
