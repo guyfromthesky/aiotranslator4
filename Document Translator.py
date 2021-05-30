@@ -1,13 +1,10 @@
 #System variable and io handling
-import sys, getopt
+from genericpath import isfile
+import sys
 import os
-import string
+
 #Regular expression handling
 import re
-
-#import configparser
-# Deep copy object
-import copy
 # Multi-process support
 from multiprocessing import Process , Queue, Manager, freeze_support
 import queue 
@@ -19,8 +16,6 @@ import subprocess
 import time
 from datetime import datetime
 #function difination
-import codecs
-import pyperclip
 import base64
 import pickle
 import unicodedata
@@ -29,34 +24,35 @@ import unicodedata
 
 #GUI
 from tkinter.ttk import Entry, Combobox, Label, Treeview, Scrollbar, OptionMenu
-from tkinter.ttk import Radiobutton, Checkbutton, Button
+from tkinter.ttk import Checkbutton, Button, Notebook
 from tkinter.ttk import Progressbar, Style
 
 from tkinter import Tk, Frame
-from tkinter import Menu, filedialog, messagebox, ttk
+from tkinter import Menu, filedialog, messagebox
 from tkinter import Text
 from tkinter import IntVar, StringVar
 from tkinter import W, E, S, N, END, RIGHT, HORIZONTAL, NO, CENTER
-from tkinter import WORD, NORMAL, ACTIVE, INSERT
+from tkinter import WORD, NORMAL, BOTTOM, X
 from tkinter import DISABLED
 
-from tkinter import colorchooser
 from tkinter import scrolledtext 
 from tkinter import simpledialog
 
 # Web redirect
 import webbrowser
 
-from libs.aiotranslator import Translator
 from libs.aiotranslator import ver_num as TranslatorVersion
+from libs.aiotranslator import generate_translator
+
 from libs.aioconfigmanager import ConfigLoader
 from libs.documentprocessing import translate_docx, translate_msg
 from libs.documentprocessing import translate_presentation, translate_workbook
 
 from libs.version import get_version
+from libs.tkinter_extension import AutocompleteCombobox
 
 from google.cloud import logging
-import json
+import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
@@ -157,7 +153,6 @@ class DocumentTranslator(Frame):
 
 		self.Generate_MainTab_UI(self.MainTab)
 		self.Generate_TranslateSetting_UI(self.TranslateSetting)
-		self.Generate_Utility_UI(self.Utility)
 		self.Generate_TM_Manager_UI(self.TM_Manager)
 		self.Generate_DB_Uploader_UI(self.DB_Uploader)
 		self.Generate_Debugger_UI(self.Process)
@@ -315,19 +310,6 @@ class DocumentTranslator(Frame):
 		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
 
 
-	def Generate_Utility_UI(self, Tab):
-		# Utility option
-		Row = 1
-		Label(Tab, textvariable=self.Notice).grid(row=Row, column=1, columnspan = 10, padx=5, pady=5, sticky= W)
-		
-		Row += 1
-		self.RawTMSource = StringVar()
-		Label(Tab, text=  self.LanguagePack.Label['FixTM']).grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky= W)
-		self.TextRawTMPath = Entry(Tab,width = 100, state="readonly", textvariable=self.RawTMSource)
-		self.TextRawTMPath.grid(row=Row, column=3, columnspan=4, padx=4, pady=5, sticky=W)
-		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.BtnLoadRawTM).grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=E)
-		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Execute'], command= self.BtnOptimizeTM).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=W)
-	
 	def Generate_Debugger_UI(self, Tab):	
 
 		Row = 1
@@ -531,30 +513,24 @@ class DocumentTranslator(Frame):
 		self.parent.config(menu = menubar) 
 
 	def Generate_Tab_UI(self):
-		TAB_CONTROL = ttk.Notebook(self.parent)
+		TAB_CONTROL = Notebook(self.parent)
 		#Tab1
-		self.MainTab = ttk.Frame(TAB_CONTROL)
+		self.MainTab = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.MainTab, text=  self.LanguagePack.Tab['Main'])
 		#Tab2
-		self.TranslateSetting = ttk.Frame(TAB_CONTROL)
+		self.TranslateSetting = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.TranslateSetting, text=  self.LanguagePack.Tab['Translator'])
-		#Tab3
-		#self.ExcelSetting = ttk.Frame(TAB_CONTROL)
-		#TAB_CONTROL.add(self.ExcelSetting, text=  self.LanguagePack.Tab['Excel'])
-		#Tab4
-		self.Utility = ttk.Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.Utility, text=  self.LanguagePack.Tab['Utility'])
 		#Tab5
 		#self.Comparison = ttk.Frame(TAB_CONTROL)
 		#TAB_CONTROL.add(self.Comparison, text=  self.LanguagePack.Tab['Comparison'])
 		#Tab6
-		self.TM_Manager = ttk.Frame(TAB_CONTROL)
+		self.TM_Manager = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.TM_Manager, text=  self.LanguagePack.Tab['TMManager'])
 
-		self.DB_Uploader = ttk.Frame(TAB_CONTROL)
+		self.DB_Uploader = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.DB_Uploader, text=  self.LanguagePack.Tab['DBUploader'])
 
-		self.Process = ttk.Frame(TAB_CONTROL)
+		self.Process = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.Process, text=  self.LanguagePack.Tab['Debug'])
 
 		TAB_CONTROL.pack(expand=1, fill="both")
@@ -695,18 +671,6 @@ class DocumentTranslator(Frame):
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 		return
 
-	def BtnLoadRawTM(self):
-		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectSource'],filetypes = (("TM file","*.pkl"),), multiple = True)	
-		if filename != "":
-			self.RawTMFile = list(filename)
-			Display = self.CorrectPath(self.RawTMFile[0])
-			self.RawTMSource.set(Display)
-			
-			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
-		else:
-			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
-		return
-	
 
 ###########################################################################################
 # DB UPLOADER 
@@ -724,43 +688,144 @@ class DocumentTranslator(Frame):
 		return
 
 	def Btn_DB_Uploader_Execute_Script(self):
-		DB = self.Str_DB_Path.get()
 		glossary_id = self.ProjectList.get()
-		
-		result = self.Confirm_Popup(glossary_id, 'Are you sure you want to replace the DB of '+ glossary_id + "?")
+		result = self.Confirm_Popup(glossary_id, 'Please type the Project ID: \''+ glossary_id + "\' to confirm.")
 		
 		if result == True:
-			
-			self.Automation_Processor = Process(target=Function_Execute_Script, args=(self.StatusQueue, DB, glossary_id,))
-			self.Automation_Processor.start()
-			self.after(DELAY, self.Wait_For_Uploader_Processor)	
+			DB = self.Str_DB_Path.get()
+			self.Generate_DB_Processor = Process(target=function_create_csv_db, args=(self.ResultQueue, DB))
+			self.Generate_DB_Processor.start()
+			self.after(DELAY, self.Wait_For_Creator_Processor)	
 
+	def Wait_For_Creator_Processor(self):
+		db_path = None
+		if (self.Generate_DB_Processor.is_alive()):
+
+			try:
+				db_path = self.ResultQueue.get(0)
+				if db_path != False:
+					self.Notice.set('CSV DB is generated')
+					self.Debugger.insert("end", "\n\r")
+					self.Debugger.insert("end", "CSV DB is generaterd")
+					self.Debugger.insert("end", "\n\r")
+					self.Debugger.insert("end", "Compare generated DB with the current version")
+			except queue.Empty:
+				pass	
+			self.after(DELAY, self.Wait_For_Creator_Processor)
+		else:
+			try:
+				db_path = self.ResultQueue.get(0)
+				if db_path != False:
+					self.Notice.set('CSV DB is generated')
+					self.Debugger.insert("end", "\n\r")
+					self.Debugger.insert("end", "CSV DB is generaterd")
+					self.Debugger.insert("end", "\n\r")
+					self.Debugger.insert("end", "Compare generated DB with the current version")
+			except queue.Empty:
+				pass
+			self.Generate_DB_Processor.terminate()
+		if db_path != None:	
+			glossary_id = self.ProjectList.get()
+			self.Compare_DB_Processor = Process(target=function_compare_db, args=(self.ResultQueue, self.MyTranslator, glossary_id, db_path))
+			self.Compare_DB_Processor.start()
+			self.after(DELAY, self.Wait_For_DB_Compare_Processor)	
+		'''
+		MsgBox = messagebox.askquestion ('Exit Application','Are you sure you want to exit the application',icon = 'warning')
+		if MsgBox == 'yes':
+			self.Generate_DB_Processor = Process(target=function_create_csv_db, args=(self.ResultQueue, self.MyTranslator))
+			self.AuGenerate_DB_Processortomation_Processor.start()
+			self.after(DELAY, self.Wait_For_Uploader_Processor)	
+		else:
+			messagebox.showinfo('Return','You will now return to the application screen')
+		'''
+		
+	def Wait_For_DB_Compare_Processor(self):
+		compare_result = None
+		if (self.Compare_DB_Processor.is_alive()):
+			try:
+				compare_result = self.ResultQueue.get(0)
+				if compare_result != None:
+					self.Notice.set('Compare done')
+					self.Debugger.insert("end", "\n\r")
+					self.Debugger.insert("end", "Compare done")
+					if compare_result['dropped']>0:
+						self.Debugger.insert("end", "\n\r")
+						self.Debugger.insert("end", 'Dropped: ' + str(compare_result['dropped']))
+					if compare_result['added']>0:
+						self.Debugger.insert("end", "\n\r")
+						self.Debugger.insert("end", 'Added: ' + str(compare_result['added']))
+					if compare_result['changed']>0:
+						self.Debugger.insert("end", "\n\r")
+						self.Debugger.insert("end", 'Changes: ' + str(compare_result['changed']))
+					self.Debugger.insert("end", "\n\r")
+					self.Debugger.insert("end", "Wait for user's confirmation.")
+			except queue.Empty:
+				pass	
+			self.after(DELAY, self.Wait_For_DB_Compare_Processor)
+		else:
+			try:
+				compare_result = self.ResultQueue.get(0)
+				if compare_result != None:
+					self.Notice.set('Compare done')
+					self.Debugger.insert("end", "\n\r")
+					self.Debugger.insert("end", "Compare done")
+					if compare_result['dropped']>0:
+						self.Debugger.insert("end", "\n\r")
+						self.Debugger.insert("end", 'Dropped: ' + str(compare_result['dropped']))
+					if compare_result['added']>0:
+						self.Debugger.insert("end", "\n\r")
+						self.Debugger.insert("end", 'Added: ' + str(compare_result['added']))
+					if compare_result['changed']>0:
+						self.Debugger.insert("end", "\n\r")
+						self.Debugger.insert("end", 'Changes: ' + str(compare_result['changed']))
+					self.Debugger.insert("end", "\n\r")
+					self.Debugger.insert("end", "Wait for user's confirmation.")
+			except queue.Empty:
+				pass
+			self.Compare_DB_Processor.terminate()
+		if compare_result != None:
+			message = 'Are you sure you want to upload the DB?'
+			message += '\n'
+			if compare_result['dropped']>0:
+				message += 'Dropped: ' + str(compare_result['dropped']) + '\n'
+			if compare_result['added']>0:
+				message += 'Added: ' + str(compare_result['added']) + '\n'
+			if compare_result['changed']>0:
+				message += 'Changes: ' + str(compare_result['changed']) + '\n'
+
+			result = messagebox.askquestion ('Notice',message,icon = 'warning')
+			if result == 'yes':
+				glossary_id = self.ProjectList.get()
+				db_path = compare_result['path']
+				self.Upload_DB_Processor = Process(target=function_upload_db, args=(self.StatusQueue,self.MyTranslator, glossary_id, db_path))
+				self.Upload_DB_Processor.start()
+				self.after(DELAY, self.Wait_For_Uploader_Processor)	
+	
 	def Wait_For_Uploader_Processor(self):
-		if (self.Automation_Processor.is_alive()):
+		if (self.Upload_DB_Processor.is_alive()):
 
 			try:
 				Status = self.StatusQueue.get(0)
-				if Status != None:
-					self.Notice.set(Status)
+				if Status != False:
+					self.Notice.set('CSV DB is uploaded')
 					self.Debugger.insert("end", "\n\r")
-					self.Debugger.insert("end", Status)
+					self.Debugger.insert("end", 'CSV DB is uploaded')
 			except queue.Empty:
 				pass	
 			self.after(DELAY, self.Wait_For_Uploader_Processor)
 		else:
 			try:
 				Status = self.StatusQueue.get(0)
-				if Status != None:	
-					self.Notice.set('Compare complete')
-					print(Status)
+				if Status != False:
+					self.Notice.set('CSV DB is uploaded')
 					self.Debugger.insert("end", "\n\r")
-					self.Debugger.insert("end", Status)
+					self.Debugger.insert("end", 'CSV DB is uploaded')
 			except queue.Empty:
 				pass
-			self.Automation_Processor.terminate()
-
-	def Confirm_Popup(self, Request, Message):
-		MsgBox = simpledialog.askstring(title="Input project ID", prompt="What's your Project ID?")
+			self.Upload_DB_Processor.terminate()
+	
+	def Confirm_Popup(self, Request, message):
+		MsgBox = simpledialog.askstring(title="Confirmation popup", prompt=message)
 
 		if MsgBox == Request:
 			return True
@@ -870,16 +935,19 @@ class DocumentTranslator(Frame):
 		self.glossary_id = self.glossary_id.replace('\n', '')
 		tm_path = self.TMPath.get()
 		print('Start new process: Generate Translator')
-		self.TranslatorProcess = Process(	target=GenerateTranslator, 
-											kwargs={	'my_translator_queue' : self.MyTranslator_Queue, 
-														'tm_manager' : self.TMManager, 
+		self.TranslatorProcess = Process(	target = generate_translator,
+											kwargs= {	'my_translator_queue' : self.MyTranslator_Queue, 
+														'temporary_tm' : self.TMManager, 
 														'from_language' : source_language, 
 														'to_language' : target_language, 
 														'glossary_id' : self.glossary_id, 
-														'tm_path' : tm_path,
+														'used_tool' : tool_name,
+														'tm_path' : None,
 														'bucket_id' : self.bucket_id, 
 														'db_list_uri' : self.db_list_uri, 
-														'project_bucket_id' : self.project_bucket_id,},)
+														'project_bucket_id' : self.project_bucket_id,
+													},
+										)
 		self.TranslatorProcess.start()										
 		self.after(DELAY, self.GetMyTranslator)
 		return
@@ -1078,40 +1146,6 @@ class DocumentTranslator(Frame):
 		self.TranslatorProcess.start()
 		self.after(DELAY, self.GetCompleteStatus)
 
-
-	def BtnOptimizeTM(self):
-		SourceDocument = self.RawTMFile
-
-		self.p4 = Process(target=OptimizeTM, args=(SourceDocument, self.StatusQueue,))
-		self.p4.start()
-		self.after(DELAY, self.GetOptimizeTMStatus)	
-
-	def GetOptimizeTMStatus(self):
-		if (self.p4.is_alive()):
-			try:
-				Status = self.StatusQueue.get(0)
-				if Status != None:
-					SafeStatus = Status[0:self.STATUS_LENGTH]
-					self.Notice.set(SafeStatus)
-					self.Debugger.insert("end", "\n")
-					self.Debugger.insert("end", Status)
-					self.Debugger.yview(END)
-			except queue.Empty:
-				pass	
-			self.after(DELAY, self.GetOptimizeStatus)
-		else:
-			try:
-				Status = self.StatusQueue.get(0)
-				if Status != None:	
-					SafeStatus = Status[0:self.STATUS_LENGTH]
-					self.Notice.set(SafeStatus)
-					self.Debugger.insert("end", "\n")
-					self.Debugger.insert("end", Status)
-					self.Debugger.yview(END)
-			except queue.Empty:
-				pass
-			self.p4.terminate()
-
 	def GetCompleteStatus(self):
 		if (self.TranslatorProcess.is_alive()):
 			try:
@@ -1188,92 +1222,39 @@ class DocumentTranslator(Frame):
 				self.renew_my_translator()
 				#self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
-class AutocompleteCombobox(Combobox):
+class BottomPanel(Frame):
+	def __init__(self, master):
+		Frame.__init__(self, master) 
+		self.pack(side=BOTTOM, fill=X)          # resize with parent
+		
+		# separator widget
+		#Separator(orient=HORIZONTAL).grid(in_=self, row=0, column=1, sticky=E+W, pady=5)
+		Row = 1
+		Label(text='Version', width=15).grid(in_=self, row=Row, column=1, padx=5, pady=5, sticky=W)
+		Label(textvariable=master.VersionStatus, width=15).grid(in_=self, row=Row, column=2, padx=0, pady=5, sticky=W)
+		master.VersionStatus.set('-')
 
-	def set_completion_list(self, completion_list):
-		"""Use our completion list as our drop down selection menu, arrows move through menu."""
-		self._completion_list = sorted(completion_list, key=str.lower) # Work with a sorted list
-		self._hits = []
-		self._hit_index = 0
-		self.position = 0
-		self.bind('<KeyRelease>', self.handle_keyrelease)
-		self['values'] = self._completion_list  # Setup our popup menu
-		#self._w = 10
-		self.delete(0,END)	
+		Label(text='Update', width=15).grid(in_=self, row=Row, column=3, padx=5, pady=5)
+		Label(textvariable=master.UpdateDay, width=15).grid(in_=self, row=Row, column=4, padx=0, pady=5)
+		master.VersionStatus.set('-')
+	
+		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
+		DictionaryLabelA.grid(in_=self, row=Row, column=5, padx=5, pady=5)
+		
+		Label(textvariable=master.DictionaryStatus, width=15).grid(in_=self, row=Row, column=6, padx=0, pady=5)
+		master.DictionaryStatus.set('0')
 
-	def Set_Entry_Width(self, width):
-		self.configure(width=width)
+		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self, row=Row, column=7, padx=5, pady=5)
+		Label(textvariable=master.HeaderStatus, width=15).grid(in_=self, row=Row, column=8, padx=0, pady=5)
+		master.HeaderStatus.set('0')
 
-	def Set_DropDown_Width(self, width):
-		print('Change size: ', width)
-		style = Style()
-		style.configure('TCombobox', postoffset=(0,0,width,0))
-		self.configure(style='TCombobox')
+		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=20, command= master.RenewMyTranslator, state=DISABLED)
+		self.RenewTranslatorMain.grid(in_=self, row=Row, column=10, columnspan=9, padx=10, pady=5, stick=E)
+		
+		
+		self.rowconfigure(0, weight=1)
+		self.columnconfigure(0, weight=1)
 
-	def autofill(self, delta=0):
-		"""autocomplete the Combobox, delta may be 0/1/-1 to cycle through possible hits"""
-		if delta: # need to delete selection otherwise we would fix the current position
-			self.delete(self.position, END)
-		else: # set position to end so selection starts where textentry ended
-			self.position = len(self.get())
-		# collect hits
-		_hits = []
-		for element in self._completion_list:
-			if self.get().lower() in element: # Match case insensitively
-				_hits.append(element)
-		# if we have a new hit list, keep this in mind
-		if _hits != self._hits:
-			self._hit_index = 0
-			self._hits=_hits
-		# only allow cycling if we are in a known hit list
-		if _hits == self._hits and self._hits:
-			self._hit_index = (self._hit_index + delta) % len(self._hits)
-		# now finally perform the auto completion
-		if self._hits:
-			self.delete(0,END)
-			self.insert(0,self._hits[self._hit_index])
-			self.select_range(self.position,END)
-
-	def autocomplete(self, delta=0):
-		"""autocomplete the Combobox, delta may be 0/1/-1 to cycle through possible hits"""
-		if delta: # need to delete selection otherwise we would fix the current position
-			self.delete(self.position, END)
-		else: # set position to end so selection starts where textentry ended
-			self.position = len(self.get())
-		# collect hits
-		_hits = []
-		for element in self._completion_list:
-			if element.lower().startswith(self.get().lower()): # Match case insensitively
-				_hits.append(element)
-		# if we have a new hit list, keep this in mind
-		if _hits != self._hits:
-			self._hit_index = 0
-			self._hits=_hits
-		# only allow cycling if we are in a known hit list
-		if _hits == self._hits and self._hits:
-			self._hit_index = (self._hit_index + delta) % len(self._hits)
-		# now finally perform the auto completion
-		if self._hits:
-			self.delete(0,END)
-			self.insert(0,self._hits[self._hit_index])
-			self.select_range(self.position,END)
-
-	def handle_keyrelease(self, event):
-		"""event handler for the keyrelease event on this widget"""
-		if event.keysym == "BackSpace":
-			self.delete(self.index(INSERT), END)
-			self.position = self.index(END)
-		if event.keysym == "Left":
-			if self.position < self.index(END): # delete the selection
-				self.delete(self.position, END)
-			else:
-				self.position = self.position-1 # delete one character
-				self.delete(self.position, END)
-		if event.keysym == "Right":
-			self.position = self.index(END) # go to end (no selection)
-		if len(event.keysym) == 1:
-			#self.autocomplete()			
-			self.autofill()		
 
 def SortDictionary(List):
 	return(sorted(List, key = lambda x: (len(x[1]), x[1]), reverse = True))
@@ -1295,31 +1276,6 @@ def Importtranslation_memory(TMPath):
 		print('TM not exist')
 		return []
 
-# Function for Document Translator
-def GenerateTranslator(
-		my_translator_queue = None, 
-		tm_manager = None, 
-		from_language = 'ko', 
-		to_language = 'en', 
-		glossary_id = "", 
-		tm_path= None, 
-		bucket_id = 'nxvnbucket',
-		db_list_uri = 'config/db_list.csv',
-		project_bucket_id = 'credible-bay-281107'
-	):	
-	
-	MyTranslator = Translator(	from_language = from_language, 
-								to_language = to_language, 
-								glossary_id =  glossary_id, 
-								temporary_tm = tm_manager,
-								tm_path = tm_path, 
-								used_tool = tool_name, 
-								tool_version = ver_num,
-								bucket_id = bucket_id,
-								db_list_uri = db_list_uri,
-								project_bucket_id = project_bucket_id
-	)
-	my_translator_queue.put(MyTranslator)
 
 def Optimize(SourceDocument, StatusQueue):
 	from openpyxl import load_workbook, worksheet, Workbook
@@ -1365,65 +1321,90 @@ def Optimize(SourceDocument, StatusQueue):
 ###########################################################################################
 
 ###########################################################################################
-def Function_Execute_Script(StatusQueue, DB_Path, glossary_id, **kwargs):
+def function_create_csv_db(result_queue, db_path):
+	result_path = function_create_db_data(db_path)
+	result_queue.put(result_path)
 
-	Output = function_create_db_data(StatusQueue, DB_Path)
+def function_compare_db(result_queue, MyTranslator, glossary_id, new_csv_path):
+	sourcename, ext = os.path.splitext(new_csv_path)
+	old_csv_db = sourcename + '_old' + ext
+	
+	MyTranslator.download_db_to_file(glossary_id, old_csv_db)
+	#print('Old path', old_csv_db)
+	if isfile(old_csv_db):
+		print('File exist')
+	old_db = pd.read_csv(old_csv_db)
+	new_db = pd.read_csv(new_csv_path)
+	old_db['version'] = "old"
+	new_db['version'] = "new"	
+	
+	old_cols = old_db.columns.tolist()
 
-	StatusQueue.put("CSV DB created:" + str(Output))
-	if glossary_id != '':
-		
-		MyTranslator = Translator(	from_language = 'en', 
-									to_language = 'ko', 
-									glossary_id =  glossary_id, 
-									temporary_tm = None,
-									tm_path = None, 
-									used_tool = 'Document Translator', 
-									tool_version = ver_num,)
-		MyTranslator.backup_and_update_blob(glossary_id, Output)
-		
-		print('Logging data')
+	#new_cols = new_db.columns.tolist()
 
-		client = logging.Client()
-		
-		log_name = 'db-update'
+	old_accts_all = set(old_db[old_cols[1]])
+	
+	new_accts_all = set(new_db[old_cols[1]])
 
-		logger = client.logger(log_name)
-		
-		try:
-			if sys.platform.startswith('win') == 'win':
-				try:
-					user_name = os.getlogin()
-				except:
-					user_name = os.environ['COMPUTERNAME']
-			else:
-				try:
-					user_name = os.environ['LOGNAME']
-				except:
-					user_name = "Anonymous"
-		except:
-			user_name = "Anonymous"
+	dropped_accts = old_accts_all - new_accts_all
+	added_accts = new_accts_all - old_accts_all
 
-		data_object = {
-			'tool': 'Document Translator',
-			'translator_ver': ver_num,
-			'glossary_id': glossary_id,
-			'db_file': str(Output)
-		}
+	all_data = pd.concat([old_db,new_db], ignore_index=True)
+	changes = all_data.drop_duplicates(subset=None, keep= 'last')
+	
+	result = {
+		'dropped': len(dropped_accts),
+		'added': len(added_accts),
+		'changed': len(changes),
+		'path': new_csv_path
+	}
+	result_queue.put(result)
 
-		tracking_object = {
-			'user': user_name,
-			'details': data_object
-		}
-		
-		try:
-			logger.log_struct(tracking_object)
-		except Exception  as e:
-			print('exception:', e)
-			result = False
-		
-		
-		
-		StatusQueue.put("DB updated.")
+def function_upload_db(status_queue, MyTranslator, glossary_id, db_path):
+	
+	MyTranslator.backup_and_update_blob(glossary_id, db_path)
+
+	print('Logging data')
+
+	client = logging.Client()
+	
+	log_name = 'db-update'
+
+	logger = client.logger(log_name)
+	
+	try:
+		if sys.platform.startswith('win') == 'win':
+			try:
+				user_name = os.getlogin()
+			except:
+				user_name = os.environ['COMPUTERNAME']
+		else:
+			try:
+				user_name = os.environ['LOGNAME']
+			except:
+				user_name = "Anonymous"
+	except:
+		user_name = "Anonymous"
+
+	data_object = {
+		'tool': 'Document Translator',
+		'translator_ver': ver_num,
+		'glossary_id': glossary_id,
+		'db_file': str(db_path)
+	}
+
+	tracking_object = {
+		'user': user_name,
+		'details': data_object
+	}
+	
+	try:
+		logger.log_struct(tracking_object)
+	except Exception  as e:
+		print('exception:', e)
+		result = False
+	
+	status_queue.put("DB updated.")
 
 
 
@@ -1431,10 +1412,8 @@ def Function_Execute_Script(StatusQueue, DB_Path, glossary_id, **kwargs):
 # db_object['info'] = @dict
 # db_object['db'] = @dict
 
-def function_create_db_data(
-		StatusQueue, DB_Path, **kwargs
-):
-	from openpyxl import load_workbook, worksheet, Workbook
+def function_create_db_data(DB_Path):
+	from openpyxl import load_workbook
 	import csv
 
 	DatabasePath = DB_Path
@@ -1446,8 +1425,6 @@ def function_create_db_data(
 	#output_file = Outputdir + '/' + sourcename + '_SingleFile.xlsx'
 	output_file_csv = Outputdir + '/' + sourcename + '.csv'
 	SpecialSheets = ['info']
-
-	RowCount = 0
 
 	if DatabasePath != None:
 		
@@ -1541,9 +1518,6 @@ def function_create_db_data(
 									temp_Cel = ws[temp_Add]
 									temp_Val = temp_Cel.value
 									writer.writerow(['info', 'date', temp_Val])
-						#db_object['info'] = info_entry
-
-		#StatusQueue.put("Successfully load dictionary from: " +  str(DictList))
 
 	return output_file_csv
 
@@ -1920,7 +1894,7 @@ def main():
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
 
 	try:
-		DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue,status_queue = StatusQueue
+		DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue, status_queue = StatusQueue
 		, my_translator_queue = MyTranslatorQueue, my_db_queue = MyDB, tm_manager = TMManager)
 		root.mainloop()
 		print('Root is terminated.')

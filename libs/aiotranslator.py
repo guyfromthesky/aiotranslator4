@@ -1076,7 +1076,21 @@ class Translator:
 			if self.user_name == ano:
 				self.banned = True
 				break
-			
+
+	def download_db_to_file(self, glossary_id, download_path):
+		for gloss_data in self.glossary_data_list:
+			gloss_id = gloss_data[0]
+			if glossary_id == gloss_id:
+				uri =  gloss_data[1]
+		cloud_client = storage.Client()
+		bucket = cloud_client.get_bucket(self.bucket_id)
+		blob = bucket.get_blob(uri)
+		print('Download file to: ', download_path)
+		blob.download_to_filename(download_path)	
+		'''
+		with open(download_path,'wb') as f:
+			cloud_client.download_to_file(blob, f)
+		'''
 
 	def load_db_from_glob(self, file_uri= None, timeout=180,):
 
