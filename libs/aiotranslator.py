@@ -269,7 +269,11 @@ class Translator:
 		now = datetime.now()
 		year =  now.isocalendar()[0]
 		week =  now.isocalendar()[1]
-		return str(year) + "_" + str(week)
+		day =  now.isocalendar()[2]
+		return str(year) + "_" + str(week) + '_' + str(day)
+
+	def get_timestamp(self):
+		return str(datetime.now())
 
 	# Might use on DB uploader
 	def get_glossary_list(self):
@@ -1400,7 +1404,7 @@ class Translator:
 			blob_id = self.get_glossary_path(glossary_id)
 		except:
 			return False	
-		current_timestamp  = self.get_time_stamp()
+		current_timestamp  = self.get_timestamp()
 		blob = bucket.blob(blob_id)
 		blob_name, ext = os.path.splitext(blob_id)
 		new_blob = blob_name + "_" + current_timestamp + ext

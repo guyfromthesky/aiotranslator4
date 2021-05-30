@@ -398,8 +398,8 @@ class DocumentTranslator(Frame):
 		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Execute'], command= self.Btn_DB_Uploader_Execute_Script).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
 
 		Row += 1
-		self.Debugger = Text(Tab, width=125, height=14, undo=True, wrap=WORD, )
-		self.Debugger.grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E+N+S)
+		self.Uploader_Debugger = Text(Tab, width=125, height=14, undo=True, wrap=WORD, )
+		self.Uploader_Debugger.grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E+N+S)
 
 
 	def search_tm_event(self, event):
@@ -689,7 +689,7 @@ class DocumentTranslator(Frame):
 
 	def Btn_DB_Uploader_Execute_Script(self):
 		glossary_id = self.ProjectList.get()
-		result = self.Confirm_Popup(glossary_id, 'Please type the Project ID: \''+ glossary_id + "\' to confirm.")
+		result = self.Confirm_Popup(glossary_id, 'Please type \''+ glossary_id + "\' to confirm.")
 		
 		if result == True:
 			DB = self.Str_DB_Path.get()
@@ -705,10 +705,10 @@ class DocumentTranslator(Frame):
 				db_path = self.ResultQueue.get(0)
 				if db_path != False:
 					self.Notice.set('CSV DB is generated')
-					self.Debugger.insert("end", "\n\r")
-					self.Debugger.insert("end", "CSV DB is generaterd")
-					self.Debugger.insert("end", "\n\r")
-					self.Debugger.insert("end", "Compare generated DB with the current version")
+					self.Uploader_Debugger.insert("end", "\n\r")
+					self.Uploader_Debugger.insert("end", "CSV DB is generaterd")
+					self.Uploader_Debugger.insert("end", "\n\r")
+					self.Uploader_Debugger.insert("end", "Compare generated DB with the current version")
 			except queue.Empty:
 				pass	
 			self.after(DELAY, self.Wait_For_Creator_Processor)
@@ -717,10 +717,10 @@ class DocumentTranslator(Frame):
 				db_path = self.ResultQueue.get(0)
 				if db_path != False:
 					self.Notice.set('CSV DB is generated')
-					self.Debugger.insert("end", "\n\r")
-					self.Debugger.insert("end", "CSV DB is generaterd")
-					self.Debugger.insert("end", "\n\r")
-					self.Debugger.insert("end", "Compare generated DB with the current version")
+					self.Uploader_Debugger.insert("end", "\n\r")
+					self.Uploader_Debugger.insert("end", "CSV DB is generaterd")
+					self.Uploader_Debugger.insert("end", "\n\r")
+					self.Uploader_Debugger.insert("end", "Compare generated DB with the current version")
 			except queue.Empty:
 				pass
 			self.Generate_DB_Processor.terminate()
@@ -745,20 +745,26 @@ class DocumentTranslator(Frame):
 			try:
 				compare_result = self.ResultQueue.get(0)
 				if compare_result != None:
+					change_flag = False
 					self.Notice.set('Compare done')
-					self.Debugger.insert("end", "\n\r")
-					self.Debugger.insert("end", "Compare done")
+					self.Uploader_Debugger.insert("end", "\n\r")
+					self.Uploader_Debugger.insert("end", "Compare done")
 					if compare_result['dropped']>0:
-						self.Debugger.insert("end", "\n\r")
-						self.Debugger.insert("end", 'Dropped: ' + str(compare_result['dropped']))
+						self.Uploader_Debugger.insert("end", "\n\r")
+						self.Uploader_Debugger.insert("end", 'Dropped: ' + str(compare_result['dropped']))
+						change_flag = True
 					if compare_result['added']>0:
-						self.Debugger.insert("end", "\n\r")
-						self.Debugger.insert("end", 'Added: ' + str(compare_result['added']))
+						self.Uploader_Debugger.insert("end", "\n\r")
+						self.Uploader_Debugger.insert("end", 'Added: ' + str(compare_result['added']))
+						change_flag = True					
 					if compare_result['changed']>0:
-						self.Debugger.insert("end", "\n\r")
-						self.Debugger.insert("end", 'Changes: ' + str(compare_result['changed']))
-					self.Debugger.insert("end", "\n\r")
-					self.Debugger.insert("end", "Wait for user's confirmation.")
+						self.Uploader_Debugger.insert("end", "\n\r")
+						self.Uploader_Debugger.insert("end", 'Changes: ' + str(compare_result['changed']))
+						change_flag = True
+					if change_flag == False:
+						self.Uploader_Debugger.insert("end", "No change are made")
+					self.Uploader_Debugger.insert("end", "\n\r")
+					self.Uploader_Debugger.insert("end", "Wait for user's confirmation.")
 			except queue.Empty:
 				pass	
 			self.after(DELAY, self.Wait_For_DB_Compare_Processor)
@@ -766,38 +772,49 @@ class DocumentTranslator(Frame):
 			try:
 				compare_result = self.ResultQueue.get(0)
 				if compare_result != None:
+					change_flag = False
 					self.Notice.set('Compare done')
-					self.Debugger.insert("end", "\n\r")
-					self.Debugger.insert("end", "Compare done")
+					self.Uploader_Debugger.insert("end", "\n\r")
+					self.Uploader_Debugger.insert("end", "Compare done")
 					if compare_result['dropped']>0:
-						self.Debugger.insert("end", "\n\r")
-						self.Debugger.insert("end", 'Dropped: ' + str(compare_result['dropped']))
+						self.Uploader_Debugger.insert("end", "\n\r")
+						self.Uploader_Debugger.insert("end", 'Dropped: ' + str(compare_result['dropped']))
+						change_flag = True
 					if compare_result['added']>0:
-						self.Debugger.insert("end", "\n\r")
-						self.Debugger.insert("end", 'Added: ' + str(compare_result['added']))
+						self.Uploader_Debugger.insert("end", "\n\r")
+						self.Uploader_Debugger.insert("end", 'Added: ' + str(compare_result['added']))
+						change_flag = True					
 					if compare_result['changed']>0:
-						self.Debugger.insert("end", "\n\r")
-						self.Debugger.insert("end", 'Changes: ' + str(compare_result['changed']))
-					self.Debugger.insert("end", "\n\r")
-					self.Debugger.insert("end", "Wait for user's confirmation.")
+						self.Uploader_Debugger.insert("end", "\n\r")
+						self.Uploader_Debugger.insert("end", 'Changes: ' + str(compare_result['changed']))
+						change_flag = True
+					if change_flag == False:
+						self.Uploader_Debugger.insert("end", "No change are made")
+					self.Uploader_Debugger.insert("end", "\n\r")
+					self.Uploader_Debugger.insert("end", "Wait for user's confirmation.")
 			except queue.Empty:
 				pass
 			self.Compare_DB_Processor.terminate()
 		if compare_result != None:
 			message = 'Are you sure you want to upload the DB?'
 			message += '\n'
+			change_flag = False
 			if compare_result['dropped']>0:
 				message += 'Dropped: ' + str(compare_result['dropped']) + '\n'
+				change_flag = True
 			if compare_result['added']>0:
 				message += 'Added: ' + str(compare_result['added']) + '\n'
+				change_flag = True
 			if compare_result['changed']>0:
 				message += 'Changes: ' + str(compare_result['changed']) + '\n'
+				change_flag = True
+			if change_flag == False:
+				message += 'OLD and NEW DB are identical.'
 
 			result = messagebox.askquestion ('Notice',message,icon = 'warning')
 			if result == 'yes':
 				glossary_id = self.ProjectList.get()
-				db_path = compare_result['path']
-				self.Upload_DB_Processor = Process(target=function_upload_db, args=(self.StatusQueue,self.MyTranslator, glossary_id, db_path))
+				self.Upload_DB_Processor = Process(target=function_upload_db, args=(self.StatusQueue,self.MyTranslator, glossary_id, compare_result))
 				self.Upload_DB_Processor.start()
 				self.after(DELAY, self.Wait_For_Uploader_Processor)	
 	
@@ -808,8 +825,8 @@ class DocumentTranslator(Frame):
 				Status = self.StatusQueue.get(0)
 				if Status != False:
 					self.Notice.set('CSV DB is uploaded')
-					self.Debugger.insert("end", "\n\r")
-					self.Debugger.insert("end", 'CSV DB is uploaded')
+					self.Uploader_Debugger.insert("end", "\n\r")
+					self.Uploader_Debugger.insert("end", 'CSV DB is uploaded')
 			except queue.Empty:
 				pass	
 			self.after(DELAY, self.Wait_For_Uploader_Processor)
@@ -818,8 +835,8 @@ class DocumentTranslator(Frame):
 				Status = self.StatusQueue.get(0)
 				if Status != False:
 					self.Notice.set('CSV DB is uploaded')
-					self.Debugger.insert("end", "\n\r")
-					self.Debugger.insert("end", 'CSV DB is uploaded')
+					self.Uploader_Debugger.insert("end", "\n\r")
+					self.Uploader_Debugger.insert("end", 'CSV DB is uploaded')
 			except queue.Empty:
 				pass
 			self.Upload_DB_Processor.terminate()
@@ -1339,28 +1356,92 @@ def function_compare_db(result_queue, MyTranslator, glossary_id, new_csv_path):
 	new_db['version'] = "new"	
 	
 	old_cols = old_db.columns.tolist()
-
+	Old_Index_ID = old_cols[1]
 	#new_cols = new_db.columns.tolist()
 
-	old_accts_all = set(old_db[old_cols[1]])
+	old_accts_all = set(old_db[Old_Index_ID])
 	
-	new_accts_all = set(new_db[old_cols[1]])
+	new_accts_all = set(new_db[Old_Index_ID])
 
 	dropped_accts = old_accts_all - new_accts_all
 	added_accts = new_accts_all - old_accts_all
 
 	all_data = pd.concat([old_db,new_db], ignore_index=True)
 	changes = all_data.drop_duplicates(subset=None, keep= 'last')
+	dupe_accts = changes[changes[Old_Index_ID].duplicated() == True][Old_Index_ID].tolist()
+	dupes = changes[changes[Old_Index_ID].isin(dupe_accts)]
 	
+	change_new = dupes[(dupes["version"] == "new")]
+	change_old = dupes[(dupes["version"] == "old")]
+	change_new = change_new.drop(['version'], axis=1)
+	change_old = change_old.drop(['version'], axis=1)
+
+	change_new.set_index(Old_Index_ID, inplace=True)
+	change_new = change_new.fillna("#NA")
+
+	change_old.set_index(Old_Index_ID, inplace=True)
+	change_old = change_old.fillna("#NA")
+	
+	# Combine all the changes together
+	try:
+			
+		df_all_changes = pd.concat([change_old, change_new],
+									axis='columns',
+									keys=['old', 'new'],
+									join='outer')
+		df_all_changes = df_all_changes.swaplevel(axis='columns')[change_new.columns[0:]]
+		#df_all_changes.fillna("#NA")
+		
+		df_changed = df_all_changes.groupby(level=0, axis=1).apply(lambda frame: frame.apply(report_diff, axis=1))
+		#create a list of text columns (int columns do not have '{} ---> {}')
+		df_changed = df_changed.reset_index()
+		
+		df_changed['has_change'] = df_changed.apply(has_change, axis=1)
+		#df_changed.tail()
+		diff = df_changed[(df_changed.has_change == 'Y')]
+		
+		
+		diff = diff.reindex(columns=Old_Index_ID)
+	except:
+		diff = []
+
+
 	result = {
 		'dropped': len(dropped_accts),
 		'added': len(added_accts),
-		'changed': len(changes),
+		'changed': len(diff),
 		'path': new_csv_path
 	}
 	result_queue.put(result)
 
-def function_upload_db(status_queue, MyTranslator, glossary_id, db_path):
+def has_change(row):
+	if "-->" in row.to_string():
+		return "Y"
+	else:
+		return "N"
+
+def report_diff(x):
+	#print(x)
+	if len(x) == 2:
+		if x[0] == x[1]:
+			#return x[0]
+			return x[0]
+		elif x[0] == "#NA":
+			return "[ADD] --> " + str(x[1])
+		elif x[1]== "#NA":
+			return "[DROP] --> " + str(x[0])
+		else:
+			return '{} --> {}'.format(*x)
+	else:
+		#return x[0]
+		return x[0]
+
+def function_upload_db(status_queue, MyTranslator, glossary_id, result):
+	
+	db_path = result['path']
+	add = result['added']
+	drop = result['dropped']
+	changes = result['changed']
 	
 	MyTranslator.backup_and_update_blob(glossary_id, db_path)
 
@@ -1373,24 +1454,30 @@ def function_upload_db(status_queue, MyTranslator, glossary_id, db_path):
 	logger = client.logger(log_name)
 	
 	try:
-		if sys.platform.startswith('win') == 'win':
+		if sys.platform.startswith('win'):
 			try:
 				user_name = os.getlogin()
-			except:
+			except Exception as Error_msg:
+				print('Error:', Error_msg)
 				user_name = os.environ['COMPUTERNAME']
 		else:
 			try:
 				user_name = os.environ['LOGNAME']
-			except:
+			except Exception as Error_msg:
+				print('Error:', Error_msg)
 				user_name = "Anonymous"
-	except:
+	except Exception as Error_msg:
+		print('Error:', Error_msg)
 		user_name = "Anonymous"
 
 	data_object = {
 		'tool': 'Document Translator',
 		'translator_ver': ver_num,
 		'glossary_id': glossary_id,
-		'db_file': str(db_path)
+		'db_file': str(db_path),
+		'added': add,
+		'dropped': drop,
+		'changed': changes,
 	}
 
 	tracking_object = {
@@ -1847,7 +1934,7 @@ def send_fail_request(error_message):
 	logger = client.logger(log_name)
 	
 	try:
-		if sys.platform.startswith('win') == 'win':
+		if sys.platform.startswith('win'):
 			try:
 				user_name = os.getlogin()
 			except:
