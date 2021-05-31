@@ -23,7 +23,7 @@ import unicodedata
 #from urllib.parse import urlparse
 
 #GUI
-from tkinter.ttk import Entry, Combobox, Label, Treeview, Scrollbar, OptionMenu
+from tkinter.ttk import Entry, Label, Treeview, Scrollbar, OptionMenu
 from tkinter.ttk import Checkbutton, Button, Notebook
 from tkinter.ttk import Progressbar, Style
 
@@ -32,7 +32,7 @@ from tkinter import Menu, filedialog, messagebox
 from tkinter import Text
 from tkinter import IntVar, StringVar
 from tkinter import W, E, S, N, END, RIGHT, HORIZONTAL, NO, CENTER
-from tkinter import WORD, NORMAL, BOTTOM, X
+from tkinter import WORD, NORMAL, BOTTOM, X, TOP, BOTH, Y
 from tkinter import DISABLED
 
 from tkinter import scrolledtext 
@@ -71,7 +71,7 @@ class DocumentTranslator(Frame):
 	my_translator_queue = None, my_db_queue = None, my_translator_agent = None, tm_manager = None, ):
 		
 		Frame.__init__(self, Root) 
-		#super().__init__()
+		self.pack(side=TOP, expand=Y, fill=X)
 		self.parent = Root 
 
 		# Queue
@@ -124,7 +124,9 @@ class DocumentTranslator(Frame):
 		self.LanguagePack = LanguagePack
 	
 		# Init function
-		self.initUI()
+		self.create_buttom_panel()
+		
+		self.init_ui()
 		
 		self.init_UI_setting()
 
@@ -134,8 +136,11 @@ class DocumentTranslator(Frame):
 		else:
 			self.Error('No license selected, please select the key in Translate setting.')	
 
+	def create_buttom_panel(self):
+		self.bottom_panel = BottomPanel(self)
+
 	# UI init
-	def initUI(self):
+	def init_ui(self):
 
 		self.parent.resizable(False, False)
 		self.parent.title(version)
@@ -150,19 +155,17 @@ class DocumentTranslator(Frame):
 		self.Debug = StringVar()
 		self.Progress = StringVar()
 		
-
-		self.Generate_MainTab_UI(self.MainTab)
+		self.Generate_DocumentTranslator_UI(self.MainTab)
 		self.Generate_TranslateSetting_UI(self.TranslateSetting)
 		self.Generate_TM_Manager_UI(self.TM_Manager)
 		self.Generate_DB_Uploader_UI(self.DB_Uploader)
 		self.Generate_Debugger_UI(self.Process)
 
-		#self.init_App_Setting()
 		
-	def Generate_MainTab_UI(self, Tab):
+	def Generate_DocumentTranslator_UI(self, Tab):
 		Row=1
 		Label(Tab, textvariable=self.Progress, width= 40).grid(row=Row, column=1, columnspan=3, padx=5, pady=5, sticky=W)
-		Label(Tab, textvariable=self.Notice, justify=RIGHT).grid(row=Row, column=3, columnspan=8, padx=5, pady=5, sticky= E)
+		Label(Tab, textvariable=self.Notice, justify=RIGHT).grid(row=Row, column=3, columnspan=6, padx=5, pady=5, sticky= E)
 
 		Row+=1
 		Label(Tab, text=  self.LanguagePack.Label['Language'], width= 10, font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
@@ -184,8 +187,8 @@ class DocumentTranslator(Frame):
 		Radiobutton(Tab, width= 10, text=  self.LanguagePack.Option['Hangul'], value=1, variable=self.Language, command= self.set_target_language).grid(row=Row, column=2, padx=0, pady=5, sticky=W)
 		Radiobutton(Tab, width= 10, text=  self.LanguagePack.Option['English'], value=2, variable=self.Language, command= self.set_target_language).grid(row=Row, column=3, padx=0, pady=5, sticky=W)
 		'''
-				
-		Label(Tab, text= self.LanguagePack.Label['ProjectKey']).grid(row=Row, column=4, padx=5, pady=5, sticky=W)
+		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['Swap'], command= self.swap_language).grid(row=Row, column=4, columnspan=2, padx=5, pady=5, sticky=E)		
+		Label(Tab, text= self.LanguagePack.Label['ProjectKey']).grid(row=Row, column=6, padx=5, pady=5, sticky=E)
 		self.Text_glossary_id = AutocompleteCombobox(Tab)
 		self.Text_glossary_id.Set_Entry_Width(20)
 		
@@ -194,24 +197,28 @@ class DocumentTranslator(Frame):
 		if self.glossary_id != None:
 			self.Text_glossary_id.set(self.glossary_id )
 
-		self.Text_glossary_id.grid(row=Row, column=5, columnspan=2, padx=5, pady=5, stick=W)
+		self.Text_glossary_id.grid(row=Row, column=7, columnspan=1, padx=5, pady=5, stick=E)
 		self.Text_glossary_id.bind("<<ComboboxSelected>>", self.SaveProjectKey)
 
-		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['RenewDatabase'], command= self.renew_my_translator).grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=E)
-		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['OpenOutput'], command= self.OpenOutput).grid(row=Row, column=9, columnspan=1, padx=5, pady=5, sticky=E)
+		#Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['RenewDatabase'], command= self.renew_my_translator).grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=E)
+		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['OpenOutput'], command= self.OpenOutput).grid(row=Row, column=8, columnspan=1, padx=5, pady=5, sticky=E)
 
 		Row+=1
 		Label(Tab, width= 10, text=  self.LanguagePack.Label['Source'], font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		self.CurrentSourceFile = StringVar()
 		self.TextFilePath = Entry(Tab,width = 120, text= self.LanguagePack.ToolTips['SelectSource'], state="readonly", textvariable=self.CurrentSourceFile)
-		self.TextFilePath.grid(row=Row, column=2, columnspan=7, padx=5, pady=5, sticky=E)
-		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.BtnLoadDocument).grid(row=Row, column=9, columnspan=1, padx=5, pady=5, sticky=E)
+		self.TextFilePath.grid(row=Row, column=2, columnspan=6, padx=5, pady=5, sticky=E)
+		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.BtnLoadDocument).grid(row=Row, column=8, columnspan=1, padx=5, pady=5, sticky=E)
 		
 		Row += 1
 		Label(Tab, text=  self.LanguagePack.Label['ToolOptions']).grid(row=Row, column=1, padx=5, pady=5, sticky= W)
 		Label(Tab, text= self.LanguagePack.Label['TMOptions']).grid(row=Row, column=3, columnspan=2, padx=5, pady=5, sticky=W)
 		Label(Tab, text= self.LanguagePack.Label['TranslateOptions']).grid(row=Row, column=5, columnspan=2, padx=5, pady=5, sticky=W)
-		Label(Tab, text= self.LanguagePack.Label['OtherOptions']).grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=W)
+		#Label(Tab, text= self.LanguagePack.Label['OtherOptions']).grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=W)
+
+		Button(Tab, width = 20, text=  self.LanguagePack.Button['Stop'], command= self.Stop).grid(row=Row, column=7, columnspan=1,padx=5, pady=0, sticky=E)	
+		self.btn_translate = Button(Tab, width = 20, text=  self.LanguagePack.Button['Translate'], command= self.Translate, state=DISABLED)
+		self.btn_translate.grid(row=Row, column=8, columnspan=1, padx=5, pady=0, sticky=E)
 
 		Row += 1
 		self.TranslateFileName = IntVar()
@@ -267,39 +274,12 @@ class DocumentTranslator(Frame):
 
 		Label(Tab, text="Sheet: ").grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		self.SheetList = Text(Tab, width = 110, height=1) #
-		self.SheetList.grid(row=Row, column=2, columnspan=8, padx=5, pady=5, sticky=E)
+		self.SheetList.grid(row=Row, column=2, columnspan=7, padx=5, pady=5, sticky=E)
 
 		Row+=1
 		self.progressbar = Progressbar(Tab, orient=HORIZONTAL, length=1000,  mode='determinate')
 		self.progressbar["maximum"] = 1000
-		self.progressbar.grid(row=Row, column=1, columnspan=9, padx=5, pady=5, sticky=W)
-		
-		Row+=1
-		DictionaryLabel = Label(Tab, text=  self.LanguagePack.Label['Dictionary'])
-		DictionaryLabel.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
-		#Label(Tab, text='Version').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
-		Label(Tab, textvariable=self.VersionStatus).grid(row=Row, column=2, padx=0, pady=5)
-		self.VersionStatus.set('-')
-
-		#Label(Tab, text='Update').grid(row=Row, column=3, padx=5, pady=5)
-		Label(Tab, textvariable=self.update_day).grid(row=Row, column=3, padx=0, pady=5)
-		self.VersionStatus.set('-')
-
-		#DictionaryLabel = Label(Tab, text=  self.LanguagePack.Label['Dictionary'])
-		#DictionaryLabel.grid(row=Row, column=4, padx=5, pady=5, sticky=W)
-		Label(Tab, width= 10, textvariable=self.DictionaryStatus).grid(row=Row, column=4, padx=0, pady=5)
-		self.DictionaryStatus.set('-')
-
-		TMLabel=Label(Tab, text=  self.LanguagePack.Label['TM'])
-		TMLabel.grid(row=Row, column=5, padx=5, pady=5, sticky=W)
-		TMLabel.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['FilePath'] + self.TMPath.get()))
-		Label(Tab, width= 10, textvariable=self.TMStatus).grid(row=Row, column=6, padx=0, pady=5, sticky=W)
-		self.TMStatus.set('-')
-
-
-		Button(Tab, width = 20, text=  self.LanguagePack.Button['Stop'], command= self.Stop).grid(row=Row, column=7, columnspan=2,padx=0, pady=5)	
-		self.TranslateBtn = Button(Tab, width = 20, text=  self.LanguagePack.Button['Translate'], command= self.Translate, state=DISABLED)
-		self.TranslateBtn.grid(row=Row, column=9, columnspan=1, padx=5, pady=0, sticky=E)
+		self.progressbar.grid(row=Row, column=1, columnspan=8, padx=5, pady=5, sticky=W)
 
 
 	def Generate_TranslateSetting_UI(self, Tab):
@@ -312,28 +292,27 @@ class DocumentTranslator(Frame):
 
 	def Generate_Debugger_UI(self, Tab):	
 
-		Row = 1
 		# Add clear console button.
-		self.Debugger = scrolledtext.ScrolledText(Tab, width=125, height=19, undo=True, wrap=WORD, )
-		self.Debugger.grid(row=Row, column=1, columnspan=20, padx=5, pady=5)
+		self.Debugger = scrolledtext.ScrolledText(Tab, width=122, height=17, undo=True, wrap=WORD, )
+		self.Debugger.grid(row=0, column=0, padx=5, pady=5, sticky = E+W)
 
 
 	def Generate_TM_Manager_UI(self, Tab):
 		self.pair_list = []
 		self.removed_list = []
 		Max_Size = 10
+		
+		#Label(Tab, width = 100, text= "").grid(row=Row, column=1, columnspan=Max_Size, padx=5, pady=5, sticky = (N,S,W,E))
 		Row = 1
-		Label(Tab, width = 100, text= "").grid(row=Row, column=1, columnspan=Max_Size, padx=5, pady=5, sticky = (N,S,W,E))
-		Row += 1
-		self.search_text = Text(Tab, width = (125- self.HALF_BUTTON_WIDTH*3), height=1) #
-		self.search_text.grid(row=Row, column=1, columnspan=Max_Size-4, padx=5, pady=5, stick=W)
+		self.search_text = Text(Tab, height=1, width=85) #
+		self.search_text.grid(row=Row,  column=1, columnspan=7, padx=5, pady=5, stick=W+E)
 
 		#self.search_text.bind("<Enter>", self.search_tm_event)
 
 		#print('Btn size', self.HALF_BUTTON_WIDTH)
-		Button(Tab, text= self.LanguagePack.Button['Load'], width= self.HALF_BUTTON_WIDTH, command= self.load_tm_list).grid(row=Row, column=Max_Size-3, sticky=E)
-		Button(Tab, text= self.LanguagePack.Button['Save'], width= self.HALF_BUTTON_WIDTH, command= self.save_tm).grid(row=Row, column=Max_Size-2, sticky=E)
-		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Search'] , command= self.search_tm_list).grid(row=Row, column=Max_Size-1,sticky=E)
+		Button(Tab, text= self.LanguagePack.Button['Load'], width= self.HALF_BUTTON_WIDTH, command= self.load_tm_list).grid(row=Row, column=8, sticky=E)
+		Button(Tab, text= self.LanguagePack.Button['Save'], width= self.HALF_BUTTON_WIDTH, command= self.save_tm).grid(row=Row, column=9, sticky=E)
+		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Search'] , command= self.search_tm_list).grid(row=Row, column=10,sticky=E)
 		Row +=1
 		#self.Debugger = Text(Tab, width=120, height=20, undo=True, wrap=WORD)
 		#self.List = scrolledtext.ScrolledText(Tab, width=125, height=20, undo=True, wrap=WORD, )
@@ -343,7 +322,7 @@ class DocumentTranslator(Frame):
 		#style.map('Treeview', background = [('seleted', 'green')])
 		
 		self.Treeview = Treeview(Tab)
-		self.Treeview.grid(row=Row, column=1, columnspan=Max_Size, padx=5, pady=5, sticky = (N,S,W,E))
+		self.Treeview.grid(row=Row, column=1, columnspan=11, padx=5, pady=5, sticky = N+S+W+E)
 		verscrlbar = Scrollbar(Tab, orient ="vertical", command = self.Treeview.yview)
 		#verscrlbar.pack(side ='right', fill ='x') 
 		self.Treeview.configure(  yscrollcommand=verscrlbar.set)
@@ -353,16 +332,16 @@ class DocumentTranslator(Frame):
 
 		self.Treeview.column('#0', width=0, stretch=NO)
 		self.Treeview.column('index', anchor=CENTER, width=0, stretch=NO)
-		self.Treeview.column('Source', anchor=CENTER, width=80)
-		self.Treeview.column('Target', anchor=CENTER, width=80)
+		self.Treeview.column('Source', anchor=CENTER, width=130)
+		self.Treeview.column('Target', anchor=CENTER, width=130)
 
 		self.Treeview.heading('#0', text='', anchor=CENTER)
 		self.Treeview.heading('index', text='index', anchor=CENTER)
 		self.Treeview.heading('Source', text='Source', anchor=CENTER)
 		self.Treeview.heading('Target', text='Target', anchor=CENTER)
 
-		verscrlbar.grid(row=Row, column=Max_Size,  sticky = (N,S,E))
-		Tab.grid_columnconfigure(Max_Size, weight=0, pad=0)
+		verscrlbar.grid(row=Row, column=11,  sticky = N+S+E)
+		Tab.grid_columnconfigure(11, weight=0, pad=0)
 		styles = Style()
 		styles.configure('Treeview',rowheight=22)
 
@@ -380,7 +359,7 @@ class DocumentTranslator(Frame):
 		self.Str_DB_Path = StringVar()
 		#self.Str_DB_Path.set('C:\\Users\\evan\\OneDrive - NEXON COMPANY\\[Demostration] V4 Gacha test\\DB\\db.xlsx')
 		Label(Tab, text=  self.LanguagePack.Label['MainDB']).grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky= W)
-		self.Entry_Old_File_Path = Entry(Tab,width = 130, state="readonly", textvariable=self.Str_DB_Path)
+		self.Entry_Old_File_Path = Entry(Tab,width = 110, state="readonly", textvariable=self.Str_DB_Path)
 		self.Entry_Old_File_Path.grid(row=Row, column=3, columnspan=6, padx=4, pady=5, sticky=E)
 		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.Btn_DB_Uploader_Browse_DB_File).grid(row=Row, column=9, columnspan=2, padx=5, pady=5, sticky=E)
 		
@@ -398,7 +377,7 @@ class DocumentTranslator(Frame):
 		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Execute'], command= self.Btn_DB_Uploader_Execute_Script).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
 
 		Row += 1
-		self.Uploader_Debugger = Text(Tab, width=125, height=14, undo=True, wrap=WORD, )
+		self.Uploader_Debugger = scrolledtext.ScrolledText(Tab, width=122, height=13, undo=True, wrap=WORD, )
 		self.Uploader_Debugger.grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E+N+S)
 
 
@@ -480,11 +459,12 @@ class DocumentTranslator(Frame):
 
 	def save_tm(self):
 		print('Saving config')
-		UpdateProcess = Process(target=self.MyTranslator.export_current_translation_memory, args=(self.removed_list,))
+		UpdateProcess = Process(target=self.MyTranslator.export_current_translation_memory,)
 		UpdateProcess.start()
 		self.removed_list = []
 
 	def Generate_Menu_UI(self):
+
 		menubar = Menu(self.parent) 
 		# Adding File Menu and commands 
 		file = Menu(menubar, tearoff = 0)
@@ -513,32 +493,52 @@ class DocumentTranslator(Frame):
 		self.parent.config(menu = menubar) 
 
 	def Generate_Tab_UI(self):
-		TAB_CONTROL = Notebook(self.parent)
+
+		MainPanel = Frame(self, name='mainpanel')
+		MainPanel.pack(side=TOP, fill=BOTH, expand=Y)
+		TAB_CONTROL = Notebook(MainPanel, name='notebook')
+		# extend bindings to top level window allowing
+		#   CTRL+TAB - cycles thru tabs
+		#   SHIFT+CTRL+TAB - previous tab
+		#   ALT+K - select tab using mnemonic (K = underlined letter)
+		TAB_CONTROL.enable_traversal()
+
+		#TAB_CONTROL = Notebook(self.parent)
 		#Tab1
 		self.MainTab = Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.MainTab, text=  self.LanguagePack.Tab['Main'])
+		TAB_CONTROL.add(self.MainTab, text= self.LanguagePack.Tab['Main'])
 		#Tab2
 		self.TranslateSetting = Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.TranslateSetting, text=  self.LanguagePack.Tab['Translator'])
+		TAB_CONTROL.add(self.TranslateSetting, text= self.LanguagePack.Tab['Translator'])
 		#Tab5
 		#self.Comparison = ttk.Frame(TAB_CONTROL)
 		#TAB_CONTROL.add(self.Comparison, text=  self.LanguagePack.Tab['Comparison'])
 		#Tab6
 		self.TM_Manager = Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.TM_Manager, text=  self.LanguagePack.Tab['TMManager'])
+		TAB_CONTROL.add(self.TM_Manager, text= self.LanguagePack.Tab['TMManager'])
 
 		self.DB_Uploader = Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.DB_Uploader, text=  self.LanguagePack.Tab['DBUploader'])
+		TAB_CONTROL.add(self.DB_Uploader, text= self.LanguagePack.Tab['DBUploader'])
 
 		self.Process = Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.Process, text=  self.LanguagePack.Tab['Debug'])
+		TAB_CONTROL.add(self.Process, text = self.LanguagePack.Tab['Debug'])
 
-		TAB_CONTROL.pack(expand=1, fill="both")
+		#TAB_CONTROL.pack(expand=1, fill="both")
+		TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
 
+	def disable_button(self):
+		_state = DISABLED
+		self.bottom_panel.btn_renew_translator.configure(state=_state)
+		self.btn_translate.configure(state=_state)
+		
+	def enable_button(self):
+		_state = NORMAL
+		self.bottom_panel.btn_renew_translator.configure(state=_state)
+		self.btn_translate.configure(state=_state)
 
 	# Menu Function
 	def About(self):
-		messagebox.showinfo("About....", "Creator: Giang\r\nUI/UX Improve: Ally")
+		messagebox.showinfo("About....", "Creator: Giang - evan@nexonnetworks.com")
 
 	def Error(self, ErrorText):
 		messagebox.showinfo('Tool error...', ErrorText)	
@@ -558,16 +558,29 @@ class DocumentTranslator(Frame):
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'tm_update', self.TMUpdate.get())
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'remove_unselected_sheet', self.SheetRemoval.get())
 
+	def swap_language(self):
+		
+		source_language = self.source_language.get()
+		source_language_index = self.language_list.index(source_language)
+		target_language = self.target_language.get()
+		target_language_index = self.language_list.index(target_language)
+		self.target_language.set(source_language)
+		self.source_language.set(target_language)
+
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', source_language_index)
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_lang', target_language_index)
+		self.MyTranslator.set_language_pair(target_language = self.language_id_list[source_language_index], source_language = self.language_id_list[target_language_index])
+		self._dictionary_status.set(str(len(self.MyTranslator.dictionary)))
+		self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
 	def SetLanguageKorean(self):
 		self.AppLanguage = 'kr'
 		self.SaveAppLanguage(self.AppLanguage)
-		#self.initUI()
+
 	
 	def SetLanguageEnglish(self):
 		self.AppLanguage = 'en'
 		self.SaveAppLanguage(self.AppLanguage)
-		#self.initUI()
 
 	def OpenWeb(self):
 		webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/AIO+Translator")
@@ -586,20 +599,12 @@ class DocumentTranslator(Frame):
 			newPath = self.CorrectPath(Outputdir + '/'+ sourcename + '.' + ext)
 			return newPath
 
-	def SelectDictionary(self):
-		filename = filedialog.askopenfilename(title = "Select Database file",filetypes = (("Dictionary files","*.xlsx *.xlsm"), ), )	
-		if filename != "":
-			NewDictionary = self.CorrectPath(filename)	
-			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Database', 'path', NewDictionary, True)
-			self.Notice.set(self.LanguagePack.ToolTips['DocumentLoaded'])
-		else:
-			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 
 	def Btn_Select_License_Path(self):
 		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectDB'],filetypes = (("JSON files","*.json" ), ), )	
 		if filename != "":
 			LicensePath = self.CorrectPath(filename)
-			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'license_file', 'path', LicensePath, True)
+			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'license_file', LicensePath, True)
 			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LicensePath
 			self.LicensePath.set(LicensePath)
 		else:
@@ -611,7 +616,7 @@ class DocumentTranslator(Frame):
 		if filename != "":
 			NewTM = self.CorrectPath(filename)
 			self.TMPath.set(NewTM)
-			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'translation_memory', 'path', NewTM, True)
+			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'translation_memory', NewTM, True)
 			self.renew_my_translator()
 			self.Notice.set(self.LanguagePack.ToolTips['TMUpdated'])
 		else:
@@ -635,7 +640,8 @@ class DocumentTranslator(Frame):
 	def SaveProjectKey(self, event):
 		glossary_id = self.Text_glossary_id.get()
 		glossary_id = glossary_id.replace('\n', '')
-		self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'glossary_id', 'value', glossary_id)
+
+		self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'glossary_id', glossary_id)
 		self.MyTranslator.glossary_id = glossary_id
 		
 		self.renew_my_translator()
@@ -748,7 +754,7 @@ class DocumentTranslator(Frame):
 					change_flag = False
 					self.Notice.set('Compare done')
 					self.Uploader_Debugger.insert("end", "\n\r")
-					self.Uploader_Debugger.insert("end", "Compare done")
+					self.Uploader_Debugger.insert("end", "Compare done\n\r")
 					if compare_result['dropped']>0:
 						self.Uploader_Debugger.insert("end", "\n\r")
 						self.Uploader_Debugger.insert("end", 'Dropped: ' + str(compare_result['dropped']))
@@ -775,7 +781,7 @@ class DocumentTranslator(Frame):
 					change_flag = False
 					self.Notice.set('Compare done')
 					self.Uploader_Debugger.insert("end", "\n\r")
-					self.Uploader_Debugger.insert("end", "Compare done")
+					self.Uploader_Debugger.insert("end", "Compare done\n\r")
 					if compare_result['dropped']>0:
 						self.Uploader_Debugger.insert("end", "\n\r")
 						self.Uploader_Debugger.insert("end", 'Dropped: ' + str(compare_result['dropped']))
@@ -863,26 +869,29 @@ class DocumentTranslator(Frame):
 
 		self.CurrentDataSource = StringVar()
 		self.Notice = StringVar()
-		self.DictionaryStatus = StringVar()
+		
 		
 		self.TMStatus  = StringVar()
 		#self.HeaderStatus = StringVar()
-		self.VersionStatus  = StringVar()
-		self.update_day = StringVar()
+		self._dictionary_status = StringVar()
+		self._version_status  = StringVar()
+		self._update_day = StringVar()
 
 		self.AppConfig = ConfigLoader()
 		self.Configuration = self.AppConfig.Config
 		self.AppLanguage  = self.Configuration['Document_Translator']['app_lang']
 		
-		self.LicensePath.set(self.Configuration['license_file']['path'])
-		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = self.Configuration['license_file']['path']
+		license_file_path = self.Configuration['Translator']['license_file']
+		self.LicensePath.set(license_file_path)
+		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = license_file_path
 
-		self.TMPath.set(self.Configuration['translation_memory']['path'])
-		self.glossary_id = self.Configuration['glossary_id']['value']
-		
-		self.bucket_id = self.Configuration['bucket_id']['value']
-		self.db_list_uri = self.Configuration['db_list_uri']['value']
-		self.project_bucket_id = self.Configuration['project_bucket_id']['value']
+		self.TMPath.set(self.Configuration['Translator']['translation_memory'])
+
+		self.bucket_id = self.Configuration['Translator']['bucket_id']
+		self.db_list_uri = self.Configuration['Translator']['db_list_uri']
+		self.project_bucket_id = self.Configuration['Translator']['project_bucket_id']
+
+		self.glossary_id = self.Configuration['Translator']['glossary_id']
 
 	def init_UI_setting(self):
 
@@ -905,8 +914,7 @@ class DocumentTranslator(Frame):
 
 	def renew_my_translator(self):
 		self.MyTranslator = None
-
-		self.TranslateBtn.configure(state=DISABLED)
+		self.disable_button()
 		self.generate_translator_engine()
 
 	def set_target_language(self, target_language):
@@ -916,8 +924,9 @@ class DocumentTranslator(Frame):
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', index)
 
 		self.MyTranslator.set_target_language(to_language)
-		self.DictionaryStatus.set(str(len(self.MyTranslator.dictionary)))
+		self._dictionary_status.set(str(len(self.MyTranslator.dictionary)))
 		self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
+		
 
 	def set_source_language(self, source_language):
 		index = self.language_list.index(source_language)
@@ -926,7 +935,7 @@ class DocumentTranslator(Frame):
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_lang', index)
 
 		self.MyTranslator.set_source_language(from_language)	
-		self.DictionaryStatus.set(str(len(self.MyTranslator.dictionary)))
+		self._dictionary_status.set(str(len(self.MyTranslator.dictionary)))
 		self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
 
@@ -959,13 +968,13 @@ class DocumentTranslator(Frame):
 														'to_language' : target_language, 
 														'glossary_id' : self.glossary_id, 
 														'used_tool' : tool_name,
-														'tm_path' : None,
+														'tm_path' : tm_path,
 														'bucket_id' : self.bucket_id, 
 														'db_list_uri' : self.db_list_uri, 
 														'project_bucket_id' : self.project_bucket_id,
 													},
 										)
-		self.TranslatorProcess.start()										
+		self.TranslatorProcess.start()
 		self.after(DELAY, self.GetMyTranslator)
 		return
 
@@ -980,11 +989,11 @@ class DocumentTranslator(Frame):
 		#print("self.MyTranslator: ", self.MyTranslator)	
 		if self.MyTranslator != None:	
 			print("My translator is created")
-			#self.MyTranslator.Convert_Translation_Memory()
-			self.TranslateBtn.configure(state=NORMAL)
+	
+			self.enable_button()
 
 			DBLength = len(self.MyTranslator.dictionary)
-			self.DictionaryStatus.set(str(DBLength))
+			self._dictionary_status.set(str(DBLength))
 			self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
 			glossary_list = [""] + self.MyTranslator.glossary_list
@@ -1008,6 +1017,7 @@ class DocumentTranslator(Frame):
 				Date = self.MyTranslator.update_day[0:10]
 			else:
 				Date = '-'
+			self.TMPath.set(str(self.MyTranslator.tm_path))
 
 			if isinstance(self.MyTranslator.latest_version, str):
 				if rev < int(self.MyTranslator.latest_version):
@@ -1022,8 +1032,8 @@ class DocumentTranslator(Frame):
 					self.quit()
 					return
 
-			self.VersionStatus.set(version)
-			self.update_day.set(Date)
+			self._version_status.set(version)
+			self._update_day.set(Date)
 			
 			self.Notice.set(self.LanguagePack.ToolTips['AppInitDone'])
 			self.TranslatorProcess.join()
@@ -1147,7 +1157,7 @@ class DocumentTranslator(Frame):
 		except:
 			pass
 
-		self.TranslateBtn.configure(state=DISABLED)
+		self.disable_button()
 
 		# Clear exist queue
 		try:
@@ -1221,11 +1231,11 @@ class DocumentTranslator(Frame):
 					self.Progress.set("Progress: " + str(0) + '%')
 
 				self.TranslatorProcess.terminate()
-				self.TranslateBtn.configure(state=NORMAL)
+				self.enable_button()
+
 			
 			except queue.Empty:
-				self.TranslateBtn.configure(state=NORMAL)
-				pass
+				self.enable_button()
 			while True:
 				try:
 					percent = self.ProcessQueue.get(0)
@@ -1248,25 +1258,27 @@ class BottomPanel(Frame):
 		#Separator(orient=HORIZONTAL).grid(in_=self, row=0, column=1, sticky=E+W, pady=5)
 		Row = 1
 		Label(text='Version', width=15).grid(in_=self, row=Row, column=1, padx=5, pady=5, sticky=W)
-		Label(textvariable=master.VersionStatus, width=15).grid(in_=self, row=Row, column=2, padx=0, pady=5, sticky=W)
-		master.VersionStatus.set('-')
+		Label(textvariable=master._version_status, width=15).grid(in_=self, row=Row, column=2, padx=0, pady=5, sticky=W)
+		master._version_status.set('-')
 
 		Label(text='Update', width=15).grid(in_=self, row=Row, column=3, padx=5, pady=5)
-		Label(textvariable=master.UpdateDay, width=15).grid(in_=self, row=Row, column=4, padx=0, pady=5)
-		master.VersionStatus.set('-')
+		Label(textvariable=master._update_day, width=15).grid(in_=self, row=Row, column=4, padx=0, pady=5)
+		master._update_day.set('-')
 	
 		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
-		DictionaryLabelA.grid(in_=self, row=Row, column=5, padx=5, pady=5)
+		DictionaryLabelA.grid(in_=self, row=Row, column=4, padx=5, pady=5)
 		
-		Label(textvariable=master.DictionaryStatus, width=15).grid(in_=self, row=Row, column=6, padx=0, pady=5)
-		master.DictionaryStatus.set('0')
+		Label(textvariable=master._dictionary_status, width=15).grid(in_=self, row=Row, column=5, padx=0, pady=5)
+		master._dictionary_status.set('-')
 
-		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self, row=Row, column=7, padx=5, pady=5)
-		Label(textvariable=master.HeaderStatus, width=15).grid(in_=self, row=Row, column=8, padx=0, pady=5)
-		master.HeaderStatus.set('0')
+		TMLabel=Label(text=  master.LanguagePack.Label['TM'])
+		TMLabel.grid(in_=self, row=Row, column=6, padx=5, pady=5, sticky=W)
+		TMLabel.bind("<Enter>", lambda event : master.Notice.set(master.LanguagePack.ToolTips['FilePath'] + master.TMPath.get()))
+		Label( width= 10, textvariable=master.TMStatus).grid(in_=self, row=Row, column=7, padx=0, pady=5, sticky=W)
+		master.TMStatus.set('-')
 
-		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=20, command= master.RenewMyTranslator, state=DISABLED)
-		self.RenewTranslatorMain.grid(in_=self, row=Row, column=10, columnspan=9, padx=10, pady=5, stick=E)
+		self.btn_renew_translator = Button(text=master.LanguagePack.Button['RenewDatabase'], width=20, command= master.renew_my_translator, state=DISABLED)
+		self.btn_renew_translator.grid(in_=self, row=Row, column=8, padx=10, pady=5, stick=E)
 		
 		
 		self.rowconfigure(0, weight=1)
@@ -1348,8 +1360,15 @@ def function_compare_db(result_queue, MyTranslator, glossary_id, new_csv_path):
 	
 	MyTranslator.download_db_to_file(glossary_id, old_csv_db)
 	#print('Old path', old_csv_db)
-	if isfile(old_csv_db):
-		print('File exist')
+	if not isfile(old_csv_db):
+		result = {
+			'dropped': 0,
+			'added': 0,
+			'changed': 0,
+			'path': new_csv_path
+		}
+		result_queue.put(result)
+		return
 	old_db = pd.read_csv(old_csv_db)
 	new_db = pd.read_csv(new_csv_path)
 	old_db['version'] = "old"
@@ -1981,7 +2000,7 @@ def main():
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
 
 	try:
-		app = DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue, status_queue = StatusQueue
+		application = DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue, status_queue = StatusQueue
 		, my_translator_queue = MyTranslatorQueue, my_db_queue = MyDB, tm_manager = TMManager)
 		root.mainloop()
 		#print('Root is terminated sending logging from current session')

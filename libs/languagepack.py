@@ -87,7 +87,7 @@ class LanguagePackEN:
 	Label['TranslateOptions'] = "Translate Options: "
 	Label['Dictionary'] = "Dictionary"
 	Label['Exception'] = "Exception"
-	Label['TM'] = "TM"
+	Label['TM'] = "TM:"
 	
 
 	Label['NumberOfProcess'] = "Number of Process: " #Number of CPU process use
@@ -335,7 +335,7 @@ class LanguagePackKR:
 	Label['TranslateOptions'] = "변환 옵션"
 	Label['Dictionary'] = "사전"
 	Label['Exception'] = "예외"
-	Label['TM'] = "변환 메모리"
+	Label['TM'] = "변환 메모리:"
 
 	Label['NumberOfProcess'] = "프로세스 사용 횟수" #Number of CPU process use
 

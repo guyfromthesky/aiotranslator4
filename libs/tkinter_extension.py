@@ -1,8 +1,8 @@
-from tkinter.ttk import Combobox, Style, Entry
-from tkinter import Frame, Listbox
+from tkinter.ttk import Combobox, Style, Entry, Button
+from tkinter import Frame, Listbox, Label
 from tkinter import HORIZONTAL, X
 from tkinter import W, E, S, N, END, BOTTOM
-from tkinter import INSERT, ACTIVE
+from tkinter import INSERT, ACTIVE, NORMAL, DISABLED
 from tkinter import Text, IntVar, StringVar
 
 import re
@@ -97,17 +97,7 @@ class AutocompleteCombobox(Combobox):
 
 
 class CustomText(Text):
-	'''A text widget with a new method, highlight_pattern()
 
-	example:
-
-	text = CustomText()
-	text.tag_configure("red", foreground="#ff0000")
-	text.highlight_pattern("this should be red", "red")
-
-	The highlight_pattern method is a simplified python
-	version of the tcl code at http://wiki.tcl.tk/3246
-	'''
 	def __init__(self, *args, **kwargs):
 		Text.__init__(self, *args, **kwargs)
 
@@ -139,6 +129,47 @@ class CustomText(Text):
 			#self.mark_set("matchStart", str('1.'+ str(start_pos)))
 			#self.mark_set("matchEnd", "%s+%sc" % (index, count.get()))
 			self.tag_add(tag, "matchStart", "matchEnd")
+
+# GUIDE
+# In main FRAME, add this line:
+# main_frame.pack(side=TOP, expand=Y, fill=X)
+# In sub FRAME, add this line:
+# 
+# sub_frame.pack(side=TOP, expand=Y, fill=BOTH)
+
+class BottomPanel(Frame):
+	
+	def __init__(self, master):
+		Frame.__init__(self, master) 
+		self.pack(side=BOTTOM, fill=X)          # resize with parent
+		
+		# separator widget
+		#Separator(orient=HORIZONTAL).grid(in_=self, row=0, column=1, sticky=E+W, pady=5)
+		Row = 1
+		Label(text='Version', width=15).grid(in_=self, row=Row, column=1, padx=5, pady=5, sticky=W)
+		Label(textvariable=master.VersionStatus, width=15).grid(in_=self, row=Row, column=2, padx=0, pady=5, sticky=W)
+		master.VersionStatus.set('-')
+
+		Label(text='Update', width=15).grid(in_=self, row=Row, column=3, padx=5, pady=5)
+		Label(textvariable=master._update_day, width=15).grid(in_=self, row=Row, column=4, padx=0, pady=5)
+		master._update_day.set('-')
+	
+		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
+		DictionaryLabelA.grid(in_=self, row=Row, column=5, padx=5, pady=5)
+		
+		Label(textvariable=master.DictionaryStatus, width=15).grid(in_=self, row=Row, column=6, padx=0, pady=5)
+		master.DictionaryStatus.set('0')
+
+		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self, row=Row, column=7, padx=5, pady=5)
+		Label(textvariable=master.HeaderStatus, width=15).grid(in_=self, row=Row, column=8, padx=0, pady=5)
+		master.HeaderStatus.set('0')
+
+		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=20, command= master.RenewMyTranslator, state=DISABLED)
+		self.RenewTranslatorMain.grid(in_=self, row=Row, column=10, columnspan=9, padx=10, pady=5, stick=E)
+		
+		
+		self.rowconfigure(0, weight=1)
+		self.columnconfigure(0, weight=1)
 
 class AutocompleteEntry(Entry):
 	def __init__(self, autocompleteList, *args, **kwargs):

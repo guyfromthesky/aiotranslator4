@@ -12,7 +12,7 @@ class ConfigLoader:
 	def __init__(self):
 		self.basePath = os.path.abspath(os.path.dirname(sys.argv[0]))
 		if sys.platform.startswith('win'):
-			self.appdata = os.environ['APPDATA'] + '\\AIO Translator'
+			self.appdata = os.environ['APPDATA'] + '\\AIO Translator v4'
 		else:
 			self.appdata = os.getcwd() + '\\AIO Translator'
 	
@@ -113,7 +113,7 @@ class ConfigLoader:
 
 		self.Init_Config_Option(config, Section, 'app_lang', 2)
 		
-		self.Init_Config_Option(config, Section, 'target_lang', 2)
+		self.Init_Config_Option(config, Section, 'target_lang', 1)
 		self.Init_Config_Option(config, Section, 'source_lang', 2)
 
 		self.Init_Config_Option(config, Section, 'speed_mode', 0)
@@ -130,6 +130,7 @@ class ConfigLoader:
 			config.write(configfile)
 
 	def Translator_Init_Setting(self):
+		Section = 'Translator'
 
 		config_path = self.Translator_Config_Path
 
@@ -144,24 +145,20 @@ class ConfigLoader:
 		config = configparser.ConfigParser()
 		config.read(config_path)
 
-		self.Init_Config_Option(config, 'bucket_id', 'value', 'nxvnbucket')
-		self.Init_Config_Option(config, 'db_list_uri', 'value', 'config/db_list.csv')
-		self.Init_Config_Option(config, 'project_bucket_id', 'value', 'credible-bay-281107')
-
-		self.Init_Config_Option(config, 'license_key', 'value', '')
-		self.Init_Config_Option(config, 'glossary_id', 'value', '')
-
-		self.Config_Load_Path(config, 'license_file')
-		self.Config_Load_Path(config, 'database')
-		self.Config_Load_Path(config, 'translation_memory')	
-		self.Config_Load_Path(config, 'exception')	
+		self.Init_Config_Option(config, Section, 'bucket_id', 'nxvnbucket')
+		self.Init_Config_Option(config, Section, 'db_list_uri', 'config/db_list_v4.csv')
+		self.Init_Config_Option(config, Section, 'project_bucket_id', 'credible-bay-281107')
+		self.Init_Config_Option(config, Section, 'license_key', '')
+		self.Init_Config_Option(config, Section, 'glossary_id', '')
+		self.Init_Config_Option(config, Section, 'license_file', '', True)
+		self.Init_Config_Option(config, Section, 'translation_memory', '', True)
 		
 		with open(config_path, 'w') as configfile:
 			config.write(configfile)
 	
 	# Function will load the value from selected option.
 	# If value does not exist, return the default value
-	def Init_Config_Option(self, Config_Obj, Section, Option, Default_Value):
+	def Init_Config_Option(self, Config_Obj, Section, Option, Default_Value, Encoded = False):
 		# Config does not exist
 		if not Section in self.Config:
 			self.Config[Section] = {}
@@ -179,10 +176,13 @@ class ConfigLoader:
 			# The section have that option
 			else:
 				Value = Config_Obj[Section][Option]
-				if Value.isnumeric():
-					self.Config[Section][Option] = int(Config_Obj[Section][Option])
-				else:	
-					self.Config[Section][Option] = Config_Obj[Section][Option]
+				if Encoded == False:
+					if Value.isnumeric():
+						self.Config[Section][Option] = int(Config_Obj[Section][Option])
+					else:	
+						self.Config[Section][Option] = Config_Obj[Section][Option]
+				else:
+					self.Config[Section][Option] = base64.b64decode(Config_Obj[Section][Option]	).decode('utf-8') 	
 
 	def Config_Save_Path(self, Config_Obj, Section, Path_Value, Default_Value):
 		if not Section in self.Config:
@@ -226,7 +226,7 @@ class ConfigLoader:
 			Config_Obj.set(Section, Option, str(Default_Value))
 			self.Config[Section][Option] = Default_Value
 
-	def Get_Config(self, FileName, Section, Option, Default_Value = None):
+	def Get_Config(self, FileName, Section, Option, Default_Value = None, Encode = False):
 		
 		if FileName in self:
 			config_path = self.FileName
@@ -247,8 +247,10 @@ class ConfigLoader:
 
 		Value = Config_Obj[Section][Option]
 		if Value != '':
-			Decoded_Value = base64.b64decode(Value).decode('utf-8')
-			return Decoded_Value
+			if Encode == True:
+				return base64.b64decode(Value).decode('utf-8')
+			else:
+				return Value
 		else:
 			return Default_Value
 

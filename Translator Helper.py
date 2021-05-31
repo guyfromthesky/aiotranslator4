@@ -49,9 +49,9 @@ from libs.aiotranslator import generate_translator
 
 from libs.aioconfigmanager import ConfigLoader
 
-from libs.aioconfigmanager import ConfigLoader
+#from libs.aioconfigmanager import ConfigLoader
 
-from libs.grammercheck import LanguageTool
+#from libs.grammercheck import LanguageTool
 
 from libs.version import get_version
 from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry
@@ -63,7 +63,7 @@ import json
 
 tool_display_name = "Translator Helper"
 tool_name = 'writer'
-rev = 4000
+rev = 4001
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -137,9 +137,11 @@ class MyTranslatorHelper(Frame):
 		self.init_UI_setting()
 		
 		#self.LoadTempReport()
+		if self.LicensePath.get() != "":
+			self.generate_translator_engine()
+		else:
+			self.Error('No license selected, please select the key in Translate setting.')	
 		
-		self.generate_translator_engine()
-
 		
 	# Menu function
 	def Error(self, ErrorText):
@@ -170,7 +172,7 @@ class MyTranslatorHelper(Frame):
 		self.bottom_panel = BottomPanel(self)
 		
 	def Generate_Tab_UI(self):
-		MainPanel = Frame(self, name='demo')
+		MainPanel = Frame(self, name='mainpanel')
 		MainPanel.pack(side=TOP, fill=BOTH, expand=Y)
 		TAB_CONTROL = Notebook(MainPanel, name='notebook')
 		# extend bindings to top level window allowing
@@ -338,7 +340,7 @@ class MyTranslatorHelper(Frame):
 		self.search_entry.grid(row=Row, column=5, columnspan=6, padx=5, pady=5, sticky=E)
 
 		Row+=1
-		self.TextTestReport = Text(Tab, width=130, height=7, undo=True, wrap=WORD)
+		self.TextTestReport = Text(Tab, width=130, height=8, undo=True, wrap=WORD)
 		self.TextTestReport.grid(row=Row, column=1, columnspan=10, rowspan=7, padx=5, pady=5, stick=W+E)
 		Row+=7
 		
@@ -434,19 +436,20 @@ class MyTranslatorHelper(Frame):
 
 	def Generate_TranslateSetting_UI(self, Tab):
 		Row = 1
-		Label(Tab, textvariable=self.Notice).grid(row=Row, column=1, columnspan = 10, padx=5, pady=5, sticky= W)
+		Label(Tab, textvariable=self.Notice).grid(row=Row, column=1, columnspan = 10, padx=5, pady=5, sticky= E+W)
 		Row += 1
 
 		Label(Tab, text= self.LanguagePack.Label['LicensePath']).grid(row=Row, column=1, padx=5, pady=5, sticky=E)
-		self.TextLicensePath = Entry(Tab,width = 120, state="readonly", textvariable=self.LicensePath)
-		self.TextLicensePath.grid(row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
-		Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
+		self.TextLicensePath = Entry(Tab,width = 150, state="readonly", textvariable=self.LicensePath)
+		self.TextLicensePath.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=W+E)
+		Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path).grid(row=Row, column=10, padx=5, pady=5, sticky=E)
 
 	def Btn_Select_License_Path(self):
 		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectDB'],filetypes = (("JSON files","*.json" ), ), )	
 		if filename != "":
 			LicensePath = self.CorrectPath(filename)
-			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'license_file', 'path', LicensePath, True)
+			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'license_file', LicensePath, True)
+
 			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LicensePath
 			self.LicensePath.set(LicensePath)
 		else:
@@ -470,23 +473,30 @@ class MyTranslatorHelper(Frame):
 		
 		#self.TMStatus  = StringVar()
 		self.HeaderStatus = StringVar()
-
 		self.VersionStatus  = StringVar()
-		self.UpdateDay = StringVar()
+		self._update_day = StringVar()
 
 		self.AppConfig = ConfigLoader()
+
 		self.Configuration = self.AppConfig.Config
+		#print('self.Configuration', self.Configuration)
+
 		self.AppLanguage  = self.Configuration['Bug_Writer']['app_lang']
 
-		self.LicensePath.set(self.Configuration['license_file']['path'])
-		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = self.Configuration['license_file']['path']
-		self.TMPath.set(self.Configuration['translation_memory']['path'])
+		#self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'bucket_id', 'value', 'nxvnbucket')
+		#self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'db_list_uri', 'value', 'config/db_list_v4.csv')
+		#self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'project_bucket_id', 'value', 'credible-bay-281107')
+		license_file_path = self.Configuration['Translator']['license_file']
+		self.LicensePath.set(license_file_path)
 
-		self.glossary_id = self.Configuration['glossary_id']['value']
+		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = license_file_path
+		self.TMPath.set(self.Configuration['Translator']['translation_memory'])
 
-		self.bucket_id = self.Configuration['bucket_id']['value']
-		self.db_list_uri = self.Configuration['db_list_uri']['value']
-		self.project_bucket_id = self.Configuration['project_bucket_id']['value']
+		self.bucket_id = self.Configuration['Translator']['bucket_id']
+		self.db_list_uri = self.Configuration['Translator']['db_list_uri']
+		self.project_bucket_id = self.Configuration['Translator']['project_bucket_id']
+
+		self.glossary_id = self.Configuration['Translator']['glossary_id']
 		
 	def init_UI_setting(self):
 		
@@ -705,7 +715,7 @@ class MyTranslatorHelper(Frame):
 				Date = '-'
 
 			self.VersionStatus.set(version)
-			self.UpdateDay.set(Date)
+			self._update_day.set(Date)
 
 			if isinstance(self.MyTranslator.latest_version, str):
 				if rev < int(self.MyTranslator.latest_version):
@@ -738,12 +748,11 @@ class MyTranslatorHelper(Frame):
 			
 		self.Notice.set(self.LanguagePack.ToolTips['Translating'])
 
-		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
-		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
+		target_language = self.language_id_list[self.language_list.index(self.simple_target_language.get())]
+		source_language = self.language_id_list[self.language_list.index(self.simple_source_language.get())]
 
 		self.MyTranslator.set_language_pair(target_language = target_language, source_language = source_language)
-
-
+		
 		self.source_text = self.SourceText.get("1.0", END)
 		try:
 			source_text = self.source_text.split('\n')
@@ -1087,16 +1096,16 @@ class MyTranslatorHelper(Frame):
 	def GetTitle(self):
 		copy("")
 
-		if self.source_language.get() == 1:
-			self.MyTranslator.set_language_pair(source_language = 'ko', target_language = 'en')
-		else:
-			self.MyTranslator.set_language_pair(source_language = 'en', target_language = 'ko')
+		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
+		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
 
+
+		self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
 
 		self.Notice.set(self.LanguagePack.ToolTips['GenerateBugTitle'])
 		self.strSourceTitle = self.TextTitle.get("1.0", END).replace('\n', '')
 		self.strSourceTitle = self.TextTitle.get("1.0", END).replace('\r\n', '')
-		self.Title_Translate = Process(target=SimpleTranslate, args=(self.title, self.MyTranslator, self.strSourceTitle,))
+		self.Title_Translate = Process(target=SimpleTranslate, args=(self.return_text, self.MyTranslator, self.strSourceTitle,))
 		self.Title_Translate.start()
 		self.after(DELAY, self.TextTitleGet)
 		return
@@ -1107,7 +1116,7 @@ class MyTranslatorHelper(Frame):
 			return
 		else:
 			try:
-				TempTitle  = self.title.get(0)
+				TempTitle  = self.return_text.get(0)
 				if isinstance(TempTitle, list):
 					self.TargetTitle = "\n".join(TempTitle)
 				elif isinstance(TempTitle, str):
@@ -1500,8 +1509,8 @@ class BottomPanel(Frame):
 		master.VersionStatus.set('-')
 
 		Label(text='Update', width=15).grid(in_=self, row=Row, column=3, padx=5, pady=5)
-		Label(textvariable=master.UpdateDay, width=15).grid(in_=self, row=Row, column=4, padx=0, pady=5)
-		master.VersionStatus.set('-')
+		Label(textvariable=master._update_day, width=15).grid(in_=self, row=Row, column=4, padx=0, pady=5)
+		master._update_day.set('-')
 	
 		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
 		DictionaryLabelA.grid(in_=self, row=Row, column=5, padx=5, pady=5)
@@ -1859,15 +1868,17 @@ def MainLoop():
 	MyManager = Manager()
 	grammar_check_result = MyManager.list()
 	tm_manager = MyManager.list()
-	
 	language_tool_enable = False
+	'''
+	language_tool_enable = False
+
 	global language_tool
 	try:
 		language_tool = LanguageTool('en')
 		language_tool_enable = True
 	except Exception as error_message:
 		print('Error: ', error_message)
-
+	'''
 	root = Tk()
 
 	style = Style(root)
@@ -1886,7 +1897,8 @@ def MainLoop():
 			from google.cloud import logging
 			AppConfig = ConfigLoader()
 			Configuration = AppConfig.Config
-			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = Configuration['license_file']['path']
+			license_file_path = Configuration['Translator']['license_file']
+			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = license_file_path
 			client = logging.Client()
 		except:
 			print('Fail to communicate with logging server')

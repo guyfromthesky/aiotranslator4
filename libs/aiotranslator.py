@@ -141,7 +141,7 @@ class Translator:
 			self.prepare_db_data()
 			print('Total time to load db:', str(datetime.now() - current_time))
 		except Exception  as e:
-			print("Error:", e)
+			print("Error when loading bucket:", e)
 
 
 		# Send tracking record from previous run to logging server.
@@ -1036,11 +1036,16 @@ class Translator:
 	def load_bucket_list_from_glob(self, file_uri= None, timeout=180,):
 
 		cloud_client = storage.Client()
-
 		bucket = cloud_client.get_bucket(self.bucket_id)
 		blob = bucket.get_blob(self.db_list_uri)
-		listdb = blob.download_as_text()
-
+		print('blob', blob)
+		
+		try:
+			listdb = blob.download_as_text()
+		except Exception as e:
+			print('Fail to load blob:', e)
+			return
+	
 		mydb = listdb.split('\r\n')
 
 		for pair in mydb:
@@ -1090,7 +1095,12 @@ class Translator:
 		bucket = cloud_client.get_bucket(self.bucket_id)
 		blob = bucket.get_blob(uri)
 		print('Download file to: ', download_path)
-		blob.download_to_filename(download_path)	
+
+		try:
+			blob.download_to_filename(download_path)	
+		except Exception as e:
+			print('Fail to load blob:', e)	
+			return
 		'''
 		with open(download_path,'wb') as f:
 			cloud_client.download_to_file(blob, f)
@@ -1103,10 +1113,13 @@ class Translator:
 		bucket = cloud_client.get_bucket(self.bucket_id)
 
 		blob = bucket.get_blob(file_uri)
+	
+		try:
+			listdb = blob.download_as_text()
+		except Exception as e:
+			print('Fail to load blob:', e)
+			return
 
-		# Retrive DB as string from URI
-		listdb = blob.download_as_text()
-		
 		# Split DB into row.
 		mydb = listdb.split('\r\n')
 		
@@ -1269,6 +1282,7 @@ class Translator:
 		#print('self.glossary_id', self.glossary_id)
 		if self.glossary_id not in [None, ""]:
 			try:
+
 				uri = self.get_glossary_path(self.glossary_id)
 				print('URI:', uri)
 				#print("Load DB from glob")
@@ -1285,20 +1299,22 @@ class Translator:
 			
 
 	def prepare_db_data(self):
+		print('prepare_db_data')
 		if self.glossary_id not in [None, ""]:
 			try:
+				print('Get URI from glossary_id ')
 				uri = self.get_glossary_path(self.glossary_id)
 				print('URI:', uri)
 				print("Load DB from glob:", uri)
 				self.load_db_from_glob(uri)
 				print('Loading done!')
 			except Exception as e:
-				#self.load_db_from_glob(uri)
 				print('[Error] prepare_db_data:', e)
 
 		else:
-			self.dictionary = []
-			self.header = []
+			self.init_db_data()
+			#self.dictionary = []
+			#self.header = []
 
 		if self.proactive_memory_translate:
 			#self.import_translation_memory()
@@ -1405,11 +1421,18 @@ class Translator:
 		except:
 			return False	
 		current_timestamp  = self.get_timestamp()
+
 		blob = bucket.blob(blob_id)
-		blob_name, ext = os.path.splitext(blob_id)
-		new_blob = blob_name + "_" + current_timestamp + ext
-		print('Backup blob to: ', new_blob)
-		bucket.copy_blob(blob, bucket, new_blob)
+		
+		try:
+			blob_name, ext = os.path.splitext(blob_id)
+			new_blob = blob_name + "_" + current_timestamp + ext
+			print('Backup blob to: ', new_blob)
+			bucket.copy_blob(blob, bucket, new_blob)
+		except Exception as e:
+			print('Fail to backup blob:', e)	
+
+
 		print('Uploading to blob')
 		blob.upload_from_filename(filename = Upload_Path)
 		print('Uploading done.')
@@ -1454,7 +1477,7 @@ class Translator:
 	# Get the tm's path.
 	# if tm is invalid, use local tm instead
 	def init_tm_path(self, tm_path = None):
-		if tm_path != None:
+		if tm_path not in [None, '']:
 			if os.path.isfile(tm_path):
 				self.tm_path = self.correct_path_os(tm_path)
 				return
@@ -1605,6 +1628,8 @@ class Translator:
 				print('Fail to load tm')
 				all_tm = {}
 			
+			save_data = self.translation_memory
+
 			for Pair in self.temporary_tm:
 				save_data = self.translation_memory.append(Pair, ignore_index=True)
 			
@@ -1799,8 +1824,9 @@ def generate_translator(
 		used_tool = None,
 		tm_path= None, 
 		bucket_id = 'nxvnbucket',
-		db_list_uri = 'config/db_list.csv',
+		db_list_uri = 'config/db_list_v4.csv',
 		project_bucket_id = 'credible-bay-281107'):	
+	print('Translator options:', locals())
 	MyTranslator = Translator(	from_language = from_language, 
 								to_language = to_language, 
 								glossary_id =  glossary_id, 
