@@ -1875,8 +1875,9 @@ def MainLoop():
 	#root.geometry("400x350+300+300")
 	
 	try:
-		MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
+		application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 		root.mainloop()
+		application.MyTranslator.send_tracking_record()
 	except Exception as e:
 		
 		root.withdraw()

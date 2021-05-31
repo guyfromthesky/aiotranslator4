@@ -145,7 +145,7 @@ class Translator:
 
 
 		# Send tracking record from previous run to logging server.
-		tracking_result = self.send_tracking_record()
+		#tracking_tesult = self.send_tracking_record()
 
 		# Init tracking request
 		self.last_section_tm_request = 0
@@ -347,7 +347,7 @@ class Translator:
 	
 	# Send all tracking record to logging
 	def send_tracking_record(self,file_name = None):
-
+		print('Send tracking record to logging')
 		self.last_section_api_usage = self.load_request_log(self.tracking_log)
 		print('translate-usage:', self.last_section_api_usage)
 		self.last_section_tm_request = self.load_request_log(self.tm_request_log)
@@ -640,7 +640,7 @@ class Translator:
 		return RawText
 
 	def korean_pre_translate(self, input):
-		print('korean_pre_translate')
+		#print('korean_pre_translate')
 		# Use for Translating en -> KR
 		# It's a litle complicated....
 		# To cover some special case can happen.

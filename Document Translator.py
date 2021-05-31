@@ -1981,11 +1981,14 @@ def main():
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
 
 	try:
-		DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue, status_queue = StatusQueue
+		app = DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue, status_queue = StatusQueue
 		, my_translator_queue = MyTranslatorQueue, my_db_queue = MyDB, tm_manager = TMManager)
 		root.mainloop()
-		print('Root is terminated.')
+		#print('Root is terminated sending logging from current session')
+		#app.MyTranslator.send_tracking_record()
+		#Remove created process
 	except Exception as e:
+		print('Error message:', e)
 		root.withdraw()
 
 		send_fail_request(e)
