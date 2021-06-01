@@ -1208,11 +1208,13 @@ class Translator:
 			exception_for_source_language = all_db[all_db["tag"] == 'exception'][[self.to_language]].values.tolist()
 			exception_for_target_language = all_db[all_db["tag"] == 'exception'][[self.from_language]].values.tolist()
 			self.exception = exception_for_source_language + exception_for_target_language
-			
+			print('self.exception', self.exception)
 			#Create normal dict list:
 			dictionary = all_db[all_db["tag"] == 'dictionary'][[self.from_language, self.to_language]]
+			dictionary = dictionary[dictionary[self.from_language] != dictionary[self.to_language]]
 			dictionary = dictionary.drop_duplicates()
 			self.dictionary = dictionary.values.tolist()
+			
 			self.dictionary = self.sort_dictionary(self.dictionary)
 			#print("Dict: ", len(self.dictionary))
 			#print("Dict: ", len(self.dictionary))

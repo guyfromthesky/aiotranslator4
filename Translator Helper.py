@@ -54,7 +54,7 @@ from libs.aioconfigmanager import ConfigLoader
 #from libs.grammercheck import LanguageTool
 
 from libs.version import get_version
-from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry
+from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CreateToolTip
 
 #from openpyxl import load_workbook, worksheet, Workbook
 
@@ -261,14 +261,8 @@ class MyTranslatorHelper(Frame):
 		self.secondary_target_language_select = OptionMenu(Tab, self.secondary_target_language, *secondary_language_list, command = self.set_secondary_target_language)
 		self.secondary_target_language_select.config(width=self.HALF_BUTTON_SIZE)
 		self.secondary_target_language_select.grid(row=Row, column=3, padx=0, pady=5, sticky=W)
-	
-		Label(Tab, text= self.LanguagePack.Label['ProjectKey']).grid(row=Row, column=4, padx=5, pady=5, sticky=W)
-		self.text_glossary_id = AutocompleteCombobox(Tab)
-		self.text_glossary_id.Set_Entry_Width(self.HALF_BUTTON_SIZE*2)
-		self.text_glossary_id.set_completion_list([])
-		self.text_glossary_id.grid(row=Row, column=5, columnspan=2, padx=5, pady=5, stick=W)
 
-		self.text_glossary_id.bind("<<ComboboxSelected>>", self._save_project_key)
+		
 		#Button(Tab, width = self.HALF_BUTTON_SIZE, text= self.LanguagePack.Button['Save'], command= self._save_project_key).grid(row=Row, column=7, padx=5, pady=5, sticky=E)
 		self.GetTitleBtn = Button(Tab, text=self.LanguagePack.Button['GetTitle'], width=10, command=self.GetTitle, state=DISABLED)
 		self.GetTitleBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
@@ -384,7 +378,7 @@ class MyTranslatorHelper(Frame):
 		Label(Tab, text= 'Source', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
 		
 		self.simple_source_language = StringVar()
-		self.simple_source_language_select = OptionMenu(Tab, self.simple_source_language, *self.language_list, command = self.set_source_language)
+		self.simple_source_language_select = OptionMenu(Tab, self.simple_source_language, *self.language_list, command = self.set_simple_source_language)
 		self.simple_source_language_select.config(width=self.HALF_BUTTON_SIZE)
 		self.simple_source_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
 		self.simple_source_language.set('Hangul')
@@ -403,7 +397,7 @@ class MyTranslatorHelper(Frame):
 		Label(Tab, text= 'Main Target', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
 		
 		self.simple_target_language = StringVar()
-		self.simple_target_language_select = OptionMenu(Tab, self.simple_target_language, *self.language_list, command = self.set_target_language)
+		self.simple_target_language_select = OptionMenu(Tab, self.simple_target_language, *self.language_list, command = self.set_simple_target_language)
 		self.simple_target_language_select.config(width=self.HALF_BUTTON_SIZE)
 		self.simple_target_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
 		self.simple_target_language.set('English')		
@@ -413,7 +407,7 @@ class MyTranslatorHelper(Frame):
 		secondary_language_list = self.language_list + ['']
 
 		self.simple_secondary_target_language = StringVar()
-		self.simple_secondary_target_language_select = OptionMenu(Tab, self.simple_secondary_target_language, *secondary_language_list, command = self.set_secondary_target_language)
+		self.simple_secondary_target_language_select = OptionMenu(Tab, self.simple_secondary_target_language, *secondary_language_list, command = self.set_simple_secondary_target_language)
 		self.simple_secondary_target_language_select.config(width=self.HALF_BUTTON_SIZE)
 		self.simple_secondary_target_language_select.grid(row=Row, column=4, padx=0, pady=5, sticky=W)
 		self.simple_secondary_target_language.set('Japanese')
@@ -641,13 +635,44 @@ class MyTranslatorHelper(Frame):
 		self.UpdatePredictionList()
 		#self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
+	def set_simple_secondary_target_language(self, target_language):
+		if target_language == "":
+			index = 6
+		else:
+			index = self.language_list.index(target_language)
+		#print('Save secondary_target_lang as', index )
+		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'secondary_target_lang', index)
+
+
+	def set_simple_target_language(self, target_language):
+		index = self.language_list.index(target_language)
+		to_language = self.language_id_list[index]
+		
+		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'target_lang', index)
+
+		self.MyTranslator.set_target_language(to_language)
+		self.DictionaryStatus.set(str(len(self.MyTranslator.dictionary)))
+		self.UpdatePredictionList()
+		#self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
+
+	def set_simple_source_language(self, source_language):
+		index = self.language_list.index(source_language)
+		from_language = self.language_id_list[index]
+
+		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'source_lang', index)
+
+		self.MyTranslator.set_source_language(from_language)	
+		self.DictionaryStatus.set(str(len(self.MyTranslator.dictionary)))
+		self.UpdatePredictionList()
+		#self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
+
 	def generate_translator_engine(self):
 		self.Notice.set(self.LanguagePack.ToolTips['AppInit'])
 	
 		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
 
-		#self.glossary_id = self.text_glossary_id.get()
+		#self.glossary_id = self.bottom_panel.project_id_select.get()
 		#self.glossary_id = self.glossary_id.replace('\n', '')
 		print('Start new process: Generate Translator')
 		self.TranslatorProcess = Process(	target = generate_translator,
@@ -697,12 +722,12 @@ class MyTranslatorHelper(Frame):
 			
 			self.DictionaryStatus.set(db_count)
 			glossary_list = [""] + self.MyTranslator.glossary_list
-			self.text_glossary_id.set_completion_list(glossary_list)
-			
+
+			self.bottom_panel.project_id_select.set_completion_list(glossary_list)
 			if self.glossary_id in self.MyTranslator.glossary_list:
-				self.text_glossary_id.set(self.glossary_id)
+				self.bottom_panel.project_id_select.set(self.glossary_id)
 			else:
-				self.text_glossary_id.set("")
+				self.bottom_panel.project_id_select.set("")
 
 			if isinstance(self.MyTranslator.version, str):
 				version = self.MyTranslator.version[0:10]
@@ -751,8 +776,10 @@ class MyTranslatorHelper(Frame):
 		target_language = self.language_id_list[self.language_list.index(self.simple_target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.simple_source_language.get())]
 
-		self.MyTranslator.set_language_pair(target_language = target_language, source_language = source_language)
-		
+		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
+			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
+		print('Get translation from: ', source_language, ' to ',  target_language)		
+	
 		self.source_text = self.SourceText.get("1.0", END)
 		try:
 			source_text = self.source_text.split('\n')
@@ -804,14 +831,20 @@ class MyTranslatorHelper(Frame):
 			return
 			
 		self.Notice.set(self.LanguagePack.ToolTips['Translating'])
+		
+		
+	
 		primary_target_language = self.language_id_list[self.language_list.index(self.simple_secondary_target_language.get())]
 		if primary_target_language == "":
 			self.single_translate()
+		
 		target_language = self.language_id_list[self.language_list.index(self.simple_target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.simple_source_language.get())]
 
-		self.MyTranslator.set_language_pair(target_language = target_language, source_language = source_language)
+		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
+			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
 
+		print('Get translation from: ', source_language, ' to ',  target_language)
 
 		self.source_text = self.SourceText.get("1.0", END)
 		try:
@@ -909,11 +942,6 @@ class MyTranslatorHelper(Frame):
 		self.Notice.set(self.LanguagePack.ToolTips['Translating'])
 		self.TargetText.delete("1.0", END)
 
-		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
-		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
-
-		self.MyTranslator.set_language_pair(target_language = target_language, source_language = source_language)
-
 		SourceText = self.SourceText.get("1.0", END)
 		try:
 			SourceText = SourceText.split('\n')
@@ -1000,7 +1028,7 @@ class MyTranslatorHelper(Frame):
 		#self.RenewTranslator.configure(state=DISABLED)
 		#self.RenewTranslatorMain.configure(state=DISABLED)
 		self.bottom_panel.RenewTranslatorMain.configure(state=DISABLED)
-
+		
 		self.secondary_target_language_select.configure(state=DISABLED)
 		self.target_language_select.configure(state=DISABLED)
 		self.source_language_select.configure(state=DISABLED)
@@ -1009,7 +1037,7 @@ class MyTranslatorHelper(Frame):
 		self.simple_target_language_select.configure(state=DISABLED)
 		self.simple_source_language_select.configure(state=DISABLED)
 		
-		self.text_glossary_id.configure(state=DISABLED)
+		self.bottom_panel.project_id_select.configure(state=DISABLED)
 
 		#self.Translate_bilingual_Btn.configure(state=DISABLED)
 		self.TranslateBtn.configure(state=DISABLED)
@@ -1031,7 +1059,7 @@ class MyTranslatorHelper(Frame):
 		self.simple_target_language_select.configure(state=NORMAL)
 		self.simple_source_language_select.configure(state=NORMAL)
 
-		self.text_glossary_id.configure(state=NORMAL)
+		self.bottom_panel.project_id_select.configure(state=NORMAL)
 
 		#self.Translate_bilingual_Btn.configure(state=NORMAL)
 		self.TranslateBtn.configure(state=NORMAL)
@@ -1098,10 +1126,9 @@ class MyTranslatorHelper(Frame):
 
 		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
-
-
-		self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
-
+		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
+			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
+		print('Get title from: ', source_language, ' to ',  target_language)
 		self.Notice.set(self.LanguagePack.ToolTips['GenerateBugTitle'])
 		self.strSourceTitle = self.TextTitle.get("1.0", END).replace('\n', '')
 		self.strSourceTitle = self.TextTitle.get("1.0", END).replace('\r\n', '')
@@ -1210,15 +1237,17 @@ class MyTranslatorHelper(Frame):
 		self.Notice.set(self.LanguagePack.ToolTips['GenerateBugReport'])
 
 		copy("")
-
 		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
 		secondary_target_language = self.language_id_list[self.language_list.index(self.secondary_target_language.get())]
+		#self.MyTranslator.set_language_pair(target_language = target_language, source_language = source_language)
 		if secondary_target_language == "":
 			secondary_target_language = None
+		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
+			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
 
-		self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
-		
+		print('Get report from: ', source_language, ' to ',  target_language)
+
 		Simple_Template = self.UseSimpleTemplate.get()
 
 		self.BugWriter = Process(target=Translate_Simple, args=(self.report_details, Simple_Template, self.MyTranslator, secondary_target_language))
@@ -1329,7 +1358,7 @@ class MyTranslatorHelper(Frame):
 
 	def _save_project_key(self, event=None):
 		
-		self.glossary_id = self.text_glossary_id.get()
+		self.glossary_id = self.bottom_panel.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
 		print('Save current project key: ', self.glossary_id)
 		self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'glossary_id', 'value', self.glossary_id)
@@ -1503,27 +1532,40 @@ class BottomPanel(Frame):
 		
 		# separator widget
 		#Separator(orient=HORIZONTAL).grid(in_=self, row=0, column=1, sticky=E+W, pady=5)
-		Row = 1
-		Label(text='Version', width=15).grid(in_=self, row=Row, column=1, padx=5, pady=5, sticky=W)
-		Label(textvariable=master.VersionStatus, width=15).grid(in_=self, row=Row, column=2, padx=0, pady=5, sticky=W)
-		master.VersionStatus.set('-')
-
-		Label(text='Update', width=15).grid(in_=self, row=Row, column=3, padx=5, pady=5)
-		Label(textvariable=master._update_day, width=15).grid(in_=self, row=Row, column=4, padx=0, pady=5)
-		master._update_day.set('-')
-	
-		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
-		DictionaryLabelA.grid(in_=self, row=Row, column=5, padx=5, pady=5)
+		#Row = 1
 		
-		Label(textvariable=master.DictionaryStatus, width=15).grid(in_=self, row=Row, column=6, padx=0, pady=5)
+		#Label(text='Version', width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5, sticky=W)
+		#Col += 1
+		#Label(textvariable=master.VersionStatus, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5, sticky=W)
+		#master.VersionStatus.set('-')
+		Col = 1
+		Row = 1
+		Label(text='Update', width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5)
+		Col += 1
+		Label(textvariable=master._update_day, width=20).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
+		master._update_day.set('-')
+		Col += 1
+		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
+		DictionaryLabelA.grid(in_=self, row=Row, column=Col, padx=5, pady=5)
+		Col += 1
+		Label(textvariable=master.DictionaryStatus, width=20).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
 		master.DictionaryStatus.set('0')
-
-		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self, row=Row, column=7, padx=5, pady=5)
-		Label(textvariable=master.HeaderStatus, width=15).grid(in_=self, row=Row, column=8, padx=0, pady=5)
+		Col += 1
+		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5)
+		Col += 1
+		Label(textvariable=master.HeaderStatus, width=20).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
 		master.HeaderStatus.set('0')
-
+		Col += 1
+		Label(text= master.LanguagePack.Label['ProjectKey'], width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5, sticky=W)
+		Col += 1
+		self.project_id_select = AutocompleteCombobox()
+		self.project_id_select.Set_Entry_Width(30)
+		self.project_id_select.set_completion_list([])
+		self.project_id_select.grid(in_=self, row=Row, column=Col, padx=5, pady=5, stick=W)
+		self.project_id_select.bind("<<ComboboxSelected>>", master._save_project_key)
+		Col += 1
 		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=20, command= master.RenewMyTranslator, state=DISABLED)
-		self.RenewTranslatorMain.grid(in_=self, row=Row, column=10, columnspan=9, padx=10, pady=5, stick=E)
+		self.RenewTranslatorMain.grid(in_=self, row=Row, column=Col, padx=10, pady=5, stick=E)
 		
 		
 		self.rowconfigure(0, weight=1)
@@ -1554,12 +1596,14 @@ def dual_translate(queue, MyTranslator, second_target_language, text):
 def correct_sentence(result_manager, sentence_list):
 	
 	for paragraph in sentence_list:
-		sentences = language_tool.sentence_split(paragraph)
+		sentences = []
+		#sentences = language_tool.sentence_split(paragraph)
 		for sentence in sentences:
 			sub_sentences = sentence.split('\n')
 			for sub_sentence in sub_sentences:
 				if sub_sentence != "":
-					corrected_sentence = language_tool.correct(sub_sentence)
+					corrected_sentence = []
+					#corrected_sentence = language_tool.correct(sub_sentence)
 					if sub_sentence != corrected_sentence:
 						result_obj = {'old': sub_sentence, 'new': corrected_sentence}
 						result_manager.append(result_obj)

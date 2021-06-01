@@ -188,17 +188,6 @@ class DocumentTranslator(Frame):
 		Radiobutton(Tab, width= 10, text=  self.LanguagePack.Option['English'], value=2, variable=self.Language, command= self.set_target_language).grid(row=Row, column=3, padx=0, pady=5, sticky=W)
 		'''
 		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['Swap'], command= self.swap_language).grid(row=Row, column=4, columnspan=2, padx=5, pady=5, sticky=E)		
-		Label(Tab, text= self.LanguagePack.Label['ProjectKey']).grid(row=Row, column=6, padx=5, pady=5, sticky=E)
-		self.Text_glossary_id = AutocompleteCombobox(Tab)
-		self.Text_glossary_id.Set_Entry_Width(20)
-		
-		self.Text_glossary_id.set_completion_list([])
-
-		if self.glossary_id != None:
-			self.Text_glossary_id.set(self.glossary_id )
-
-		self.Text_glossary_id.grid(row=Row, column=7, columnspan=1, padx=5, pady=5, stick=E)
-		self.Text_glossary_id.bind("<<ComboboxSelected>>", self.SaveProjectKey)
 
 		#Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['RenewDatabase'], command= self.renew_my_translator).grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=E)
 		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['OpenOutput'], command= self.OpenOutput).grid(row=Row, column=8, columnspan=1, padx=5, pady=5, sticky=E)
@@ -529,6 +518,7 @@ class DocumentTranslator(Frame):
 	def disable_button(self):
 		_state = DISABLED
 		self.bottom_panel.btn_renew_translator.configure(state=_state)
+		
 		self.btn_translate.configure(state=_state)
 		
 	def enable_button(self):
@@ -637,8 +627,8 @@ class DocumentTranslator(Frame):
 			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'translation_memory', 'path', NewTM, True)
 			self.renew_my_translator()
 
-	def SaveProjectKey(self, event):
-		glossary_id = self.Text_glossary_id.get()
+	def _save_project_key(self, event):
+		glossary_id = self.bottom_panel.project_id_select.get()
 		glossary_id = glossary_id.replace('\n', '')
 
 		self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'glossary_id', glossary_id)
@@ -957,7 +947,7 @@ class DocumentTranslator(Frame):
 		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
 
-		self.glossary_id = self.Text_glossary_id.get()
+		self.glossary_id = self.bottom_panel.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
 		tm_path = self.TMPath.get()
 		print('Start new process: Generate Translator')
@@ -997,14 +987,14 @@ class DocumentTranslator(Frame):
 			self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
 			glossary_list = [""] + self.MyTranslator.glossary_list
-			self.Text_glossary_id.set_completion_list(glossary_list)
+			self.bottom_panel.project_id_select.set_completion_list(glossary_list)
 			self.ProjectList.set_completion_list(glossary_list)
 
 			if self.glossary_id in self.MyTranslator.glossary_list:
-				self.Text_glossary_id.set(self.glossary_id)
+				self.bottom_panel.project_id_select.set(self.glossary_id)
 				self.ProjectList.set(self.glossary_id)
 			else:
-				self.Text_glossary_id.set("")
+				self.bottom_panel.project_id_select.set("")
 				self.ProjectList.set(self.glossary_id)
 				#self.Error('No Valid Project selected, please update the project key and try again.')	
 			
@@ -1257,28 +1247,40 @@ class BottomPanel(Frame):
 		# separator widget
 		#Separator(orient=HORIZONTAL).grid(in_=self, row=0, column=1, sticky=E+W, pady=5)
 		Row = 1
-		Label(text='Version', width=15).grid(in_=self, row=Row, column=1, padx=5, pady=5, sticky=W)
-		Label(textvariable=master._version_status, width=15).grid(in_=self, row=Row, column=2, padx=0, pady=5, sticky=W)
-		master._version_status.set('-')
-
-		Label(text='Update', width=15).grid(in_=self, row=Row, column=3, padx=5, pady=5)
-		Label(textvariable=master._update_day, width=15).grid(in_=self, row=Row, column=4, padx=0, pady=5)
+		Col = 1
+		Label(text='Update', width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5, stick=E)
+		Col += 1
+		Label(textvariable=master._update_day, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5, stick=E)
 		master._update_day.set('-')
-	
+		Col += 1
 		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
-		DictionaryLabelA.grid(in_=self, row=Row, column=4, padx=5, pady=5)
-		
-		Label(textvariable=master._dictionary_status, width=15).grid(in_=self, row=Row, column=5, padx=0, pady=5)
+		DictionaryLabelA.grid(in_=self, row=Row, column=Col, padx=5, pady=5, stick=E)
+		Col += 1
+		Label(textvariable=master._dictionary_status, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5, stick=E)
 		master._dictionary_status.set('-')
-
-		TMLabel=Label(text=  master.LanguagePack.Label['TM'])
-		TMLabel.grid(in_=self, row=Row, column=6, padx=5, pady=5, sticky=W)
+		Col += 1
+		TMLabel=Label(text=  master.LanguagePack.Label['TM'], width=15)
+		TMLabel.grid(in_=self, row=Row, column=Col, padx=5, pady=5, sticky=E)
 		TMLabel.bind("<Enter>", lambda event : master.Notice.set(master.LanguagePack.ToolTips['FilePath'] + master.TMPath.get()))
-		Label( width= 10, textvariable=master.TMStatus).grid(in_=self, row=Row, column=7, padx=0, pady=5, sticky=W)
+		Col += 1
+		Label( width= 15, textvariable=master.TMStatus).grid(in_=self, row=Row, column=Col, padx=0, pady=5, sticky=E)
 		master.TMStatus.set('-')
 
-		self.btn_renew_translator = Button(text=master.LanguagePack.Button['RenewDatabase'], width=20, command= master.renew_my_translator, state=DISABLED)
-		self.btn_renew_translator.grid(in_=self, row=Row, column=8, padx=10, pady=5, stick=E)
+		Col += 1
+		Label(text='Project', width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5, stick=E)
+
+		Col += 1
+		self.project_id_select = AutocompleteCombobox()
+		self.project_id_select.Set_Entry_Width(25)
+		self.project_id_select.set_completion_list([])
+		self.project_id_select.grid(in_=self, row=Row, column=Col, padx=5, pady=5, stick=E)
+		if master.glossary_id != None:
+			self.project_id_select.set(master.glossary_id )
+
+		self.project_id_select.bind("<<ComboboxSelected>>", master._save_project_key)
+		Col += 1
+		self.btn_renew_translator = Button(text=master.LanguagePack.Button['RenewDatabase'], width=15, command= master.renew_my_translator, state=DISABLED)
+		self.btn_renew_translator.grid(in_=self, row=Row, column=Col, padx=10, pady=5, stick=E)
 		
 		
 		self.rowconfigure(0, weight=1)
@@ -1583,24 +1585,29 @@ def function_create_db_data(DB_Path):
 							
 							for i in range(start_row, database.max_row): 
 								db_entry = {}
-
+								valid = False
 								for language in list_col:
+									#print('Current language: ', language)
 									if list_col[language] != '':
-											
+										
 										cell_adress = list_col[language] + str(i+1)
 										raw_cell_value = database[cell_adress].value
-	
-										if raw_cell_value != None:
+										#print('raw_cell_value', raw_cell_value)
+										if raw_cell_value not in ['', None]:
+											valid = True
 											cell_value = raw_cell_value.replace('\r', '').replace('\n', '')	
 
 											if sheetname != 'header':
 												cell_value = cell_value.lower()
 											cell_value = basse64_encode(cell_value)
 											#print('Encrypt value: ', cell_value)
+										else:
+											cell_value = ''	
 										db_entry[language] = cell_value
 									else:
 										db_entry[language] = ''
-								writer.writerow([sheetname, db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP'], db_entry['VI']])
+								if valid:
+									writer.writerow([sheetname, db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP'], db_entry['VI']])
 								#db_object['db'][sheetname].append(db_entry)
 								
 					elif sheetname == 'info':

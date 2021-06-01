@@ -1,5 +1,5 @@
 from tkinter.ttk import Combobox, Style, Entry, Button
-from tkinter import Frame, Listbox, Label
+from tkinter import Frame, Listbox, Label, Toplevel
 from tkinter import HORIZONTAL, X
 from tkinter import W, E, S, N, END, BOTTOM
 from tkinter import INSERT, ACTIVE, NORMAL, DISABLED
@@ -294,11 +294,11 @@ class CreateToolTip(object):
 		x += self.widget.winfo_rootx() + 25
 		y += self.widget.winfo_rooty() + 20
 		# creates a toplevel window
-		self.tw = tk.Toplevel(self.widget)
+		self.tw = Toplevel(self.widget)
 		# Leaves only the label and removes the app window
 		self.tw.wm_overrideredirect(True)
 		self.tw.wm_geometry("+%d+%d" % (x, y))
-		label = tk.Label(self.tw, text=self.text, justify='left',
+		label = Label(self.tw, text=self.text, justify='left',
 					   background='yellow', relief='solid', borderwidth=1,
 					   font=("times", "8", "normal"))
 		label.pack(ipadx=1)
