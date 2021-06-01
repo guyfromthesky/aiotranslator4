@@ -56,7 +56,7 @@ import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4000
+rev = 4001
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
