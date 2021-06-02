@@ -7,7 +7,7 @@ from html import unescape
 # import urllib.request
 #import urllib.parse
 from urllib.parse import urlparse
-import html
+#import html
 # Unused
 # import requests, uuid, 
 import json
@@ -24,6 +24,7 @@ import os
 import sys
 import unicodedata
 import string
+import socket
 
 import pickle
 # Unused
@@ -33,7 +34,7 @@ from datetime import datetime
 from libs.version import get_version
 
 Tool = "translator"
-rev = 4001
+rev = 4002
 ver_num = get_version(rev)
 Translatorversion = Tool + " " + ver_num
 
@@ -366,10 +367,16 @@ class Translator:
 			log_name = 'translator-usage'
 
 			logger = client.logger(log_name)
+			try:
+				hostname = socket.gethostname()
+				ip_address = socket.gethostbyname(hostname)
+			except:
+				ip_address = ''	
 
 			data_object = {
 				'user': self.user_name,
 				'device': self.pc_name,
+				'ip': ip_address,
 				'project': self.glossary_id,
 				'tool': self.used_tool,
 				'tool_ver': self.tool_version,

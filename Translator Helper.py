@@ -63,7 +63,7 @@ import json
 
 tool_display_name = "Translator Helper"
 tool_name = 'writer'
-rev = 4001
+rev = 4002
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -778,17 +778,21 @@ class MyTranslatorHelper(Frame):
 
 		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
 			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
-		print('Get translation from: ', source_language, ' to ',  target_language)		
+			print('Update language pair from: ', source_language, ' to ',  target_language)		
 	
 		self.source_text = self.SourceText.get("1.0", END)
+		if self.source_text.endswith('\n'):
+			self.source_text = self.source_text[:-1]
+		#print('Source:', self.source_text)
 		try:
-			source_text = self.source_text.split('\n')
+			_temp_source = 	self.source_text.split('\n')
 		except:
 			pass
+		source_text = []
 		try:
-			for text in source_text:
-				if text == "":
-					self.source_text.remove(text)
+			for text in _temp_source:
+				if text != "":
+					source_text.append(text)
 		except:
 			pass
 		
@@ -832,29 +836,37 @@ class MyTranslatorHelper(Frame):
 			
 		self.Notice.set(self.LanguagePack.ToolTips['Translating'])
 		
-		
+		self.primary_translation = ''
+		self.main_translation = ''
+		self.source_language
 	
 		primary_target_language = self.language_id_list[self.language_list.index(self.simple_secondary_target_language.get())]
 		if primary_target_language == "":
+			messagebox.showinfo('Warning', 'Primary target language is EMPTY.\nIf you don\'t need to use the primary target language,\nplease use Translate button to save the API usage.')	
 			self.single_translate()
+			return
 		
 		target_language = self.language_id_list[self.language_list.index(self.simple_target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.simple_source_language.get())]
 
 		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
 			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
+			print('Update language pair from: ', source_language, ' to ',  target_language)
 
-		print('Get translation from: ', source_language, ' to ',  target_language)
 
 		self.source_text = self.SourceText.get("1.0", END)
+		if self.source_text.endswith('\n'):
+			self.source_text = self.source_text[:-1]
+		#print('Source:', self.source_text)	
 		try:
-			source_text = 	self.source_text.split('\n')
+			_temp_source = 	self.source_text.split('\n')
 		except:
 			pass
+		source_text = []
 		try:
-			for text in source_text:
-				if text == "":
-					source_text.remove(text)
+			for text in _temp_source:
+				if text != "":
+					source_text.append(text)
 		except:
 			pass
 		
@@ -913,17 +925,17 @@ class MyTranslatorHelper(Frame):
 		return
 
 	def btn_bilingual(self):
-		bilingual = self.source_text + "\n"
+		bilingual = self.main_translation + "\n"
 		bilingual += self.Separator + "\n" 
-		bilingual += self.main_translation
+		bilingual += self.source_text
 		copy(bilingual)
 		self.Notice.set(self.LanguagePack.ToolTips['Copied'])
 		return
 
 	def btn_trilingual(self):
-		trilingual = self.source_text + "\n"
+		trilingual = self.main_translation + "\n"	
 		trilingual += self.Separator + "\n"
-		trilingual += self.main_translation + "\n"
+		trilingual += self.source_text + "\n"
 		trilingual += self.Separator + "\n"
 		trilingual += self.primary_translation
 	
@@ -1128,7 +1140,7 @@ class MyTranslatorHelper(Frame):
 		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
 		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
 			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
-		print('Get title from: ', source_language, ' to ',  target_language)
+			print('Update language pair from: ', source_language, ' to ',  target_language)
 		self.Notice.set(self.LanguagePack.ToolTips['GenerateBugTitle'])
 		self.strSourceTitle = self.TextTitle.get("1.0", END).replace('\n', '')
 		self.strSourceTitle = self.TextTitle.get("1.0", END).replace('\r\n', '')
@@ -1207,11 +1219,12 @@ class MyTranslatorHelper(Frame):
 	#GUI function
 	def collect_report_elements(self):
 		TextTestServer = self.TextServer.get("1.0", END).replace('\n', '')
+		#print('TextTestServer', TextTestServer)
 		TextTestClient = self.TextClient.get("1.0", END).replace('\n', '')
-
+		#print('TextTestClient', TextTestClient)
 		To_Translate = {}
 		To_Translate['TextTestVersion'] = [TextTestServer, TextTestClient]
-
+	
 		if self.SkipTestInfo.get() == 1:
 			TextReproduceTime = self.TextReprodTime.get("1.0", END).replace('\n', '')
 			TextTestAccount = self.TextAccount.get("1.0", END).replace('\n', '')
@@ -1245,8 +1258,7 @@ class MyTranslatorHelper(Frame):
 			secondary_target_language = None
 		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
 			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
-
-		print('Get report from: ', source_language, ' to ',  target_language)
+			print('Update language pair from: ', source_language, ' to ',  target_language)
 
 		Simple_Template = self.UseSimpleTemplate.get()
 
@@ -1266,11 +1278,12 @@ class MyTranslatorHelper(Frame):
 			self.BugWriter.join()
 
 	def confirm_report_grammar(self):
+		self.collect_report_elements()
 		if not self.language_tool_enable:
 			self.GenerateReportCSS()
 		
 		self.Notice.set('Checking grammar from the report')
-		self.collect_report_elements()
+		
 		#print('report_details', self.report_details)
 		
 		self.grammar_check_list = []
@@ -1612,7 +1625,7 @@ def correct_sentence(result_manager, sentence_list):
 	return
 #Bug Writer 
 def Translate_Simple(Object, simple_template, my_translator, secondary_target_language = None):
-
+	
 	to_translate = []
 
 	TextTestReport_index = []
@@ -1705,7 +1718,7 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 			counter+=1
 			
 	first_language_translation = my_translator.translate(to_translate)
-	if secondary_target_language != None:
+	if secondary_target_language not in [None, '']:
 		temp_language = my_translator.to_language
 		my_translator.set_target_language(secondary_target_language)
 		second_language_translation = my_translator.translate(to_translate)
@@ -1720,12 +1733,12 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 
 	for index in TextShouldBe_index:
 		New_TextShouldBe.append(first_language_translation[index])
-		if secondary_target_language != None:
+		if secondary_target_language not in [None, '']:
 			secondary_TextShouldBe.append(second_language_translation[index])
 
 	for index in TextReproduceSteps_index:
 		New_TextReproduceSteps.append(first_language_translation[index])
-		if secondary_target_language != None:
+		if secondary_target_language not in [None, '']:
 			secondary_TextReproduceSteps.append(second_language_translation[index])	
 
 	Lang = my_translator.to_language
@@ -1750,7 +1763,7 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 	copy(CssText)
 
 def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = None):
-		
+	print('Text_List_Secondary', Text_List_Secondary)
 	Details = ''
 	x = 1
 	if Lang == 'ko':		
@@ -1762,7 +1775,7 @@ def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Se
 		for row in Text_List_Old:
 			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 			x += 1
-		if Text_List_Secondary != None:
+		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			x = 1
 			for row in Text_List_Secondary:
@@ -1777,7 +1790,7 @@ def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Se
 		for row in Text_List:
 			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 			x += 1
-		if Text_List_Secondary != None:
+		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			x = 1
 			for row in Text_List_Secondary:
@@ -1787,7 +1800,7 @@ def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Se
 	return Details
 
 def Simple_Step_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = None):
-	
+	print('Text_List_Secondary', Text_List_Secondary)
 	Details = "\r\n"
 	Details += Add_Style(Title)
 	x = 1
@@ -1800,7 +1813,7 @@ def Simple_Step_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Second
 		for row in Text_List_Old:
 			Details += '\r\n' + str(x) + ') ' + row
 			x += 1
-		if Text_List_Secondary != None:
+		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
 				Details += '\r\n' + str(x) + ') ' + row
@@ -1814,7 +1827,7 @@ def Simple_Step_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Second
 		for row in Text_List:
 			Details += '\r\n' + str(x) + ') ' + row
 			x += 1
-		if Text_List_Secondary != None:
+		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
 				Details += '\r\n' + str(x) + ') ' + row
@@ -1822,6 +1835,7 @@ def Simple_Step_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Second
 	return Details
 
 def Simple_Row_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = None):
+	print('Text_List_Secondary', Text_List_Secondary)
 	Details = ''
 	if Lang == 'ko':		
 		for row in Text_List:
@@ -1829,7 +1843,7 @@ def Simple_Row_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Sec
 		Details += '\r\n================================================='
 		for row in Text_List_Old:
 			Details += '\r\n<p>' + row + '&nbsp;</p>'
-		if Text_List_Secondary != None:
+		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
 				Details += '\r\n<p>' + row + '&nbsp;</p>'
@@ -1839,7 +1853,7 @@ def Simple_Row_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Sec
 		Details += '\r\n================================================='
 		for row in Text_List:
 			Details += '\r\n<p>' + row + '&nbsp;</p>'
-		if Text_List_Secondary != None:
+		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
 				Details += '\r\n<p>' + row + '&nbsp;</p>'
@@ -1848,6 +1862,7 @@ def Simple_Row_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Sec
 	return Details
 
 def Simple_Row_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = None):
+	print('Text_List_Secondary', Text_List_Secondary)
 	Details = "\r\n"
 	Details += Add_Style(Title)
 	if Lang == 'ko':		
@@ -1856,7 +1871,7 @@ def Simple_Row_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Seconda
 		Details += '\r\n================================================='
 		for row in Text_List_Old:
 			Details += '\r\n'+ row
-		if Text_List_Secondary != None:
+		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
 				Details += '\r\n'+ row
@@ -1867,7 +1882,7 @@ def Simple_Row_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Seconda
 		Details += '\r\n================================================='
 		for row in Text_List:
 			Details += '\r\n'+ row
-		if Text_List_Secondary != None:
+		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
 				Details += '\r\n'+ row
