@@ -206,12 +206,18 @@ class AutocompleteEntry(Entry):
 		self.bind("<Right>", self.selection)
 		self.bind("<Up>", self.moveUp)
 		self.bind("<Down>", self.moveDown)
-		
+		self.bind("<FocusOut>", self.destroy_droplist)
+
 		self.listboxUp = False
 
 	def set_completion_list(self, completion_list):
 		#print('Auto list updated')
 		self.autocompleteList = sorted(completion_list, key=str.lower)
+
+	def destroy_droplist(self, event):
+		if self.listboxUp:
+			self.listbox.destroy()
+			self.listboxUp = False
 
 	def changed(self, name, index, mode):
 		if self.var.get() == '':
@@ -225,11 +231,11 @@ class AutocompleteEntry(Entry):
 					self.listbox = Listbox(width=self["width"], height=self.listboxLength)
 					self.listbox.bind("<Button-1>", self.selection)
 					self.listbox.bind("<Right>", self.selection)
-					print(self.winfo_x(), self.winfo_y(), self.winfo_height())
+					#print(self.winfo_x(), self.winfo_y(), self.winfo_height())
 					self.listbox.place(x=self.winfo_x(), y=self.winfo_y() + self.winfo_height()*2)
 					self.listboxUp = True
-				
-				self.listbox.delete(0, END)
+				if self.listboxUp:
+					self.listbox.delete(0, END)
 				for w in words:
 					self.listbox.insert(END,w)
 			else:

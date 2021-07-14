@@ -34,7 +34,7 @@ from datetime import datetime
 from libs.version import get_version
 
 Tool = "translator"
-rev = 4002
+rev = 4003
 ver_num = get_version(rev)
 Translatorversion = Tool + " " + ver_num
 
@@ -511,7 +511,7 @@ class Translator:
 
 		#if self.ValidateUnicodeSource(source_text) == False:
 		#	return False
-			
+		
 		elif self.proactive_memory_translate == True:
 			
 			translated = self.memory_translate(source_text)
@@ -519,7 +519,7 @@ class Translator:
 			if translated != False:
 				
 				result = translated	
-
+		
 		#self.invalid_request_log
 		if not isinstance(result, bool):
 			count = 0
@@ -557,6 +557,7 @@ class Translator:
 		# Add 2 space to the dict to prevent the en character and ko character merge into 1
 		# because the translator API cannot handle those.
 		RawText = source_text
+		remained_length = len(RawText)
 		LowerCase_text = source_text
 		
 		if self.to_language == 'en':
@@ -568,12 +569,13 @@ class Translator:
 		#print('Temp dict for Korean translate', len(temp_dict))
 
 		for pair in temp_dict:
-			#print('pair', pair)
+			if remained_length == 0:
+				break
 			# Old is en text in the dict
-			Old = pair[1].strip()
+			Old = pair[0].strip()
 			
 			# New is the KR text we want to replace with
-			New = " " + pair[0].strip() + " "
+			New = " " + pair[1].strip() + " "
 			#New = pair[1].strip()
 			# IF there is the defined text in the sentence
 			StartFind = 0
@@ -625,7 +627,7 @@ class Translator:
 						Raw_Old = RawText[location:StartFind]
 						#print('Raw_Old', Raw_Old)
 						RawText = RawText.replace(FirstChar + Raw_Old + NextChar, FirstChar + New + NextChar, 1)
-						
+						remained_length -= len(Raw_Old)
 						#RawText[location, StartFind-1] = RawText
 
 						#print('Replace: ', FirstChar + Old + NextChar, ' by ',  FirstChar + New + NextChar)
@@ -643,8 +645,13 @@ class Translator:
 		# Remove the space from both side of the text
 		# The space that we've add above.
 		RawText = RawText.strip()
-		#print('RawText', RawText)
-		return RawText
+		
+		if remained_length == 0:
+			translated = True
+		else:
+			translated = False
+
+		return RawText, translated
 
 	def korean_pre_translate(self, input):
 		#print('korean_pre_translate')
@@ -652,6 +659,7 @@ class Translator:
 		# It's a litle complicated....
 		# To cover some special case can happen.
 		RawText = input
+		remained_length = len(RawText)
 		source_text = RawText.lower()
 		if self.to_language == 'ko':
 			temp_dict = self.dictionary + self.ko_dictionary
@@ -664,11 +672,14 @@ class Translator:
 		#print('Temp dict for English translate', len(temp_dict))
 
 		for pair in temp_dict:
+			if remained_length == 0:
+				break
+			
 			# Old is en text in the dict
-			Old = pair[1].strip()
+			Old = pair[0].strip()
 			
 			# New is the KR text we want to replace with
-			New = " " + pair[0].strip() + " "
+			New = " " + pair[1].strip() + " "
 			#print('koreanPreTranslate Replacing ', Old, New)
 			# IF there is the defined text in the sentence
 			StartFind = 0
@@ -714,12 +725,19 @@ class Translator:
 					Raw_Old = RawText[location:StartFind]
 					#print('Raw Old', Raw_Old, 'Old', Old)
 					RawText = RawText.replace(Raw_Old, New, 1)
+					remained_length -= len(Raw_Old)
 					#print("RawText", RawText)
 				source_text = RawText.lower()
 		# Remove the space from both side of the text
 		# The space that we've add above.
 		RawText = RawText.strip()
-		return RawText
+		if remained_length == 0:
+			translated = True
+		else:
+			translated = False
+
+		#print('Raw result:', RawText)
+		return RawText, translated
 
 ######################################################################
 # All translate function
@@ -762,14 +780,18 @@ class Translator:
 				except Exception  as e:
 					#print('Exception: ', e)
 					if self.to_language in ['ko', 'cn', 'jp']:
-						pre_translate = self.korean_pre_translate(text)	
+						raw_translate, translation_complete = self.korean_pre_translate(text)	
+						
+						
 					elif self.to_language in ['en', 'vi']:
-						pre_translate = self.english_pre_translate(text)
-					
-					#print('pre_translate', pre_translate)
-					raw_source.append(text)
-					to_translate.append(pre_translate)
-					to_translate_index.append([i])
+						raw_translate, translation_complete = self.english_pre_translate(text)	
+						
+					if translation_complete == True:
+						translation[i] = raw_translate
+					else:
+						raw_source.append(text)
+						to_translate.append(raw_translate)
+						to_translate_index.append([i])
 					#print('Append done')
 				#raw_source.append(text)
 				#to_translate.append(pre_translate)
@@ -781,7 +803,6 @@ class Translator:
 		#print('source_text', source_text)
 		#print('to_translate', to_translate)
 		#print('translation', translation)
-
 		if len(to_translate) > 0:
 			try:
 				translated = self.activated_translator(to_translate)
@@ -802,8 +823,6 @@ class Translator:
 				#print('Append TM: ', translated[i], raw_source[i] )
 				self.generate_temporary_tm(str_translated = translated[i], str_input = raw_source[i])
 
-		
-		
 		if isinstance(Input, str):
 			return translation[0]
 		else:
@@ -889,7 +908,7 @@ class Translator:
 		return language_code
 
 	def google_translate_v3(self, source_text):
-		print('Translate with GoogleAPItranslate')
+		#print('Translate with GoogleAPItranslate')
 		"""Translates a given text using a glossary."""
 		ToTranslate = []
 		
@@ -903,9 +922,9 @@ class Translator:
 		Client = translate.TranslationServiceClient()
 		Parent = f"projects/{self.project_id}/locations/{self.location}"
 		target_language_code = self.correct_language_code(self.to_language)
-		print('target_language_code', target_language_code)
+		#print('target_language_code', target_language_code)
 		source_language_code = self.correct_language_code(self.from_language)
-		print('source_language_code', source_language_code)
+		#print('source_language_code', source_language_code)
 		response = Client.translate_text(
 			request={
 				"contents": ToTranslate,

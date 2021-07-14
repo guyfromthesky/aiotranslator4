@@ -724,6 +724,8 @@ class MyTranslatorHelper(Frame):
 			glossary_list = [""] + self.MyTranslator.glossary_list
 
 			self.bottom_panel.project_id_select.set_completion_list(glossary_list)
+			#print('saved gloss:', self.glossary_id)
+			#print('list gloss', self.MyTranslator.glossary_list)
 			if self.glossary_id in self.MyTranslator.glossary_list:
 				self.bottom_panel.project_id_select.set(self.glossary_id)
 			else:
@@ -763,7 +765,10 @@ class MyTranslatorHelper(Frame):
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['AppInit'])
 
-
+	def get_source_text(self):
+		self.source_text = self.SourceText.get("1.0", END)
+		if self.source_text.endswith('\n'):
+			self.source_text = self.source_text[:-1]
 
 	#Execute function
 	def single_translate(self):
@@ -780,9 +785,7 @@ class MyTranslatorHelper(Frame):
 			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
 			print('Update language pair from: ', source_language, ' to ',  target_language)		
 	
-		self.source_text = self.SourceText.get("1.0", END)
-		if self.source_text.endswith('\n'):
-			self.source_text = self.source_text[:-1]
+		self.get_source_text()
 		#print('Source:', self.source_text)
 		try:
 			_temp_source = 	self.source_text.split('\n')
@@ -924,15 +927,22 @@ class MyTranslatorHelper(Frame):
 		self.Notice.set(self.LanguagePack.ToolTips['Copied'])
 		return
 
+
+
 	def btn_bilingual(self):
+
+		self.get_source_text()
+
 		bilingual = self.main_translation + "\n"
 		bilingual += self.Separator + "\n" 
 		bilingual += self.source_text
 		copy(bilingual)
 		self.Notice.set(self.LanguagePack.ToolTips['Copied'])
-		return
 
 	def btn_trilingual(self):
+		
+		self.get_source_text()
+
 		trilingual = self.main_translation + "\n"	
 		trilingual += self.Separator + "\n"
 		trilingual += self.source_text + "\n"
@@ -1374,7 +1384,7 @@ class MyTranslatorHelper(Frame):
 		self.glossary_id = self.bottom_panel.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
 		print('Save current project key: ', self.glossary_id)
-		self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'glossary_id', 'value', self.glossary_id)
+		self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'glossary_id', self.glossary_id)
 		self.MyTranslator.glossary_id = self.glossary_id
 		self.RenewMyTranslator()
 

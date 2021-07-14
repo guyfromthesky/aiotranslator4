@@ -148,7 +148,7 @@ class ConfigLoader:
 		self.Init_Config_Option(config, Section, 'bucket_id', 'nxvnbucket')
 		self.Init_Config_Option(config, Section, 'db_list_uri', 'config/db_list_v4.csv')
 		self.Init_Config_Option(config, Section, 'project_bucket_id', 'credible-bay-281107')
-		self.Init_Config_Option(config, Section, 'license_key', '')
+		#self.Init_Config_Option(config, Section, 'license_key', '')
 		self.Init_Config_Option(config, Section, 'glossary_id', '')
 		self.Init_Config_Option(config, Section, 'license_file', '', True)
 		self.Init_Config_Option(config, Section, 'translation_memory', '', True)
