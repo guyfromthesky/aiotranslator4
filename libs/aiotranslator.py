@@ -552,7 +552,7 @@ class Translator:
 		
 
 	def english_pre_translate(self, source_text):
-		#print('english pre-translate')
+		print('english pre-translate')
 		# Use for Translating KR -> en
 		# Add 2 space to the dict to prevent the en character and ko character merge into 1
 		# because the translator API cannot handle those.
@@ -650,11 +650,11 @@ class Translator:
 			translated = True
 		else:
 			translated = False
-
+		print('RawText', RawText)
 		return RawText, translated
 
 	def korean_pre_translate(self, input):
-		#print('korean_pre_translate')
+		print('korean_pre_translate')
 		# Use for Translating en -> KR
 		# It's a litle complicated....
 		# To cover some special case can happen.
@@ -736,7 +736,7 @@ class Translator:
 		else:
 			translated = False
 
-		#print('Raw result:', RawText)
+		print('Raw result:', RawText)
 		return RawText, translated
 
 ######################################################################
@@ -801,7 +801,7 @@ class Translator:
 				translation[i] = validation
 
 		#print('source_text', source_text)
-		#print('to_translate', to_translate)
+		print('to_translate', to_translate)
 		#print('translation', translation)
 		if len(to_translate) > 0:
 			try:
@@ -939,6 +939,40 @@ class Translator:
 			ListReturn.append(unescape(translation.translated_text))
 
 		return ListReturn
+
+	def google_translate_v2(self, source_text):
+		#print('Translate with GoogleAPItranslate')
+		"""Translates a given text using a glossary."""
+		ToTranslate = []
+		
+		if isinstance(source_text, list):
+			ToTranslate = source_text
+		else:
+			ToTranslate = [source_text]
+
+		# Supported language codes: https://cloud.google.com/translate/docs/languages
+		
+		Client = translate.Client()
+		Parent = f"projects/{self.project_id}/locations/{self.location}"
+		target_language_code = self.correct_language_code(self.to_language)
+		#print('target_language_code', target_language_code)
+		source_language_code = self.correct_language_code(self.from_language)
+		#print('source_language_code', source_language_code)
+		response = Client.translate(
+			
+			request={
+				"contents": ToTranslate,
+				"target_language_code": target_language_code,
+				"source_language_code": source_language_code,
+				"parent": Parent,
+			}
+		)
+
+		ListReturn = []
+		for translation in response.translations:
+			ListReturn.append(unescape(translation.translated_text))
+
+		return ListReturn	
 
 	def google_glossary_translate(self, source_text):
 		#print('Translate with GoogleAPItranslate')

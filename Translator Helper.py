@@ -63,7 +63,7 @@ import json
 
 tool_display_name = "Translator Helper"
 tool_name = 'writer'
-rev = 4002
+rev = 4003
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
