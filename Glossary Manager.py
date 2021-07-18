@@ -1,15 +1,27 @@
+from logging import getLoggerClass
 from google.cloud import translate_v3 as translate
 import os
 import time
-from datetime import datetime
+from libs.aioconfigmanager import ConfigLoader
+import os
 
-cwd = os.path.dirname(os.path.realpath(__file__))
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= cwd + '/json/Admin.json'
-print(cwd + '//json//my.json')
+TranslatorAgent = 'googleapi'
+from_language = 'en'
+to_language = 'ko'
+GlossaryID = 'V4GB'
+
+
+AppConfig = ConfigLoader()
+Configuration = AppConfig.Config
+AppLanguage  = Configuration['Document_Translator']['app_lang']
+#tm = Configuration['Translator']['tm_path']
+print(Configuration['Translator']['license_file'])
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = Configuration['Translator']['license_file']
+
 def create_glossary(
 	project_id="credible-bay-281107",
-	input_uri="gs://nxvnbucket/DB/V4/NXVNV4GB.csv",
-	glossary_id="NXVNV4GB",
+	input_uri="gs://nxvnbucket/DB_V4/AXE/AXEKR.csv",
+	glossary_id="AXEKR_EN",
 	timeout=180,
 ):
 	"""
@@ -20,8 +32,8 @@ def create_glossary(
 	client = translate.TranslationServiceClient()
 
 	# Supported language codes: https://cloud.google.com/translate/docs/languages
-	source_lang_code = "ko"
-	target_lang_code = "en"
+	source_lang_code = "en"
+	target_lang_code = "ko"
 	location = "us-central1"  # The location of the glossary
 	#location = 'asia-southeast1'
 	name = client.glossary_path(project_id, location, glossary_id)
@@ -49,7 +61,7 @@ def create_glossary(
 def translate_text_with_glossary(
 	text="YOUR_TEXT_TO_TRANSLATE",
 	project_id="credible-bay-281107",
-	glossary_id="MSM",
+	glossary_id="AXEKR_EN",
 ):
 	"""Translates a given text using a glossary."""
 	
@@ -62,6 +74,7 @@ def translate_text_with_glossary(
 	)
 	
 	glossary_config = translate.TranslateTextGlossaryConfig(glossary=glossary)
+	print('glossary_config', glossary_config)
 	st = time.time()
 	# Supported language codes: https://cloud.google.com/translate/docs/languages
 	response = client.translate_text(
@@ -98,7 +111,7 @@ def get_glossary(glossaryID, timeout=180,):
 	print(glossaries)
 
 
-def list_glossaries(project_id="credible-bay-281107"):
+def  list_glossaries(project_id="credible-bay-281107"):
 	"""List Glossaries."""
 
 	client = translate.TranslationServiceClient()
@@ -106,10 +119,10 @@ def list_glossaries(project_id="credible-bay-281107"):
 	location = "us-central1"
 
 	parent = f"projects/{project_id}/locations/{location}"
-
-	# Iterate over all results
+	
 	for glossary in client.list_glossaries(parent=parent):
-		print("Name: {}".format(glossary.name))
+		print("Name: {}".format(glossary.name.split('/')[-1]))
+		
 		print("Entry count: {}".format(glossary.entry_count))
 		print("Input uri: {}".format(glossary.input_config.gcs_source.input_uri))
 
@@ -120,12 +133,14 @@ def list_glossaries(project_id="credible-bay-281107"):
 		for language_code in glossary.language_codes_set.language_codes:
 			print("Language code: {}".format(language_code))
 
-list_glossaries()
+
+#create_glossary()
+#list_glossaries()
 
 #delete_glossary(glossary_id = 'OH')
 #create_glossary(input_uri="gs://nxvnbucket/DB/OH/OH.csv",	glossary_id="OH")
 
-#translate_text_with_glossary(['Groggy', 'Test', 'Happy'])
+translate_text_with_glossary(['Use the active skill', 'Use the Kaidan Fruits.', 'Access to Phantom of Kaidan'])
 #create_glossary(input_uri="gs://nxvnv4/DB/MSM.csv",	glossary_id="MSM")
 
 #create_glossary()

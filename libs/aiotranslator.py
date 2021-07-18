@@ -278,15 +278,16 @@ class Translator:
 
 	# Might use on DB uploader
 	def get_glossary_list(self):
-		print('Getting Glossary info')
+		
+		client = translate.TranslationServiceClient()
+		location = "us-central1"
+		parent = f"projects/{self.project_bucket_id}/locations/{location}"
+		
 		self.glossary_list = []
-		self.glossary_listFull = self.full_list_glossaries()
-		print('glossary_listFull', self.glossary_listFull)
-		for Gloss in self.glossary_listFull:
-			Gloss = Gloss.split('/')[-1]
-			if '_' not in Gloss:
-				self.glossary_list.append(Gloss)		
-
+		
+		for glossary in client.list_glossaries(parent=parent):
+			self.glossary_list.append(glossary.name.split('/')[-1])
+		print('Glossary list:', self.glossary_id)
 
 	def load_request_log(self, log_file):
 
@@ -1093,6 +1094,8 @@ class Translator:
 
 		return 	glossary
 	
+
+
 	def load_bucket_list_from_glob(self, file_uri= None, timeout=180,):
 
 		cloud_client = storage.Client()
