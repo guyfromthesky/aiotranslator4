@@ -12,7 +12,7 @@ class ConfigLoader:
 	def __init__(self):
 		self.basePath = os.path.abspath(os.path.dirname(sys.argv[0]))
 		if sys.platform.startswith('win'):
-			self.appdata = os.environ['APPDATA'] + '\\AIO Translator v4'
+			self.appdata = os.environ['APPDATA'] + '\\AIO Translator'
 		else:
 			self.appdata = os.getcwd() + '\\AIO Translator'
 	
@@ -146,7 +146,7 @@ class ConfigLoader:
 		config.read(config_path)
 
 		self.Init_Config_Option(config, Section, 'bucket_id', 'nxvnbucket')
-		self.Init_Config_Option(config, Section, 'db_list_uri', 'config/db_list_v4.csv')
+		self.Init_Config_Option(config, Section, 'db_list_uri', 'config/db_list.csv')
 		self.Init_Config_Option(config, Section, 'project_bucket_id', 'credible-bay-281107')
 		#self.Init_Config_Option(config, Section, 'license_key', '')
 		self.Init_Config_Option(config, Section, 'glossary_id', '')

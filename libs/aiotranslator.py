@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 # import requests, uuid, 
 import json
 
-from google.cloud import translate_v3 as translate
+from google.cloud import translate_v3 as translator
 from google.cloud import storage
 from google.cloud import logging
 
@@ -34,7 +34,7 @@ from datetime import datetime
 from libs.version import get_version
 
 Tool = "translator"
-rev = 4003
+rev = 4100
 ver_num = get_version(rev)
 Translatorversion = Tool + " " + ver_num
 
@@ -90,11 +90,11 @@ class Translator:
 
 		self.glossary_list = []	
 		self.glossary_data_list = []
-		
+		self.glossary_size = 0
 
 		# Get the temp folder location for Windows/Mac
 		self.init_config_path()
-		
+
 		# Check and get the location of TM file
 		# If path is invalid or not stated, use local TM
 		self.init_tm_path(tm_path)
@@ -106,7 +106,8 @@ class Translator:
 		self.special_tag = ['header', 'name', 'en_only', 'kr_only', 'cn_only', 'jp_only', 'vi_only', 'exception']
 		self.supported_language = ['ko', 'en', 'cn', 'jp', 'vi']
 		
-		self.init_db_data()
+		# Obsoleted
+		#self.init_db_data()
 
 		self.temporary_tm = temporary_tm
 
@@ -136,10 +137,20 @@ class Translator:
 		try:
 			current_time = datetime.now()
 			print('Load bucket from glob')
-			self.load_bucket_list_from_glob()
+			# List of the glossary uploaded.
+			# The list is also the list that display in the tool.
+			self.load_config_from_bucket()
 			print('Total time to load bucket list:', str(datetime.now() - current_time))
 			current_time = datetime.now()
-			self.prepare_db_data()
+			# Replace this function with the glossary init
+			# Get the glossary list and length
+
+			# Check if the glossary is exist or not
+			# Create the glassary if any (require permission)
+			# Display the length of the
+			self.prepare_glossary_info()
+
+
 			print('Total time to load db:', str(datetime.now() - current_time))
 		except Exception  as e:
 			print("Error when loading bucket:", e)
@@ -156,9 +167,11 @@ class Translator:
 ######################################################################################################
 # INIT FUNCTION
 ######################################################################################################
+	# Obsoleted
 	def init_db_data(self):
 		# The multi-language DB.
 		self.all_db = pd.DataFrame()
+		'''
 		# Used to translate from A -> B and vice versa
 		self.dictionary = []
 		# The DB that only be used to translate from korean to other language
@@ -171,7 +184,7 @@ class Translator:
 		self.jp_dictionary = []
 		# The DB that only be used to translate from Vietnamese to other language.
 		self.vi_dictionary = []
-
+		'''
 		self.header = []
 		self.name = []
 		self.exception = []
@@ -260,10 +273,10 @@ class Translator:
 	# Not use, consider remove later
 	# If the lib is run as a server, consider to use this function
 	def init_glossary(self):
-		self.Client = translate.TranslationServiceClient()	
+		self.Client = translator.TranslationServiceClient()	
 		self.Parent = f"projects/{self.project_id}/locations/{self.location}"
 		self.Glossary = self.Client.glossary_path(self.project_id, self.location, self.glossary_id)
-		self.Glossary_Config = translate.TranslateTextGlossaryConfig(glossary=self.Glossary)
+		self.Glossary_Config = translator.TranslateTextGlossaryConfig(glossary=self.Glossary)
 
 	# Check and remove later
 	def get_time_stamp(self):
@@ -278,16 +291,12 @@ class Translator:
 
 	# Might use on DB uploader
 	def get_glossary_list(self):
-		
-		client = translate.TranslationServiceClient()
-		location = "us-central1"
-		parent = f"projects/{self.project_bucket_id}/locations/{location}"
-		
+		print('Getting Glossary info')
 		self.glossary_list = []
-		
-		for glossary in client.list_glossaries(parent=parent):
-			self.glossary_list.append(glossary.name.split('/')[-1])
-		print('Glossary list:', self.glossary_id)
+		self.glossary_list_full = self.full_list_glossaries()
+		for _gloss in self.glossary_list_full:
+			self.glossary_list.append(_gloss)		
+
 
 	def load_request_log(self, log_file):
 
@@ -553,7 +562,7 @@ class Translator:
 		
 
 	def english_pre_translate(self, source_text):
-		print('english pre-translate')
+		#print('english pre-translate')
 		# Use for Translating KR -> en
 		# Add 2 space to the dict to prevent the en character and ko character merge into 1
 		# because the translator API cannot handle those.
@@ -651,11 +660,11 @@ class Translator:
 			translated = True
 		else:
 			translated = False
-		print('RawText', RawText)
+
 		return RawText, translated
 
 	def korean_pre_translate(self, input):
-		print('korean_pre_translate')
+		#print('korean_pre_translate')
 		# Use for Translating en -> KR
 		# It's a litle complicated....
 		# To cover some special case can happen.
@@ -737,7 +746,7 @@ class Translator:
 		else:
 			translated = False
 
-		print('Raw result:', RawText)
+		#print('Raw result:', RawText)
 		return RawText, translated
 
 ######################################################################
@@ -745,7 +754,7 @@ class Translator:
 ######################################################################
 	# Translator main function.
 	# All the text will be passed into this function.
-	def translate(self, Input):
+	def translate_old(self, Input):
 		if self.to_language == self.from_language:
 			return Input
 		#print('Translate:', Input)
@@ -802,8 +811,86 @@ class Translator:
 				translation[i] = validation
 
 		#print('source_text', source_text)
-		print('to_translate', to_translate)
+		#print('to_translate', to_translate)
 		#print('translation', translation)
+		if len(to_translate) > 0:
+			try:
+				translated = self.activated_translator(to_translate)
+			except Exception  as e:
+				print('error:', e)
+				translated = []
+		
+		else:
+			translated = []	
+
+		#print('translated', translated)
+
+		for i in range(len(translated)):
+			for index_number in to_translate_index[i]:
+				translation[index_number] = translated[i]
+			#translation[to_translate_index[i]] = translated[i]
+			if self.tm_update == True:
+				#print('Append TM: ', translated[i], raw_source[i] )
+				self.generate_temporary_tm(str_translated = translated[i], str_input = raw_source[i])
+
+		if isinstance(Input, str):
+			return translation[0]
+		else:
+			return translation
+	
+	def translate(self, Input):
+		if self.to_language == self.from_language:
+			return Input
+		#print('Translate:', Input)
+		if isinstance(Input, list):
+			source_text = Input
+		elif isinstance(Input, str):
+			source_text = [Input]
+		else:
+			return False
+
+		#print('source_text', source_text)
+
+		raw_source = []
+		to_translate = []
+		to_translate_index = []
+		translation = []
+	
+		for text in source_text:
+			translation.append(text)
+
+		
+		for i in range(len(translation)):
+			text = str(translation[i])
+			# Check if the text we send to google translate does not belong to these case below:
+			# + Number
+			# + Url
+			# + In-valid source language
+			# + Text has been ranslated before
+			validation = self.ValidateSourceText(text)
+			#print('Details:', text, 'Result:', validation)
+			if validation == False:
+				continue
+			if validation == True:
+				try:
+					# Check if the text has been request to translate
+					# This check is to remove duplicate translate request
+					index_num = raw_source.index(text)
+					# If the index number is found, appen the index
+					to_translate_index[index_num].append(i)
+				except Exception  as e:
+					print('Exception: ', e)
+					raw_source.append(text)
+					to_translate.append(text)
+					to_translate_index.append([i])
+				#print('Append done')
+				#raw_source.append(text)
+				#to_translate.append(pre_translate)
+				#to_translate_index.append(i)
+			else:
+				#translated by memory
+				translation[i] = validation
+
 		if len(to_translate) > 0:
 			try:
 				translated = self.activated_translator(to_translate)
@@ -851,7 +938,8 @@ class Translator:
 		
 		try:	
 			
-			translation = self.google_translate_v3(source_text)
+			#translation = self.google_translate_v3(source_text)
+			translation = self.google_glossary_translate(source_text)
 		
 		except Exception  as e:
 			print('error translation:', e)
@@ -920,7 +1008,7 @@ class Translator:
 
 		# Supported language codes: https://cloud.google.com/translate/docs/languages
 		
-		Client = translate.TranslationServiceClient()
+		Client = translator.TranslationServiceClient()
 		Parent = f"projects/{self.project_id}/locations/{self.location}"
 		target_language_code = self.correct_language_code(self.to_language)
 		#print('target_language_code', target_language_code)
@@ -941,40 +1029,6 @@ class Translator:
 
 		return ListReturn
 
-	def google_translate_v2(self, source_text):
-		#print('Translate with GoogleAPItranslate')
-		"""Translates a given text using a glossary."""
-		ToTranslate = []
-		
-		if isinstance(source_text, list):
-			ToTranslate = source_text
-		else:
-			ToTranslate = [source_text]
-
-		# Supported language codes: https://cloud.google.com/translate/docs/languages
-		
-		Client = translate.Client()
-		Parent = f"projects/{self.project_id}/locations/{self.location}"
-		target_language_code = self.correct_language_code(self.to_language)
-		#print('target_language_code', target_language_code)
-		source_language_code = self.correct_language_code(self.from_language)
-		#print('source_language_code', source_language_code)
-		response = Client.translate(
-			
-			request={
-				"contents": ToTranslate,
-				"target_language_code": target_language_code,
-				"source_language_code": source_language_code,
-				"parent": Parent,
-			}
-		)
-
-		ListReturn = []
-		for translation in response.translations:
-			ListReturn.append(unescape(translation.translated_text))
-
-		return ListReturn	
-
 	def google_glossary_translate(self, source_text):
 		#print('Translate with GoogleAPItranslate')
 		"""Translates a given text using a glossary."""
@@ -987,15 +1041,13 @@ class Translator:
 		else:
 			ToTranslate = [source_text]
 
-		#print('ToTranslate', ToTranslate)	
 		# Supported language codes: https://cloud.google.com/translate/docs/languages
-		
-		Client = translate.TranslationServiceClient()
-		Parent = f"projects/{self.project_bucket_id}/locations/{self.location}"
+		Client = translator.TranslationServiceClient()
+		Parent = f"projects/{self.project_id}/locations/{self.location}"
 		#Glossary = Client.glossary_path(self.project_id, "us-central1", self.glossary_id)
 		Glossary = Client.glossary_path(self.project_bucket_id, "us-central1", 'General-DB')
 		#print('Glossary', Glossary)
-		Glossary_Config = translate.TranslateTextGlossaryConfig(glossary=Glossary)
+		Glossary_Config = translator.TranslateTextGlossaryConfig(glossary=Glossary)
 		
 		response = Client.translate_text(
 			request={
@@ -1007,7 +1059,6 @@ class Translator:
 			}
 		)
 		ListReturn = []
-		#print('response', response)
 		for translation in response.glossary_translations:
 			ListReturn.append(unescape(translation.translated_text))
 
@@ -1064,7 +1115,7 @@ class Translator:
 	def list_glossaries(self):
 		
 		List = []
-		client = translate.TranslationServiceClient()
+		client = translator.TranslationServiceClient()
 
 		parent = f"projects/{self.project_id}/locations/{self.location}"
 
@@ -1076,27 +1127,26 @@ class Translator:
 
 	def full_list_glossaries(self):
 		
-		List = []
-		client = translate.TranslationServiceClient()
+		List = {}
+		client = translator.TranslationServiceClient()
 
 		parent = f"projects/{self.project_bucket_id}/locations/{self.location}"
 
 		for glossary in client.list_glossaries(parent=parent):
-			Gloss = glossary.name.split('/')[-1]
-			List.append(Gloss)		
+			_gloss_name = glossary.name.split('/')[-1]
+			List[_gloss_name] = glossary.entry_count
+			
 		return List
 
 	def get_glossary(self, glossary_id= None, timeout=180,):
-
-		client = translate.TranslationServiceClient()
+		# Get glossary from the running project
+		client = translator.TranslationServiceClient()
 		name = client.glossary_path(self.project_id, self.location, glossary_id)
 		glossary = client.get_glossary(name = name)
 
 		return 	glossary
 	
-
-
-	def load_bucket_list_from_glob(self, file_uri= None, timeout=180,):
+	def load_config_from_bucket(self, file_uri= None, timeout=180,):
 
 		cloud_client = storage.Client()
 		bucket = cloud_client.get_bucket(self.bucket_id)
@@ -1110,7 +1160,7 @@ class Translator:
 			return
 	
 		mydb = listdb.split('\r\n')
-
+		self.bucket_db_list = []
 		for pair in mydb:
 
 			data = pair.split(',')
@@ -1121,7 +1171,7 @@ class Translator:
 			if Valid:
 				id = str(data[0]).replace('\ufeff', '')
 				URI = str(data[1])
-				self.glossary_list.append(id)
+				self.bucket_db_list.append(id)
 				self.glossary_data_list.append([id, URI])
 		try:
 			versioning = bucket.get_blob('config/latest_version')
@@ -1169,6 +1219,29 @@ class Translator:
 			cloud_client.download_to_file(blob, f)
 		'''
 
+	def _load_header_from_blob(self, header_uri):
+		cloud_client = storage.Client()
+
+		bucket = cloud_client.get_bucket(self.bucket_id)
+
+		blob = bucket.get_blob(file_uri)
+	
+		try:
+			listdb = blob.download_as_text()
+		except Exception as e:
+			print('Fail to load blob:', e)
+			return
+		_my_header = listdb.split('\r\n')
+		
+		# Split row into list
+		split_db = lambda x: x.split(',')
+		list_header = list(map(split_db, _my_header))
+		# Remove the header since it's not nesessary
+		list_header.remove(list_db[0])
+
+
+
+
 	def load_db_from_glob(self, file_uri= None, timeout=180,):
 
 		cloud_client = storage.Client()
@@ -1191,7 +1264,7 @@ class Translator:
 		list_db = list(map(split_db, mydb))
 		# Remove the header since it's not nesessary
 		list_db.remove(list_db[0])
-
+		list_header = []
 		# Retrive info data and remove from DB
 		index_count = 0
 		for item_index in range(len(list_db)- 1):
@@ -1208,14 +1281,17 @@ class Translator:
 					index_count += 1
 				if index_count == 2:
 					break	
-		
+			elif item[0] == 'header':
+				list_header.append(item)
+
+
 		# Decode encoded DB.
 		# Please note that from translator V4, DB is store in base64 encoded format.
-		new_list_db = list(map(lambda x: self.base64_decode_list(x), list_db))
+		#new_list_db = list(map(lambda x: self.base64_decode_list(x), list_db))
 		# Load DB as DataFrame
 		db_columns = ['tag'] + self.supported_language
 		
-		self.all_db = pd.DataFrame(columns=db_columns, data=new_list_db)
+		self.all_db = pd.DataFrame(columns=db_columns, data=list_header)
 		self.update_db_from_dataframe()
 
 	# Filter DB and store in suitable variable
@@ -1238,6 +1314,7 @@ class Translator:
 			header = header.drop_duplicates()
 			self.header = header.values.tolist()
 			self.header = self.sort_dictionary(self.header)
+			'''
 			#Create name list:
 			name = all_db[all_db["tag"] == 'name'][[self.from_language, self.to_language]]
 			name = name.drop_duplicates()
@@ -1267,6 +1344,8 @@ class Translator:
 				jp_dictionary = jp_dictionary.drop_duplicates()
 				self.jp_dictionary = jp_dictionary.values.tolist()
 				self.jp_dictionary = self.sort_dictionary(self.jp_dictionary)
+			
+			
 			#Create exception list:
 			exception_for_source_language = all_db[all_db["tag"] == 'exception'][[self.to_language]].values.tolist()
 			exception_for_target_language = all_db[all_db["tag"] == 'exception'][[self.from_language]].values.tolist()
@@ -1281,13 +1360,14 @@ class Translator:
 			self.dictionary = self.sort_dictionary(self.dictionary)
 			#print("Dict: ", len(self.dictionary))
 			#print("Dict: ", len(self.dictionary))
+			'''
 		else:
 			self.init_db_data()
 			#self.dictionary = []
 
 
 	def get_glossary_length(self, timeout=180,):
-		client = translate.TranslationServiceClient()
+		client = translator.TranslationServiceClient()
 		name = client.glossary_path(self.project_id, self.location, self.glossary_id)
 		try:
 			glossary = client.get_glossary(name = name)
@@ -1306,21 +1386,21 @@ class Translator:
 	# Currently not use
 	def create_glossary(self, input_uri= None, glossary_id=None, timeout=180,):
 
-		client = translate.TranslationServiceClient()
+		client = translator.TranslationServiceClient()
 		source_lang_code = "ko"
 		target_lang_code = "en"
 
 		name = client.glossary_path(self.project_id, self.location, glossary_id)
 		
-		language_codes_set = translate.types.Glossary.LanguageCodesSet(
+		language_codes_set = translator.types.Glossary.LanguageCodesSet(
 			language_codes=[source_lang_code, target_lang_code]
 		)
 
-		gcs_source = translate.types.GcsSource(input_uri=input_uri)
+		gcs_source = translator.types.GcsSource(input_uri=input_uri)
 
-		input_config = translate.types.GlossaryInputConfig(gcs_source=gcs_source)
+		input_config = translator.types.GlossaryInputConfig(gcs_source=gcs_source)
 
-		glossary = translate.types.Glossary(
+		glossary = translator.types.Glossary(
 			name=name, language_codes_set=language_codes_set, input_config=input_config
 		)
 
@@ -1334,7 +1414,7 @@ class Translator:
 	# Delete the glossary that use for glossary_translate
 	def delete_glossary(self, glossary_id= None, timeout=180,):
 		"""Delete a specific glossary based on the glossary id."""
-		client = translate.TranslationServiceClient()
+		client = translator.TranslationServiceClient()
 
 		name = client.glossary_path(self.project_id, self.location, glossary_id)
 
@@ -1363,6 +1443,32 @@ class Translator:
 			self.import_translation_memory()
 			
 
+	def prepare_glossary_info(self):
+		print('Get glossary list and length:')
+		# self.glossary_list = [{glossary_id: glossary_length}...{}]
+		if self.glossary_id not in [None, ""]:
+			try:
+				self.get_glossary_list()
+				print(self.glossary_list)
+				print(self.glossary_list_full)
+				self.glossary_size = self.glossary_list_full[self.glossary_id]
+				# Check if the glossary is exist
+				# self.glossary_id
+
+				# Create glossary if any
+
+				# Update db_length
+				print('Get URI from glossary_id ')
+				uri = self.get_glossary_path(self.glossary_id)
+				print('URI:', uri)
+				print("Load DB from glob:", uri)
+				self.load_db_from_glob(uri)
+				print('Loading done!')
+			except Exception as e:
+				print('[Error] prepare_db_data:', e)
+		else:
+			self.init_db_data()
+
 	def prepare_db_data(self):
 		print('prepare_db_data')
 		if self.glossary_id not in [None, ""]:
@@ -1376,8 +1482,7 @@ class Translator:
 			except Exception as e:
 				print('[Error] prepare_db_data:', e)
 
-		else:
-			self.init_db_data()
+		
 			#self.dictionary = []
 			#self.header = []
 
@@ -1501,35 +1606,72 @@ class Translator:
 		print('Uploading to blob')
 		blob.upload_from_filename(filename = Upload_Path)
 		print('Uploading done.')
-		#def create_glossary(self, input_uri= None, glossary_id=None, timeout=180,):
-		
+		self.update_glossary(glossary_id, blob_id)
+	
+	def create_glossary(self, input_uri= None, glossary_id=None, timeout=180,):
+		"""
+		Create a equivalent term sets glossary. Glossary can be words or
+		short phrases (usually fewer than five words).
+		https://cloud.google.com/translate/docs/advanced/glossary#format-glossary
+		"""
+
+		client = translator.TranslationServiceClient()
+
+		# Supported language codes: https://cloud.google.com/translate/docs/languages
+		source_lang_code = "en"
+		target_lang_code = "ko"
+		location = "us-central1"  # The location of the glossary
+		#location = 'asia-southeast1'
+		name = client.glossary_path(self.project_bucket_id, location, glossary_id)
+		language_codes_set = translator.types.Glossary.LanguageCodesSet(
+			language_codes=[source_lang_code, target_lang_code]
+		)
+
+		gcs_source = translator.types.GcsSource(input_uri=input_uri)
+
+		input_config = translator.types.GlossaryInputConfig(gcs_source=gcs_source)
+
+		glossary = translator.types.Glossary(
+			name=name, language_codes_set=language_codes_set, input_config=input_config
+		)
+
+		parent = f"projects/{self.project_bucket_id}/locations/{location}"
+		# glossary is a custom dictionary Translation API uses
+		# to translate the domain-specific terminology.
+		operation = client.create_glossary(parent=parent, glossary=glossary)
+		result = operation.result(timeout)
+		print("Created: {}".format(result.name))
+		print("Input Uri: {}".format(result.input_config.gcs_source.input_uri))
+
+	def delete_glossary(self, glossary_id= "", timeout=180,):
+		"""Delete a specific glossary based on the glossary ID."""
+		client = translator.TranslationServiceClient()
+		name = client.glossary_path(self.project_bucket_id , "us-central1", glossary_id)
+		operation = client.delete_glossary(name=name)
+		result = operation.result(timeout)
+		print("Deleted: {}".format(result.name))
 
 
-	def update_glossary(self, glossary_id, upload_path):
+
+	def update_glossary(self, glossary_id, db_uri):
 		from google.cloud import storage
-		sclient = storage.Client()
-		
-		gloss = self.get_glossary(glossary_id)
-		print('gloss', gloss)
 
-		print('Getting bucket')
-		bucket = sclient.get_bucket(self.bucket_id)
 		try:
-			blob_id = self.get_glossary_path(glossary_id)
+			gloss = self.get_glossary(glossary_id)
+			_uri = gloss.input_config.gcs_source.input_uri
 		except:
-			return False	
-		print('blob_id', blob_id)
-		self.delete_glossary(glossary_id)
-		print('Deleting blob')
-		blob = bucket.blob(blob_id)
-
-		bucket.delete_blob(blob_name = blob_id)
+			_uri = db_uri
+		_uri = 'gs://nxvnbucket/' + _uri
+		print('URI: ', _uri)
+		print('Glossary ID:', glossary_id)
+		try:
+			self.delete_glossary(glossary_id)
+			print('Deleting blob')
+		except Exception as e:
+			print('Error while deleting glossary:', glossary_id, e)	
 		
-		print('Uploading to blob')
-		blob.upload_from_filename(filename = upload_path)
-		#def create_glossary(self, input_uri= None, glossary_id=None, timeout=180,):
 		print('Create glossary')
-		self.create_glossary(input_uri= gloss.input_config.gcs_source.input_uri, glossary_id=glossary_id)
+		self.create_glossary(input_uri= _uri, glossary_id=glossary_id)
 
 	
 ##########################################################
@@ -1889,7 +2031,7 @@ def generate_translator(
 		used_tool = None,
 		tm_path= None, 
 		bucket_id = 'nxvnbucket',
-		db_list_uri = 'config/db_list_v4.csv',
+		db_list_uri = 'config/db_list.csv',
 		project_bucket_id = 'credible-bay-281107'):	
 	print('Translator options:', locals())
 	MyTranslator = Translator(	from_language = from_language, 

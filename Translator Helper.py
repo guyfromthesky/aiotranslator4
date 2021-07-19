@@ -63,7 +63,7 @@ import json
 
 tool_display_name = "Translator Helper"
 tool_name = 'writer'
-rev = 4003
+rev = 4100
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -620,8 +620,9 @@ class MyTranslatorHelper(Frame):
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'target_lang', index)
 
 		self.MyTranslator.set_target_language(to_language)
-		self.DictionaryStatus.set(str(len(self.MyTranslator.dictionary)))
-		self.UpdatePredictionList()
+		self.DictionaryStatus.set(str(self.MyTranslator.glossary_size))
+		self.RenewMyTranslator()
+		#self.UpdatePredictionList()
 		#self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
 	def set_source_language(self, source_language):
@@ -631,8 +632,9 @@ class MyTranslatorHelper(Frame):
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'source_lang', index)
 
 		self.MyTranslator.set_source_language(from_language)	
-		self.DictionaryStatus.set(str(len(self.MyTranslator.dictionary)))
-		self.UpdatePredictionList()
+		self.DictionaryStatus.set(str(self.MyTranslator.glossary_size))
+		self.RenewMyTranslator()
+		#self.UpdatePredictionList()
 		#self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
 	def set_simple_secondary_target_language(self, target_language):
@@ -651,7 +653,7 @@ class MyTranslatorHelper(Frame):
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'target_lang', index)
 
 		self.MyTranslator.set_target_language(to_language)
-		self.DictionaryStatus.set(str(len(self.MyTranslator.dictionary)))
+		self.DictionaryStatus.set(str(self.MyTranslator.glossary_size))
 		self.UpdatePredictionList()
 		#self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
@@ -662,7 +664,7 @@ class MyTranslatorHelper(Frame):
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'source_lang', index)
 
 		self.MyTranslator.set_source_language(from_language)	
-		self.DictionaryStatus.set(str(len(self.MyTranslator.dictionary)))
+		self.DictionaryStatus.set(str(self.MyTranslator.glossary_size))
 		self.UpdatePredictionList()
 		#self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
@@ -716,7 +718,7 @@ class MyTranslatorHelper(Frame):
 			self.UpdatePredictionList()
 
 			try:
-				db_count = str(len(self.MyTranslator.dictionary))
+				db_count = str(self.MyTranslator.glossary_size)
 			except:
 				db_count = 0
 			
@@ -1106,10 +1108,11 @@ class MyTranslatorHelper(Frame):
 	def UpdatePredictionList(self):
 		#print('self.header_list', self.header_list)
 		Autolist = []
+		'''
 		for item in self.MyTranslator.dictionary:
 			Autolist.append(item[0])
 			Autolist.append(item[1])
-		
+		'''
 		'''
 		for item in self.MyTranslator.NameList:
 			Autolist.append("\"" + item[0] + "\"")
@@ -1117,25 +1120,15 @@ class MyTranslatorHelper(Frame):
 		'''
 		#print('Autolist', Autolist)
 		#set_completion_list
-
+		
 		self.search_entry.set_completion_list(Autolist)
-
-
-
 
 	def UpdateHeaderList(self):
 		self.header_listFull = self.MyTranslator.header	
 		self.header_list = [""]
 
-		if self.source_language.get() == 1:
-			x = 1
-			#y = 0
-		else: 
-			x = 0
-			#y = 1
-
 		for Header in self.header_listFull:
-			self.header_list.append(Header[x])
+			self.header_list.append(Header[0])
 		self.HeaderOptionA.set_completion_list(self.header_list)
 		self.HeaderOptionB.set_completion_list(self.header_list)
 

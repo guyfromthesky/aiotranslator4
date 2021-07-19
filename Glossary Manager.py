@@ -61,14 +61,15 @@ def create_glossary(
 def translate_text_with_glossary(
 	text="YOUR_TEXT_TO_TRANSLATE",
 	project_id="credible-bay-281107",
-	glossary_id="AXEKR_EN",
+	
+	glossary_id="AXEKR",
 ):
 	"""Translates a given text using a glossary."""
-	
+	project_translate = "round-reality-294501"
 	client = translate.TranslationServiceClient()
 	location = "us-central1"
-	parent = f"projects/{project_id}/locations/{location}"
-
+	parent = f"projects/{project_translate}/locations/{location}"
+	
 	glossary = client.glossary_path(
 		project_id, "us-central1", glossary_id  # The location of the glossary
 	)
@@ -89,7 +90,7 @@ def translate_text_with_glossary(
 	print('Get gloss',time.time()- st)
 	print("Translated text: \n")
 	for translation in response.glossary_translations:
-		print("\t {}".format(translation.translated_text))
+		print(translation.translated_text)
 
 def delete_glossary(
 	project_id="credible-bay-281107", glossary_id="NXVNV4GB", timeout=180,
@@ -102,13 +103,6 @@ def delete_glossary(
 	operation = client.delete_glossary(name=name)
 	result = operation.result(timeout)
 	print("Deleted: {}".format(result.name))
-
-
-def get_glossary(glossaryID, timeout=180,):
-
-	glossaries = self.Client.list_glossaries(glossaryID)
-
-	print(glossaries)
 
 
 def  list_glossaries(project_id="credible-bay-281107"):
@@ -129,18 +123,18 @@ def  list_glossaries(project_id="credible-bay-281107"):
 		# Note: You can create a glossary using one of two modes:
 		# language_code_set or language_pair. When listing the information for
 		# a glossary, you can only get information for the mode you used
-		# when creating the glossary.
+		# when creating the glossary.d
 		for language_code in glossary.language_codes_set.language_codes:
 			print("Language code: {}".format(language_code))
 
 
 #create_glossary()
-#list_glossaries()
+list_glossaries()
+my_gloss = 'General'
+delete_glossary(glossary_id = my_gloss)
+#create_glossary(input_uri="gs://nxvnbucket/DB/AXE/AXEKR.csv",	glossary_id= my_gloss)
 
-#delete_glossary(glossary_id = 'OH')
-#create_glossary(input_uri="gs://nxvnbucket/DB/OH/OH.csv",	glossary_id="OH")
-
-translate_text_with_glossary(['Use the active skill', 'Use the Kaidan Fruits.', 'Access to Phantom of Kaidan'])
+#translate_text_with_glossary(['Use the active skill', 'Use the kaidan fruits.', 'Access to phantom of kaidan'])
 #create_glossary(input_uri="gs://nxvnv4/DB/MSM.csv",	glossary_id="MSM")
 
 #create_glossary()

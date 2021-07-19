@@ -56,7 +56,7 @@ import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4001
+rev = 4100
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -982,19 +982,22 @@ class DocumentTranslator(Frame):
 	
 			self.enable_button()
 
-			DBLength = len(self.MyTranslator.dictionary)
-			self._dictionary_status.set(str(DBLength))
+			self._dictionary_status.set(str(self.MyTranslator.glossary_size))
 			self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
 			glossary_list = [""] + self.MyTranslator.glossary_list
+			bucket_db_list = [""] + self.MyTranslator.bucket_db_list
 			self.bottom_panel.project_id_select.set_completion_list(glossary_list)
-			self.ProjectList.set_completion_list(glossary_list)
+			self.ProjectList.set_completion_list(bucket_db_list)
 
 			if self.glossary_id in self.MyTranslator.glossary_list:
 				self.bottom_panel.project_id_select.set(self.glossary_id)
-				self.ProjectList.set(self.glossary_id)
 			else:
 				self.bottom_panel.project_id_select.set("")
+
+			if self.glossary_id in self.MyTranslator.bucket_db_list:
+				self.ProjectList.set(self.glossary_id)
+			else:
 				self.ProjectList.set(self.glossary_id)
 				#self.Error('No Valid Project selected, please update the project key and try again.')	
 			
@@ -1599,7 +1602,8 @@ def function_create_db_data(DB_Path):
 
 											if sheetname != 'header':
 												cell_value = cell_value.lower()
-											cell_value = basse64_encode(cell_value)
+											# Obsoleted
+											# cell_value = basse64_encode(cell_value)
 											#print('Encrypt value: ', cell_value)
 										else:
 											cell_value = ''	
