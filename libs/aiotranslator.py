@@ -1224,7 +1224,7 @@ class Translator:
 
 		bucket = cloud_client.get_bucket(self.bucket_id)
 
-		blob = bucket.get_blob(file_uri)
+		blob = bucket.get_blob(header_uri)
 	
 		try:
 			listdb = blob.download_as_text()
@@ -1237,7 +1237,7 @@ class Translator:
 		split_db = lambda x: x.split(',')
 		list_header = list(map(split_db, _my_header))
 		# Remove the header since it's not nesessary
-		list_header.remove(list_db[0])
+		list_header.remove(list_header[0])
 
 
 
@@ -1314,6 +1314,7 @@ class Translator:
 			header = header.drop_duplicates()
 			self.header = header.values.tolist()
 			self.header = self.sort_dictionary(self.header)
+			print(self.header)
 			'''
 			#Create name list:
 			name = all_db[all_db["tag"] == 'name'][[self.from_language, self.to_language]]
@@ -1451,18 +1452,24 @@ class Translator:
 				self.get_glossary_list()
 				print(self.glossary_list)
 				print(self.glossary_list_full)
-				self.glossary_size = self.glossary_list_full[self.glossary_id]
+				
 				# Check if the glossary is exist
 				# self.glossary_id
 
 				# Create glossary if any
 
 				# Update db_length
-				print('Get URI from glossary_id ')
-				uri = self.get_glossary_path(self.glossary_id)
-				print('URI:', uri)
-				print("Load DB from glob:", uri)
-				self.load_db_from_glob(uri)
+				if self.glossary_id in self.glossary_list:
+					print('Update db length')
+					self.glossary_size = self.glossary_list_full[self.glossary_id]
+					print('Get URI from glossary_id ')
+					uri = self.get_glossary_path(self.glossary_id)
+					print('URI:', uri)
+					print("Load DB from glob:", uri)
+					self.load_db_from_glob(uri)
+				else:
+					print('Init blank dict')
+					self.init_db_data()
 				print('Loading done!')
 			except Exception as e:
 				print('[Error] prepare_db_data:', e)
