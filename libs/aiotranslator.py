@@ -34,7 +34,7 @@ from datetime import datetime
 from libs.version import get_version
 
 Tool = "translator"
-rev = 4100
+rev = 4104
 ver_num = get_version(rev)
 Translatorversion = Tool + " " + ver_num
 
@@ -119,8 +119,6 @@ class Translator:
 		self.printable = string.printable
 		
 		# Flag for user who is banned.
-		self.banned = False
-
 		# Get user name of the Windows account
 		self.get_user_name()
 
@@ -128,7 +126,6 @@ class Translator:
 		self.get_pc_name()
 
 		# Minimun version allowed to be used.
-		self.latest_version = 0
 		# DB version
 		self.version = '-'
 		# Update day of the DB
@@ -170,7 +167,7 @@ class Translator:
 	# Obsoleted
 	def init_db_data(self):
 		# The multi-language DB.
-		self.all_db = pd.DataFrame()
+		self.all_header = pd.DataFrame()
 		'''
 		# Used to translate from A -> B and vice versa
 		self.dictionary = []
@@ -879,7 +876,7 @@ class Translator:
 					# If the index number is found, appen the index
 					to_translate_index[index_num].append(i)
 				except Exception  as e:
-					print('Exception: ', e)
+					#print('Exception: ', e)
 					raw_source.append(text)
 					to_translate.append(text)
 					to_translate_index.append([i])
@@ -932,9 +929,6 @@ class Translator:
 				return False
 		except:
 			pass
-		
-		if self.banned == True:
-			return
 		
 		try:	
 			
@@ -1078,21 +1072,21 @@ class Translator:
 		if target_language != self.to_language:
 			print('Set target lang to:', target_language)
 			self.to_language = target_language	
-			self.update_db_from_dataframe()
+			self.update_header_from_dataframe()
 			self.import_translation_memory()
 
 	def set_source_language(self, source_language):
 		if source_language != self.from_language:
 			print('Set source lang to:', source_language)
 			self.from_language = source_language	
-			self.update_db_from_dataframe()
+			self.update_header_from_dataframe()
 			self.import_translation_memory()
 
 	def set_language_pair(self, source_language, target_language):
 		if source_language != target_language:
 			self.from_language = source_language
 			self.to_language = target_language
-			self.update_db_from_dataframe()
+			self.update_header_from_dataframe()
 			self.import_translation_memory()
 
 	def swap_language(self):
@@ -1173,31 +1167,7 @@ class Translator:
 				URI = str(data[1])
 				self.bucket_db_list.append(id)
 				self.glossary_data_list.append([id, URI])
-		try:
-			versioning = bucket.get_blob('config/latest_version')
-			myversion = versioning.download_as_text()
-			my_latest_version = myversion
-			#my_latest_version = myversion.split('\r\n')[0]
-		except:
-			my_latest_version = ""	
-		if my_latest_version != "":	
-			self.latest_version = my_latest_version
-		else:
-			self.latest_version = None
-
-		try:
-			banning = bucket.get_blob('config/banning')
-			banning_list = banning.download_as_text()
-			my_banning_list = banning_list.split('\r\n')
-		except:
-			my_banning_list = []
-
-		self.banned = False
-		for ano in my_banning_list:
-			print(ano)
-			if self.user_name == ano:
-				self.banned = True
-				break
+		print('Bucket glossary list: ', self.bucket_db_list)		
 
 	def download_db_to_file(self, glossary_id, download_path):
 		for gloss_data in self.glossary_data_list:
@@ -1208,12 +1178,12 @@ class Translator:
 		bucket = cloud_client.get_bucket(self.bucket_id)
 		blob = bucket.get_blob(uri)
 		print('Download file to: ', download_path)
-
-		try:
-			blob.download_to_filename(download_path)	
-		except Exception as e:
-			print('Fail to load blob:', e)	
-			return
+		if blob != None:
+			try:
+				blob.download_to_filename(download_path)	
+			except Exception as e:
+				print('Fail to load blob:', e)	
+				return
 		'''
 		with open(download_path,'wb') as f:
 			cloud_client.download_to_file(blob, f)
@@ -1225,22 +1195,71 @@ class Translator:
 		bucket = cloud_client.get_bucket(self.bucket_id)
 
 		blob = bucket.get_blob(header_uri)
-	
+		if blob != None:
+			try:
+				listdb = blob.download_as_text()
+			except Exception as e:
+				print('Fail to load blob:', e)
+				return
+			_my_header = listdb.split('\r\n')
+			#print('_my_header', _my_header)
+			# Split row into list
+			split_db = lambda x: x.split(',')
+			list_header = list(map(split_db, _my_header))
+			# Remove the header since it's not nesessary
+			list_header.remove(list_header[0])
+
+			db_columns = self.supported_language + ['tag']
+			if len(list_header) > 0 and len(list_header[0]) > 1:
+				self.all_header = pd.DataFrame(columns=db_columns, data=list_header)
+				self.update_header_from_dataframe()
+			else:
+				self.init_db_data()
+		else:
+			self.init_db_data()
+
+	def load_info_from_glob(self, file_uri= None, timeout=180,):
+
+		cloud_client = storage.Client()
+
+		bucket = cloud_client.get_bucket(self.bucket_id)
+
+		blob = bucket.get_blob(file_uri)
+		if blob == None:
+			self.version = '-'
+			self.update_day = '-'
+			return
 		try:
 			listdb = blob.download_as_text()
 		except Exception as e:
 			print('Fail to load blob:', e)
 			return
-		_my_header = listdb.split('\r\n')
+
+		# Split DB into row.
+		mydb = listdb.split('\r\n')
 		
 		# Split row into list
 		split_db = lambda x: x.split(',')
-		list_header = list(map(split_db, _my_header))
+		list_db = list(map(split_db, mydb))
 		# Remove the header since it's not nesessary
-		list_header.remove(list_header[0])
-
-
-
+		list_db.remove(list_db[0])
+	
+		# Retrive info data and remove from DB
+		index_count = 0
+		for item_index in range(len(list_db)- 1):
+			current_indexer = item_index-index_count
+			item = list_db[current_indexer]		
+			if item[0] == 'info':
+				if item[1] == 'version':
+					self.version = item[2]
+					del list_db[current_indexer]
+					index_count += 1
+				elif item[1] == 'date':
+					self.update_day = item[2]
+					del list_db[current_indexer]
+					index_count += 1
+				if index_count == 2:
+					break	
 
 	def load_db_from_glob(self, file_uri= None, timeout=180,):
 
@@ -1295,11 +1314,27 @@ class Translator:
 		self.update_db_from_dataframe()
 
 	# Filter DB and store in suitable variable
-	def update_db_from_dataframe(self):
-		if self.from_language not in self.all_db or self.to_language not in self.all_db:
+	def update_header_from_dataframe(self):
+		if self.from_language not in self.all_header or self.to_language not in self.all_header:
 			self.init_db_data()
 			return
 		#print("prepare new DB: ", "Source language: ", self.from_language, 'Target language: ', self.to_language,)
+		# Drop N/A value
+		if self.from_language != self.to_language:
+			all_db = self.all_header[~self.all_header[self.from_language].isin([''])][['tag', self.from_language, self.to_language]]
+			all_db = all_db[~all_db[self.to_language].isin([''])][['tag', self.from_language, self.to_language]]
+			#Create header list:
+			header = all_db[all_db["tag"] == 'header'][[self.from_language, self.to_language]]
+			header = header.drop_duplicates()
+			self.header = header.values.tolist()
+			self.header = self.sort_dictionary(self.header)
+			
+		else:
+			self.init_db_data()
+			#self.dictionary = []
+	
+	def update_db_from_dataframe(self):
+		
 		# Drop N/A value
 		if self.from_language != self.to_language:
 			all_db = self.all_db[~self.all_db[self.from_language].isin([''])][['tag', self.from_language, self.to_language]]
@@ -1314,7 +1349,7 @@ class Translator:
 			header = header.drop_duplicates()
 			self.header = header.values.tolist()
 			self.header = self.sort_dictionary(self.header)
-			print(self.header)
+			#print(self.header)
 			'''
 			#Create name list:
 			name = all_db[all_db["tag"] == 'name'][[self.from_language, self.to_language]]
@@ -1447,34 +1482,44 @@ class Translator:
 	def prepare_glossary_info(self):
 		print('Get glossary list and length:')
 		# self.glossary_list = [{glossary_id: glossary_length}...{}]
-		if self.glossary_id not in [None, ""]:
-			try:
-				self.get_glossary_list()
-				print(self.glossary_list)
-				print(self.glossary_list_full)
-				
-				# Check if the glossary is exist
-				# self.glossary_id
+		try:
+			self.get_glossary_list()
+			print('Glossary list ', self.glossary_list)
+			print('Glossary full list', self.glossary_list_full)
+			
+			# Check if the glossary is exist
+			# self.glossary_id
 
-				# Create glossary if any
+			# Create glossary if any
 
-				# Update db_length
-				if self.glossary_id in self.glossary_list:
-					print('Update db length')
-					self.glossary_size = self.glossary_list_full[self.glossary_id]
-					print('Get URI from glossary_id ')
-					uri = self.get_glossary_path(self.glossary_id)
-					print('URI:', uri)
-					print("Load DB from glob:", uri)
-					self.load_db_from_glob(uri)
+			# Update db_length
+			if self.glossary_id in self.glossary_list:
+				print('Update db length')
+				self.glossary_size = self.glossary_list_full[self.glossary_id]
+				print('Get URI from glossary_id ')
+				uri = self.get_glossary_path(self.glossary_id)
+
+				if uri != None:
+					_uri_name, _ext = os.path.splitext(uri)
+					_header_uri = _uri_name + "_" + 'header' + _ext
+					_info_uri = _uri_name + "_" + 'header' + _ext
+					print('URI:', _header_uri)
+
+					print("Load DB from glob:", _header_uri)
+					self._load_header_from_blob(_header_uri)
+
+
+					self.load_info_from_glob(_info_uri)
 				else:
-					print('Init blank dict')
 					self.init_db_data()
-				print('Loading done!')
-			except Exception as e:
-				print('[Error] prepare_db_data:', e)
-		else:
+			else:
+				print('Init blank dict')
+				self.init_db_data()
+			print('Loading done!')
+		except Exception as e:
+			print('[Error] prepare_db_data:', e)
 			self.init_db_data()
+
 
 	def prepare_db_data(self):
 		print('prepare_db_data')
@@ -1586,9 +1631,13 @@ class Translator:
 	# Replace the DB file by the new one
 	# Need to rename the old DB file for backup purpose
 	# 	-> Update later
-	def backup_and_update_blob(self, glossary_id, Upload_Path):
+	def backup_and_update_blob(self, glossary_id, address):
 		from google.cloud import storage
 		sclient = storage.Client()
+		
+		#db_path = address['db']
+		#header_path = address['header']
+		#info_path = address['info']
 		
 		#gloss = self.get_glossary(glossary_id)
 
@@ -1597,22 +1646,28 @@ class Translator:
 			blob_id = self.get_glossary_path(glossary_id)
 		except:
 			return False	
-		current_timestamp  = self.get_timestamp()
-
-		blob = bucket.blob(blob_id)
 		
-		try:
-			blob_name, ext = os.path.splitext(blob_id)
-			new_blob = blob_name + "_" + current_timestamp + ext
-			print('Backup blob to: ', new_blob)
-			bucket.copy_blob(blob, bucket, new_blob)
-		except Exception as e:
-			print('Fail to backup blob:', e)	
+		_blob_name, _ext = os.path.splitext(blob_id)
 
-
-		print('Uploading to blob')
-		blob.upload_from_filename(filename = Upload_Path)
-		print('Uploading done.')
+		for file_name in ['db', 'header', 'info']:
+			current_id = _blob_name + "_" + file_name + _ext
+			blob = bucket.blob(current_id)
+			if file_name == 'db':
+				try:
+					current_timestamp  = self.get_timestamp()
+					new_blob = _blob_name + "_db_" + current_timestamp + _ext
+					print('Backup blob to: ', new_blob)
+					bucket.copy_blob(blob, bucket, new_blob)
+				except Exception as e:
+					print('Fail to backup blob:', e)
+				
+				current_id = blob_id
+			
+			Upload_Path = address[file_name]
+			print('Uploading to blob:', current_id)
+			blob.upload_from_filename(filename = Upload_Path)
+			print('Uploading done.')
+		print('Create glossary from blob: ', blob_id)
 		self.update_glossary(glossary_id, blob_id)
 	
 	def create_glossary(self, input_uri= None, glossary_id=None, timeout=180,):
@@ -1662,13 +1717,13 @@ class Translator:
 
 	def update_glossary(self, glossary_id, db_uri):
 		from google.cloud import storage
-
+		print('Provided uri:', db_uri)
 		try:
 			gloss = self.get_glossary(glossary_id)
 			_uri = gloss.input_config.gcs_source.input_uri
 		except:
 			_uri = db_uri
-		_uri = 'gs://nxvnbucket/' + _uri
+			_uri = 'gs://nxvnbucket/' + _uri
 		print('URI: ', _uri)
 		print('Glossary ID:', glossary_id)
 		try:

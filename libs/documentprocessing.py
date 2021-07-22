@@ -197,7 +197,7 @@ class RunData:
 #Workbook handle
 def translate_workbook(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
 	""" How Document Translator tool proccesses the translation in Excel file """
-
+	print(locals())
 	from openpyxl import load_workbook, worksheet, Workbook
 	from openpyxl.styles import Font
 
@@ -241,11 +241,13 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 		SheetRemovalMode = False
 	else:
 		SheetRemovalMode = Options['SheetRemovalMode']
-
+	print('Data only:', DataOnly)
 	try:
-		if DataOnly:
+		if DataOnly == True:
+			print('Data only')
 			xlsx = load_workbook(SourceDocument, data_only=True)
 		else:
+			print('Disable data only')
 			xlsx = load_workbook(SourceDocument)
 	except Exception as e:
 		status_queue.put('Failed to load the document: ' + str(e))

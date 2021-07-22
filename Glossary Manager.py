@@ -49,12 +49,14 @@ def create_glossary(
 		name=name, language_codes_set=language_codes_set, input_config=input_config
 	)
 
+
 	parent = f"projects/{project_id}/locations/{location}"
 	# glossary is a custom dictionary Translation API uses
 	# to translate the domain-specific terminology.
 	operation = client.create_glossary(parent=parent, glossary=glossary)
 
 	result = operation.result(timeout)
+	print('result', result)
 	print("Created: {}".format(result.name))
 	print("Input Uri: {}".format(result.input_config.gcs_source.input_uri))
 
@@ -131,8 +133,9 @@ def  list_glossaries(project_id="credible-bay-281107"):
 #create_glossary()
 list_glossaries()
 my_gloss = 'General-DB'
+#delete_glossary(glossary_id=my_gloss)
 #create_glossary(glossary_id = my_gloss)
-create_glossary(input_uri="gs://nxvnbucket/DB/General/General.csv",	glossary_id= my_gloss)
+#create_glossary(input_uri="gs://nxvnbucket/DB/General/General.csv",	glossary_id= my_gloss)
 
 #translate_text_with_glossary(['Use the active skill', 'Use the kaidan fruits.', 'Access to phantom of kaidan'])
 #create_glossary(input_uri="gs://nxvnv4/DB/MSM.csv",	glossary_id="MSM")

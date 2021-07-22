@@ -49,7 +49,7 @@ from libs.aiotranslator import generate_translator
 
 from libs.aioconfigmanager import ConfigLoader
 
-#from libs.aioconfigmanager import ConfigLoader
+from libs.cloudconfig import CloudConfigLoader
 
 #from libs.grammercheck import LanguageTool
 
@@ -63,8 +63,8 @@ import json
 
 tool_display_name = "Translator Helper"
 tool_name = 'writer'
-rev = 4100
-ver_num = get_version(rev) 
+REV = 4103
+ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
 DELAY = 20
@@ -137,6 +137,19 @@ class MyTranslatorHelper(Frame):
 		self.init_UI_setting()
 		
 		#self.LoadTempReport()
+
+
+		if REV < int(self.latest_version):
+			self.Error('Current version is lower than the minimal version allowed. Please update.')	
+			webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/AIO+Translator")
+			self.quit()
+			return
+
+		if self.banning_status:
+			self.Error('You\'re not allowed to use the tool. If you feel that it\'s unfair, please contact with your manager for more information.')	
+			self.quit()
+			return
+
 		if self.LicensePath.get() != "":
 			self.generate_translator_engine()
 		else:
@@ -453,7 +466,7 @@ class MyTranslatorHelper(Frame):
 	# Init functions
 	# Some option is saved for the next time use
 	def init_App_Setting(self):
-
+		print('init_App_Setting')
 		self.SkipTestInfo = IntVar()
 		self.UseSimpleTemplate = IntVar()
 
@@ -476,10 +489,6 @@ class MyTranslatorHelper(Frame):
 		#print('self.Configuration', self.Configuration)
 
 		self.AppLanguage  = self.Configuration['Bug_Writer']['app_lang']
-
-		#self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'bucket_id', 'value', 'nxvnbucket')
-		#self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'db_list_uri', 'value', 'config/db_list_v4.csv')
-		#self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'project_bucket_id', 'value', 'credible-bay-281107')
 		license_file_path = self.Configuration['Translator']['license_file']
 		self.LicensePath.set(license_file_path)
 
@@ -492,6 +501,16 @@ class MyTranslatorHelper(Frame):
 
 		self.glossary_id = self.Configuration['Translator']['glossary_id']
 		
+		cloud_config = CloudConfigLoader()
+		cloud_configuration = cloud_config.Config
+		self.banning_status = cloud_configuration['banned']
+		self.latest_version = cloud_configuration['latest_version']
+		
+		
+		#self.Config['bucket_db_list']
+		#self.Config['glossary_data_list']
+		
+
 	def init_UI_setting(self):
 		
 		self.source_language.set(self.language_list[self.Configuration['Bug_Writer']['source_lang']])
@@ -746,20 +765,7 @@ class MyTranslatorHelper(Frame):
 			self.VersionStatus.set(version)
 			self._update_day.set(Date)
 
-			if isinstance(self.MyTranslator.latest_version, str):
-				if rev < int(self.MyTranslator.latest_version):
-					self.Error('Current version is lower than the minimal version allowed. Please update.')	
-					webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/AIO+Translator")
-					self.quit()
-					return
-
-			if isinstance(self.MyTranslator.banned, bool):
-				if self.MyTranslator.banned:
-					self.Error('You\'re not allowed to use the tool. If you feel that it\'s unfair, please contact with your manager for more information.')	
-					self.quit()
-					return
-
-				#self.Error('No Valid Project selected, please update the project ID in Translate Setting tab')	
+			#self.Error('No Valid Project selected, please update the project ID in Translate Setting tab')	
 			#DBLength = self.MyTranslator.get_glossary_length()
 			#self.DictionaryStatus.set(str(DBLength))
 
@@ -1946,7 +1952,8 @@ def MainLoop():
 	style = Style(root)
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
 	#root.geometry("400x350+300+300")
-	
+	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
+		
 	try:
 		application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 		root.mainloop()

@@ -56,7 +56,7 @@ import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4100
+rev = 4103
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -1012,19 +1012,6 @@ class DocumentTranslator(Frame):
 				Date = '-'
 			self.TMPath.set(str(self.MyTranslator.tm_path))
 
-			if isinstance(self.MyTranslator.latest_version, str):
-				if rev < int(self.MyTranslator.latest_version):
-					self.Error('Current version is lower than the minimal version allowed. Please update.')	
-					webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/AIO+Translator")
-					self.quit()
-					return
-
-			if isinstance(self.MyTranslator.banned, bool):
-				if self.MyTranslator.banned:
-					self.Error('You\'re not allowed to use the tool. If you feel that it\'s unfair, please contact with your manager for more information.')	
-					self.quit()
-					return
-
 			self._version_status.set(version)
 			self._update_day.set(Date)
 			
@@ -1065,9 +1052,9 @@ class DocumentTranslator(Frame):
 
 		#Set Data Mode
 		if self.DataOnly.get() == 1:
-			self.Options['DataMode']  = True
+			self.Options['DataOnly']  = True
 		else:
-			self.Options['DataMode'] = False	
+			self.Options['DataOnly'] = False	
 
 		#Set Skip Mode
 		'''
@@ -1359,7 +1346,8 @@ def function_create_csv_db(result_queue, db_path):
 	result_path = function_create_db_data(db_path)
 	result_queue.put(result_path)
 
-def function_compare_db(result_queue, MyTranslator, glossary_id, new_csv_path):
+def function_compare_db(result_queue, MyTranslator, glossary_id, address):
+	new_csv_path = address['db']
 	sourcename, ext = os.path.splitext(new_csv_path)
 	old_csv_db = sourcename + '_old' + ext
 	
@@ -1434,7 +1422,7 @@ def function_compare_db(result_queue, MyTranslator, glossary_id, new_csv_path):
 		'dropped': len(dropped_accts),
 		'added': len(added_accts),
 		'changed': len(diff),
-		'path': new_csv_path
+		'path': address
 	}
 	result_queue.put(result)
 
@@ -1462,12 +1450,12 @@ def report_diff(x):
 
 def function_upload_db(status_queue, MyTranslator, glossary_id, result):
 	
-	db_path = result['path']
+	address = result['path']
 	add = result['added']
 	drop = result['dropped']
 	changes = result['changed']
 	
-	MyTranslator.backup_and_update_blob(glossary_id, db_path)
+	MyTranslator.backup_and_update_blob(glossary_id, address)
 
 	print('Logging data')
 
@@ -1498,7 +1486,7 @@ def function_upload_db(status_queue, MyTranslator, glossary_id, result):
 		'tool': 'Document Translator',
 		'translator_ver': ver_num,
 		'glossary_id': glossary_id,
-		'db_file': str(db_path),
+		'db_file': str(address['db']),
 		'added': add,
 		'dropped': drop,
 		'changed': changes,
@@ -1534,7 +1522,9 @@ def function_create_db_data(DB_Path):
 	sourcename, ext = os.path.splitext(baseName)
 
 	#output_file = Outputdir + '/' + sourcename + '_SingleFile.xlsx'
-	output_file_csv = Outputdir + '/' + sourcename + '.csv'
+	output_db_csv = Outputdir + '/' + sourcename + '.csv'
+	output_header_csv = Outputdir + '/' + sourcename + '_header'+ '.csv'
+	output_info_csv = Outputdir + '/' + sourcename + '_info'+ '.csv'
 	SpecialSheets = ['info']
 
 	if DatabasePath != None:
@@ -1547,13 +1537,19 @@ def function_create_db_data(DB_Path):
 			db_object = {}
 			db_object['info'] = {}
 			db_object['db'] = {}
-			with open(output_file_csv, 'w', newline='', encoding='utf_8_sig') as csv_file:
-				writer = csv.writer(csv_file, delimiter=',')
-				writer.writerow(['Description', 'ko', 'en', 'cn', 'jp', 'vi'])
+			with open(output_db_csv, 'w', newline='', encoding='utf_8_sig') as csv_db, open(output_header_csv, 'w', newline='', encoding='utf_8_sig') as csv_header, open(output_info_csv, 'w', newline='', encoding='utf_8_sig') as csv_info:
+				db_writer = csv.writer(csv_db, delimiter=',')
+				db_writer.writerow(['','ko', 'en', 'cn', 'jp', 'vi', 'description'])
 				
+				header_writer = csv.writer(csv_header, delimiter=',')
+				header_writer.writerow(['ko', 'en', 'cn', 'jp', 'vi', 'description'])
+				
+				info_writer = csv.writer(csv_info, delimiter=',')
+				
+
 				for sheet in xlsx:
 					sheetname = sheet.title.lower()
-					
+					print('Current sheet:', sheetname)
 					if sheetname not in SpecialSheets:
 						# init loop
 						list_col = {}
@@ -1578,7 +1574,8 @@ def function_create_db_data(DB_Path):
 								if cell_value in list_col:
 									list_col[cell_value] = cell.column_letter
 									start_row = cell.row
-								language_count = len(list_col)
+									language_count+=1
+								
 							if language_count > 1:
 								database = ws
 								DictList.append(sheet.title)
@@ -1600,8 +1597,8 @@ def function_create_db_data(DB_Path):
 											valid = True
 											cell_value = raw_cell_value.replace('\r', '').replace('\n', '')	
 
-											if sheetname != 'header':
-												cell_value = cell_value.lower()
+											#if sheetname != 'header':
+											#	cell_value = cell_value.lower()
 											# Obsoleted
 											# cell_value = basse64_encode(cell_value)
 											#print('Encrypt value: ', cell_value)
@@ -1611,7 +1608,10 @@ def function_create_db_data(DB_Path):
 									else:
 										db_entry[language] = ''
 								if valid:
-									writer.writerow([sheetname, db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP'], db_entry['VI']])
+									if sheetname != 'header':
+										db_writer.writerow(['', db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP'], db_entry['VI'], sheetname])
+									else:
+										header_writer.writerow([db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP'], db_entry['VI'], sheetname])
 								#db_object['db'][sheetname].append(db_entry)
 								
 					elif sheetname == 'info':
@@ -1626,7 +1626,7 @@ def function_create_db_data(DB_Path):
 									temp_Cel = ws[temp_Add]
 									temp_Val = temp_Cel.value
 									info_entry['version'] = temp_Val
-									writer.writerow(['info', 'version', temp_Val])
+									db_writer.writerow(['info', 'version', temp_Val])
 
 								elif cell.value == "date":
 									temp_Col = chr(ord(cell.column_letter) + 1)
@@ -1634,9 +1634,14 @@ def function_create_db_data(DB_Path):
 									temp_Add = temp_Col + str(temp_Row)	
 									temp_Cel = ws[temp_Add]
 									temp_Val = temp_Cel.value
-									writer.writerow(['info', 'date', temp_Val])
+									db_writer.writerow(['info', 'date', temp_Val])
 
-	return output_file_csv
+	_address = {}
+	_address['db'] = output_db_csv
+	_address['header'] = output_header_csv
+	_address['info'] = output_info_csv
+
+	return _address
 
 def basse64_encode(string_to_encode):
 	if string_to_encode == '':
