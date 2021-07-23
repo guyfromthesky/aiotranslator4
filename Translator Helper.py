@@ -63,7 +63,7 @@ import json
 
 tool_display_name = "Translator Helper"
 tool_name = 'writer'
-REV = 4103
+REV = 4104
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -501,11 +501,16 @@ class MyTranslatorHelper(Frame):
 
 		self.glossary_id = self.Configuration['Translator']['glossary_id']
 		
-		cloud_config = CloudConfigLoader()
-		cloud_configuration = cloud_config.Config
-		self.banning_status = cloud_configuration['banned']
-		self.latest_version = cloud_configuration['latest_version']
-		
+		try:
+			cloud_config = CloudConfigLoader()
+			cloud_configuration = cloud_config.Config
+			self.banning_status = cloud_configuration['banned']
+			self.latest_version = cloud_configuration['latest_version']
+		except Exception as e:
+			print("Error while loading cloud configuration:", e)
+			self.banning_status = False
+			self.latest_version = 1000
+			
 		
 		#self.Config['bucket_db_list']
 		#self.Config['glossary_data_list']
@@ -1952,10 +1957,10 @@ def MainLoop():
 	style = Style(root)
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
 	#root.geometry("400x350+300+300")
-	application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
+	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 		
 	try:
-		#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
+		application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 		root.mainloop()
 		application.MyTranslator.send_tracking_record()
 	except Exception as e:

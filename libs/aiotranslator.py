@@ -34,7 +34,7 @@ from datetime import datetime
 from libs.version import get_version
 
 Tool = "translator"
-rev = 4104
+rev = 4105
 ver_num = get_version(rev)
 Translatorversion = Tool + " " + ver_num
 
@@ -1038,8 +1038,8 @@ class Translator:
 		# Supported language codes: https://cloud.google.com/translate/docs/languages
 		Client = translator.TranslationServiceClient()
 		Parent = f"projects/{self.project_id}/locations/{self.location}"
-		#Glossary = Client.glossary_path(self.project_id, "us-central1", self.glossary_id)
-		Glossary = Client.glossary_path(self.project_bucket_id, "us-central1", 'General-DB')
+		Glossary = Client.glossary_path(self.project_id, "us-central1", self.glossary_id)
+		#Glossary = Client.glossary_path(self.project_bucket_id, "us-central1", 'General-DB')
 		#print('Glossary', Glossary)
 		Glossary_Config = translator.TranslateTextGlossaryConfig(glossary=Glossary)
 		
