@@ -4,7 +4,7 @@ import json
 import os
 import sys
 from google.cloud import storage
-import subprocess
+import uuid
 
 
 class CloudConfigLoader:
@@ -104,5 +104,9 @@ class CloudConfigLoader:
 	
 	def generate_device_unique_id(self):
 		print('generate_device_unique_id')
-		return str(subprocess.check_output('wmic csproduct get uuid'), 'utf-8').split('\n')[1].strip()
-		
+		try:
+			uuid = uuid.UUID(int=uuid.getnode())
+			return uuid
+		except Exception as e:
+			print("Error while getting UUID:", e)
+			return None	
