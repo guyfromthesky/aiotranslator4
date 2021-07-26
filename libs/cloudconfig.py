@@ -106,7 +106,9 @@ class CloudConfigLoader:
 		print('generate_device_unique_id')
 		try:
 			_uuid = uuid.UUID(int=uuid.getnode())
-			return _uuid
+			
 		except Exception as e:
 			print("Error while getting UUID:", e)
-			return None	
+			_uuid = None
+		print("Generated uuid:", _uuid)
+		return _uuid
