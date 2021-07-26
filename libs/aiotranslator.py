@@ -106,7 +106,11 @@ class Translator:
 		#self.SpecialSheets = ['kr_only', 'en_only', 'name']
 		self.special_tag = ['header', 'name', 'en_only', 'kr_only', 'cn_only', 'jp_only', 'vi_only', 'exception']
 		self.supported_language = ['ko', 'en', 'cn', 'jp', 'vi']
+<<<<<<< HEAD
 		self.supported_language_code = ['ko', 'en', 'zh-TW', 'ja', 'vi']
+=======
+		self.supported_language_code = ['ko', 'en', 'zh_Hanz', 'ja', 'vi']
+>>>>>>> 62545608a14b73a144a61936e35c41c1ed9a5a1d
 		# Obsoleted
 		#self.init_db_data()
 
@@ -1446,7 +1450,11 @@ class Translator:
 		name = client.glossary_path(self.project_id, self.location, glossary_id)
 		
 		language_codes_set = translator.types.Glossary.LanguageCodesSet(
+<<<<<<< HEAD
 			language_codes = supported_language
+=======
+			language_codes= self.supported_language_code
+>>>>>>> 62545608a14b73a144a61936e35c41c1ed9a5a1d
 		)
 
 		gcs_source = translator.types.GcsSource(input_uri=input_uri)
