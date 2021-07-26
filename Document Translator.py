@@ -560,7 +560,7 @@ class DocumentTranslator(Frame):
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', source_language_index)
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_lang', target_language_index)
 		self.MyTranslator.set_language_pair(target_language = self.language_id_list[source_language_index], source_language = self.language_id_list[target_language_index])
-		self._dictionary_status.set(str(len(self.MyTranslator.dictionary)))
+		#self._dictionary_status.set(str(len(self.MyTranslator.dictionary)))
 		self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
 	def SetLanguageKorean(self):
@@ -914,7 +914,7 @@ class DocumentTranslator(Frame):
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', index)
 
 		self.MyTranslator.set_target_language(to_language)
-		self._dictionary_status.set(str(len(self.MyTranslator.dictionary)))
+		#self._dictionary_status.set(str(len(self.MyTranslator.dictionary)))
 		self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 		
 
@@ -925,7 +925,7 @@ class DocumentTranslator(Frame):
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_lang', index)
 
 		self.MyTranslator.set_source_language(from_language)	
-		self._dictionary_status.set(str(len(self.MyTranslator.dictionary)))
+		#self._dictionary_status.set(str(len(self.MyTranslator.dictionary)))
 		self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
 
@@ -972,13 +972,13 @@ class DocumentTranslator(Frame):
 		try:
 			st = time.time()
 			self.MyTranslator = self.MyTranslator_Queue.get_nowait()
-			print('Get Translator',time.time()- st)
+			#print('Get Translator',time.time()- st)
 		except queue.Empty:
 			self.after(DELAY, self.GetMyTranslator)
 
 		#print("self.MyTranslator: ", self.MyTranslator)	
 		if self.MyTranslator != None:	
-			print("My translator is created")
+			#print("My translator is created")
 	
 			self.enable_button()
 
@@ -1010,8 +1010,9 @@ class DocumentTranslator(Frame):
 				Date = self.MyTranslator.update_day[0:10]
 			else:
 				Date = '-'
-			self.TMPath.set(str(self.MyTranslator.tm_path))
 
+
+			self.TMPath.set(str(self.MyTranslator.tm_path))
 			self._version_status.set(version)
 			self._update_day.set(Date)
 			
@@ -1454,8 +1455,15 @@ def function_upload_db(status_queue, MyTranslator, glossary_id, result):
 	add = result['added']
 	drop = result['dropped']
 	changes = result['changed']
-	
-	MyTranslator.backup_and_update_blob(glossary_id, address)
+	print('DB path:', result['path']['db'])
+	_db = pd.read_csv(result['path']['db'])
+	_supported_language = []
+	for language in ['en', 'ko', 'vi', 'ja', 'zh-TW']:
+		print(language, _db[language].dropna())
+		if not _db[language].dropna().empty:
+			_supported_language.append(language)
+
+	MyTranslator.backup_and_update_blob(glossary_id, address ,_supported_language)
 
 	print('Logging data')
 
@@ -1539,7 +1547,7 @@ def function_create_db_data(DB_Path):
 			db_object['db'] = {}
 			with open(output_db_csv, 'w', newline='', encoding='utf_8_sig') as csv_db, open(output_header_csv, 'w', newline='', encoding='utf_8_sig') as csv_header, open(output_info_csv, 'w', newline='', encoding='utf_8_sig') as csv_info:
 				db_writer = csv.writer(csv_db, delimiter=',')
-				db_writer.writerow(['','ko', 'en', 'cn', 'jp', 'vi', 'description'])
+				db_writer.writerow(['','ko', 'en', 'zh-TW', 'ja', 'vi', 'description'])
 				
 				header_writer = csv.writer(csv_header, delimiter=',')
 				header_writer.writerow(['ko', 'en', 'cn', 'jp', 'vi', 'description'])
@@ -1610,6 +1618,8 @@ def function_create_db_data(DB_Path):
 								if valid:
 									if sheetname != 'header':
 										db_writer.writerow(['', db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP'], db_entry['VI'], sheetname])
+									elif sheetname == 'info':
+										print('Do nothing')	
 									else:
 										header_writer.writerow([db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP'], db_entry['VI'], sheetname])
 								#db_object['db'][sheetname].append(db_entry)
@@ -1626,7 +1636,7 @@ def function_create_db_data(DB_Path):
 									temp_Cel = ws[temp_Add]
 									temp_Val = temp_Cel.value
 									info_entry['version'] = temp_Val
-									db_writer.writerow(['info', 'version', temp_Val])
+									info_writer.writerow(['info', 'version', temp_Val])
 
 								elif cell.value == "date":
 									temp_Col = chr(ord(cell.column_letter) + 1)
@@ -1634,7 +1644,7 @@ def function_create_db_data(DB_Path):
 									temp_Add = temp_Col + str(temp_Row)	
 									temp_Cel = ws[temp_Add]
 									temp_Val = temp_Cel.value
-									db_writer.writerow(['info', 'date', temp_Val])
+									info_writer.writerow(['info', 'date', temp_Val])
 
 	_address = {}
 	_address['db'] = output_db_csv
@@ -1839,11 +1849,11 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 
 			try:
 				Newsourcename = sourcename.encode('cp437').decode('euc_kr')
-				StatusQueue.put('Correct name: ' + Newsourcename)
+				StatusQueue.put('Correct malformed name: ' + Newsourcename)
 				
 			except:
 				Newsourcename = sourcename
-				StatusQueue.put('fail to create new name: ' + Newsourcename)
+				#StatusQueue.put('fail to create new name: ' + Newsourcename)
 
 			if Options['FixCorruptFileName'] == True:	
 				try:
@@ -1879,6 +1889,7 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 		
 		Options['SourceDocument'] = newPath
 		Options['OutputDocument'] = output_file
+		print('Option:', Options)
 		if ext == '.docx':
 			#Result = translate_docx(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:

@@ -90,8 +90,20 @@ class ConfigLoader:
 		self.Init_Config_Option(config, Section, 'TextShouldBe', "")
 		self.Init_Config_Option(config, Section, 'HeaderA', "")
 		self.Init_Config_Option(config, Section, 'HeaderB', "")
+		
+		Section = 'Simple_Translator'
+		if not config.has_section(Section):
+			config.add_section(Section)
+			self.Config[Section] = {}
+		self.Init_Config_Option(config, Section, 'target_lang', 2)
+		self.Init_Config_Option(config, Section, 'source_lang', 3)
+		self.Init_Config_Option(config, Section, 'secondary_target_lang', 5)
+
+
 		with open(config_path, 'w') as configfile:
 			config.write(configfile)
+
+
 
 	def Doc_Init_Setting(self):
 

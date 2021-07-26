@@ -49,7 +49,7 @@ class CloudConfigLoader:
 		return _project_id
 
 	def load_project_list_from_bucket(self):
-		print('load_project_list_from_bucket')
+		#print('load_project_list_from_bucket')
 		blob = self.bucket.get_blob(self.db_list_uri)
 		if blob != None:
 			try:
@@ -77,7 +77,7 @@ class CloudConfigLoader:
 	
 	
 	def load_project_info_from_bucket(self):
-		print('load_project_info_from_bucket')
+		#print('load_project_info_from_bucket')
 		try:
 			versioning = self.bucket.get_blob('config/latest_version')
 			myversion = versioning.download_as_text()
