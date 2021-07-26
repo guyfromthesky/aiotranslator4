@@ -105,7 +105,7 @@ class Translator:
 		#self.SpecialSheets = ['kr_only', 'en_only', 'name']
 		self.special_tag = ['header', 'name', 'en_only', 'kr_only', 'cn_only', 'jp_only', 'vi_only', 'exception']
 		self.supported_language = ['ko', 'en', 'cn', 'jp', 'vi']
-		
+		self.supported_language_code = ['ko', 'en', 'zh_Hanz', 'ja', 'vi']
 		# Obsoleted
 		#self.init_db_data()
 
@@ -1423,13 +1423,11 @@ class Translator:
 	def create_glossary(self, input_uri= None, glossary_id=None, timeout=180,):
 
 		client = translator.TranslationServiceClient()
-		source_lang_code = "ko"
-		target_lang_code = "en"
 
 		name = client.glossary_path(self.project_id, self.location, glossary_id)
 		
 		language_codes_set = translator.types.Glossary.LanguageCodesSet(
-			language_codes=[source_lang_code, target_lang_code]
+			language_codes= self.supported_language_code
 		)
 
 		gcs_source = translator.types.GcsSource(input_uri=input_uri)

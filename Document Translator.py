@@ -1539,7 +1539,7 @@ def function_create_db_data(DB_Path):
 			db_object['db'] = {}
 			with open(output_db_csv, 'w', newline='', encoding='utf_8_sig') as csv_db, open(output_header_csv, 'w', newline='', encoding='utf_8_sig') as csv_header, open(output_info_csv, 'w', newline='', encoding='utf_8_sig') as csv_info:
 				db_writer = csv.writer(csv_db, delimiter=',')
-				db_writer.writerow(['','ko', 'en', 'cn', 'jp', 'vi', 'description'])
+				db_writer.writerow(['','ko', 'en', 'cn-Hanz', 'ja', 'vi', 'description'])
 				
 				header_writer = csv.writer(csv_header, delimiter=',')
 				header_writer.writerow(['ko', 'en', 'cn', 'jp', 'vi', 'description'])
