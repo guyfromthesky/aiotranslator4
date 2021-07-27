@@ -106,11 +106,8 @@ class Translator:
 		#self.SpecialSheets = ['kr_only', 'en_only', 'name']
 		self.special_tag = ['header', 'name', 'en_only', 'kr_only', 'cn_only', 'jp_only', 'vi_only', 'exception']
 		self.supported_language = ['ko', 'en', 'cn', 'jp', 'vi']
-<<<<<<< HEAD
 		self.supported_language_code = ['ko', 'en', 'zh-TW', 'ja', 'vi']
-=======
-		self.supported_language_code = ['ko', 'en', 'zh_Hanz', 'ja', 'vi']
->>>>>>> 62545608a14b73a144a61936e35c41c1ed9a5a1d
+		self.glossary_language = ['ko', 'en']
 		# Obsoleted
 		#self.init_db_data()
 
@@ -938,24 +935,19 @@ class Translator:
 			pass
 		_translate_fail = False
 		translation = None
+	
 		try:	
-			
 			#translation = self.google_translate_v3(source_text)
-			translation = self.google_glossary_translate(source_text)
-		
+			if self.glossary_id == "":
+				translation = self.google_translate_v3(source_text)
+			else:	
+				if self.from_language in self.glossary_language and self.to_language in self.glossary_language:
+					translation = self.google_glossary_translate(source_text)
+				else:
+					translation = self.google_translate_v3(source_text)
 		except Exception  as e:
 			print('error translation:', e)
 			_error_message = e
-
-		print("Translation:", translation)
-
-		if translation == None:	
-			
-			try:
-				translation = self.google_translate_v3(source_text)
-			except Exception  as e:
-				print('error translation:', e)
-				_error_message = e
 
 		if translation == None:	
 	
@@ -1151,8 +1143,11 @@ class Translator:
 
 		for glossary in client.list_glossaries(parent=parent):
 			_gloss_name = glossary.name.split('/')[-1]
-			List[_gloss_name] = glossary.entry_count
-			
+			List[_gloss_name] = {}
+			List[_gloss_name]['size'] = glossary.entry_count
+			List[_gloss_name]['language'] = []
+			for language_code in glossary.language_codes_set.language_codes:
+				List[_gloss_name]['language'].append(language_code)
 		return List
 
 	def get_glossary(self, glossary_id= None, timeout=180,):
@@ -1242,7 +1237,7 @@ class Translator:
 			self.init_db_data()
 
 	def load_info_from_glob(self, file_uri= None, timeout=180,):
-
+	
 		cloud_client = storage.Client()
 
 		bucket = cloud_client.get_bucket(self.bucket_id)
@@ -1259,31 +1254,21 @@ class Translator:
 			return
 
 		# Split DB into row.
+		
 		mydb = listdb.split('\r\n')
 		
 		# Split row into list
 		split_db = lambda x: x.split(',')
 		list_db = list(map(split_db, mydb))
-		# Remove the header since it's not nesessary
-		list_db.remove(list_db[0])
-	
-		# Retrive info data and remove from DB
-		index_count = 0
-		for item_index in range(len(list_db)- 1):
-			current_indexer = item_index-index_count
-			item = list_db[current_indexer]		
-			if item[0] == 'info':
-				if item[1] == 'version':
-					self.version = item[2]
-					del list_db[current_indexer]
-					index_count += 1
-				elif item[1] == 'date':
-					self.update_day = item[2]
-					del list_db[current_indexer]
-					index_count += 1
-				if index_count == 2:
-					break	
 
+		
+		# Retrive info data and remove from DB
+		for item in list_db:
+			key = item[0].replace('\ufeff', '')
+			if key == 'date':
+				self.update_day = item[1]
+
+	
 	def load_db_from_glob(self, file_uri= None, timeout=180,):
 
 		cloud_client = storage.Client()
@@ -1450,11 +1435,7 @@ class Translator:
 		name = client.glossary_path(self.project_id, self.location, glossary_id)
 		
 		language_codes_set = translator.types.Glossary.LanguageCodesSet(
-<<<<<<< HEAD
 			language_codes = supported_language
-=======
-			language_codes= self.supported_language_code
->>>>>>> 62545608a14b73a144a61936e35c41c1ed9a5a1d
 		)
 
 		gcs_source = translator.types.GcsSource(input_uri=input_uri)
@@ -1466,11 +1447,12 @@ class Translator:
 		)
 
 		parent = f"projects/{self.project_id}/locations/{self.location}"
-		operation = client.create_glossary(parent=parent, glossary=glossary)
-
-		result = operation.result(timeout)
-		print("Created: {}".format(result.name))
-		print("Input Uri: {}".format(result.input_config.gcs_source.input_uri))
+		try:
+			operation = client.create_glossary(parent=parent, glossary=glossary)
+			return operation.result(timeout)
+		except Exception as e:
+			print('Error while uploading glossary:', e)
+			return False
 	
 	# Delete the glossary that use for glossary_translate
 	def delete_glossary(self, glossary_id= None, timeout=180,):
@@ -1520,14 +1502,15 @@ class Translator:
 			# Update db_length
 			if self.glossary_id in self.glossary_list:
 				#print('Update db length')
-				self.glossary_size = self.glossary_list_full[self.glossary_id]
+				self.glossary_size = self.glossary_list_full[self.glossary_id]['size']
+				self.glossary_language = self.glossary_list_full[self.glossary_id]['language']
 				#print('Get URI from glossary_id ')
 				uri = self.get_glossary_path(self.glossary_id)
 
 				if uri != None:
 					_uri_name, _ext = os.path.splitext(uri)
 					_header_uri = _uri_name + "_" + 'header' + _ext
-					_info_uri = _uri_name + "_" + 'header' + _ext
+					_info_uri = _uri_name + "_" + 'info' + _ext
 					#print('URI:', _header_uri)
 
 					#print("Load DB from glob:", _header_uri)
@@ -1656,7 +1639,7 @@ class Translator:
 	# Replace the DB file by the new one
 	# Need to rename the old DB file for backup purpose
 	# 	-> Update later
-	def backup_and_update_blob(self, glossary_id, address, supported_language):
+	def backup_and_update_blob(self, glossary_id, address):
 		from google.cloud import storage
 		sclient = storage.Client()
 		
@@ -1679,7 +1662,6 @@ class Translator:
 			blob = bucket.blob(current_id)
 			if file_name == 'db':
 				try:
-					
 					current_timestamp  = self.get_timestamp()
 					new_blob = _blob_name + "_db_" + current_timestamp + _ext
 					print('Backup blob to: ', new_blob)
@@ -1689,11 +1671,12 @@ class Translator:
 				_gloosary_id = current_id
 			
 			Upload_Path = address[file_name]
+			supported_language = address['language']
 			print('Uploading to blob:', current_id)
 			blob.upload_from_filename(filename = Upload_Path)
 			print('Uploading done.')
 		print('Create glossary from blob: ', _gloosary_id)
-		self.update_glossary(glossary_id, _gloosary_id, supported_language)
+		return self.update_glossary(glossary_id, _gloosary_id, supported_language)
 	
 
 	def delete_glossary(self, glossary_id= "", timeout=180,):
@@ -1720,7 +1703,7 @@ class Translator:
 		
 		print('Create glossary')
 		
-		self.create_glossary(_uri, glossary_id, supported_language)
+		return self.create_glossary(_uri, glossary_id, supported_language)
 
 	
 ##########################################################
@@ -1764,7 +1747,7 @@ class Translator:
 			try:
 				with open(self.tm_path, 'rb') as pickle_load:
 					all_tm = pickle.load(pickle_load)
-					print('all tm:', all_tm)
+					#print('all tm:', all_tm)
 				if isinstance(all_tm, dict):
 					# TM format v4
 					if self.glossary_id in all_tm:

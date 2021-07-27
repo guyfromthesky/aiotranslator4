@@ -56,7 +56,7 @@ import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4103
+rev = 4104
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -806,7 +806,10 @@ class DocumentTranslator(Frame):
 				change_flag = True
 			if change_flag == False:
 				message += 'OLD and NEW DB are identical.'
-
+			
+			self.Uploader_Debugger.insert("end", "\n\r")
+			self.Uploader_Debugger.insert("end", message)
+			
 			result = messagebox.askquestion ('Notice',message,icon = 'warning')
 			if result == 'yes':
 				glossary_id = self.ProjectList.get()
@@ -822,7 +825,7 @@ class DocumentTranslator(Frame):
 				if Status != False:
 					self.Notice.set('CSV DB is uploaded')
 					self.Uploader_Debugger.insert("end", "\n\r")
-					self.Uploader_Debugger.insert("end", 'CSV DB is uploaded')
+					self.Uploader_Debugger.insert("end", Status)
 			except queue.Empty:
 				pass	
 			self.after(DELAY, self.Wait_For_Uploader_Processor)
@@ -832,7 +835,7 @@ class DocumentTranslator(Frame):
 				if Status != False:
 					self.Notice.set('CSV DB is uploaded')
 					self.Uploader_Debugger.insert("end", "\n\r")
-					self.Uploader_Debugger.insert("end", 'CSV DB is uploaded')
+					self.Uploader_Debugger.insert("end", Status)
 			except queue.Empty:
 				pass
 			self.Upload_DB_Processor.terminate()
@@ -1455,18 +1458,11 @@ def function_upload_db(status_queue, MyTranslator, glossary_id, result):
 	add = result['added']
 	drop = result['dropped']
 	changes = result['changed']
-	print('DB path:', result['path']['db'])
-	_db = pd.read_csv(result['path']['db'])
-	_supported_language = []
-	for language in ['en', 'ko', 'vi', 'ja', 'zh-TW']:
-		print(language, _db[language].dropna())
-		if not _db[language].dropna().empty:
-			_supported_language.append(language)
 
-	MyTranslator.backup_and_update_blob(glossary_id, address ,_supported_language)
-
-	print('Logging data')
-
+	result = MyTranslator.backup_and_update_blob(glossary_id, address)
+	if result == False:
+		status_queue.put('Fail to upload DB')
+		return
 	client = logging.Client()
 	
 	log_name = 'db-update'
@@ -1513,6 +1509,10 @@ def function_upload_db(status_queue, MyTranslator, glossary_id, result):
 	
 	status_queue.put("DB updated.")
 
+def get_datestamp():
+	_now = datetime.now()	
+	_date_time = _now.strftime("%m/%d/%Y")
+	return _date_time
 
 
 # Load the DB from xlsx file and return DB object:
@@ -1547,11 +1547,7 @@ def function_create_db_data(DB_Path):
 			db_object['db'] = {}
 			with open(output_db_csv, 'w', newline='', encoding='utf_8_sig') as csv_db, open(output_header_csv, 'w', newline='', encoding='utf_8_sig') as csv_header, open(output_info_csv, 'w', newline='', encoding='utf_8_sig') as csv_info:
 				db_writer = csv.writer(csv_db, delimiter=',')
-<<<<<<< HEAD
 				db_writer.writerow(['','ko', 'en', 'zh-TW', 'ja', 'vi', 'description'])
-=======
-				db_writer.writerow(['','ko', 'en', 'cn-Hanz', 'ja', 'vi', 'description'])
->>>>>>> 62545608a14b73a144a61936e35c41c1ed9a5a1d
 				
 				header_writer = csv.writer(csv_header, delimiter=',')
 				header_writer.writerow(['ko', 'en', 'cn', 'jp', 'vi', 'description'])
@@ -1561,7 +1557,7 @@ def function_create_db_data(DB_Path):
 
 				for sheet in xlsx:
 					sheetname = sheet.title.lower()
-					print('Current sheet:', sheetname)
+					#print('Current sheet:', sheetname)
 					if sheetname not in SpecialSheets:
 						# init loop
 						list_col = {}
@@ -1622,38 +1618,26 @@ def function_create_db_data(DB_Path):
 								if valid:
 									if sheetname != 'header':
 										db_writer.writerow(['', db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP'], db_entry['VI'], sheetname])
-									elif sheetname == 'info':
-										print('Do nothing')	
-									else:
+									elif sheetname != 'info':
 										header_writer.writerow([db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP'], db_entry['VI'], sheetname])
 								#db_object['db'][sheetname].append(db_entry)
-								
-					elif sheetname == 'info':
-						ws = xlsx[sheet.title]
-						for row in ws.iter_rows():
-							for cell in row:
-								info_entry = {}	
-								if cell.value == "version":
-									temp_Col = chr(ord(cell.column_letter) + 1)
-									temp_Row = cell.row
-									temp_Add = temp_Col + str(temp_Row)	
-									temp_Cel = ws[temp_Add]
-									temp_Val = temp_Cel.value
-									info_entry['version'] = temp_Val
-									info_writer.writerow(['info', 'version', temp_Val])
 
-								elif cell.value == "date":
-									temp_Col = chr(ord(cell.column_letter) + 1)
-									temp_Row = cell.row
-									temp_Add = temp_Col + str(temp_Row)	
-									temp_Cel = ws[temp_Add]
-									temp_Val = temp_Cel.value
-									info_writer.writerow(['info', 'date', temp_Val])
+				
+				info_writer.writerow(['date', get_datestamp()])				
+				_db = pd.read_csv(output_db_csv)
+				_supported_language = []
+				for language in ['en', 'ko', 'vi', 'ja', 'zh-TW']:
+					if not _db[language].dropna().empty:
+						#info_writer.writerow(['language', language])
+						_supported_language.append(language)
+
+				
 
 	_address = {}
 	_address['db'] = output_db_csv
 	_address['header'] = output_header_csv
 	_address['info'] = output_info_csv
+	_address['language'] = _supported_language
 
 	return _address
 
