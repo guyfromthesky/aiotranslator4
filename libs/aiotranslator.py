@@ -16,6 +16,7 @@ import json
 from google.cloud import translate_v3 as translator
 from google.cloud import storage
 from google.cloud import logging
+from google.cloud.translate_v3.types.translation_service import Glossary
 
 import pandas as pd
 #import numpy as np
@@ -31,11 +32,12 @@ import pickle
 # Unused
 #import time
 from datetime import datetime
+import csv
 
 from libs.version import get_version
 
 Tool = "translator"
-rev = 4106
+rev = 4108
 ver_num = get_version(rev)
 Translatorversion = Tool + " " + ver_num
 
@@ -1191,11 +1193,23 @@ class Translator:
 		for gloss_data in self.glossary_data_list:
 			gloss_id = gloss_data[0]
 			if glossary_id == gloss_id:
-				uri =  gloss_data[1]
+				_uri =  gloss_data[1]
+
+			
+		if _uri == None:
+			print('No old DB, skip dowwnload')
+			with open(download_path, 'w', newline='', encoding='utf_8_sig') as csv_db:
+				db_writer = csv.writer(csv_db, delimiter=',')
+				db_writer.writerow(['','ko', 'en', 'zh-TW', 'ja', 'vi', 'description'])
+				
+		sourcename, ext = os.path.splitext(_uri)
+		_uri = sourcename + '_db' + ext	
+		print('Download db from:', _uri)
 		cloud_client = storage.Client()
 		bucket = cloud_client.get_bucket(self.bucket_id)
-		blob = bucket.get_blob(uri)
-		print('Download file to: ', download_path)
+		blob = bucket.get_blob(_uri)
+		
+
 		if blob != None:
 			try:
 				blob.download_to_filename(download_path)	
@@ -1663,14 +1677,19 @@ class Translator:
 			if file_name == 'db':
 				try:
 					current_timestamp  = self.get_timestamp()
-					new_blob = _blob_name + "_db_" + current_timestamp + _ext
+					list_folder = _blob_name.split('/')
+					db_name = list_folder[-1]
+					root = list_folder[0:-1]
+					root_name = '/'.join(root)
+					new_blob = root_name + '/Backup/' + db_name + "_db_" + current_timestamp + _ext
 					print('Backup blob to: ', new_blob)
 					bucket.copy_blob(blob, bucket, new_blob)
 				except Exception as e:
 					print('Fail to backup blob:', e)
 				_gloosary_id = current_id
-			
+
 			Upload_Path = address[file_name]
+
 			supported_language = address['language']
 			print('Uploading to blob:', current_id)
 			blob.upload_from_filename(filename = Upload_Path)
@@ -1782,11 +1801,11 @@ class Translator:
 				return
 
 		if self.from_language != self.to_language:
-			#self.translation_memory = self.translation_memory.dropna(subset=[self.from_language])
-			#self.translation_memory = self.translation_memory.dropna(subset=[self.to_language])
+			self.translation_memory = self.translation_memory.dropna(subset=[self.from_language])
+			self.translation_memory = self.translation_memory.dropna(subset=[self.to_language])
 			#self.translation_memory = self.translation_memory[~self.translation_memory[self.to_language].isin([pd.NA])][[self.from_language, self.to_language]]
 			self.translation_memory = self.translation_memory[[self.from_language, self.to_language]]
-			self.translation_memory.drop_duplicates(inplace=True)
+			#self.translation_memory.drop_duplicates(inplace=True)
 		else:
 			self.init_translation_memory()
 
@@ -1798,7 +1817,8 @@ class Translator:
 		print('Append translation memory')
 		new_tm_size = len(self.temporary_tm)
 		print('Size of temporary TM: ', new_tm_size)
-
+		if self.glossary_id == "":
+			_glossary = 'Default' 
 		if len(self.temporary_tm) > 0:
 			while True:
 				try:
@@ -1806,9 +1826,9 @@ class Translator:
 						all_tm = pickle.load(pickle_load)
 					if isinstance(all_tm, dict):
 						# TM format v4
-						if self.glossary_id in all_tm:
+						if _glossary in all_tm:
 							print('TM v4 format')
-							self.translation_memory = all_tm[self.glossary_id]
+							self.translation_memory = all_tm[_glossary]
 						# TM format v3
 						elif 'en' in all_tm:
 							print('TM v3 format')
@@ -1838,7 +1858,7 @@ class Translator:
 
 					#self.translation_memory = self.translation_memory.append(Pair, ignore_index=True)
 
-				all_tm[self.glossary_id] = self.translation_memory
+				all_tm[_glossary] = self.translation_memory
 				
 				try:
 					with open(self.tm_path, 'wb') as pickle_file:
@@ -1987,14 +2007,14 @@ class Translator:
 	def memory_translate(self, source_text):
 		# Use the previous translate result to speed up the translation progress
 		source_text = source_text.lower()
-
 		try:
 			if len(self.translation_memory) > 0:
 				#translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
 				translated = self.translation_memory.loc[self.translation_memory[self.from_language] == source_text]
+				#print('Mem translated:', translated)
 				if len(translated) > 0:
 					#print('TM translate', translated)
-					return translated.iloc[0][self.from_language]
+					return translated.iloc[0][self.to_language]
 
 		except Exception  as e:
 			print('Error message (TM):', e)

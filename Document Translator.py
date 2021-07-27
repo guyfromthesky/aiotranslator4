@@ -56,7 +56,7 @@ import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4104
+rev = 4105
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -168,7 +168,7 @@ class DocumentTranslator(Frame):
 		Label(Tab, textvariable=self.Notice, justify=RIGHT).grid(row=Row, column=3, columnspan=6, padx=5, pady=5, sticky= E)
 
 		Row+=1
-		Label(Tab, text=  self.LanguagePack.Label['Language'], width= 10, font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+		Label(Tab, text=  self.LanguagePack.Label['Source'], width= 10, font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 
 		self.source_language = StringVar()
 
@@ -176,21 +176,25 @@ class DocumentTranslator(Frame):
 		self.source_language_select.config(width=self.HALF_BUTTON_WIDTH)
 		self.source_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
 
+
+
+		Label(Tab, text=  self.LanguagePack.Label['Language'], width= 10, font='calibri 11 bold').grid(row=Row, column=3, padx=5, pady=5, sticky=W)
+
 		self.target_language = StringVar()
 
 		self.target_language_select = OptionMenu(Tab, self.target_language, *self.language_list, command = self.set_target_language)
 		self.target_language_select.config(width=self.HALF_BUTTON_WIDTH)
-		self.target_language_select.grid(row=Row, column=3, padx=0, pady=5, sticky=W)
+		self.target_language_select.grid(row=Row, column=4, padx=0, pady=5, sticky=W)
 
 		'''
 		self.Language = IntVar()	
 		Radiobutton(Tab, width= 10, text=  self.LanguagePack.Option['Hangul'], value=1, variable=self.Language, command= self.set_target_language).grid(row=Row, column=2, padx=0, pady=5, sticky=W)
 		Radiobutton(Tab, width= 10, text=  self.LanguagePack.Option['English'], value=2, variable=self.Language, command= self.set_target_language).grid(row=Row, column=3, padx=0, pady=5, sticky=W)
 		'''
-		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['Swap'], command= self.swap_language).grid(row=Row, column=4, columnspan=2, padx=5, pady=5, sticky=E)		
+		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['Swap'], command= self.swap_language).grid(row=Row, column=7, padx=5, pady=5, sticky=E)		
 
 		#Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['RenewDatabase'], command= self.renew_my_translator).grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=E)
-		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['OpenOutput'], command= self.OpenOutput).grid(row=Row, column=8, columnspan=1, padx=5, pady=5, sticky=E)
+		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['OpenOutput'], command= self.OpenOutput).grid(row=Row, column=8, padx=5, pady=5, sticky=E)
 
 		Row+=1
 		Label(Tab, width= 10, text=  self.LanguagePack.Label['Source'], font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
@@ -277,6 +281,13 @@ class DocumentTranslator(Frame):
 		self.TextLicensePath = Entry(Tab,width = 120, state="readonly", textvariable=self.LicensePath)
 		self.TextLicensePath.grid(row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
 		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
+		
+		Row += 1
+		Label(Tab, text= self.LanguagePack.Label['TM']).grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+		self.TextLicensePath = Entry(Tab,width = 120, state="readonly", textvariable=self.TMPath)
+		self.TextLicensePath.grid(row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
+		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.SelectTM).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
+		
 
 
 	def Generate_Debugger_UI(self, Tab):	
@@ -323,6 +334,9 @@ class DocumentTranslator(Frame):
 		self.Treeview.column('index', anchor=CENTER, width=0, stretch=NO)
 		self.Treeview.column('Source', anchor=CENTER, width=130)
 		self.Treeview.column('Target', anchor=CENTER, width=130)
+
+		#self.source_tm_label = StringVar()
+		#self.target_tm_label = StringVar()
 
 		self.Treeview.heading('#0', text='', anchor=CENTER)
 		self.Treeview.heading('index', text='index', anchor=CENTER)
@@ -406,8 +420,10 @@ class DocumentTranslator(Frame):
 	def load_tm_list(self):
 		self.remove_treeview()
 		tm_size = len(self.MyTranslator.translation_memory)
-		print('Total TM:', tm_size)
-		#for i in range(tm_size):
+		
+		self.Treeview.heading('Source', text='Source' + ' (' + self.MyTranslator.from_language.upper() + ') ', anchor=CENTER)
+		self.Treeview.heading('Target', text='Target' + ' (' + self.MyTranslator.to_language.upper() + ') ',  anchor=CENTER)
+		
 		for index, pair in self.MyTranslator.translation_memory.iterrows():	
 			from_str = pair[self.MyTranslator.from_language]
 			to_str = pair[self.MyTranslator.to_language]
@@ -415,11 +431,13 @@ class DocumentTranslator(Frame):
 				#print("Pair:", ko_str, en_str)
 				try:
 					#self.Treeview.insert('', 'end', text= str(pair['ko']), values=([str(pair['en'])]))
-					self.Treeview.insert('', 'end', text= '', values=( index, str(to_str), str(from_str)))
+					self.Treeview.insert('', 'end', text= '', values=( index, str(from_str), str(to_str)))
 					#print('Inserted id:', id)
 				except:
 					pass	
-	
+					
+
+
 	def search_tm_list(self):
 		text = self.search_text.get("1.0", END).replace("\n", "").replace(" ", "")
 		self.remove_treeview()
@@ -1351,18 +1369,20 @@ def function_create_csv_db(result_queue, db_path):
 	result_queue.put(result_path)
 
 def function_compare_db(result_queue, MyTranslator, glossary_id, address):
+	print('Compare DB')
+	print(locals())
 	new_csv_path = address['db']
 	sourcename, ext = os.path.splitext(new_csv_path)
 	old_csv_db = sourcename + '_old' + ext
 	
 	MyTranslator.download_db_to_file(glossary_id, old_csv_db)
-	#print('Old path', old_csv_db)
+	print('Old path', old_csv_db, '->', glossary_id)
 	if not isfile(old_csv_db):
 		result = {
 			'dropped': 0,
 			'added': 0,
 			'changed': 0,
-			'path': new_csv_path
+			'path': address
 		}
 		result_queue.put(result)
 		return
@@ -1428,6 +1448,7 @@ def function_compare_db(result_queue, MyTranslator, glossary_id, address):
 		'changed': len(diff),
 		'path': address
 	}
+	print('Compare DB:', result)
 	result_queue.put(result)
 
 def has_change(row):
@@ -1453,7 +1474,8 @@ def report_diff(x):
 		return x[0]
 
 def function_upload_db(status_queue, MyTranslator, glossary_id, result):
-	
+	print('Upload DB')
+	print(locals())
 	address = result['path']
 	add = result['added']
 	drop = result['dropped']
