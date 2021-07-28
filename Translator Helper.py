@@ -63,7 +63,7 @@ import json
 
 tool_display_name = "Translator Helper"
 tool_name = 'writer'
-REV = 4104
+REV = 4105
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -1118,12 +1118,9 @@ class MyTranslatorHelper(Frame):
 
 	def UpdatePredictionList(self):
 		#print('self.header_list', self.header_list)
-		Autolist = []
-		'''
-		for item in self.MyTranslator.dictionary:
-			Autolist.append(item[0])
-			Autolist.append(item[1])
-		'''
+		Autolist = self.MyTranslator.dictionary
+		
+	
 		'''
 		for item in self.MyTranslator.NameList:
 			Autolist.append("\"" + item[0] + "\"")
@@ -1765,7 +1762,7 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 		strReport = Simple_Row_Template(Lang,  "Report", New_TextTestReport, Old_TextTestReport, second_language_translation)	
 		strReprodSteps = Simple_Step_Template(Lang, "Reproduce Steps", New_TextReproduceSteps, Old_TextReproduceSteps, second_language_translation)	
 		strShouldBe = Simple_Row_Template(Lang, "Should Be", New_TextShouldBe, Old_TextShouldBe, second_language_translation)	
-		
+	
 	CssText = strTestVersion
 	#print("Skip info:", self.SkipTestInfo.get())
 	if skip_test_info == False:

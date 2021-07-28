@@ -199,8 +199,8 @@ class DocumentTranslator(Frame):
 		Row+=1
 		Label(Tab, width= 10, text=  self.LanguagePack.Label['Source'], font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		self.CurrentSourceFile = StringVar()
-		self.TextFilePath = Entry(Tab,width = 120, text= self.LanguagePack.ToolTips['SelectSource'], state="readonly", textvariable=self.CurrentSourceFile)
-		self.TextFilePath.grid(row=Row, column=2, columnspan=6, padx=5, pady=5, sticky=E)
+		self.TextFilePath = Entry(Tab,width = 128, text= self.LanguagePack.ToolTips['SelectSource'], state="readonly", textvariable=self.CurrentSourceFile)
+		self.TextFilePath.grid(row=Row, column=2, columnspan=6, padx=5, pady=5, sticky=W+E)
 		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.BtnLoadDocument).grid(row=Row, column=8, columnspan=1, padx=5, pady=5, sticky=E)
 		
 		Row += 1
@@ -707,7 +707,7 @@ class DocumentTranslator(Frame):
 		
 		if result == True:
 			DB = self.Str_DB_Path.get()
-			self.Generate_DB_Processor = Process(target=function_create_csv_db, args=(self.ResultQueue, DB))
+			self.Generate_DB_Processor = Process(target=function_create_csv_db, args=(self.StatusQueue, self.ResultQueue, DB))
 			self.Generate_DB_Processor.start()
 			self.after(DELAY, self.Wait_For_Creator_Processor)	
 
@@ -740,7 +740,7 @@ class DocumentTranslator(Frame):
 			self.Generate_DB_Processor.terminate()
 		if db_path != None:	
 			glossary_id = self.ProjectList.get()
-			self.Compare_DB_Processor = Process(target=function_compare_db, args=(self.ResultQueue, self.MyTranslator, glossary_id, db_path))
+			self.Compare_DB_Processor = Process(target=function_compare_db, args=(self.StatusQueue, self.ResultQueue, self.MyTranslator, glossary_id, db_path))
 			self.Compare_DB_Processor.start()
 			self.after(DELAY, self.Wait_For_DB_Compare_Processor)	
 		'''
@@ -1299,27 +1299,6 @@ class BottomPanel(Frame):
 		self.columnconfigure(0, weight=1)
 
 
-def SortDictionary(List):
-	return(sorted(List, key = lambda x: (len(x[1]), x[1]), reverse = True))
-
-def Importtranslation_memory(TMPath):
-	if TMPath == None:
-		return []
-	elif os.path.isfile(TMPath):
-		print('TM exist')
-		try:
-			with open(TMPath, 'rb') as pickle_load:
-				TM = pickle.load(pickle_load)
-			print('TM loaded, pair found: ', len(TM))
-			return TM
-		except:
-			#print('TM is corrupted.')
-			return []
-	else:
-		print('TM not exist')
-		return []
-
-
 def Optimize(SourceDocument, StatusQueue):
 	from openpyxl import load_workbook, worksheet, Workbook
 	from openpyxl.styles import Font
@@ -1364,19 +1343,25 @@ def Optimize(SourceDocument, StatusQueue):
 ###########################################################################################
 
 ###########################################################################################
-def function_create_csv_db(result_queue, db_path):
-	result_path = function_create_db_data(db_path)
-	result_queue.put(result_path)
-
-def function_compare_db(result_queue, MyTranslator, glossary_id, address):
+def function_create_csv_db(status_queue, result_queue, db_path):
+	try:
+		result_path = function_create_db_data(db_path)
+		result_queue.put(result_path)
+	except Exception as e:
+		status_queue.put('Error while creating csv db: ' + str(e))
+	
+def function_compare_db(status_queue, result_queue, MyTranslator, glossary_id, address):
 	print('Compare DB')
 	print(locals())
 	new_csv_path = address['db']
 	sourcename, ext = os.path.splitext(new_csv_path)
 	old_csv_db = sourcename + '_old' + ext
+	try:
+		MyTranslator.download_db_to_file(glossary_id, old_csv_db)
+		status_queue.put('Loading OLD DB file.')
+	except:
+		status_queue.put('Fail to load OLD DB file.')	
 	
-	MyTranslator.download_db_to_file(glossary_id, old_csv_db)
-	print('Old path', old_csv_db, '->', glossary_id)
 	if not isfile(old_csv_db):
 		result = {
 			'dropped': 0,
@@ -1384,6 +1369,7 @@ def function_compare_db(result_queue, MyTranslator, glossary_id, address):
 			'changed': 0,
 			'path': address
 		}
+		status_queue.put('OLD DB file is not existed.')
 		result_queue.put(result)
 		return
 	old_db = pd.read_csv(old_csv_db)
@@ -1448,7 +1434,7 @@ def function_compare_db(result_queue, MyTranslator, glossary_id, address):
 		'changed': len(diff),
 		'path': address
 	}
-	print('Compare DB:', result)
+	
 	result_queue.put(result)
 
 def has_change(row):
@@ -1552,7 +1538,7 @@ def function_create_db_data(DB_Path):
 	sourcename, ext = os.path.splitext(baseName)
 
 	#output_file = Outputdir + '/' + sourcename + '_SingleFile.xlsx'
-	output_db_csv = Outputdir + '/' + sourcename + '.csv'
+	output_db_csv = Outputdir + '/' + sourcename + '_db'+ '.csv'
 	output_header_csv = Outputdir + '/' + sourcename + '_header'+ '.csv'
 	output_info_csv = Outputdir + '/' + sourcename + '_info'+ '.csv'
 	SpecialSheets = ['info']
@@ -1652,7 +1638,9 @@ def function_create_db_data(DB_Path):
 					if not _db[language].dropna().empty:
 						#info_writer.writerow(['language', language])
 						_supported_language.append(language)
-
+				_db = _db[['en', 'ko', 'vi', 'ja', 'zh-TW']]
+				_db = _db.drop_duplicates()
+				_db.to_csv(output_db_csv, encoding ='utf_8_sig' )
 				
 
 	_address = {}
@@ -1678,156 +1666,6 @@ def base64_decode(string_to_decode):
 
 
 ###########################################################################################
-
-def OptimizeTM(SourceDocument, StatusQueue):
-
-	KO = []
-	EN = []
-	to_remove = []
-	for File in SourceDocument:
-		if File != None:
-			try:
-				with open(File, 'rb') as pickle_load:
-					TM = pickle.load(pickle_load)
-				if isinstance(TM, list):
-					print('Old TM format')
-					for Pair in TM:
-						KO.append(Pair[0])
-						EN.append(Pair[1])
-					#self.en_tm = np.array(en)
-					#self.ko_tm = np.array(ko)
-				elif isinstance(TM, dict):
-					print('New TM format')
-					KO = TM['KO']
-					EN = TM['EN']
-					#self.en_tm = np.array(TM['en'])
-					#self.ko_tm = np.array(TM['ko'])
-			except:
-				print('Fail to load tm')
-				return
-			en_to_remove = []
-			ko_to_remove = []
-			for index in range(len(EN)):
-				word = EN[index]
-				if word == "":
-					en_to_remove.append(word)
-				elif not ValidateEnglishSource(word):
-					en_to_remove.append(word)
-
-			for index in range(len(KO)):
-				word = KO[index]
-				if word == "":
-					ko_to_remove.append(word)
-				elif not ValidateKoreanSource(word):
-					ko_to_remove.append(word)	
-			
-			to_remove = list(dict.fromkeys(to_remove))
-
-			for word in en_to_remove:
-				index = EN.index(word)
-				try:
-					if index != -1:
-						print('Removing: ', '\r\nEN: ', EN[index], '\r\nKO: ', KO[index])
-						del EN[index]
-						del KO[index]
-				except:
-					continue	
-			for word in ko_to_remove:
-				try:
-					index = KO.index(word)
-					if index != -1:
-						print('Removing: ', '\r\nEN: ', EN[index], '\r\nKO: ', KO[index])
-						del EN[index]
-						del KO[index]
-				except:
-					continue		
-
-			print("Total removed: " , len(en_to_remove) + len(ko_to_remove))
-			Message = "Total removed: " + str(len(en_to_remove) + len(ko_to_remove))
-			StatusQueue.put(Message)
-			'''
-			Outputdir = os.path.dirname(File)
-			baseName = os.path.basename(File)
-			sourcename, ext = os.path.splitext(baseName)
-			TranslatedName	= sourcename
-			output_file = Outputdir + '/' + TranslatedName + '_Optmized' + ext
-			'''
-			translation_memory = {}
-			translation_memory['EN'] = EN
-			translation_memory['KO'] = KO
-
-			with open(File, 'wb') as pickle_file:
-				pickle.dump(translation_memory, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
-
-
-# Function for processor	
-def MergeTMSource(SourceDocument, OutputDocument, StatusQueue):
-	NewTM = []
-
-	for File in SourceDocument:
-		if File != None:
-			
-			with open(File, 'rb') as pickle_load:
-				TempPickle = pickle.load(pickle_load)
-			for Pair in TempPickle:
-				NewTM.append(Pair)
-			StatusQueue.put('Finish adding ' + str(File) + ' to new TM.')	
-
-	StatusQueue.put('Total TM load: ' + str(len(NewTM)))
-
-	if len(NewTM) != 0:	
-		b_set = set(tuple(x) for x in NewTM)
-		SortedTM = [ list(x) for x in b_set ]
-		print('Total TM sentence has been added: ', str(len(SortedTM)))
-		with open(OutputDocument, 'wb') as pickle_file:
-			print("Saving pickle file....", OutputDocument)
-			pickle.dump(SortedTM, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
-
-	StatusQueue.put('Saving TM successful, total duplicated Pair: ' + str(len(NewTM)- len(SortedTM)))
-			
-def OldalidateEnglishSource(string):
-	try:
-		string.encode('ascii')
-	except UnicodeEncodeError :
-		return False
-	else:
-
-		return True
-
-def ValidateEnglishSource(string):
-	for i in range(len(string)):
-		c = string[i]
-		if unicodedata.category(c)[0:2] == 'Ll' : # other characters
-			try:
-				if 'LATIN' in unicodedata.name(c) : return True
-			except:
-				continue
-	return False
-		
-
-def ValidateKoreanSource(string):
-	for i in range(len(string)):
-		c = string[i]
-		if unicodedata.category(c)[0:2] == 'Lo' : # other characters
-			try:
-				if 'HANGUL' in unicodedata.name(c) : return True
-			except:
-				continue
-	return False
-
-
-def ValidateURL(string):
-	
-	Result = urlparse(string)
-	
-	try:
-		if Result.scheme == "" or Result.netloc == "":
-			return False
-		else:
-			#print(Result)
-			return True	
-	except:
-		return False
 
 def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQueue, Options,):
 	print('Creating process for Translator...')
@@ -1910,7 +1748,7 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 				Result = str(e)
 				
 		elif ext in ['.xlsx', '.xlsm']:
-			#Result = translate_workbook(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
+			Result = translate_workbook(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			try:
 				Result = translate_workbook(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			except Exception as e:

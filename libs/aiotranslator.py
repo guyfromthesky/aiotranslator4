@@ -37,7 +37,7 @@ import csv
 from libs.version import get_version
 
 Tool = "translator"
-rev = 4108
+rev = 4110
 ver_num = get_version(rev)
 Translatorversion = Tool + " " + ver_num
 
@@ -68,8 +68,8 @@ class Translator:
 		**kwargs
 	):
 		
-		self.from_language = from_language
-		self.to_language = to_language	
+		self.from_language = self.correct_language_code(from_language)
+		self.to_language = self.correct_language_code(to_language)	
 		self.default_exception = ['pass', 'fail', 'n/a', 'n/t', 'result', '\t', '\r', '\n', '', '\r\n', ' ', 'sort', 'function', 'data' , 'x', 'o']
 
 		self.source_language_predict = source_language_predict
@@ -172,6 +172,7 @@ class Translator:
 	def init_db_data(self):
 		# The multi-language DB.
 		self.all_header = pd.DataFrame()
+		self.dictionary = []
 		'''
 		# Used to translate from A -> B and vice versa
 		self.dictionary = []
@@ -187,7 +188,6 @@ class Translator:
 		self.vi_dictionary = []
 		'''
 		self.header = []
-		self.name = []
 		self.exception = []
 	
 	def init_config_path(self):
@@ -833,7 +833,7 @@ class Translator:
 				translation[index_number] = translated[i]
 			#translation[to_translate_index[i]] = translated[i]
 			if self.tm_update == True:
-				#print('Append TM: ', translated[i], raw_source[i] )
+				print('Append TM: ', translated[i], raw_source[i] )
 				self.generate_temporary_tm(str_translated = translated[i], str_input = raw_source[i])
 
 		if isinstance(Input, str):
@@ -920,7 +920,8 @@ class Translator:
 			return translation
 	
 	def activated_translator(self, source_text):
-		#print('Active translator')
+		
+		print('Active translator', 'from:', self.from_language, 'to:', self.to_language)
 		
 		count = 0
 		try:
@@ -929,8 +930,6 @@ class Translator:
 					count+= len(c)
 			elif isinstance(source_text, str):
 				count+= len(source_text)
-			#elif isinstance(source_text, int):
-			#	return source_text
 			else:
 				return False
 		except:
@@ -948,7 +947,7 @@ class Translator:
 				else:
 					translation = self.google_translate_v3(source_text)
 		except Exception  as e:
-			print('error translation:', e)
+			print('Activated translation error:', e)
 			_error_message = e
 
 		if translation == None:	
@@ -1009,7 +1008,7 @@ class Translator:
 
 	def google_translate_v3(self, source_text):
 		#print('Translate with GoogleAPItranslate')
-		"""Translates a given text using a glossary."""
+		"""Translates a given text with google api."""
 		ToTranslate = []
 		
 		if isinstance(source_text, list):
@@ -1055,7 +1054,7 @@ class Translator:
 		# Supported language codes: https://cloud.google.com/translate/docs/languages
 		Client = translator.TranslationServiceClient()
 		Parent = f"projects/{self.project_id}/locations/{self.location}"
-		Glossary = Client.glossary_path(self.project_id, "us-central1", self.glossary_id)
+		Glossary = Client.glossary_path(self.project_bucket_id, "us-central1", self.glossary_id)
 		#Glossary = Client.glossary_path(self.project_bucket_id, "us-central1", 'General-DB')
 		#print('Glossary', Glossary)
 		Glossary_Config = translator.TranslateTextGlossaryConfig(glossary=Glossary)
@@ -1087,31 +1086,27 @@ class Translator:
 
 	def set_target_language(self, target_language):
 		if target_language != self.to_language:
-			print('Set target lang to:', target_language)
-			self.to_language = target_language	
-			self.update_header_from_dataframe()
-			self.import_translation_memory()
+			self.set_language_pair(self.from_language, self.correct_language_code(target_language))
+			
 
 	def set_source_language(self, source_language):
 		if source_language != self.from_language:
-			print('Set source lang to:', source_language)
-			self.from_language = source_language	
-			self.update_header_from_dataframe()
-			self.import_translation_memory()
+			self.set_language_pair( self.correct_language_code(source_language), self.to_language)
 
 	def set_language_pair(self, source_language, target_language):
 		if source_language != target_language:
-			self.from_language = source_language
-			self.to_language = target_language
+			self.from_language = self.correct_language_code(source_language)
+			self.to_language = self.correct_language_code(target_language)
 			self.update_header_from_dataframe()
+			self.update_db_from_dataframe()
 			self.import_translation_memory()
 
 	def swap_language(self):
 		Temp = self.from_language
 		self.from_language = self.to_language	
 		self.to_language = Temp
-		self.update_db_from_dataframe()
-		self.import_translation_memory()
+		#self.update_db_from_dataframe()
+		#self.import_translation_memory()
 
 	def set_translator_agent(self, TranslatorAgent):
 		self.TranslatorAgent = TranslatorAgent
@@ -1292,47 +1287,14 @@ class Translator:
 		blob = bucket.get_blob(file_uri)
 	
 		try:
-			listdb = blob.download_as_text()
+			_download_path = self.config_path + '\\AIO Translator\\temp_db.csv'
+			blob.download_to_filename(_download_path)	
 		except Exception as e:
 			print('Fail to load blob:', e)
 			return
 
-		# Split DB into row.
-		mydb = listdb.split('\r\n')
-		
-		# Split row into list
-		split_db = lambda x: x.split(',')
-		list_db = list(map(split_db, mydb))
-		# Remove the header since it's not nesessary
-		list_db.remove(list_db[0])
-		list_header = []
-		# Retrive info data and remove from DB
-		index_count = 0
-		for item_index in range(len(list_db)- 1):
-			current_indexer = item_index-index_count
-			item = list_db[current_indexer]		
-			if item[0] == 'info':
-				if item[1] == 'version':
-					self.version = item[2]
-					del list_db[current_indexer]
-					index_count += 1
-				elif item[1] == 'date':
-					self.update_day = item[2]
-					del list_db[current_indexer]
-					index_count += 1
-				if index_count == 2:
-					break	
-			elif item[0] == 'header':
-				list_header.append(item)
-
-
-		# Decode encoded DB.
-		# Please note that from translator V4, DB is store in base64 encoded format.
-		#new_list_db = list(map(lambda x: self.base64_decode_list(x), list_db))
 		# Load DB as DataFrame
-		db_columns = ['tag'] + self.supported_language
-		
-		self.all_db = pd.DataFrame(columns=db_columns, data=list_header)
+		self.all_db = pd.read_csv(_download_path, usecols=self.glossary_language)
 		self.update_db_from_dataframe()
 
 	# Filter DB and store in suitable variable
@@ -1356,72 +1318,20 @@ class Translator:
 			#self.dictionary = []
 	
 	def update_db_from_dataframe(self):
-		
+		print('Update DB from dataframe')
 		# Drop N/A value
 		if self.from_language != self.to_language:
-			all_db = self.all_db[~self.all_db[self.from_language].isin([''])][['tag', self.from_language, self.to_language]]
-			all_db = all_db[~all_db[self.to_language].isin([''])][['tag', self.from_language, self.to_language]]
-			#all_db = self.all_db.dropna(subset=[self.from_language])[['tag', self.from_language, self.to_language]]
-			#all_db = all_db.dropna(subset=[self.to_language])[['tag', self.from_language, self.to_language]]
-			
-			
-			#print('all_db', all_db)
-			#Create header list:
-			header = all_db[all_db["tag"] == 'header'][[self.from_language, self.to_language]]
-			header = header.drop_duplicates()
-			self.header = header.values.tolist()
-			self.header = self.sort_dictionary(self.header)
-			#print(self.header)
-			'''
-			#Create name list:
-			name = all_db[all_db["tag"] == 'name'][[self.from_language, self.to_language]]
-			name = name.drop_duplicates()
-			self.name = name.values.tolist()
-			self.name = self.sort_dictionary(self.name)
-			if self.from_language == 'en':
-				#Create en_only list:
-				en_dictionary = all_db[all_db["tag"] == 'en_only'][[self.from_language, self.to_language]]
-				en_dictionary = en_dictionary.drop_duplicates()
-				self.en_dictionary = en_dictionary.values.tolist()
-				self.en_dictionary = self.sort_dictionary(self.en_dictionary)
-			elif self.from_language == 'ko':
-				#Create kr_only list:
-				ko_dictionary = all_db[all_db["tag"] == 'kr_only'][[self.from_language, self.to_language]]
-				ko_dictionary = ko_dictionary.drop_duplicates()
-				self.ko_dictionary = ko_dictionary.values.tolist()
-				self.ko_dictionary = self.sort_dictionary(self.ko_dictionary)
-			elif self.from_language == 'cn':
-				#Create cn_only list:
-				cn_dictionary = all_db[all_db["tag"] == 'cn_only'][[self.from_language, self.to_language]]
-				cn_dictionary = cn_dictionary.drop_duplicates()
-				self.cn_dictionary = cn_dictionary.values.tolist()
-				self.cn_dictionary = self.sort_dictionary(self.cn_dictionary)
-			elif self.from_language == 'jp':
-				#Create jp_only list:
-				jp_dictionary = all_db[all_db["tag"] == 'jp_only'][[self.from_language, self.to_language]]
-				jp_dictionary = jp_dictionary.drop_duplicates()
-				self.jp_dictionary = jp_dictionary.values.tolist()
-				self.jp_dictionary = self.sort_dictionary(self.jp_dictionary)
-			
-			
-			#Create exception list:
-			exception_for_source_language = all_db[all_db["tag"] == 'exception'][[self.to_language]].values.tolist()
-			exception_for_target_language = all_db[all_db["tag"] == 'exception'][[self.from_language]].values.tolist()
-			self.exception = exception_for_source_language + exception_for_target_language
-			print('self.exception', self.exception)
 			#Create normal dict list:
-			dictionary = all_db[all_db["tag"] == 'dictionary'][[self.from_language, self.to_language]]
-			dictionary = dictionary[dictionary[self.from_language] != dictionary[self.to_language]]
+			dictionary = self.all_db[[self.from_language, self.to_language]]
+			#dictionary = dictionary[dictionary[self.from_language] != dictionary[self.to_language]]
 			dictionary = dictionary.drop_duplicates()
-			self.dictionary = dictionary.values.tolist()
+			self.dictionary = dictionary[self.from_language].astype(str).values.tolist() + dictionary[self.to_language].astype(str).values.tolist()
+			#print('dict:', self.dictionary)
+			#self.dictionary = self.sort_dictionary(self.dictionary)
 			
-			self.dictionary = self.sort_dictionary(self.dictionary)
-			#print("Dict: ", len(self.dictionary))
-			#print("Dict: ", len(self.dictionary))
-			'''
 		else:
 			self.init_db_data()
-			#self.dictionary = []
+			self.dictionary = []
 
 
 	def get_glossary_length(self, timeout=180,):
@@ -1497,8 +1407,7 @@ class Translator:
 
 		if self.proactive_memory_translate:
 			#self.import_translation_memory()
-			self.import_translation_memory()
-			
+			self.import_translation_memory()	
 
 	def prepare_glossary_info(self):
 		#print('Get glossary list and length:')
@@ -1523,15 +1432,27 @@ class Translator:
 
 				if uri != None:
 					_uri_name, _ext = os.path.splitext(uri)
+					_db_uri = _uri_name + "_" + 'db' + _ext
 					_header_uri = _uri_name + "_" + 'header' + _ext
 					_info_uri = _uri_name + "_" + 'info' + _ext
 					#print('URI:', _header_uri)
 
-					#print("Load DB from glob:", _header_uri)
-					self._load_header_from_blob(_header_uri)
+					
+					print("Load info from glob:", _info_uri)
 					self.load_info_from_glob(_info_uri)
+					
+					if self.used_tool == 'writer':
+						print("Load header from glob:", _header_uri)
+						self._load_header_from_blob(_header_uri)
+						print("Load db from glob:", _db_uri)
+						self.load_db_from_glob(_db_uri)
+						print('Load db from bucket done')	
+
+					else:
+						self.init_db_data()
 				else:
 					self.init_db_data()
+				print('Load data from bucket done')	
 			else:
 				print('Init blank dict')
 				self.init_db_data()
@@ -1557,7 +1478,7 @@ class Translator:
 				print('[Error] prepare_db_data:', e)
 
 		
-			#self.dictionary = []
+			self.dictionary = []
 			#self.header = []
 
 		if self.proactive_memory_translate:
@@ -1818,7 +1739,10 @@ class Translator:
 		new_tm_size = len(self.temporary_tm)
 		print('Size of temporary TM: ', new_tm_size)
 		if self.glossary_id == "":
-			_glossary = 'Default' 
+			_glossary = 'Default'
+		else:
+			_glossary = self.glossary_id
+
 		if len(self.temporary_tm) > 0:
 			while True:
 				try:
@@ -1844,8 +1768,8 @@ class Translator:
 						for Pair in all_tm:
 							new_row = {'en': Pair[1], 'ko':Pair[0]}
 						self.translation_memory = self.translation_memory.append(new_row, ignore_index=True)
-				except:
-					print('Fail to load tm')
+				except Exception as e:
+					print('Fail to load tm:', e)
 					all_tm = {}
 				if self.translation_memory.empty:
 					self.init_translation_memory()
@@ -1873,14 +1797,19 @@ class Translator:
 		return new_tm_size
 	
 	def export_current_translation_memory(self):
-	
+		
+		if self.glossary_id == "":
+			_glossary = 'Default'
+		else:
+			_glossary = self.glossary_id
+		
 		while True:
 			try:
 				with open(self.tm_path, 'rb') as pickle_load:
 					all_tm = pickle.load(pickle_load)
 				if isinstance(all_tm, dict):
 					# TM format v4
-					if self.glossary_id in all_tm:
+					if _glossary in all_tm:
 						print('TM v4 format')
 					elif 'en' in all_tm:
 						all_tm = {}
@@ -1897,7 +1826,7 @@ class Translator:
 				save_data = self.translation_memory.append(Pair, ignore_index=True)
 			
 			save_data = save_data.reindex()
-			all_tm[self.glossary_id] = save_data
+			all_tm[_glossary] = save_data
 			
 			try:
 				with open(self.tm_path, 'wb') as pickle_file:
@@ -1914,8 +1843,13 @@ class Translator:
 		
 	def create_new_tm_file(self, new_tm_file):
 	
+		if self.glossary_id == "":
+			_glossary = 'Default'
+		else:
+			_glossary = self.glossary_id
+
 		all_tm = {}
-		all_tm[self.glossary_id] = None
+		all_tm[_glossary] = None
 		try:
 			with open(new_tm_file, 'wb') as pickle_file:
 				print("Updating pickle file....", new_tm_file)
