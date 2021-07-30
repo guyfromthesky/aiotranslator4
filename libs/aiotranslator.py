@@ -34,6 +34,8 @@ import pickle
 from datetime import datetime
 import csv
 
+from pandas.core.frame import DataFrame
+
 from libs.version import get_version
 
 Tool = "translator"
@@ -837,7 +839,7 @@ class Translator:
 	
 	def activated_translator(self, source_text):
 		
-		print('Active translator', 'from:', self.from_language, 'to:', self.to_language)
+		#print('Active translator', 'from:', self.from_language, 'to:', self.to_language)
 		
 		count = 0
 		try:
@@ -916,6 +918,7 @@ class Translator:
 		return False
 
 	def correct_language_code(self, language_code):
+		"""Correct support language from tool to google standard"""
 		if language_code == 'jp':
 			return 'ja'
 		if language_code == 'cn':
@@ -1881,7 +1884,7 @@ class Translator:
 	def memory_translate(self, source_text):
 		# Use the previous translate result to speed up the translation progress
 		source_text = source_text.lower()
-		if self.translation_memory != None:
+		if isinstance(self.memory_translate, DataFrame):
 			try:
 				if len(self.translation_memory) > 0:
 					#translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
