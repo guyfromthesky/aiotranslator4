@@ -6,9 +6,16 @@ class LanguageTool:
 	def __init__(self, language = 'en'):
 		if language == 'en':
 			self.language_tool = language_tool_python.LanguageTool('en-US')
+		else:
+			self.language_tool = language_tool_python.LanguageTool(language)	
 
 	def sentence_split(self, paragraph):
-		sentences = nltk.sent_tokenize(paragraph)
+		try:
+			sentences = nltk.sent_tokenize(paragraph)
+		except Exception as e:
+			print("Error while splitting sentence:", e)
+			return paragraph
+
 		return sentences
 
 	def correct_list(self, sentence_list):

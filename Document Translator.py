@@ -56,7 +56,7 @@ import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4105
+rev = 4106
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -1353,88 +1353,97 @@ def function_create_csv_db(status_queue, result_queue, db_path):
 def function_compare_db(status_queue, result_queue, MyTranslator, glossary_id, address):
 	print('Compare DB')
 	print(locals())
-	new_csv_path = address['db']
-	sourcename, ext = os.path.splitext(new_csv_path)
-	old_csv_db = sourcename + '_old' + ext
 	try:
-		MyTranslator.download_db_to_file(glossary_id, old_csv_db)
-		status_queue.put('Loading OLD DB file.')
-	except:
-		status_queue.put('Fail to load OLD DB file.')	
-	
-	if not isfile(old_csv_db):
+		new_csv_path = address['db']
+		sourcename, ext = os.path.splitext(new_csv_path)
+		old_csv_db = sourcename + '_old' + ext
+		try:
+			MyTranslator.download_db_to_file(glossary_id, old_csv_db)
+			status_queue.put('Loading OLD DB file.')
+		except:
+			status_queue.put('Fail to load OLD DB file.')	
+		
+		if not isfile(old_csv_db):
+			result = {
+				'dropped': 0,
+				'added': 0,
+				'changed': 0,
+				'path': address
+			}
+			status_queue.put('OLD DB file is not existed.')
+			result_queue.put(result)
+			return
+		old_db = pd.read_csv(old_csv_db, usecols = ['en', 'ko', 'vi', 'ja', 'zh-TW'])
+		new_db = pd.read_csv(new_csv_path, usecols = ['en', 'ko', 'vi', 'ja', 'zh-TW'])
+		old_db['version'] = "old"
+		new_db['version'] = "new"	
+		
+		old_cols = old_db.columns.tolist()
+		Old_Index_ID = old_cols[1]
+		#new_cols = new_db.columns.tolist()
+
+		old_accts_all = set(old_db[Old_Index_ID])
+		
+		new_accts_all = set(new_db[Old_Index_ID])
+
+		dropped_accts = old_accts_all - new_accts_all
+		added_accts = new_accts_all - old_accts_all
+
+		all_data = pd.concat([old_db,new_db], ignore_index=True)
+		changes = all_data.drop_duplicates(subset=None, keep= 'last')
+		dupe_accts = changes[changes[Old_Index_ID].duplicated() == True][Old_Index_ID].tolist()
+		dupes = changes[changes[Old_Index_ID].isin(dupe_accts)]
+		
+		change_new = dupes[(dupes["version"] == "new")]
+		change_old = dupes[(dupes["version"] == "old")]
+		change_new = change_new.drop(['version'], axis=1)
+		change_old = change_old.drop(['version'], axis=1)
+
+		change_new.set_index(Old_Index_ID, inplace=True)
+		change_new = change_new.fillna("#NA")
+
+		change_old.set_index(Old_Index_ID, inplace=True)
+		change_old = change_old.fillna("#NA")
+		
+		# Combine all the changes together
+		try:
+				
+			df_all_changes = pd.concat([change_old, change_new],
+										axis='columns',
+										keys=['old', 'new'],
+										join='outer')
+			df_all_changes = df_all_changes.swaplevel(axis='columns')[change_new.columns[0:]]
+			#df_all_changes.fillna("#NA")
+			
+			df_changed = df_all_changes.groupby(level=0, axis=1).apply(lambda frame: frame.apply(report_diff, axis=1))
+			#create a list of text columns (int columns do not have '{} ---> {}')
+			df_changed = df_changed.reset_index()
+			
+			df_changed['has_change'] = df_changed.apply(has_change, axis=1)
+			#df_changed.tail()
+			diff = df_changed[(df_changed.has_change == 'Y')]
+			
+			
+			diff = diff.reindex(columns=Old_Index_ID)
+		except:
+			diff = []
+
+
 		result = {
-			'dropped': 0,
-			'added': 0,
-			'changed': 0,
+			'dropped': len(dropped_accts),
+			'added': len(added_accts),
+			'changed': len(diff),
 			'path': address
 		}
-		status_queue.put('OLD DB file is not existed.')
-		result_queue.put(result)
-		return
-	old_db = pd.read_csv(old_csv_db)
-	new_db = pd.read_csv(new_csv_path)
-	old_db['version'] = "old"
-	new_db['version'] = "new"	
-	
-	old_cols = old_db.columns.tolist()
-	Old_Index_ID = old_cols[1]
-	#new_cols = new_db.columns.tolist()
+	except Exception as e:
+		result = {
+				'dropped': 0,
+				'added': 0,
+				'changed': 0,
+				'path': address
+			}
+		status_queue.put("Error when compare DB: " + str(e))
 
-	old_accts_all = set(old_db[Old_Index_ID])
-	
-	new_accts_all = set(new_db[Old_Index_ID])
-
-	dropped_accts = old_accts_all - new_accts_all
-	added_accts = new_accts_all - old_accts_all
-
-	all_data = pd.concat([old_db,new_db], ignore_index=True)
-	changes = all_data.drop_duplicates(subset=None, keep= 'last')
-	dupe_accts = changes[changes[Old_Index_ID].duplicated() == True][Old_Index_ID].tolist()
-	dupes = changes[changes[Old_Index_ID].isin(dupe_accts)]
-	
-	change_new = dupes[(dupes["version"] == "new")]
-	change_old = dupes[(dupes["version"] == "old")]
-	change_new = change_new.drop(['version'], axis=1)
-	change_old = change_old.drop(['version'], axis=1)
-
-	change_new.set_index(Old_Index_ID, inplace=True)
-	change_new = change_new.fillna("#NA")
-
-	change_old.set_index(Old_Index_ID, inplace=True)
-	change_old = change_old.fillna("#NA")
-	
-	# Combine all the changes together
-	try:
-			
-		df_all_changes = pd.concat([change_old, change_new],
-									axis='columns',
-									keys=['old', 'new'],
-									join='outer')
-		df_all_changes = df_all_changes.swaplevel(axis='columns')[change_new.columns[0:]]
-		#df_all_changes.fillna("#NA")
-		
-		df_changed = df_all_changes.groupby(level=0, axis=1).apply(lambda frame: frame.apply(report_diff, axis=1))
-		#create a list of text columns (int columns do not have '{} ---> {}')
-		df_changed = df_changed.reset_index()
-		
-		df_changed['has_change'] = df_changed.apply(has_change, axis=1)
-		#df_changed.tail()
-		diff = df_changed[(df_changed.has_change == 'Y')]
-		
-		
-		diff = diff.reindex(columns=Old_Index_ID)
-	except:
-		diff = []
-
-
-	result = {
-		'dropped': len(dropped_accts),
-		'added': len(added_accts),
-		'changed': len(diff),
-		'path': address
-	}
-	
 	result_queue.put(result)
 
 def has_change(row):
@@ -1528,6 +1537,7 @@ def get_datestamp():
 # db_object['db'] = @dict
 
 def function_create_db_data(DB_Path):
+	print('Create DB from:', DB_Path)
 	from openpyxl import load_workbook
 	import csv
 
@@ -1546,13 +1556,10 @@ def function_create_db_data(DB_Path):
 	if DatabasePath != None:
 		
 		if (os.path.isfile(DatabasePath)):
+			print('Load DB from file: ', DatabasePath)
 			xlsx = load_workbook(DatabasePath)
 			DictList = []
 			#Dict = []
-			
-			db_object = {}
-			db_object['info'] = {}
-			db_object['db'] = {}
 			with open(output_db_csv, 'w', newline='', encoding='utf_8_sig') as csv_db, open(output_header_csv, 'w', newline='', encoding='utf_8_sig') as csv_header, open(output_info_csv, 'w', newline='', encoding='utf_8_sig') as csv_info:
 				db_writer = csv.writer(csv_db, delimiter=',')
 				db_writer.writerow(['','ko', 'en', 'zh-TW', 'ja', 'vi', 'description'])
@@ -1562,10 +1569,10 @@ def function_create_db_data(DB_Path):
 				
 				info_writer = csv.writer(csv_info, delimiter=',')
 				
-
+				print('Looking for DB in each sheet:')
 				for sheet in xlsx:
 					sheetname = sheet.title.lower()
-					#print('Current sheet:', sheetname)
+					print('Current sheet:', sheetname)
 					if sheetname not in SpecialSheets:
 						# init loop
 						list_col = {}
@@ -1579,8 +1586,6 @@ def function_create_db_data(DB_Path):
 
 						database = None
 						ws = xlsx[sheet.title]
-						
-						db_object['db'][sheetname] = []
 
 						for row in ws.iter_rows():
 							language_count = 0
@@ -1631,16 +1636,16 @@ def function_create_db_data(DB_Path):
 								#db_object['db'][sheetname].append(db_entry)
 
 				
-				info_writer.writerow(['date', get_datestamp()])				
-				_db = pd.read_csv(output_db_csv)
-				_supported_language = []
-				for language in ['en', 'ko', 'vi', 'ja', 'zh-TW']:
-					if not _db[language].dropna().empty:
-						#info_writer.writerow(['language', language])
-						_supported_language.append(language)
-				_db = _db[['en', 'ko', 'vi', 'ja', 'zh-TW']]
-				_db = _db.drop_duplicates()
-				_db.to_csv(output_db_csv, encoding ='utf_8_sig' )
+				info_writer.writerow(['date', get_datestamp()])
+	_db = pd.read_csv(output_db_csv)
+	_supported_language = []
+	for language in ['en', 'ko', 'vi', 'ja', 'zh-TW']:
+		if not _db[language].dropna().empty:
+			#info_writer.writerow(['language', language])
+			_supported_language.append(language)
+	_db = _db[['en', 'ko', 'vi', 'ja', 'zh-TW']]
+	_db = _db.drop_duplicates()
+	_db.to_csv(output_db_csv, encoding ='utf_8_sig' )
 				
 
 	_address = {}
@@ -1648,7 +1653,7 @@ def function_create_db_data(DB_Path):
 	_address['header'] = output_header_csv
 	_address['info'] = output_info_csv
 	_address['language'] = _supported_language
-
+	print('Create CSV DB completed.')
 	return _address
 
 def basse64_encode(string_to_encode):
@@ -1748,7 +1753,7 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 				Result = str(e)
 				
 		elif ext in ['.xlsx', '.xlsm']:
-			Result = translate_workbook(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
+			#Result = translate_workbook(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			try:
 				Result = translate_workbook(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			except Exception as e:

@@ -100,6 +100,8 @@ class CustomText(Text):
 
 	def __init__(self, *args, **kwargs):
 		Text.__init__(self, *args, **kwargs)
+		Text.tag_configure(self, "red", background="red")
+		Text.tag_configure(self, "blue", background='deep sky blue', foreground='white')
 
 	def highlight_pattern(self, pattern, tag, start="1.0", end="end",
 						  regexp=False):

@@ -37,7 +37,7 @@ import csv
 from libs.version import get_version
 
 Tool = "translator"
-rev = 4110
+rev = 4113
 ver_num = get_version(rev)
 Translatorversion = Tool + " " + ver_num
 
@@ -757,90 +757,6 @@ class Translator:
 ######################################################################
 	# Translator main function.
 	# All the text will be passed into this function.
-	def translate_old(self, Input):
-		if self.to_language == self.from_language:
-			return Input
-		#print('Translate:', Input)
-		if isinstance(Input, list):
-			source_text = Input
-		elif isinstance(Input, str):
-			source_text = [Input]
-		else:
-			return False
-
-		#print('source_text', source_text)
-
-		raw_source = []
-		to_translate = []
-		to_translate_index = []
-		translation = []
-	
-		for text in source_text:
-			translation.append(text)
-
-		
-		for i in range(len(translation)):
-			text = str(translation[i])
-			
-			validation = self.ValidateSourceText(text)
-			#print('Details:', text, 'Result:', validation)
-			if validation == False:
-				continue
-			if validation == True:
-				try:
-					index_num = raw_source.index(text)
-					to_translate_index[index_num].append(i)
-				except Exception  as e:
-					#print('Exception: ', e)
-					if self.to_language in ['ko', 'cn', 'jp']:
-						raw_translate, translation_complete = self.korean_pre_translate(text)	
-						
-						
-					elif self.to_language in ['en', 'vi']:
-						raw_translate, translation_complete = self.english_pre_translate(text)	
-						
-					if translation_complete == True:
-						translation[i] = raw_translate
-					else:
-						raw_source.append(text)
-						to_translate.append(raw_translate)
-						to_translate_index.append([i])
-					#print('Append done')
-				#raw_source.append(text)
-				#to_translate.append(pre_translate)
-				#to_translate_index.append(i)
-			else:
-				#translated by memory
-				translation[i] = validation
-
-		#print('source_text', source_text)
-		#print('to_translate', to_translate)
-		#print('translation', translation)
-		if len(to_translate) > 0:
-			try:
-				translated = self.activated_translator(to_translate)
-			except Exception  as e:
-				print('error:', e)
-				translated = []
-		
-		else:
-			translated = []	
-
-		#print('translated', translated)
-
-		for i in range(len(translated)):
-			for index_number in to_translate_index[i]:
-				translation[index_number] = translated[i]
-			#translation[to_translate_index[i]] = translated[i]
-			if self.tm_update == True:
-				print('Append TM: ', translated[i], raw_source[i] )
-				self.generate_temporary_tm(str_translated = translated[i], str_input = raw_source[i])
-
-		if isinstance(Input, str):
-			return translation[0]
-		else:
-			return translation
-	
 	def translate(self, Input):
 		if self.to_language == self.from_language:
 			return Input
@@ -1094,12 +1010,32 @@ class Translator:
 			self.set_language_pair( self.correct_language_code(source_language), self.to_language)
 
 	def set_language_pair(self, source_language, target_language):
+		if self.from_language == source_language and self.to_language == target_language:
+			return
+		print('Set languag pair:', 'Source - ', source_language, 'Target -', target_language)
 		if source_language != target_language:
-			self.from_language = self.correct_language_code(source_language)
-			self.to_language = self.correct_language_code(target_language)
-			self.update_header_from_dataframe()
-			self.update_db_from_dataframe()
-			self.import_translation_memory()
+			self.from_language = source_language
+			self.to_language = target_language
+			
+			if self.used_tool == 'writer':
+				self.update_header_from_dataframe()
+				self.update_db_from_dataframe()
+			else:	
+				self.update_tm_from_dataframe()
+
+	def set_language_pair_only(self, source_language, target_language):
+		if self.from_language == source_language and self.to_language == target_language:
+			return
+		print('Set languag pair:', 'Source - ', source_language, 'Target -', target_language)
+		if source_language != target_language:
+			self.from_language = source_language
+			self.to_language = target_language
+			
+			if self.used_tool == 'writer':
+				self.update_header_from_dataframe()
+				self.update_db_from_dataframe()
+			else:	
+				self.update_tm_from_dataframe()			
 
 	def swap_language(self):
 		Temp = self.from_language
@@ -1224,26 +1160,22 @@ class Translator:
 		blob = bucket.get_blob(header_uri)
 		if blob != None:
 			try:
-				listdb = blob.download_as_text()
+				_download_path = self.config_path + '\\AIO Translator\\temp_header.csv'
+				blob.download_to_filename(_download_path)	
 			except Exception as e:
 				print('Fail to load blob:', e)
+				self.header = []	
 				return
-			_my_header = listdb.split('\r\n')
-			#print('_my_header', _my_header)
-			# Split row into list
-			split_db = lambda x: x.split(',')
-			list_header = list(map(split_db, _my_header))
-			# Remove the header since it's not nesessary
-			list_header.remove(list_header[0])
 
-			db_columns = self.supported_language + ['tag']
-			if len(list_header) > 0 and len(list_header[0]) > 1:
-				self.all_header = pd.DataFrame(columns=db_columns, data=list_header)
-				self.update_header_from_dataframe()
-			else:
-				self.init_db_data()
+			# Load DB as DataFrame
+			self.all_header = pd.read_csv(_download_path, usecols=self.supported_language)
+			try:
+				os.remove(_download_path)
+			except Exception as e:
+				print("Error when removing header:", _download_path)	
+			self.update_header_from_dataframe()
 		else:
-			self.init_db_data()
+			self.header = []	
 
 	def load_info_from_glob(self, file_uri= None, timeout=180,):
 	
@@ -1285,52 +1217,56 @@ class Translator:
 		bucket = cloud_client.get_bucket(self.bucket_id)
 
 		blob = bucket.get_blob(file_uri)
-	
-		try:
-			_download_path = self.config_path + '\\AIO Translator\\temp_db.csv'
-			blob.download_to_filename(_download_path)	
-		except Exception as e:
-			print('Fail to load blob:', e)
-			return
+		if blob != None:
+			try:
+				_download_path = self.config_path + '\\AIO Translator\\temp_db.csv'
+				blob.download_to_filename(_download_path)	
+			except Exception as e:
+				print('Fail to load blob:', e)
+				return
 
-		# Load DB as DataFrame
-		self.all_db = pd.read_csv(_download_path, usecols=self.glossary_language)
-		self.update_db_from_dataframe()
+			# Load DB as DataFrame
+			self.all_db = pd.read_csv(_download_path, usecols=self.glossary_language)
+			try:
+				os.remove(_download_path)
+			except Exception as e:
+				print("Error when removing header:", _download_path)
+			self.update_db_from_dataframe()
+		else:
+			self.dictionary = []	
 
 	# Filter DB and store in suitable variable
 	def update_header_from_dataframe(self):
-		if self.from_language not in self.all_header or self.to_language not in self.all_header:
-			self.init_db_data()
-			return
-		#print("prepare new DB: ", "Source language: ", self.from_language, 'Target language: ', self.to_language,)
-		# Drop N/A value
+		
 		if self.from_language != self.to_language:
-			all_db = self.all_header[~self.all_header[self.from_language].isin([''])][['tag', self.from_language, self.to_language]]
-			all_db = all_db[~all_db[self.to_language].isin([''])][['tag', self.from_language, self.to_language]]
-			#Create header list:
-			header = all_db[all_db["tag"] == 'header'][[self.from_language, self.to_language]]
-			header = header.drop_duplicates()
-			self.header = header.values.tolist()
-			self.header = self.sort_dictionary(self.header)
-			
+			if self.from_language in self.all_header and self.to_language in self.all_header:
+				#Create normal dict list:
+				print('Create Header list from Dataframe')
+				
+				header = self.all_header[[self.from_language, self.to_language]]
+				header = header.dropna(subset=[self.from_language])
+				header = header.dropna(subset=[self.to_language])
+				header = header.drop_duplicates()
+				self.header = header.values.tolist()
+			else:
+				self.header = []
 		else:
-			self.init_db_data()
-			#self.dictionary = []
+			self.header = []
 	
 	def update_db_from_dataframe(self):
 		print('Update DB from dataframe')
 		# Drop N/A value
 		if self.from_language != self.to_language:
-			#Create normal dict list:
-			dictionary = self.all_db[[self.from_language, self.to_language]]
-			#dictionary = dictionary[dictionary[self.from_language] != dictionary[self.to_language]]
-			dictionary = dictionary.drop_duplicates()
-			self.dictionary = dictionary[self.from_language].astype(str).values.tolist() + dictionary[self.to_language].astype(str).values.tolist()
-			#print('dict:', self.dictionary)
-			#self.dictionary = self.sort_dictionary(self.dictionary)
-			
+			if self.from_language in self.all_db and self.to_language in self.all_db:
+				#Create normal dict list:
+				print('Create DB list from Dataframe')
+				dictionary = self.all_db[[self.from_language, self.to_language]]
+				dictionary = dictionary.drop_duplicates()
+				self.dictionary = dictionary[self.from_language].astype(str).values.tolist()
+				#self.dictionary = dictionary[self.from_language].astype(str).values.tolist() + dictionary[self.to_language].astype(str).values.tolist()
+			else:
+				self.dictionary = []
 		else:
-			self.init_db_data()
 			self.dictionary = []
 
 
@@ -1440,7 +1376,7 @@ class Translator:
 					
 					print("Load info from glob:", _info_uri)
 					self.load_info_from_glob(_info_uri)
-					
+
 					if self.used_tool == 'writer':
 						print("Load header from glob:", _header_uri)
 						self._load_header_from_blob(_header_uri)
@@ -1668,8 +1604,8 @@ class Translator:
 		return
 
 	def init_translation_memory(self):
-		self.translation_memory = pd.DataFrame(columns=self.supported_language)
-		self.translation_memory_size = len(self.translation_memory)	
+		self.current_tm = pd.DataFrame(columns=self.supported_language)
+		self.translation_memory_size = len(self.current_tm)	
 
 	# Load TM detail from pickle file.
 	# The TM support all supported languages (en, ko, jp, cn, vi)
@@ -1692,17 +1628,17 @@ class Translator:
 					# TM format v4
 					if self.glossary_id in all_tm:
 						print('TM v4')
-						self.translation_memory = all_tm[self.glossary_id]
+						self.current_tm = all_tm[self.glossary_id]
 
 					# TM format v3
 					elif 'EN' in all_tm:
 						# Please note that from V3 and below, the TM only have 2 languages.
 						print('TM v3')		
-
-						self.translation_memory['en'] = all_tm['EN']
-						self.translation_memory['en'] = self.translation_memory['en'].str.lower()
-						self.translation_memory['ko'] = all_tm['KO']
-						self.translation_memory['ko'] = self.translation_memory['ko'].str.lower()
+						print(all_tm.keys())
+						self.current_tm['en'] = all_tm['EN']
+						self.current_tm['en'] = self.current_tm['en'].str.lower()
+						self.current_tm['ko'] = all_tm['KO']
+						self.current_tm['ko'] = self.current_tm['ko'].str.lower()
 					else:
 						print('No TM for this ProjectID')
 
@@ -1712,7 +1648,7 @@ class Translator:
 					
 					for Pair in all_tm:
 						new_row = {'en': Pair[1], 'ko':Pair[0],}
-						self.translation_memory = self.translation_memory.append(new_row, ignore_index=True)
+						self.current_tm = self.current_tm.append(new_row, ignore_index=True)
 				else:
 					print('Current TM format:')
 					print(type(all_tm))		
@@ -1721,8 +1657,13 @@ class Translator:
 				print('Fail to load pickle file')
 				return
 
+		self.update_tm_from_dataframe()
+
+
+	def update_tm_from_dataframe(self):
+		print('Update TM from dataframe')
 		if self.from_language != self.to_language:
-			self.translation_memory = self.translation_memory.dropna(subset=[self.from_language])
+			self.translation_memory = self.current_tm.dropna(subset=[self.from_language])
 			self.translation_memory = self.translation_memory.dropna(subset=[self.to_language])
 			#self.translation_memory = self.translation_memory[~self.translation_memory[self.to_language].isin([pd.NA])][[self.from_language, self.to_language]]
 			self.translation_memory = self.translation_memory[[self.from_language, self.to_language]]
@@ -1730,7 +1671,6 @@ class Translator:
 		else:
 			self.init_translation_memory()
 
-		#print("TM: ", self.translation_memory)
 		self.translation_memory_size = len(self.translation_memory)	
 
 	# Update TM from temporary_tm to pickle file
@@ -1941,19 +1881,20 @@ class Translator:
 	def memory_translate(self, source_text):
 		# Use the previous translate result to speed up the translation progress
 		source_text = source_text.lower()
-		try:
-			if len(self.translation_memory) > 0:
-				#translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
-				translated = self.translation_memory.loc[self.translation_memory[self.from_language] == source_text]
-				#print('Mem translated:', translated)
-				if len(translated) > 0:
-					#print('TM translate', translated)
-					return translated.iloc[0][self.to_language]
+		if self.translation_memory != None:
+			try:
+				if len(self.translation_memory) > 0:
+					#translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
+					translated = self.translation_memory.loc[self.translation_memory[self.from_language] == source_text]
+					#print('Mem translated:', translated)
+					if len(translated) > 0:
+						#print('TM translate', translated)
+						return translated.iloc[0][self.to_language]
 
-		except Exception  as e:
-			print('Error message (TM):', e)
-			pass
-		
+			except Exception  as e:
+				print('Error message (TM):', e)
+				pass
+			
 		# new_row = {self.to_language: translated, self.from_language: Input}
 		# self.temporary_tm = self.temporary_tm.append(new_row)
 		
