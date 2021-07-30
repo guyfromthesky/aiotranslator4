@@ -18,7 +18,7 @@ from datetime import datetime
 #function difination
 import base64
 import pickle
-import unicodedata
+#import unicodedata
 
 #from urllib.parse import urlparse
 
@@ -56,7 +56,7 @@ import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4106
+rev = 4107
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -1568,6 +1568,7 @@ def function_create_db_data(DB_Path):
 				header_writer.writerow(['ko', 'en', 'cn', 'jp', 'vi', 'description'])
 				
 				info_writer = csv.writer(csv_info, delimiter=',')
+				info_writer.writerow(['date', get_datestamp()])
 				
 				print('Looking for DB in each sheet:')
 				for sheet in xlsx:
@@ -1612,8 +1613,11 @@ def function_create_db_data(DB_Path):
 									if list_col[language] != '':
 										
 										cell_adress = list_col[language] + str(i+1)
-										raw_cell_value = database[cell_adress].value
-										#print('raw_cell_value', raw_cell_value)
+										try:
+											raw_cell_value = str(database[cell_adress].value)
+										except:
+											raw_cell_value = None	
+
 										if raw_cell_value not in ['', None]:
 											valid = True
 											cell_value = raw_cell_value.replace('\r', '').replace('\n', '')	
@@ -1636,7 +1640,6 @@ def function_create_db_data(DB_Path):
 								#db_object['db'][sheetname].append(db_entry)
 
 				
-				info_writer.writerow(['date', get_datestamp()])
 	_db = pd.read_csv(output_db_csv)
 	_supported_language = []
 	for language in ['en', 'ko', 'vi', 'ja', 'zh-TW']:

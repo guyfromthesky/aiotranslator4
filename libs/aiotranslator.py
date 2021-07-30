@@ -1013,6 +1013,7 @@ class Translator:
 			self.set_language_pair( self.correct_language_code(source_language), self.to_language)
 
 	def set_language_pair(self, source_language, target_language):
+		'''Set source and target language for the translator'''
 		if self.from_language == source_language and self.to_language == target_language:
 			return
 		print('Set languag pair:', 'Source - ', source_language, 'Target -', target_language)

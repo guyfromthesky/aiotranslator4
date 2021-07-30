@@ -17,8 +17,10 @@ from pyperclip import copy
 #from tkinter import *
 #from tkinter.ttk import *
 from tkinter.ttk import Entry, Label, Style
-from tkinter.ttk import Checkbutton, Button, OptionMenu, Notebook
+from tkinter.ttk import Checkbutton, OptionMenu, Notebook
 from tkinter import Tk, Frame, Toplevel
+from tkinter import Button
+
 # Widget type
 from tkinter import Menu, filedialog, messagebox
 from tkinter import Text
@@ -30,6 +32,7 @@ from tkinter import WORD
 from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, BOTTOM
 # Config state
 from tkinter import DISABLED, NORMAL
+
 
 #from tkinter import filedialog
 #from tkinter import messagebox
