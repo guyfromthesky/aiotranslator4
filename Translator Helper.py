@@ -781,10 +781,13 @@ class MyTranslatorHelper(Frame):
 		target_language = self.language_id_list[self.language_list.index(self.simple_target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.simple_source_language.get())]
 
+		if target_language == source_language:
+			messagebox.showinfo('Error', 'Source and Primary Target language is the same.')	
+			return
 		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
 			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
 			print('Update language pair from: ', source_language, ' to ',  target_language)		
-	
+
 		self.get_source_text()
 		#print('Source:', self.source_text)
 		try:
@@ -871,6 +874,16 @@ class MyTranslatorHelper(Frame):
 		target_language = self.language_id_list[self.language_list.index(self.simple_target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.simple_source_language.get())]
 
+		if source_language == target_language:
+			messagebox.showinfo('Error', 'Source and Primary Target language is the same.')	
+			return
+		if source_language == primary_target_language:
+			messagebox.showinfo('Error', 'Source and Secondary Target language is the same.')	
+			return
+		if target_language == primary_target_language:
+			messagebox.showinfo('Error', 'Primary and Secondary Target language is the same.')	
+			return
+		
 		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
 			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
 			print('Update language pair from: ', source_language, ' to ',  target_language)
