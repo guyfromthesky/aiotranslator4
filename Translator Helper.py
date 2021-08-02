@@ -54,7 +54,7 @@ from libs.aioconfigmanager import ConfigLoader
 
 from libs.cloudconfig import CloudConfigLoader
 
-from libs.grammarcheck import LanguageTool
+#from libs.grammarcheck import LanguageTool
 
 from libs.version import get_version
 from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText
@@ -66,7 +66,7 @@ import json
 
 tool_display_name = "Translator Helper"
 tool_name = 'writer'
-REV = 4106
+REV = 4108
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -255,9 +255,9 @@ class MyTranslatorHelper(Frame):
 	def Generate_BugWriter_UI(self, Tab):
 
 		Row=1
-		Label(Tab, text= 'Source', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
-		Label(Tab, text= 'Main Target', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 2, padx=5, pady=5, stick=E+W)
-		Label(Tab, text= 'Primary Target', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 3, padx=5, pady=5, stick=E+W)
+		Label(Tab, text= self.LanguagePack.Label['SourceLanguage'], width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
+		Label(Tab, text= self.LanguagePack.Label['MainLanguage'], width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 2, padx=5, pady=5, stick=E+W)
+		Label(Tab, text= self.LanguagePack.Label['SecondaryLanguage'], width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 3, padx=5, pady=5, stick=E+W)
 		Label(Tab, textvariable=self.Notice).grid(row=Row, column=4, columnspan=7, padx=5, pady=5, stick=E)
 
 		Row += 1
@@ -317,12 +317,9 @@ class MyTranslatorHelper(Frame):
 		Checkbutton(Tab, text=self.LanguagePack.Label['TestInfo'], variable = self.SkipTestInfo, command = self.SaveSetting).grid(row=Row, column=8, padx=5, pady=5, stick=W)
 		#self.SkipTestInfo.set(1)
 
-		Button(Tab, text=self.LanguagePack.Button['Reset'], width=10, command= self.ResetTestReport).grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
+		Button(Tab, text=self.LanguagePack.Button['Reset'], width=10, command= self.ResetTestReport).grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 
 
-
-		self.GetReportBtn = Button(Tab, text=self.LanguagePack.Button['GetReport'], width=10, command= self.generate_report, state=DISABLED)
-		self.GetReportBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 		Row+=1
 		Label(Tab, text=self.LanguagePack.Label['Client']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
 
@@ -357,14 +354,21 @@ class MyTranslatorHelper(Frame):
 		
 		Row+=1
 		Label(Tab, width=10, text=self.LanguagePack.Label['Steps']).grid(row=Row, column=1, columnspan=2, padx=0, pady=0, stick=W)
+
+
 		Label(Tab, width=10, text=self.LanguagePack.Label['Expected']).grid(row=Row, column=6, columnspan=2, padx=0, pady=0, stick=W)
 		#Button(Tab, text=self.LanguagePack.Button['Load'], width=10, command= self._load_report).grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
 		#self.grammar_check = Button(Tab, text="Grammar Check", width=10, command= self.analyze_grammar)
 		#self.grammar_check.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
 
-		self.db_highlight = Button(Tab, text="DB Highlight", width=10, command= self.analyze_terminology)
-		self.db_highlight.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
-		
+		#self.db_correction = Button(Tab, text="DB Falt Alarm", width=10	, command= self.analyze_fault_terminology, state=DISABLED)
+		#self.db_correction.grid(row=Row, column=8, padx=5, pady=5, stick=W+E)
+
+		self.db_highlight = Button(Tab, text="DB Highlight", width=10, command= self.analyze_terminology, state=DISABLED)
+		self.db_highlight.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)	
+
+		self.GetReportBtn = Button(Tab, text=self.LanguagePack.Button['GetReport'], width=10, command= self.generate_report, state=DISABLED)
+		self.GetReportBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 		
 
 		Row+=1
@@ -396,7 +400,7 @@ class MyTranslatorHelper(Frame):
 		
 		Row +=self.ROW_SIZE
 
-		Label(Tab, text= 'Source', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
+		Label(Tab, text= self.LanguagePack.Label['SourceLanguage'], width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
 		
 		self.simple_source_language = StringVar()
 		self.simple_source_language_select = OptionMenu(Tab, self.simple_source_language, *self.language_list, command = self.set_simple_language)
@@ -415,7 +419,7 @@ class MyTranslatorHelper(Frame):
 
 		Row +=1
 
-		Label(Tab, text= 'Main Target', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
+		Label(Tab, text= self.LanguagePack.Label['MainLanguage'], width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
 		
 		self.simple_target_language = StringVar()
 		self.simple_target_language_select = OptionMenu(Tab, self.simple_target_language, *self.language_list, command = self.set_simple_language)
@@ -423,7 +427,7 @@ class MyTranslatorHelper(Frame):
 		self.simple_target_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
 		self.simple_target_language.set('English')		
 		
-		Label(Tab, text= 'Primary Target', width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 3, padx=5, pady=5, stick=E+W)
+		Label(Tab, text= self.LanguagePack.Label['SecondaryLanguage'], width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 3, padx=5, pady=5, stick=E+W)
 		
 		secondary_language_list = self.language_list + ['']
 
@@ -436,8 +440,8 @@ class MyTranslatorHelper(Frame):
 		Button(Tab, text= 'Trilingual Copy', width = self.BUTTON_SIZE, command= self.btn_trilingual).grid(row = Row, column=8, padx=5, pady=5)
 		
 		Button(Tab, text=self.LanguagePack.Button['Bilingual'], width = self.BUTTON_SIZE, command= self.btn_bilingual).grid(row = Row, column=9, padx=5, pady=5, sticky=E)
-		self.dual_translate = Button(Tab, text= 'Dual Translate', width = self.BUTTON_SIZE, command= self.dual_translate, state=DISABLED)
-		self.dual_translate.grid(row = Row, column=10, padx=0, pady=5, sticky=E)
+		self.dual_translate_btn = Button(Tab, text= 'Dual Translate', width = self.BUTTON_SIZE, command= self.dual_translate, state=DISABLED)
+		self.dual_translate_btn.grid(row = Row, column=10, padx=0, pady=5, sticky=E)
 		#self.Translate_bilingual_Btn = Button(Tab, text=self.LanguagePack.Button['TranslateAndBilingual'], width = self.BUTTON_SIZE, command= self.BtnTranslateAndBilingual)
 		#self.Translate_bilingual_Btn.grid(row = Row, column=10, padx=5, pady=5, sticky=E)
 
@@ -458,6 +462,7 @@ class MyTranslatorHelper(Frame):
 		self.TextLicensePath = Entry(Tab,width = 150, state="readonly", textvariable=self.LicensePath)
 		self.TextLicensePath.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=W+E)
 		Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path).grid(row=Row, column=10, padx=5, pady=5, sticky=E)
+
 
 	def Btn_Select_License_Path(self):
 		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectDB'],filetypes = (("JSON files","*.json" ), ), )	
@@ -667,7 +672,7 @@ class MyTranslatorHelper(Frame):
 
 
 	def set_simple_language(self, event):
-
+		print(event)
 		simple_target_language_index = self.language_list.index(self.simple_target_language.get())
 		simple_target_language = self.language_id_list[simple_target_language_index]
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'target_lang', simple_target_language_index)
@@ -776,10 +781,13 @@ class MyTranslatorHelper(Frame):
 		target_language = self.language_id_list[self.language_list.index(self.simple_target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.simple_source_language.get())]
 
+		if target_language == source_language:
+			messagebox.showinfo('Error', 'Source and Primary Target language is the same.')	
+			return
 		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
 			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
 			print('Update language pair from: ', source_language, ' to ',  target_language)		
-	
+
 		self.get_source_text()
 		#print('Source:', self.source_text)
 		try:
@@ -796,19 +804,38 @@ class MyTranslatorHelper(Frame):
 		
 		self.p3 = Process(target=SimpleTranslate, args=(self.return_text, self.MyTranslator, source_text,))
 		self.p3.start()
-		self.after(DELAY, self.GetCompleteStatus)
+		self.after(DELAY, self.GetSimpleTranslateStatus)
 
-	def GetCompleteStatus(self):
+	def GetSimpleTranslateStatus(self):
 		if (self.p3.is_alive()):
-			self.after(DELAY, self.GetCompleteStatus)
+			self.after(DELAY, self.GetSimpleTranslateStatus)
 		else:
 			try:
 				Translated = self.return_text.get()
 				self.TargetText.delete("1.0", END)
 				if Translated[0] != False:
-					self.main_translation = "\n".join(Translated)
+					_index = 0
+					_translation = []
+					try:
+						_temp_source = 	self.source_text.split('\n')
+					except:
+						pass
+	
+					try:
+						for text in _temp_source:
+							if text != "":
+								_translation.append(Translated[_index])
+								_index += 1
+							else:
+								_translation.append(text)	
+					except:
+						pass	
+					self.main_translation = "\n".join(_translation)
 					self.main_translation = self.main_translation.replace('\r\n', '\n')
 					self.TargetText.insert("end", self.main_translation)
+					
+					
+					
 					#for pair in self.MyTranslator.Dictionary:
 					#	EN = pair[1]
 					'''
@@ -840,13 +867,23 @@ class MyTranslatorHelper(Frame):
 	
 		primary_target_language = self.language_id_list[self.language_list.index(self.simple_secondary_target_language.get())]
 		if primary_target_language == "":
-			messagebox.showinfo('Warning', 'Primary target language is EMPTY.\nIf you don\'t need to use the primary target language,\nplease use Translate button to save the API usage.')	
+			messagebox.showinfo('Warning', 'Secondary target language is EMPTY.\nIf you don\'t need to use the secondary target language,\nplease use Translate button to save the API usage.')	
 			self.single_translate()
 			return
 		
 		target_language = self.language_id_list[self.language_list.index(self.simple_target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.simple_source_language.get())]
 
+		if source_language == target_language:
+			messagebox.showinfo('Error', 'Source and Primary Target language is the same.')	
+			return
+		if source_language == primary_target_language:
+			messagebox.showinfo('Error', 'Source and Secondary Target language is the same.')	
+			return
+		if target_language == primary_target_language:
+			messagebox.showinfo('Error', 'Primary and Secondary Target language is the same.')	
+			return
+		
 		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
 			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
 			print('Update language pair from: ', source_language, ' to ',  target_language)
@@ -868,29 +905,50 @@ class MyTranslatorHelper(Frame):
 		except:
 			pass
 		
-		self.dual_translate = Process(target=dual_translate, args=(self.return_text, self.MyTranslator, primary_target_language, source_text,))
-		self.dual_translate.start()
+		self.dual_translate_process = Process(target=dual_translate, args=(self.return_text, self.MyTranslator, primary_target_language, source_text,))
+		self.dual_translate_process.start()
 		self.after(DELAY, self.get_dual_translate_result)
 
 	def get_dual_translate_result(self):
-		if (self.dual_translate.is_alive()):
+		if (self.dual_translate_process.is_alive()):
 			self.after(DELAY, self.get_dual_translate_result)
 		else:
 			try:
 				Translated = self.return_text.get()
 				self.TargetText.delete("1.0", END)
 				if isinstance(Translated, dict):
-					main = Translated['main']
-					primary = Translated['primary']
+					main_translation = Translated['main']
+					secondary_translation = Translated['primary']
 
-					self.main_translation = "\n".join(main)
+
+					_index = 0
+					_main_translation = []
+					_secondary_translation = []
+					try:
+						_temp_source = 	self.source_text.split('\n')
+					except:
+						pass
+	
+					try:
+						for text in _temp_source:
+							if text != "":
+								_main_translation.append(main_translation[_index])
+								_secondary_translation.append(secondary_translation[_index])
+								_index += 1
+							else:
+								_main_translation.append(text)
+								_secondary_translation.append(text)
+					except:
+						pass	
+
+					self.main_translation = "\n".join(_main_translation)
 					self.main_translation = self.main_translation.replace('\r\n', '\n')
 					self.TargetText.insert("end", "[" + self.simple_target_language.get() + "]\n")
 					self.TargetText.insert("end", self.main_translation)
 					self.TargetText.insert("end", "\n" + self.Separator + "\n")
 					
 					
-					self.primary_translation = "\n".join(primary)
+					self.primary_translation = "\n".join(_secondary_translation)
 					self.primary_translation = self.primary_translation.replace('\r\n', '\n')
 
 					self.TargetText.insert("end", "[" + self.simple_secondary_target_language.get() + "]\n")
@@ -910,19 +968,19 @@ class MyTranslatorHelper(Frame):
 					#Show = "\n".join(Translated)
 					#self.TargetText.insert("end", 'Fail to translate')
 					self.Notice.set(self.LanguagePack.ToolTips['TranslateFail'])	
-				self.dual_translate.join()
+				self.dual_translate_process.join()
 			except queue.Empty:
 				pass			
 
 	#Execute function
 	def BtnCopy(self):
-		Translated = self.TargetText.get("1.0", END)
-		Translated = Translated.replace('\r', '')
-		copy(Translated)
+
+		self.get_source_text()
+		
+		#Translated = self.TargetText.get("1.0", END)
+		#Translated = Translated.replace('\r', '')
+		copy(self.main_translation)
 		self.Notice.set(self.LanguagePack.ToolTips['Copied'])
-		return
-
-
 
 	def btn_bilingual(self):
 
@@ -937,6 +995,11 @@ class MyTranslatorHelper(Frame):
 
 	def btn_trilingual(self):
 		
+		primary_target_language = self.language_id_list[self.language_list.index(self.simple_secondary_target_language.get())]
+		if primary_target_language == "":
+			messagebox.showinfo('Warning', 'Secondary target language is EMPTY.\nPlease select the secondary target language or use Bilingual Copy instead.')	
+			self.btn_bilingual()
+			return
 		self.get_source_text()
 
 		trilingual = self.main_translation + "\n"	
@@ -1008,19 +1071,16 @@ class MyTranslatorHelper(Frame):
 		source_language = self.language_id_list[source_language_index]
 
 	def Swap(self):
-		'''
+		
 		SourceText = self.SourceText.get("1.0", END)
-		print(SourceText.encode('utf-8'))
-
 		Translated = self.TargetText.get("1.0", END)
-		print(Translated.encode('utf-8'))
 
 		self.SourceText.delete("1.0", END)
 		self.TargetText.delete("1.0", END)
 
 		self.TargetText.insert("end", SourceText)
 		self.SourceText.insert("end", Translated)
-		'''
+		
 		target_language_index = self.language_list.index(self.simple_target_language.get())
 		source_language_index = self.language_list.index(self.simple_source_language.get())
 
@@ -1042,7 +1102,7 @@ class MyTranslatorHelper(Frame):
 		self.GetTitleBtn.configure(state=DISABLED)
 		self.GetReportBtn.configure(state=DISABLED)
 		self.TranslateBtn.configure(state=DISABLED)
-		self.dual_translate.configure(state=DISABLED)
+		self.dual_translate_btn.configure(state=DISABLED)
 		#self.RenewTranslator.configure(state=DISABLED)
 		#self.RenewTranslatorMain.configure(state=DISABLED)
 		self.bottom_panel.RenewTranslatorMain.configure(state=DISABLED)
@@ -1062,11 +1122,13 @@ class MyTranslatorHelper(Frame):
 
 		self.db_highlight.configure(state=DISABLED)
 
+		#self.db_correction.configure(state=DISABLED)
+
 	def enable_btn(self):
 		self.GetTitleBtn.configure(state=NORMAL)
 		self.GetReportBtn.configure(state=NORMAL)
 		self.TranslateBtn.configure(state=NORMAL)
-		self.dual_translate.configure(state=NORMAL)
+		self.dual_translate_btn.configure(state=NORMAL)
 		#self.RenewTranslator.configure(state=NORMAL)
 		#self.RenewTranslatorMain.configure(state=NORMAL)
 		self.bottom_panel.RenewTranslatorMain.configure(state=NORMAL)
@@ -1083,7 +1145,10 @@ class MyTranslatorHelper(Frame):
 
 		#self.Translate_bilingual_Btn.configure(state=NORMAL)
 		self.TranslateBtn.configure(state=NORMAL)
+
 		self.db_highlight.configure(state=NORMAL)
+		#self.db_correction.configure(state=NORMAL)
+
 
 	def RenewMyTranslator(self):
 		
@@ -1138,11 +1203,22 @@ class MyTranslatorHelper(Frame):
 	def analyze_terminology(self):
 		for term in self.MyTranslator.dictionary:
 			if term not in [' ']:
-				self.TextTestReport.highlight_pattern(term, 'blue')
-				self.TextTitle.highlight_pattern(term, 'blue')
-				self.TextReproduceSteps.highlight_pattern(term, 'blue')
-				self.TextShouldBe.highlight_pattern(term, 'blue')
+				self.TextTestReport.highlight_fault_pattern(term, 'blue')
+				self.TextTitle.highlight_fault_pattern(term, 'blue')
+				self.TextReproduceSteps.highlight_fault_pattern(term, 'blue')
+				self.TextShouldBe.highlight_fault_pattern(term, 'blue')
+
 	
+	
+	def analyze_fault_terminology(self):
+		for term in self.MyTranslator.dictionary:
+			if term not in [' ']:
+				self.TextTestReport.highlight_fault_pattern(term, 'red')
+				self.TextTitle.highlight_fault_pattern(term, 'red')
+				self.TextReproduceSteps.highlight_fault_pattern(term, 'red')
+				self.TextShouldBe.highlight_fault_pattern(term, 'red')
+				
+
 	def analyze_grammar(self):
 		self.confirm_report_grammar()
 		
@@ -1494,6 +1570,11 @@ class MyTranslatorHelper(Frame):
 		#self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'use_simple_template', 'path', self.UseSimpleTemplate.get())
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'test_info_inable', self.SkipTestInfo.get())
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'use_simple_template', self.UseSimpleTemplate.get())
+
+
+
+
+
 # Class
 
 class ConfirmationPopup:
@@ -1583,7 +1664,8 @@ def dual_translate(queue, MyTranslator, second_target_language, text):
 		queue.put(Error)
 
 def correct_sentence(result_manager, sentence_list, language):
-	language_tool = LanguageTool(language)
+	language_tool = None
+	#language_tool = LanguageTool(language)
 	for paragraph in sentence_list:
 		sentences = []
 		print('paragraph', paragraph)

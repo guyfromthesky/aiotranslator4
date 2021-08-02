@@ -17,6 +17,7 @@ from google.cloud import translate_v3 as translator
 from google.cloud import storage
 from google.cloud import logging
 from google.cloud.translate_v3.types.translation_service import Glossary
+from numpy import NaN
 
 import pandas as pd
 #import numpy as np
@@ -221,11 +222,6 @@ class Translator:
 			return str(path).replace('\\', '//')
 		return path
 	
-	def init_temporary_tm(self):
-		if self.temporary_tm != None:
-			self.temporary_tm[:]
-		else:
-			self.temporary_tm = []	
 
 
 	def get_user_name(self):
@@ -1611,8 +1607,15 @@ class Translator:
 		self.current_tm = pd.DataFrame(columns=self.supported_language)
 		self.translation_memory_size = len(self.current_tm)	
 
+	def init_temporary_tm(self):
+		if self.temporary_tm != None:
+			self.temporary_tm[:]
+		else:
+			self.temporary_tm = []	
+
 	# Load TM detail from pickle file.
 	# The TM support all supported languages (en, ko, jp, cn, vi)
+	# self.current_tm[all supported language] -> self.translation_memory[from language, to language]
 	def import_translation_memory(self):
 		#print('Import TM from pickle file', str(self.tm_path))
 
@@ -1627,42 +1630,85 @@ class Translator:
 			try:
 				with open(self.tm_path, 'rb') as pickle_load:
 					all_tm = pickle.load(pickle_load)
+					print(all_tm.keys())
 					#print('all tm:', all_tm)
 				if isinstance(all_tm, dict):
 					# TM format v4
+					if 'EN' in all_tm:
+						self.import_for_first_time(all_tm)
 					if self.glossary_id in all_tm:
 						print('TM v4')
 						self.current_tm = all_tm[self.glossary_id]
-
-					# TM format v3
-					elif 'EN' in all_tm:
-						# Please note that from V3 and below, the TM only have 2 languages.
-						print('TM v3')		
-						print(all_tm.keys())
-						self.current_tm['en'] = all_tm['EN']
-						self.current_tm['en'] = self.current_tm['en'].str.lower()
-						self.current_tm['ko'] = all_tm['KO']
-						self.current_tm['ko'] = self.current_tm['ko'].str.lower()
 					else:
 						print('No TM for this ProjectID')
 
 				elif isinstance(all_tm, list):
 					print('TM v2')
 					# Consider drop support
+					self.import_for_first_time(all_tm)
 					
-					for Pair in all_tm:
-						new_row = {'en': Pair[1], 'ko':Pair[0],}
-						self.current_tm = self.current_tm.append(new_row, ignore_index=True)
 				else:
 					print('Current TM format:')
 					print(type(all_tm))		
+
 			except Exception  as e:
 				print("Error:", e)
 				print('Fail to load pickle file')
-				return
 
 		self.update_tm_from_dataframe()
 
+	def import_for_first_time(self, pickle_data):
+		print('Import TM for the first time')
+		if self.glossary_id == "":
+			_glossary = 'Default'
+		else:
+			_glossary = self.glossary_id
+		
+		print('Append TM to', _glossary)
+		self.init_translation_memory()
+		while True:
+			try:
+				if isinstance(pickle_data, dict):
+					if 'EN' in pickle_data:
+						print('TM v3 format')
+						
+						self.current_tm = pd.DataFrame({'en': pickle_data['EN'],'ko': pickle_data['KO']})
+						self.current_tm['cn'] = NaN
+						self.current_tm['jp'] = NaN
+						self.current_tm['vi'] = NaN
+					else:
+						print('Pickle data: ', type(pickle_data))
+				elif isinstance(pickle_data, list):
+					print('TM v2 format')	
+					self.current_tm = pd.DataFrame(columns=self.supported_language)
+					for Pair in pickle_data:
+						new_row = {'en': Pair[1], 'ko':Pair[0], 'cn': NaN, 'jp': NaN, 'vi': NaN}
+						
+						self.current_tm = self.current_tm.append(new_row, ignore_index=True)	
+				
+			except Exception as e:
+				print('Fail to load tm: ', e)
+			
+			pickle_data = {}
+			
+			print(type(self.current_tm))
+			#for Pair in self.temporary_tm:
+			#self.translation_memory = self.translation_memory.append(Pair, ignore_index=True)
+			
+			self.current_tm = self.current_tm.reindex()
+			pickle_data[_glossary] = self.current_tm
+			
+			try:
+				with open(self.tm_path, 'wb') as pickle_file:
+					print("Updating pickle file....", self.tm_path)
+					pickle.dump(pickle_data, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+
+				self.init_temporary_tm()
+				return
+
+			except Exception  as e:
+				print("Error:", e)
+				return
 
 	def update_tm_from_dataframe(self):
 		print('Update TM from dataframe')
@@ -1702,8 +1748,8 @@ class Translator:
 							print('TM v3 format')
 
 							self.init_translation_memory()
-
 							self.translation_memory = pd.DataFrame({'en': all_tm['en'],'ko': all_tm['ko']})
+							
 			
 					elif isinstance(all_tm, list):
 						print('TM v2 format')
@@ -1712,6 +1758,7 @@ class Translator:
 						for Pair in all_tm:
 							new_row = {'en': Pair[1], 'ko':Pair[0]}
 						self.translation_memory = self.translation_memory.append(new_row, ignore_index=True)
+					
 				except Exception as e:
 					print('Fail to load tm:', e)
 					all_tm = {}
@@ -1741,12 +1788,14 @@ class Translator:
 		return new_tm_size
 	
 	def export_current_translation_memory(self):
-		
+		print('Export current TM into file.')
 		if self.glossary_id == "":
 			_glossary = 'Default'
 		else:
 			_glossary = self.glossary_id
-		
+
+		print('Append TM to:', _glossary)	
+		self.init_translation_memory()
 		while True:
 			try:
 				with open(self.tm_path, 'rb') as pickle_load:
@@ -1756,21 +1805,28 @@ class Translator:
 					if _glossary in all_tm:
 						print('TM v4 format')
 					elif 'en' in all_tm:
+						print('TM v3 format')
 						all_tm = {}
-		
+						self.translation_memory = pd.DataFrame({'en': all_tm['en'],'ko': all_tm['ko']})
+						
 				elif isinstance(all_tm, list):
+					print('TM v2 format')	
 					all_tm = {}
+					for Pair in all_tm:
+						new_row = {'en': Pair[1], 'ko':Pair[0]}
+						self.translation_memory = self.translation_memory.append(new_row, ignore_index=True)
+					
+
 			except:
 				print('Fail to load tm')
 				all_tm = {}
 			
-			save_data = self.translation_memory
-
+			print(type(self.translation_memory))
 			for Pair in self.temporary_tm:
-				save_data = self.translation_memory.append(Pair, ignore_index=True)
+				self.translation_memory = self.translation_memory.append(Pair, ignore_index=True)
 			
-			save_data = save_data.reindex()
-			all_tm[_glossary] = save_data
+			self.translation_memory = self.translation_memory.reindex()
+			all_tm[_glossary] = self.translation_memory
 			
 			try:
 				with open(self.tm_path, 'wb') as pickle_file:
