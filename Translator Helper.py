@@ -928,9 +928,10 @@ class MyTranslatorHelper(Frame):
 
 		self.get_source_text()
 
-		bilingual = self.main_translation + "\n"
-		bilingual += self.Separator + "\n" 
-		bilingual += self.source_text
+		bilingual = self.TargetText.get("1.0", END) + "\n"
+		bilingual += self.Separator + "\n"
+		bilingual += self.SourceText.get("1.0", END) + "\n"
+		
 		copy(bilingual)
 		self.Notice.set(self.LanguagePack.ToolTips['Copied'])
 
