@@ -174,7 +174,7 @@ class DocumentTranslator(Frame):
 
 		self.source_language = StringVar()
 
-		self.source_language_select = OptionMenu(Tab, self.source_language, *self.language_list, command = self.set_source_language)
+		self.source_language_select = OptionMenu(Tab, self.source_language, *self.language_list, command = None)
 		self.source_language_select.config(width=self.HALF_BUTTON_WIDTH)
 		self.source_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
 
@@ -184,7 +184,7 @@ class DocumentTranslator(Frame):
 
 		self.target_language = StringVar()
 
-		self.target_language_select = OptionMenu(Tab, self.target_language, *self.language_list, command = self.set_target_language)
+		self.target_language_select = OptionMenu(Tab, self.target_language, *self.language_list, command = None)
 		self.target_language_select.config(width=self.HALF_BUTTON_WIDTH)
 		self.target_language_select.grid(row=Row, column=4, padx=0, pady=5, sticky=W)
 

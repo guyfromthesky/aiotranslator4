@@ -40,7 +40,7 @@ from pandas.core.frame import DataFrame
 from libs.version import get_version
 
 Tool = "translator"
-rev = 4113
+rev = 4114
 ver_num = get_version(rev)
 Translatorversion = Tool + " " + ver_num
 
@@ -71,8 +71,8 @@ class Translator:
 		**kwargs
 	):
 		
-		self.from_language = self.correct_language_code(from_language)
-		self.to_language = self.correct_language_code(to_language)	
+		self.from_language = from_language
+		self.to_language = to_language
 		self.default_exception = ['pass', 'fail', 'n/a', 'n/t', 'result', '\t', '\r', '\n', '', '\r\n', ' ', 'sort', 'function', 'data' , 'x', 'o']
 
 		self.source_language_predict = source_language_predict
@@ -1022,6 +1022,7 @@ class Translator:
 				self.update_db_from_dataframe()
 			else:	
 				self.update_tm_from_dataframe()
+				self.init_temporary_tm()
 
 	def set_language_pair_only(self, source_language, target_language):
 		if self.from_language == source_language and self.to_language == target_language:

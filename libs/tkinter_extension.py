@@ -173,7 +173,7 @@ class CustomText(Text):
 			start_pos = index
 			end_pos = str(real_index[0]) + '.' + str(int(real_index[1]) + count.get())
 			
-			if start_pos_lower != start_pos and end_pos_lower != end_pos:
+			if start_pos_lower != start_pos or end_pos_lower != end_pos:
 				self.mark_set("matchStart", str(start_pos))	
 				self.mark_set("matchEnd", str(end_pos))
 				self.tag_add('red', "matchStart", "matchEnd")
