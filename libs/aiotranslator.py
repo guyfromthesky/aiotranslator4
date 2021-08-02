@@ -1610,9 +1610,10 @@ class Translator:
 
 	def init_temporary_tm(self):
 		if self.temporary_tm != None:
-			self.temporary_tm[:]
+			self.temporary_tm[:] = []
 		else:
-			self.temporary_tm = []	
+			self.temporary_tm = []
+
 
 	# Load TM detail from pickle file.
 	# The TM support all supported languages (en, ko, jp, cn, vi)
