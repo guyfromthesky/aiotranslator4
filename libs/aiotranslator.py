@@ -138,13 +138,15 @@ class Translator:
 		# Update day of the DB
 		self.update_day = '-'
 
+		#self.load_config_from_bucket()
+		#self.prepare_glossary_info()
 		try:
 			current_time = datetime.now()
 			#print('Load bucket from glob')
 			# List of the glossary uploaded.
 			# The list is also the list that display in the tool.
 			self.load_config_from_bucket()
-			#print('Total time to load bucket list:', str(datetime.now() - current_time))
+			print('Total time to load bucket list:', str(datetime.now() - current_time))
 			current_time = datetime.now()
 			# Replace this function with the glossary init
 			# Get the glossary list and length
@@ -155,7 +157,7 @@ class Translator:
 			self.prepare_glossary_info()
 
 
-			print('Total time to load db:', str(datetime.now() - current_time))
+			print('Total time to load db + glossary:', str(datetime.now() - current_time))
 		except Exception  as e:
 			print("Error when loading bucket:", e)
 
@@ -1711,6 +1713,7 @@ class Translator:
 
 	def update_tm_from_dataframe(self):
 		print('Update TM from dataframe')
+		#print('Current Dataframe:', self.current_tm)
 		if self.from_language != self.to_language:
 			self.translation_memory = self.current_tm.dropna(subset=[self.from_language])
 			self.translation_memory = self.translation_memory.dropna(subset=[self.to_language])
@@ -1721,7 +1724,7 @@ class Translator:
 			self.init_translation_memory()
 
 		self.translation_memory_size = len(self.translation_memory)	
-
+		print('Size of TM: ', self.translation_memory_size)
 	# Update TM from temporary_tm to pickle file
 	def append_translation_memory(self):
 		print('Append translation memory')
@@ -1739,18 +1742,30 @@ class Translator:
 						all_tm = pickle.load(pickle_load)
 					if isinstance(all_tm, dict):
 						# TM format v4
-						if _glossary in all_tm:
-							print('TM v4 format')
-							self.translation_memory = all_tm[_glossary]
-						# TM format v3
-						elif 'EN' in all_tm:
-							print('TM v3 format')
-							self.import_for_first_time()
+						if 'EN' in all_tm:
+							print('TM v3 format')	
+							self.import_for_first_time(all_tm)
+							all_tm = {}
 							continue
+						elif _glossary in all_tm:
+							print('TM v4 format, glossary created')
+							self.translation_memory = all_tm[_glossary]
+						else:
+							_list_project = all_tm.keys()
+							if len(_list_project) > 0:
+								# First time use this project
+								print('Empty TM file')
+								continue
+							else:
+								# Destroy object and create new one.
+								self.import_for_first_time(all_tm)
+								all_tm = {}
+								continue		
 			
 					elif isinstance(all_tm, list):
 						print('TM v2 format')
-						self.import_for_first_time()
+						self.import_for_first_time(all_tm)
+						all_tm = {}
 						continue
 				except Exception as e:
 					print('Fail to load tm:', e)
@@ -1799,12 +1814,14 @@ class Translator:
 						print('TM v4 format')
 					elif 'en' in all_tm:
 						print('TM v3 format')
-						self.import_for_first_time()
+						self.import_for_first_time(all_tm)
+						all_tm = {}
 						continue
 						
 				elif isinstance(all_tm, list):
 					print('TM v2 format')	
-					self.import_for_first_time()
+					self.import_for_first_time(all_tm)
+					all_tm = {}
 					continue
 					
 
