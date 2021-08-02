@@ -100,7 +100,7 @@ class CustomText(Text):
 
 	def __init__(self, *args, **kwargs):
 		Text.__init__(self, *args, **kwargs)
-		Text.tag_configure(self, "red", background="red")
+		Text.tag_configure(self, "red", background='deep pink', foreground='white')
 		Text.tag_configure(self, "blue", background='deep sky blue', foreground='white')
 
 	def highlight_pattern(self, pattern, tag, start="1.0", end="end",
@@ -131,6 +131,56 @@ class CustomText(Text):
 			#self.mark_set("matchStart", str('1.'+ str(start_pos)))
 			#self.mark_set("matchEnd", "%s+%sc" % (index, count.get()))
 			self.tag_add(tag, "matchStart", "matchEnd")
+
+	def highlight_fault_pattern(self, pattern, tag, start="1.0", end="end",
+						  regexp=False):
+		'''Apply the given tag to all text that matches the given pattern
+
+		If 'regexp' is set to True, pattern will be treated as a regular
+		expression according to Tcl's regular expression syntax.
+		'''
+		start = self.index(start)
+		end = self.index(end)
+		self.mark_set("matchStart", start)
+		self.mark_set("matchEnd", start)
+		self.mark_set("searchLimit", end)
+
+		count = IntVar()
+
+		while True:
+			
+			_index_lower = self.search(pattern, "matchEnd","searchLimit", nocase= 1, 
+								count=count, regexp=regexp)
+			if _index_lower == "": break
+			if count.get() == 0: break # degenerate pattern which matches zero-length strings
+			
+			real_index = _index_lower.split('.')
+			start_pos_lower = _index_lower
+			end_pos_lower = str(real_index[0]) + '.' + str(int(real_index[1]) + count.get())
+			index = self.search(pattern, "matchEnd","searchLimit", 
+								count=count, regexp=regexp)
+			if index == "":
+				self.mark_set("matchStart", str(start_pos_lower))	
+				self.mark_set("matchEnd", str(end_pos_lower))
+				self.tag_add('red', "matchStart", "matchEnd")
+				continue
+			if count.get() == 0: 
+				self.mark_set("matchStart", str(start_pos_lower))	
+				self.mark_set("matchEnd", str(end_pos_lower))
+				self.tag_add('red', "matchStart", "matchEnd")
+				continue
+			real_index = index.split('.')
+			start_pos = index
+			end_pos = str(real_index[0]) + '.' + str(int(real_index[1]) + count.get())
+			
+			if start_pos_lower != start_pos and end_pos_lower != end_pos:
+				self.mark_set("matchStart", str(start_pos))	
+				self.mark_set("matchEnd", str(end_pos))
+				self.tag_add('red', "matchStart", "matchEnd")
+			else:
+				self.mark_set("matchStart", str(start_pos))	
+				self.mark_set("matchEnd", str(end_pos))
+				self.tag_add('blue', "matchStart", "matchEnd")		
 
 # GUIDE
 # In main FRAME, add this line:

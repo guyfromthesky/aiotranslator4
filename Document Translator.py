@@ -136,6 +136,8 @@ class DocumentTranslator(Frame):
 		else:
 			self.Error('No license selected, please select the key in Translate setting.')	
 
+		self.after(DELAY, self.status_listening)	
+
 	def create_buttom_panel(self):
 		self.bottom_panel = BottomPanel(self)
 
@@ -382,6 +384,20 @@ class DocumentTranslator(Frame):
 		Row += 1
 		self.Uploader_Debugger = scrolledtext.ScrolledText(Tab, width=122, height=13, undo=True, wrap=WORD, )
 		self.Uploader_Debugger.grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E+N+S)
+
+	def status_listening(self):
+		while True:
+			try:
+				Status = self.StatusQueue.get(0)
+				if Status != None:
+					self.Debugger.insert("end", "\n\r")
+					ct = datetime.now()
+					self.Debugger.insert("end", str(ct) + ": " + Status)
+					self.Debugger.yview(END)
+			except queue.Empty:
+				break
+		self.after(DELAY, self.status_listening)
+
 
 
 	def search_tm_event(self, event):
@@ -837,25 +853,8 @@ class DocumentTranslator(Frame):
 	
 	def Wait_For_Uploader_Processor(self):
 		if (self.Upload_DB_Processor.is_alive()):
-
-			try:
-				Status = self.StatusQueue.get(0)
-				if Status != False:
-					self.Notice.set('CSV DB is uploaded')
-					self.Uploader_Debugger.insert("end", "\n\r")
-					self.Uploader_Debugger.insert("end", Status)
-			except queue.Empty:
-				pass	
 			self.after(DELAY, self.Wait_For_Uploader_Processor)
 		else:
-			try:
-				Status = self.StatusQueue.get(0)
-				if Status != False:
-					self.Notice.set('CSV DB is uploaded')
-					self.Uploader_Debugger.insert("end", "\n\r")
-					self.Uploader_Debugger.insert("end", Status)
-			except queue.Empty:
-				pass
 			self.Upload_DB_Processor.terminate()
 	
 	def Confirm_Popup(self, Request, message):
@@ -1184,33 +1183,16 @@ class DocumentTranslator(Frame):
 				self.Progress.set("Progress: " + str(percent/10) + '%')
 			except queue.Empty:
 				pass
-			try:
-				Status = self.StatusQueue.get(0)
-				if Status != None:
-					SafeStatus = Status[0:self.STATUS_LENGTH]
-					self.Notice.set(SafeStatus)
-					self.Debugger.insert("end", "\n")
-					self.Debugger.insert("end", Status)
-					self.Debugger.yview(END)
-
-			except queue.Empty:
-				pass		
-
+			
 			self.after(DELAY, self.GetCompleteStatus)
 		else:
 			try:
 				Result = self.ResultQueue.get(0)		
 				if Result == True:
 					self.progressbar["value"] = 1000
-					self.progressbar.update()
-					Status = self.StatusQueue.get(0)
+					self.progressbar.update()	
 					self.Progress.set("Progress: " + str(100) + '%')
-					if Status != None:	
-						SafeStatus = Status[0:self.STATUS_LENGTH]
-						self.Notice.set(SafeStatus)
-						self.Debugger.insert("end", "\n")
-						self.Debugger.insert("end", Status)
-						self.Debugger.yview(END)
+					
 				elif '[Errno 13] Permission denied' in Result:
 					self.Notice.set(self.LanguagePack.ToolTips['TranslateFail'])
 					Result = Result.replace('[Errno 13] Permission denied','File is being in used')

@@ -152,6 +152,10 @@ class LanguagePackEN:
 
 	Label['ProjectKey'] = "Project key:"
 
+	Label['SourceLanguage'] = "Source language:"
+	Label['MainLanguage'] = "Primary language:"
+	Label['SecondaryLanguage'] = "Secondary language:"
+
 	Tab = {}
 	Tab['Main'] = "Main Menu"
 	Tab['General'] = "General Setting"
@@ -399,6 +403,10 @@ class LanguagePackKR:
 	Label['LicensePath'] = "라이센스 경로 :"
 
 	Label['ProjectKey'] = "프로젝트 키 :"
+
+	Label['SourceLanguage'] = "소스 언어:"
+	Label['MainLanguage'] = "기본 언어:"
+	Label['SecondaryLanguage'] = "제2언어:"
 
 	Tab = {}
 	Tab['Main'] = "메인 메뉴"
