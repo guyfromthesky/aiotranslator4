@@ -1609,10 +1609,7 @@ class Translator:
 		self.translation_memory_size = len(self.current_tm)	
 
 	def init_temporary_tm(self):
-		if self.temporary_tm != None:
-			self.temporary_tm[:] = []
-		else:
-			self.temporary_tm = []
+		self.temporary_tm[:] = []
 
 
 	# Load TM detail from pickle file.
@@ -1746,21 +1743,15 @@ class Translator:
 							print('TM v4 format')
 							self.translation_memory = all_tm[_glossary]
 						# TM format v3
-						elif 'en' in all_tm:
+						elif 'EN' in all_tm:
 							print('TM v3 format')
-
-							self.init_translation_memory()
-							self.translation_memory = pd.DataFrame({'en': all_tm['en'],'ko': all_tm['ko']})
-							
+							self.import_for_first_time()
+							continue
 			
 					elif isinstance(all_tm, list):
 						print('TM v2 format')
-						self.init_translation_memory()
-
-						for Pair in all_tm:
-							new_row = {'en': Pair[1], 'ko':Pair[0]}
-						self.translation_memory = self.translation_memory.append(new_row, ignore_index=True)
-					
+						self.import_for_first_time()
+						continue
 				except Exception as e:
 					print('Fail to load tm:', e)
 					all_tm = {}
@@ -1808,15 +1799,13 @@ class Translator:
 						print('TM v4 format')
 					elif 'en' in all_tm:
 						print('TM v3 format')
-						all_tm = {}
-						self.translation_memory = pd.DataFrame({'en': all_tm['en'],'ko': all_tm['ko']})
+						self.import_for_first_time()
+						continue
 						
 				elif isinstance(all_tm, list):
 					print('TM v2 format')	
-					all_tm = {}
-					for Pair in all_tm:
-						new_row = {'en': Pair[1], 'ko':Pair[0]}
-						self.translation_memory = self.translation_memory.append(new_row, ignore_index=True)
+					self.import_for_first_time()
+					continue
 					
 
 			except:
