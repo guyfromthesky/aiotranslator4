@@ -911,7 +911,8 @@ class MyTranslatorHelper(Frame):
 
 	def get_dual_translate_result(self):
 		"""
-		[Dual Translate] 
+		[Dual Translate] button in Simple Translator
+		Generate the translated text in Target Text textbox.
 		"""
 		if (self.dual_translate_process.is_alive()):
 			self.after(DELAY, self.get_dual_translate_result)
@@ -987,13 +988,13 @@ class MyTranslatorHelper(Frame):
 
 	def btn_bilingual(self):
 		"""
-		Bilingual button in Simple Translator.
-		What it does when clicked.
+		[Bilingual] button in Simple Translator.
+		Copy the text in Source Text and Target Text to the clipboard does when clicked.
 		"""
 
 		self.get_source_text()
 
-		# Retreive all text in the Source Text and Target Text textbox.
+		# Copy all text in the Source Text and Target Text textbox
 		bilingual = self.TargetText.get("1.0", END) + "\n"
 		bilingual += self.Separator + "\n"
 		bilingual += self.SourceText.get("1.0", END)
