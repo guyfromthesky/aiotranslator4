@@ -544,6 +544,7 @@ class DocumentTranslator(Frame):
 		self.DB_Uploader = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.DB_Uploader, text= self.LanguagePack.Tab['DBUploader'])
 
+		# Process Details tab
 		self.Process = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.Process, text = self.LanguagePack.Tab['Debug'])
 
@@ -729,6 +730,10 @@ class DocumentTranslator(Frame):
 			self.after(DELAY, self.Wait_For_Creator_Processor)	
 
 	def Wait_For_Creator_Processor(self):
+		"""
+		After [Execute] button processing
+		Display process information in the text box.
+		"""
 		db_path = None
 		if (self.Generate_DB_Processor.is_alive()):
 
@@ -771,6 +776,10 @@ class DocumentTranslator(Frame):
 		'''
 		
 	def Wait_For_DB_Compare_Processor(self):
+		"""
+		After wait_for_creator_processor() process
+		Display the old and new DB comparison in the text box.
+		"""
 		compare_result = None
 		if (self.Compare_DB_Processor.is_alive()):
 			try:
@@ -853,6 +862,10 @@ class DocumentTranslator(Frame):
 				self.after(DELAY, self.Wait_For_Uploader_Processor)	
 	
 	def Wait_For_Uploader_Processor(self):
+		"""
+		After wait_for_db_compare_processor() process
+		Display information whether the upload is successful in the text box.
+		"""
 		if (self.Upload_DB_Processor.is_alive()):
 			
 			self.after(DELAY, self.Wait_For_Uploader_Processor)
