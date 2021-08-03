@@ -377,7 +377,7 @@ class MyTranslatorHelper(Frame):
 		self.TextShouldBe = CustomText(Tab, width=50, height=7, undo=True, wrap=WORD) 
 		self.TextShouldBe.grid(row=Row, column=6, columnspan=5, padx=5, pady=5, stick=W+E)
 	
-		
+	### UI of SIMPLE TRANSLATOR ###
 	def Generate_SimpleTranslator_UI(self, Tab):
 
 		
@@ -910,6 +910,10 @@ class MyTranslatorHelper(Frame):
 		self.after(DELAY, self.get_dual_translate_result)
 
 	def get_dual_translate_result(self):
+		"""
+		[Dual Translate] button in Simple Translator
+		Generate the translated text in Target Text textbox.
+		"""
 		if (self.dual_translate_process.is_alive()):
 			self.after(DELAY, self.get_dual_translate_result)
 		else:
@@ -983,12 +987,17 @@ class MyTranslatorHelper(Frame):
 		self.Notice.set(self.LanguagePack.ToolTips['Copied'])
 
 	def btn_bilingual(self):
+		"""
+		[Bilingual] button in Simple Translator.
+		Copy the text in Source Text and Target Text to the clipboard does when clicked.
+		"""
 
 		self.get_source_text()
 
+		# Copy all text in the Source Text and Target Text textbox
 		bilingual = self.TargetText.get("1.0", END) + "\n"
 		bilingual += self.Separator + "\n"
-		bilingual += self.SourceText.get("1.0", END) + "\n"
+		bilingual += self.SourceText.get("1.0", END)
 		
 		copy(bilingual)
 		self.Notice.set(self.LanguagePack.ToolTips['Copied'])
