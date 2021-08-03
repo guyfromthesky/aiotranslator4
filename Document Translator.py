@@ -656,7 +656,7 @@ class DocumentTranslator(Frame):
 			NewTM = self.CorrectPath(filename)
 			with open(NewTM, 'wb') as pickle_file:
 				# New TM format.
-				pickle.dump({}, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+				pickle.dump({'tm_version': 4}, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 			self.TMPath.set(NewTM)
 			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'translation_memory', NewTM, True)
 			self.renew_my_translator()
