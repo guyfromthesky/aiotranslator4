@@ -5,20 +5,7 @@ obsolete
 compile
 test files
 *.pyc
-*.pyc
 libs/__pycache__/aioconfigmanager.cpython-38.pyc
 libs/__pycache__/aiotranslator_v2.cpython-38.pyc
 libs/__pycache__/aiotranslator.cpython-38.pyc
 libs/__pycache__/documentprocessing.cpython-38.pyc
-libs/__pycache__/__init__.cpython-39.pyc
-libs/__pycache__/aioconfigmanager.cpython-39.pyc
-libs/__pycache__/aiotranslator.cpython-39.pyc
-libs/__pycache__/documentprocessing.cpython-39.pyc
-libs/__pycache__/languagepack.cpython-39.pyc
-libs/__pycache__/version.cpython-39.pyc
-libs/__pycache__/__init__.cpython-39.pyc
-libs/__pycache__/aioconfigmanager.cpython-39.pyc
-libs/__pycache__/aiotranslator.cpython-39.pyc
-libs/__pycache__/documentprocessing.cpython-39.pyc
-libs/__pycache__/languagepack.cpython-39.pyc
-libs/__pycache__/version.cpython-39.pyc
