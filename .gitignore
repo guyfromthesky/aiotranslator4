@@ -22,3 +22,4 @@ libs/__pycache__/aiotranslator.cpython-39.pyc
 libs/__pycache__/documentprocessing.cpython-39.pyc
 libs/__pycache__/languagepack.cpython-39.pyc
 libs/__pycache__/version.cpython-39.pyc
+*.pyc

@@ -528,7 +528,7 @@ class Translator:
 		elif self.proactive_memory_translate == True:
 			
 			translated = self.memory_translate(source_text)
-			#print('TM Translate:', source_text, '-->', translated)
+			print('TM Translate:', source_text, '-->', translated)
 			if translated != False:
 				
 				result = translated	
@@ -1958,19 +1958,19 @@ class Translator:
 	def memory_translate(self, source_text):
 		# Use the previous translate result to speed up the translation progress
 		source_text = source_text.lower()
-		if isinstance(self.memory_translate, DataFrame):
-			try:
-				if len(self.translation_memory) > 0:
-					#translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
-					translated = self.translation_memory.loc[self.translation_memory[self.from_language] == source_text]
-					#print('Mem translated:', translated)
-					if len(translated) > 0:
-						#print('TM translate', translated)
-						return translated.iloc[0][self.to_language]
+	
+		try:
+			if len(self.translation_memory) > 0:
+				#translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
+				translated = self.translation_memory.loc[self.translation_memory[self.from_language] == source_text]
+				#print('Mem translated:', translated)
+				if len(translated) > 0:
+					#print('TM translate', translated)
+					return translated.iloc[0][self.to_language]
 
-			except Exception  as e:
-				print('Error message (TM):', e)
-				pass
+		except Exception  as e:
+			print('Error message (TM):', e)
+			pass
 			
 		# new_row = {self.to_language: translated, self.from_language: Input}
 		# self.temporary_tm = self.temporary_tm.append(new_row)
@@ -1989,7 +1989,7 @@ class Translator:
 	def append_tm_dataframe(self, dataframe, pair, ):
 		#print('Append TM Dataframe')
 		#print(dataframe)
-		print("pair", pair)
+		#print("pair", pair)
 		# pair: @dict
 		# Check if the source sentence is in the Dataframe, append the existed entry
 		index_value = pair[self.from_language]
