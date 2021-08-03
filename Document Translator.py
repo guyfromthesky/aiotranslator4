@@ -412,13 +412,14 @@ class DocumentTranslator(Frame):
 			to_remove.append(tm_index)
 			self.Treeview.delete(child_obj)
 			
-		print('Current TM pair: ', len(self.MyTranslator.translation_memory))
+		#print('Current TM pair: ', len(self.MyTranslator.translation_memory))
+		print('Current Dataframe pair: ', len(self.MyTranslator.current_tm))
 		try:
-			self.MyTranslator.translation_memory = self.MyTranslator.translation_memory.drop(to_remove)
+			self.MyTranslator.current_tm = self.MyTranslator.current_tm.drop(to_remove)
 		except Exception as e:
 			print('Error:', e)
 		
-		print('After removed TM pair: ', len(self.MyTranslator.translation_memory))
+		print('After removed TM pair: ', len(self.MyTranslator.current_tm))
 		#self.save_app_config()
 
 	def double_right_click_treeview(self, event):
@@ -853,8 +854,12 @@ class DocumentTranslator(Frame):
 	
 	def Wait_For_Uploader_Processor(self):
 		if (self.Upload_DB_Processor.is_alive()):
+			
 			self.after(DELAY, self.Wait_For_Uploader_Processor)
 		else:
+			self.Notice.set('DB is uploaded')
+			self.Uploader_Debugger.insert("end", "\n\r")
+			self.Uploader_Debugger.insert("end", "DB is uploaded")
 			self.Upload_DB_Processor.terminate()
 	
 	def Confirm_Popup(self, Request, message):

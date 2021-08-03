@@ -1802,6 +1802,10 @@ class Translator:
 		return 0
 	
 	def export_current_translation_memory(self):
+		'''
+		This function will overwrite the current self.current_tm to pickle file.
+		self.current_tm can be modifed via TM Manager tool.
+		'''
 		print('Export current TM into file.')
 		if self.glossary_id == "":
 			_glossary = 'Default'
@@ -1809,7 +1813,7 @@ class Translator:
 			_glossary = self.glossary_id
 
 		print('Append TM to:', _glossary)	
-		self.init_translation_memory()
+		#self.init_translation_memory()
 		while True:
 			try:
 				with open(self.tm_path, 'rb') as pickle_load:
@@ -1820,10 +1824,10 @@ class Translator:
 				if _tm_version == 4:
 					print('Valid')
 				elif _tm_version == 3:
-					self.import_tm_v3(all_tm)
+					#self.import_tm_v3(all_tm)
 					all_tm = {}
 				elif _tm_version == 2:
-					self.import_tm_v2(all_tm)
+					#self.import_tm_v2(all_tm)
 					all_tm = {}
 				else:
 					all_tm = {}
@@ -1834,18 +1838,6 @@ class Translator:
 			if 'tm_version' not in all_tm:
 				all_tm['tm_version'] = 4
 
-			if _glossary not in all_tm:
-				self.init_translation_memory()
-				all_tm[_glossary] = self.current_tm
-			else:
-				self.current_tm = all_tm[_glossary]
-
-			for Pair in self.temporary_tm:
-				try:
-					self.current_tm = self.append_tm_dataframe(self.current_tm, Pair)
-				except Exception as e:
-					print('Append TM DF error:', e)	
-			
 			self.current_tm = self.current_tm.reindex()
 			all_tm[_glossary] = self.current_tm
 			
