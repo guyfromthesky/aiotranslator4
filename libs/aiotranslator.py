@@ -854,7 +854,6 @@ class Translator:
 		translation = None
 	
 		try:	
-			#translation = self.google_translate_v3(source_text)
 			if self.glossary_id == "":
 				translation = self.google_translate_v3(source_text)
 			else:	
@@ -862,9 +861,8 @@ class Translator:
 					translation = self.google_glossary_translate(source_text)
 				else:
 					translation = self.google_translate_v3(source_text)
-		except Exception  as e:
-			print('Activated translation error:', e)
-			_error_message = e
+		except Exception  as _error_message:
+			print('Activated translation error:', _error_message)
 
 		if translation == None:	
 	
@@ -1386,7 +1384,10 @@ class Translator:
 						print("Load db from glob:", _db_uri)
 						self.load_db_from_glob(_db_uri)
 						print('Load db from bucket done')	
-
+					elif self.used_tool == 'writer-lite':
+						print("Load header from glob:", _header_uri)
+						self._load_header_from_blob(_header_uri)
+						self.dictionary = []
 					else:
 						self.init_db_data()
 				else:

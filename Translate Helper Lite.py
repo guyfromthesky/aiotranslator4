@@ -64,8 +64,8 @@ from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, Cust
 from google.cloud import logging
 import json
 
-tool_display_name = "Translator Helper"
-tool_name = 'writer'
+tool_display_name = "Translate Helper Lite"
+tool_name = 'writer-lite'
 REV = 4109
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
@@ -341,10 +341,10 @@ class MyTranslatorHelper(Frame):
 		Row+=1
 		Label(Tab, width=10, text=self.LanguagePack.Label['Report']).grid(row=Row, column=1, columnspan=2, padx=5, pady=5, stick=W)
 		
-		Label(Tab, width=10, text=self.LanguagePack.Label['Search']).grid(row=Row, column=4, padx=5, pady=5, stick=W)
+		#Label(Tab, width=10, text=self.LanguagePack.Label['Search']).grid(row=Row, column=4, padx=5, pady=5, stick=W)
 
-		self.search_entry = AutocompleteEntry([], Tab, listboxLength=6, width=100, matchesFunction=matches)
-		self.search_entry.grid(row=Row, column=5, columnspan=6, padx=5, pady=5, sticky=E)
+		#self.search_entry = AutocompleteEntry([], Tab, listboxLength=6, width=100, matchesFunction=matches)
+		#self.search_entry.grid(row=Row, column=5, columnspan=6, padx=5, pady=5, sticky=E)
 
 		Row+=1
 		self.TextTestReport = CustomText(Tab, width=130, height=8, undo=True, wrap=WORD)
@@ -364,8 +364,8 @@ class MyTranslatorHelper(Frame):
 		#self.db_correction = Button(Tab, text="DB Falt Alarm", width=10	, command= self.analyze_fault_terminology, state=DISABLED)
 		#self.db_correction.grid(row=Row, column=8, padx=5, pady=5, stick=W+E)
 
-		self.db_highlight = Button(Tab, text="DB Highlight", width=10, command= self.analyze_terminology, state=DISABLED)
-		self.db_highlight.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)	
+		#self.db_highlight = Button(Tab, text="DB Highlight", width=10, command= self.analyze_terminology, state=DISABLED)
+		#self.db_highlight.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)	
 
 		self.GetReportBtn = Button(Tab, text=self.LanguagePack.Button['GetReport'], width=10, command= self.generate_report, state=DISABLED)
 		self.GetReportBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
@@ -726,7 +726,7 @@ class MyTranslatorHelper(Frame):
 			self.enable_btn()
 			
 			self.UpdateHeaderList()
-			self.UpdatePredictionList()
+			#self.UpdatePredictionList()
 
 			try:
 				db_count = str(self.MyTranslator.glossary_size)
@@ -1129,7 +1129,7 @@ class MyTranslatorHelper(Frame):
 		#self.Translate_bilingual_Btn.configure(state=DISABLED)
 		self.TranslateBtn.configure(state=DISABLED)
 
-		self.db_highlight.configure(state=DISABLED)
+		#self.db_highlight.configure(state=DISABLED)
 
 		#self.db_correction.configure(state=DISABLED)
 
@@ -1155,7 +1155,7 @@ class MyTranslatorHelper(Frame):
 		#self.Translate_bilingual_Btn.configure(state=NORMAL)
 		self.TranslateBtn.configure(state=NORMAL)
 
-		self.db_highlight.configure(state=NORMAL)
+		#self.db_highlight.configure(state=NORMAL)
 		#self.db_correction.configure(state=NORMAL)
 
 
