@@ -528,7 +528,7 @@ class Translator:
 		elif self.proactive_memory_translate == True:
 			
 			translated = self.memory_translate(source_text)
-			print('TM Translate:', source_text, '-->', translated)
+			#print('TM Translate:', source_text, '-->', translated)
 			if translated != False:
 				
 				result = translated	
