@@ -56,7 +56,7 @@ import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4107
+rev = 4109
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -174,7 +174,7 @@ class DocumentTranslator(Frame):
 
 		self.source_language = StringVar()
 
-		self.source_language_select = OptionMenu(Tab, self.source_language, *self.language_list, command = None)
+		self.source_language_select = OptionMenu(Tab, self.source_language, *self.language_list, command = self.set_source_language)
 		self.source_language_select.config(width=self.HALF_BUTTON_WIDTH)
 		self.source_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
 
@@ -184,7 +184,7 @@ class DocumentTranslator(Frame):
 
 		self.target_language = StringVar()
 
-		self.target_language_select = OptionMenu(Tab, self.target_language, *self.language_list, command = None)
+		self.target_language_select = OptionMenu(Tab, self.target_language, *self.language_list, command = self.set_target_language)
 		self.target_language_select.config(width=self.HALF_BUTTON_WIDTH)
 		self.target_language_select.grid(row=Row, column=4, padx=0, pady=5, sticky=W)
 
@@ -658,7 +658,7 @@ class DocumentTranslator(Frame):
 				# New TM format.
 				pickle.dump({}, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 			self.TMPath.set(NewTM)
-			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'translation_memory', 'path', NewTM, True)
+			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'translation_memory', NewTM, True)
 			self.renew_my_translator()
 
 	def _save_project_key(self, event):
@@ -927,9 +927,16 @@ class DocumentTranslator(Frame):
 		self.disable_button()
 		self.generate_translator_engine()
 
+
 	def set_target_language(self, target_language):
 		index = self.language_list.index(target_language)
 		to_language = self.language_id_list[index]
+		if to_language == self.MyTranslator.from_language:
+			messagebox.showinfo('Error', 'Source and Target language is the same.')
+			index = self.language_id_list.index(self.MyTranslator.to_language)
+			to_language_id = self.language_list[index]
+			self.target_language.set(to_language_id)
+			return
 		
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', index)
 
@@ -941,7 +948,14 @@ class DocumentTranslator(Frame):
 	def set_source_language(self, source_language):
 		index = self.language_list.index(source_language)
 		from_language = self.language_id_list[index]
+		if from_language == self.MyTranslator.to_language:
+			messagebox.showinfo('Error', 'Source and Target language is the same.')	
+			index = self.language_id_list.index(self.MyTranslator.from_language)
+			from_language_id = self.language_list[index]
+			self.source_language.set(from_language_id)
+			return
 
+		self.MyTranslator.from_language
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_lang', index)
 
 		self.MyTranslator.set_source_language(from_language)	
