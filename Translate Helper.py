@@ -1158,7 +1158,6 @@ class MyTranslatorHelper(Frame):
 		self.db_highlight.configure(state=NORMAL)
 		#self.db_correction.configure(state=NORMAL)
 
-
 	def RenewMyTranslator(self):
 		
 		self.disable_btn()

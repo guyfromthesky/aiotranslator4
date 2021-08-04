@@ -828,7 +828,7 @@ class Translator:
 			#translation[to_translate_index[i]] = translated[i]
 			if self.tm_update == True:
 				#print('Append TM: ', translated[i], raw_source[i] )
-				self.generate_temporary_tm(str_translated = translated[i], str_input = raw_source[i])
+				self.append_temporary_tm(str_translated = translated[i], str_input = raw_source[i])
 
 		if isinstance(Input, str):
 			return translation[0]
@@ -1744,6 +1744,11 @@ class Translator:
 
 	# Update TM from temporary_tm to pickle file
 	def append_translation_memory(self):
+		'''
+		Save the current temporary memort into pickle file.
+		self.temporaty_tm >>> self.current_tm >>> glossary entry >>> pickle file
+		If a sentence is existed in an entry, that entry will be modified instead of create new one.
+		'''
 		print('Append translation memory')
 		new_tm_size = len(self.temporary_tm)
 		print('Size of temporary TM: ', new_tm_size)
@@ -1860,6 +1865,7 @@ class Translator:
 
 		all_tm = {}
 		all_tm[_glossary] = None
+		all_tm['tm_version'] = 4
 		try:
 			with open(new_tm_file, 'wb') as pickle_file:
 				print("Updating pickle file....", new_tm_file)
@@ -1875,7 +1881,7 @@ class Translator:
 	# Temporary TM is a list of dict
 	# {self.to_language: translated, self.from_language: Input}
 	# Add a KR-en pair into TM
-	def generate_temporary_tm(self, str_translated = "", str_input = ""):
+	def append_temporary_tm(self, str_translated = "", str_input = ""):
 		#print('Generate Temp TM:', str_translated, str_input)
 		translated = str_translated.lower()
 		Input = str_input.lower()
@@ -1951,19 +1957,19 @@ class Translator:
 	def memory_translate(self, source_text):
 		# Use the previous translate result to speed up the translation progress
 		source_text = source_text.lower()
-	
-		try:
-			if len(self.translation_memory) > 0:
-				#translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
-				translated = self.translation_memory.loc[self.translation_memory[self.from_language] == source_text]
-				#print('Mem translated:', translated)
-				if len(translated) > 0:
-					#print('TM translate', translated)
-					return translated.iloc[0][self.to_language]
+		if self.used_tool == 'document':
+			try:
+				if len(self.translation_memory) > 0:
+					#translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
+					translated = self.translation_memory.loc[self.translation_memory[self.from_language] == source_text]
+					#print('Mem translated:', translated)
+					if len(translated) > 0:
+						#print('TM translate', translated)
+						return translated.iloc[0][self.to_language]
 
-		except Exception  as e:
-			print('Error message (TM):', e)
-			pass
+			except Exception  as e:
+				print('Error message (TM):', e)
+				pass
 			
 		# new_row = {self.to_language: translated, self.from_language: Input}
 		# self.temporary_tm = self.temporary_tm.append(new_row)

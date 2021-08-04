@@ -740,7 +740,7 @@ class DocumentTranslator(Frame):
 			try:
 				db_path = self.ResultQueue.get(0)
 				if db_path != False:
-					self.Notice.set('CSV DB is generated')
+		
 					self.Uploader_Debugger.insert("end", "\n\r")
 					self.Uploader_Debugger.insert("end", "CSV DB is generaterd")
 					self.Uploader_Debugger.insert("end", "\n\r")
@@ -752,7 +752,6 @@ class DocumentTranslator(Frame):
 			try:
 				db_path = self.ResultQueue.get(0)
 				if db_path != False:
-					self.Notice.set('CSV DB is generated')
 					self.Uploader_Debugger.insert("end", "\n\r")
 					self.Uploader_Debugger.insert("end", "CSV DB is generaterd")
 					self.Uploader_Debugger.insert("end", "\n\r")
@@ -782,56 +781,12 @@ class DocumentTranslator(Frame):
 		"""
 		compare_result = None
 		if (self.Compare_DB_Processor.is_alive()):
-			try:
-				compare_result = self.ResultQueue.get(0)
-				if compare_result != None:
-					change_flag = False
-					self.Notice.set('Compare done')
-					self.Uploader_Debugger.insert("end", "\n\r")
-					self.Uploader_Debugger.insert("end", "Compare done\n\r")
-					if compare_result['dropped']>0:
-						self.Uploader_Debugger.insert("end", "\n\r")
-						self.Uploader_Debugger.insert("end", 'Dropped: ' + str(compare_result['dropped']))
-						change_flag = True
-					if compare_result['added']>0:
-						self.Uploader_Debugger.insert("end", "\n\r")
-						self.Uploader_Debugger.insert("end", 'Added: ' + str(compare_result['added']))
-						change_flag = True					
-					if compare_result['changed']>0:
-						self.Uploader_Debugger.insert("end", "\n\r")
-						self.Uploader_Debugger.insert("end", 'Changes: ' + str(compare_result['changed']))
-						change_flag = True
-					if change_flag == False:
-						self.Uploader_Debugger.insert("end", "No change are made")
-					self.Uploader_Debugger.insert("end", "\n\r")
-					self.Uploader_Debugger.insert("end", "Wait for user's confirmation.")
-			except queue.Empty:
-				pass	
 			self.after(DELAY, self.Wait_For_DB_Compare_Processor)
 		else:
 			try:
 				compare_result = self.ResultQueue.get(0)
-				if compare_result != None:
-					change_flag = False
-					self.Notice.set('Compare done')
-					self.Uploader_Debugger.insert("end", "\n\r")
-					self.Uploader_Debugger.insert("end", "Compare done\n\r")
-					if compare_result['dropped']>0:
-						self.Uploader_Debugger.insert("end", "\n\r")
-						self.Uploader_Debugger.insert("end", 'Dropped: ' + str(compare_result['dropped']))
-						change_flag = True
-					if compare_result['added']>0:
-						self.Uploader_Debugger.insert("end", "\n\r")
-						self.Uploader_Debugger.insert("end", 'Added: ' + str(compare_result['added']))
-						change_flag = True					
-					if compare_result['changed']>0:
-						self.Uploader_Debugger.insert("end", "\n\r")
-						self.Uploader_Debugger.insert("end", 'Changes: ' + str(compare_result['changed']))
-						change_flag = True
-					if change_flag == False:
-						self.Uploader_Debugger.insert("end", "No change are made")
-					self.Uploader_Debugger.insert("end", "\n\r")
-					self.Uploader_Debugger.insert("end", "Wait for user's confirmation.")
+				self.Uploader_Debugger.insert("end", "\n\r")
+				self.Uploader_Debugger.insert("end", "Wait for user's confirmation.")
 			except queue.Empty:
 				pass
 			self.Compare_DB_Processor.terminate()
@@ -860,6 +815,9 @@ class DocumentTranslator(Frame):
 				self.Upload_DB_Processor = Process(target=function_upload_db, args=(self.StatusQueue,self.MyTranslator, glossary_id, compare_result))
 				self.Upload_DB_Processor.start()
 				self.after(DELAY, self.Wait_For_Uploader_Processor)	
+			else:
+				self.Uploader_Debugger.insert("end", "\n\r")
+				self.Uploader_Debugger.insert("end", 'Canceled, no change is made.')
 	
 	def Wait_For_Uploader_Processor(self):
 		"""
@@ -870,7 +828,7 @@ class DocumentTranslator(Frame):
 			
 			self.after(DELAY, self.Wait_For_Uploader_Processor)
 		else:
-			self.Notice.set('DB is uploaded')
+		
 			self.Uploader_Debugger.insert("end", "\n\r")
 			self.Uploader_Debugger.insert("end", "DB is uploaded")
 			self.Upload_DB_Processor.terminate()
@@ -1373,9 +1331,10 @@ def function_compare_db(status_queue, result_queue, MyTranslator, glossary_id, a
 		old_csv_db = sourcename + '_old' + ext
 		try:
 			MyTranslator.download_db_to_file(glossary_id, old_csv_db)
-			status_queue.put('Loading OLD DB file.')
-		except:
+			#status_queue.put('Loading OLD DB file.')
+		except Exception as _error_message:
 			status_queue.put('Fail to load OLD DB file.')	
+			status_queue.put(str(_error_message))
 		
 		if not isfile(old_csv_db):
 			result = {
