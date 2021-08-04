@@ -42,7 +42,7 @@ class LanguagePackEN:
 	Button['Translate'] = "Translate"
 	Button['Swap'] = "Swap"
 	Button['Translate'] = "Translate"
-	Button['Bilingual'] = "Bilingual"
+	Button['Bilingual'] = "Bilingual Copy"
 	Button['TranslateAndBilingual'] = "Translate & Bilingual"
 	Button['Copy'] = "Copy"
 
