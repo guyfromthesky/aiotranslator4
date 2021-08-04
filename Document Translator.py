@@ -299,6 +299,7 @@ class DocumentTranslator(Frame):
 		self.Debugger.grid(row=0, column=0, padx=5, pady=5, sticky = E+W)
 
 
+	### TM Manager tab ###
 	def Generate_TM_Manager_UI(self, Tab):
 		self.pair_list = []
 		self.removed_list = []
@@ -434,7 +435,12 @@ class DocumentTranslator(Frame):
 		#self.pair_list.insert("end", text)
 		#print(child)
 
+	# Nam will check
 	def load_tm_list(self):
+		"""
+		When clicking the [Load] button in TM Manager tab
+		Display the pair languages in the text box.
+		"""
 		self.remove_treeview()
 		tm_size = len(self.MyTranslator.translation_memory)
 		
@@ -454,8 +460,12 @@ class DocumentTranslator(Frame):
 					pass	
 					
 
-
+	# Nam will check
 	def search_tm_list(self):
+		"""
+		Search text box in TM Manager tab
+		Display the pair result from the text entered in the search field.
+		"""
 		text = self.search_text.get("1.0", END).replace("\n", "").replace(" ", "")
 		self.remove_treeview()
 		print("Text to search: ", text)
