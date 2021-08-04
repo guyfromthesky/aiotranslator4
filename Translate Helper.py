@@ -439,7 +439,7 @@ class MyTranslatorHelper(Frame):
 		
 		Button(Tab, text= 'Trilingual Copy', width = self.BUTTON_SIZE, command= self.btn_trilingual).grid(row = Row, column=8, padx=5, pady=5)
 		
-		Button(Tab, text=self.LanguagePack.Button['Bilingual'], width = self.BUTTON_SIZE, command= self.btn_bilingual).grid(row = Row, column=9, padx=5, pady=5, sticky=E)
+		Button(Tab, text=self.LanguagePack.Button['Bilingual'], width = self.BUTTON_SIZE, command= self.btn_bilingual_copy).grid(row = Row, column=9, padx=5, pady=5, sticky=E)
 		self.dual_translate_btn = Button(Tab, text= 'Dual Translate', width = self.BUTTON_SIZE, command= self.dual_translate, state=DISABLED)
 		self.dual_translate_btn.grid(row = Row, column=10, padx=0, pady=5, sticky=E)
 		#self.Translate_bilingual_Btn = Button(Tab, text=self.LanguagePack.Button['TranslateAndBilingual'], width = self.BUTTON_SIZE, command= self.BtnTranslateAndBilingual)
@@ -986,10 +986,10 @@ class MyTranslatorHelper(Frame):
 		copy(self.main_translation)
 		self.Notice.set(self.LanguagePack.ToolTips['Copied'])
 
-	def btn_bilingual(self):
+	def btn_bilingual_copy(self):
 		"""
 		[Bilingual] button in Simple Translator.
-		Copy the text in Source Text and Target Text to the clipboard does when clicked.
+		Copy the text in Source Text and Target Text to the clipboard when clicked.
 		"""
 
 		self.get_source_text()
@@ -1007,7 +1007,7 @@ class MyTranslatorHelper(Frame):
 		primary_target_language = self.language_id_list[self.language_list.index(self.simple_secondary_target_language.get())]
 		if primary_target_language == "":
 			messagebox.showinfo('Warning', 'Secondary target language is EMPTY.\nPlease select the secondary target language or use Bilingual Copy instead.')	
-			self.btn_bilingual()
+			self.btn_bilingual_copy()
 			return
 		self.get_source_text()
 
