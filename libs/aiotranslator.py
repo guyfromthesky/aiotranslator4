@@ -972,7 +972,7 @@ class Translator:
 		Glossary = Client.glossary_path(self.project_bucket_id, "us-central1", self.glossary_id)
 		#Glossary = Client.glossary_path(self.project_bucket_id, "us-central1", 'General-DB')
 		#print('Glossary', Glossary)
-		Glossary_Config = translator.TranslateTextGlossaryConfig(glossary=Glossary)
+		Glossary_Config = translator.TranslateTextGlossaryConfig(glossary=Glossary, ignore_case=True)
 		
 		response = Client.translate_text(
 			request={
@@ -981,6 +981,7 @@ class Translator:
 				"source_language_code": self.from_language,
 				"parent": Parent,
 				"glossary_config": Glossary_Config,
+				
 			}
 		)
 		ListReturn = []
