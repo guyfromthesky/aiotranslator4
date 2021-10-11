@@ -68,7 +68,7 @@ DELAY = 20
 
 class DocumentTranslator(Frame):
 	def __init__(self, Root, process_queue = None, result_queue = None, status_queue = None,
-	my_translator_queue = None, my_db_queue = None, my_translator_agent = None, tm_manager = None, ):
+	my_translator_queue = None, my_db_queue = None, tm_manager = None, ):
 		
 		Frame.__init__(self, Root) 
 		self.pack(side=TOP, expand=Y, fill=X)
@@ -136,7 +136,7 @@ class DocumentTranslator(Frame):
 		else:
 			self.Error('No license selected, please select the key in Translate setting.')	
 
-		self.after(DELAY, self.status_listening)	
+		self.after(DELAY, self.debug_listening)	
 
 	def create_buttom_panel(self):
 		self.bottom_panel = BottomPanel(self)
@@ -155,6 +155,7 @@ class DocumentTranslator(Frame):
 		#**************New row#**************#
 		self.Notice = StringVar()
 		self.Debug = StringVar()
+		self.Info = StringVar()
 		self.Progress = StringVar()
 		
 		self.Generate_DocumentTranslator_UI(self.MainTab)
@@ -386,7 +387,7 @@ class DocumentTranslator(Frame):
 		self.Uploader_Debugger = scrolledtext.ScrolledText(Tab, width=122, height=13, undo=True, wrap=WORD, )
 		self.Uploader_Debugger.grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E+N+S)
 
-	def status_listening(self):
+	def debug_listening(self):
 		while True:
 			try:
 				Status = self.StatusQueue.get(0)
@@ -397,7 +398,7 @@ class DocumentTranslator(Frame):
 					self.Debugger.yview(END)
 			except queue.Empty:
 				break
-		self.after(DELAY, self.status_listening)
+		self.after(DELAY, self.debug_listening)
 
 
 

@@ -62,11 +62,10 @@ from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, Cust
 #from openpyxl import load_workbook, worksheet, Workbook
 
 from google.cloud import logging
-import json
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4111
+REV = 4112
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -1232,6 +1231,7 @@ class MyTranslatorHelper(Frame):
 		
 
 	def GetTitle(self):
+		self.disable_btn()
 		copy("")
 
 		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
@@ -1292,6 +1292,8 @@ class MyTranslatorHelper(Frame):
 				self.Title_Translate.join()
 			except queue.Empty:
 				self.Notice.set(self.LanguagePack.ToolTips['GenerateBugTitleFail'])
+
+			self.enable_btn()	
 		return
 
 	#Reset buttons
@@ -1366,7 +1368,7 @@ class MyTranslatorHelper(Frame):
 		self.after(DELAY, self.GetBugDetails)
 
 	def GetBugDetails(self):
-
+		self.disable_btn()
 		self.Notice.set(self.LanguagePack.ToolTips['ClipboardRemoved'])
 
 		if (self.BugWriter.is_alive()):
@@ -1374,6 +1376,7 @@ class MyTranslatorHelper(Frame):
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['GeneratedBugReport'])
 			self.BugWriter.join()
+			self.enable_btn()
 
 	def generate_report(self):
 		self.collect_report_elements()
