@@ -56,7 +56,7 @@ import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4111
+rev = 4112
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -132,7 +132,10 @@ class DocumentTranslator(Frame):
 
 		#Create Translator
 		if self.LicensePath.get() != "":
-			self.generate_translator_engine()
+			if os.path.isfile(self.LicensePath.get()):
+				self.generate_translator_engine()
+			else:
+				self.Error('No license selected, please select the key in Translate setting.')	
 		else:
 			self.Error('No license selected, please select the key in Translate setting.')	
 
@@ -585,7 +588,9 @@ class DocumentTranslator(Frame):
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'app_lang', language)
 
 	def save_app_config(self):
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', self.target_language.get())
+		target_language = self.target_language.get()
+		target_language_index = self.language_list.index(target_language)
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', target_language_index)
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'speed_mode', self.TurboTranslate.get())
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'value_only', self.DataOnly.get())
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'file_name_correct', self.TranslateFileName.get())
@@ -891,6 +896,8 @@ class DocumentTranslator(Frame):
 		self.glossary_id = self.Configuration['Translator']['glossary_id']
 
 	def init_UI_setting(self):
+
+		print('Config:', self.Configuration)
 
 		self.target_language.set(self.language_list[self.Configuration['Document_Translator']['target_lang']])
 		self.source_language.set(self.language_list[self.Configuration['Document_Translator']['source_lang']])
@@ -1808,11 +1815,13 @@ def send_fail_request(error_message):
 		from google.cloud import logging
 		AppConfig = ConfigLoader()
 		Configuration = AppConfig.Config
+		print('JSON file: ', Configuration['license_file']['path'])
 		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = Configuration['license_file']['path']
 		client = logging.Client()
 	except:
+
+		print('JSON file: ', Configuration['license_file']['path'])
 		print('Fail to communicate with logging server')
-		print("error message:", error_message)
 		messagebox.showinfo(title='Critical error', message=error_message)
 		return
 
@@ -1874,13 +1883,13 @@ def main():
 		#app.MyTranslator.send_tracking_record()
 		#Remove created process
 	except Exception as e:
-		print('Error message:', e)
+		print('Fail to launch the application:', e)
 		root.withdraw()
 
 		send_fail_request(e)
 		
-		print("Error message:", e)	
-		messagebox.showinfo(title='Critical error', message=e)
+		print("Fail to launch the application:", e)	
+		messagebox.showinfo(title='Fail to launch the application', message=e)
 
 
 if __name__ == '__main__':
