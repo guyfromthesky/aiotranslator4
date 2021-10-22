@@ -22,26 +22,26 @@ j=int(NumSheet)+1 #var j to control number of created sheet in loop
 
 #start for loop to create the sheets 
 for x in range(2,j):
-    wb.create_sheet(SheetName+str(x)) #create new sheet
+	wb.create_sheet(SheetName+str(x)) #create new sheet
 
 print(x)
 ws =  wb.active
 
 #start for loop to 
 for y in range(0,int(NumSheet)):
-    wb.active=y #Set new active sheet. 
-    ws= wb.active
-    print(wb.active)
-    ws.cell(row=y+1,column=y+1).value = "This is sheet" + SheetName + str(y+1)
-    
-    ws.cell(row=y+1,column=y+1).fill = BgFill
+	wb.active=y #Set new active sheet. 
+	ws= wb.active
+	print(wb.active)
+	ws.cell(row=y+1,column=y+1).value = "This is sheet" + SheetName + str(y+1)
+	
+	ws.cell(row=y+1,column=y+1).fill = BgFill
 
 
 try:
-    wb.save(basePath + '//'+ FileName + '.xlsx') #try to save the new .xlsx file as FileName input.
+	wb.save(basePath + '//'+ FileName + '.xlsx') #try to save the new .xlsx file as FileName input.
 
 except Exception as e:
-    print('Failed to save the result: ' + str(e))
+	print('Failed to save the result: ' + str(e))
 
 if (os.path.isfile(basePath + '//'+ FileName + '.xlsx')):
-    print('File created successfully')
+	print('File created successfully')
