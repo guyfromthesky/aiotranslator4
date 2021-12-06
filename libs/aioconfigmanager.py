@@ -20,7 +20,7 @@ class ConfigLoader:
 		self.Doc_Config_Path = self.appdata + '\\doc.ini'
 		self.Writer_Config_Path = self.appdata + '\\writer.ini'
 		self.Translator_Config_Path = self.appdata + '\\translator.ini'
-
+		self.Custom_Writer_Config_Path = self.appdata + '\\custom_writer.ini'
 		# Folder
 		self.TM_Backup_Folder_Path = self.appdata + '\\TM'
 
@@ -33,6 +33,7 @@ class ConfigLoader:
 
 		# Set default value:
 		self.Writer_Init_Setting()
+		self.Custom_Writer_Init_Setting()
 		self.Doc_Init_Setting()
 		self.Translator_Init_Setting()
 		#self.Initconfig()
@@ -50,6 +51,52 @@ class ConfigLoader:
 			else:
 				print ("Successfully created the directory %s " % self.appdata)
 			#Check local database
+
+	def Custom_Writer_Init_Setting(self):
+
+		config_path = self.Custom_Writer_Config_Path
+
+		if not os.path.isfile(config_path):
+			config = configparser.ConfigParser()
+			with open(config_path, 'w') as configfile:
+				config.write(configfile)
+
+		config = configparser.ConfigParser()
+		config.read(config_path, encoding='utf-8-sig')
+		Section = 'Custom_Writer'
+
+		if not config.has_section(Section):
+			config.add_section(Section)
+			self.Config[Section] = {}
+
+		self.Init_Config_Option(config, Section, 'sec_1_title', "Details")
+		self.Init_Config_Option(config, Section, 'sec_2_title', "Reproduce Step")
+		self.Init_Config_Option(config, Section, 'sec_3_title', "Reproducibility")
+		self.Init_Config_Option(config, Section, 'sec_4_title', "Expected result")
+		self.Init_Config_Option(config, Section, 'sec_5_title', "Environmental Information")
+		self.Init_Config_Option(config, Section, 'sec_6_title', "")
+
+		self.Init_Config_Option(config, Section, 'sec_1_row', 7)
+		self.Init_Config_Option(config, Section, 'sec_2_row', 5)
+		self.Init_Config_Option(config, Section, 'sec_3_row', 1)
+		self.Init_Config_Option(config, Section, 'sec_4_row', 3)
+		self.Init_Config_Option(config, Section, 'sec_5_row', 15)
+		self.Init_Config_Option(config, Section, 'sec_6_row', 0)
+
+
+
+		
+		Section = 'Simple_Translator'
+		if not config.has_section(Section):
+			config.add_section(Section)
+			self.Config[Section] = {}
+		self.Init_Config_Option(config, Section, 'target_lang', 2)
+		self.Init_Config_Option(config, Section, 'source_lang', 3)
+		self.Init_Config_Option(config, Section, 'secondary_target_lang', 5)
+
+
+		with open(config_path, 'w') as configfile:
+			config.write(configfile)
 
 	def Writer_Init_Setting(self):
 

@@ -191,6 +191,8 @@ class LanguagePackEN:
 
 	Tab['DBSeacher'] = "Search"
 
+	Tab['CustomBugWriter'] = "Custom Writer"
+
 	ToolTips = {}
 
 	ToolTips['UpdateTMFile'] = "Update the new translate result to TM file."
@@ -441,6 +443,8 @@ class LanguagePackKR:
 	Tab['DBUploader'] = "DB 업 로더"
 
 	Tab['DBSeacher'] = "검색"
+	
+	Tab['CustomBugWriter'] = "커스텀 라이터"
 
 	ToolTips = {}
 

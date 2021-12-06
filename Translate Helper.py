@@ -178,7 +178,9 @@ class MyTranslatorHelper(Frame):
 		#Shared variable
 
 		self.Generate_BugWriter_UI(self.BugWriter)
+		self.Generate_Custom_Writer_UI(self.CustomWriter)
 		self.Generate_SimpleTranslator_UI(self.SimpleTranslator)
+
 		self.Generate_TranslateSetting_UI(self.TranslateSetting)
 		#self.Generate_Search_UI(self.Searcher)
 
@@ -201,6 +203,9 @@ class MyTranslatorHelper(Frame):
 		self.BugWriter = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.BugWriter, text=self.LanguagePack.Tab['BugWriter'])
 		
+		self.CustomWriter = Frame(TAB_CONTROL)
+		TAB_CONTROL.add(self.CustomWriter, text=self.LanguagePack.Tab['CustomBugWriter'])
+
 		#Tab2
 		self.SimpleTranslator = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.SimpleTranslator, text=self.LanguagePack.Tab['SimpleTranslator'])
@@ -376,6 +381,68 @@ class MyTranslatorHelper(Frame):
 		self.TextShouldBe = CustomText(Tab, width=50, height=7, undo=True, wrap=WORD) 
 		self.TextShouldBe.grid(row=Row, column=6, columnspan=5, padx=5, pady=5, stick=W+E)
 	
+	def Generate_Custom_Writer_UI(self, Tab):
+		
+		Row = 1
+		#Button(Tab, width = self.HALF_BUTTON_SIZE, text= self.LanguagePack.Button['Save'], command= self._save_project_key).grid(row=Row, column=7, padx=5, pady=5, sticky=E)
+		self.GetTitleBtn = Button(Tab, text=self.LanguagePack.Button['GetTitle'], width=10, command=self.GetTitle, state=DISABLED)
+		self.GetTitleBtn.grid(row=Row, column=9, padx=5, pady=5, stick=E)
+		
+		Row+=1
+		Label(Tab, text=self.LanguagePack.Label['BugTitle']).grid(row=Row, column = 1, padx=5, pady=5, stick=W)
+
+		#AutocompleteCombobox
+		self.Header_A = AutocompleteCombobox(Tab)
+		self.Header_A.Set_Entry_Width(self.HALF_BUTTON_SIZE*2)
+		self.Header_A.set_completion_list(self.header_list)
+		self.Header_A.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
+		
+		self.TextTitle = CustomText(Tab, width=90, height=3, undo=True, wrap=WORD)
+		self.TextTitle.grid(row=Row, column=4, columnspan=6, rowspan=2, padx=5, pady=5, stick=W)
+
+		Row+=1
+
+		self.Header_B = AutocompleteCombobox(Tab)
+		self.Header_B.Set_Entry_Width(self.HALF_BUTTON_SIZE*2)
+		self.Header_B.set_completion_list(self.header_list)
+		self.Header_B.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
+
+		if self.Custom_Writer['sec_1_row'] > 0 and self.Custom_Writer['sec_1_title'] != "":
+			Row+=1
+			Label(Tab, text=self.Custom_Writer['sec_1_title']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
+			self.Section_1_Box = Text(Tab, height=self.Custom_Writer['sec_1_row'], undo=True)
+			self.Section_1_Box.grid(row=Row, column=2, columnspan=8, padx=5, pady=5, stick=W+E)
+
+		if self.Custom_Writer['sec_2_row'] > 0 and self.Custom_Writer['sec_2_title'] != "":
+			Row+=1
+			Label(Tab, text=self.Custom_Writer['sec_2_title']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
+			self.Section_2_Box = Text(Tab,height=self.Custom_Writer['sec_2_row'], undo=True)
+			self.Section_2_Box.grid(row=Row, column=2, columnspan=8, padx=5, pady=5, stick=W+E)
+			
+		if self.Custom_Writer['sec_3_row'] > 0 and self.Custom_Writer['sec_3_title'] != "":
+			Row+=1
+			Label(Tab, text=self.Custom_Writer['sec_3_title']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
+			self.Section_3_Box = Text(Tab, height=self.Custom_Writer['sec_3_row'], undo=True)
+			self.Section_3_Box.grid(row=Row, column=2, columnspan=8, padx=5, pady=5, stick=W+E)
+	
+		if self.Custom_Writer['sec_4_row'] > 0 and self.Custom_Writer['sec_4_title'] != "":
+			Row+=1
+			Label(Tab, text=self.Custom_Writer['sec_4_title']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
+			self.Section_4_Box = Text(Tab, height=self.Custom_Writer['sec_4_row'], undo=True)
+			self.Section_4_Box.grid(row=Row, column=2, columnspan=8, padx=5, pady=5, stick=W+E)
+
+		if self.Custom_Writer['sec_5_row'] > 0 and self.Custom_Writer['sec_5_title'] != "":
+			Row+=1
+			Label(Tab, text=self.Custom_Writer['sec_5_title']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
+			self.Section_5_Box = Text(Tab, height=self.Custom_Writer['sec_5_row'], undo=True)
+			self.Section_5_Box.grid(row=Row, column=2, columnspan=8, padx=5, pady=5, stick=W+E)
+		
+		if self.Custom_Writer['sec_6_row'] > 0 and self.Custom_Writer['sec_6_title'] != "":
+			Row+=1
+			Label(Tab, text=self.Custom_Writer['sec_6_title']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
+			self.Section_6_Box = Text(Tab, height=self.Custom_Writer['sec_6_row'], undo=True)
+			self.Section_6_Box.grid(row=Row, column=2, columnspan=8, padx=5, pady=5, stick=W+E)
+
 	### UI of SIMPLE TRANSLATOR ###
 	def Generate_SimpleTranslator_UI(self, Tab):
 
@@ -461,6 +528,106 @@ class MyTranslatorHelper(Frame):
 		self.TextLicensePath = Entry(Tab,width = 150, state="readonly", textvariable=self.LicensePath)
 		self.TextLicensePath.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=W+E)
 		Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path).grid(row=Row, column=10, padx=5, pady=5, sticky=E)
+		
+		Text_Box_Size = 15
+		Row += 1
+		
+		Label(Tab, text= 'Section 1 title').grid(row=Row, column=1, padx=5, pady=5, sticky=E)
+		self.Sec_1_title_value = Text(Tab, width = Text_Box_Size, height=1, undo=True) 
+		self.Sec_1_title_value.grid(row=Row, column=3, padx=5, pady=5, sticky=E)
+		self.Sec_1_title_value.insert('end', self.Custom_Writer['sec_1_title'])
+		
+		Label(Tab, text= 'Section 1 height').grid(row=Row, column=5, padx=5, pady=5, sticky=E)
+		self.Sec_1_height_value = Text(Tab, width = Text_Box_Size, height=1, undo=True) 
+		self.Sec_1_height_value.grid(row=Row, column=7, padx=5, pady=5, sticky=E)
+		self.Sec_1_height_value.insert('end', self.Custom_Writer['sec_1_row'])
+		
+		Label(Tab, text= 'Section 1 translate type').grid(row=Row, column=8, padx=5, pady=5, sticky=E)
+		self.Sec_1_translate_variable = StringVar()
+		self.Sec_1_translate_value = OptionMenu(Tab, self.Sec_1_translate_variable, *['Single', 'Bilingual', 'Trilingual'], command = None)
+		self.Sec_1_translate_value.grid(row=Row, column=9, padx=5, pady=5, sticky=E)
+
+		Row += 1
+		Label(Tab, text= 'Section 2 title').grid(row=Row, column=1, padx=5, pady=5, sticky=E)
+		self.Sec_2_title_value = Text(Tab, width = Text_Box_Size, height=1, undo=True) 
+		self.Sec_2_title_value.grid(row=Row, column=3, padx=5, pady=5, sticky=E)
+		self.Sec_2_title_value.insert('end', self.Custom_Writer['sec_2_title'])
+
+		Label(Tab, text= 'Section 2 height').grid(row=Row, column=5, padx=5, pady=5, sticky=E)
+		self.Sec_2_height_value = Text(Tab, width = Text_Box_Size, height=1, undo=True) 
+		self.Sec_2_height_value.grid(row=Row, column=7, padx=5, pady=5, sticky=E)
+		self.Sec_2_height_value.insert('end', self.Custom_Writer['sec_2_row'])
+
+		Label(Tab, text= 'Section 2 translate type').grid(row=Row, column=8, padx=5, pady=5, sticky=E)
+		self.Sec_2_translate_variable = StringVar()
+		self.Sec_2_translate_value = OptionMenu(Tab, self.Sec_2_translate_variable, *['Single', 'Bilingual', 'Trilingual'], command = None)
+		self.Sec_2_translate_value.grid(row=Row, column=9, padx=5, pady=5, sticky=E)
+
+		Row += 1
+		Label(Tab, text= 'Section 3 title').grid(row=Row, column=1, padx=5, pady=5, sticky=E)
+		self.Sec_3_title_value = Text(Tab, width = Text_Box_Size, height=1, undo=True) 
+		self.Sec_3_title_value.grid(row=Row, column=3, padx=5, pady=5, sticky=E)
+		self.Sec_3_title_value.insert('end', self.Custom_Writer['sec_3_title'])
+
+		Label(Tab, text= 'Section 3 height').grid(row=Row, column=5, padx=5, pady=5, sticky=E)
+		self.Sec_3_height_value = Text(Tab, width = Text_Box_Size, height=1, undo=True) 
+		self.Sec_3_height_value.grid(row=Row, column=7, padx=5, pady=5, sticky=E)
+		self.Sec_3_height_value.insert('end', self.Custom_Writer['sec_3_row'])
+
+		Label(Tab, text= 'Section 3 translate type').grid(row=Row, column=8, padx=5, pady=5, sticky=E)
+		self.Sec_3_translate_variable = StringVar()
+		self.Sec_3_translate_value = OptionMenu(Tab, self.Sec_3_translate_variable, *['Single', 'Bilingual', 'Trilingual'], command = None)
+		self.Sec_3_translate_value.grid(row=Row, column=9, padx=5, pady=5, sticky=E)
+
+		Row += 1
+		Label(Tab, text= 'Section 4 title').grid(row=Row, column=1, padx=5, pady=5, sticky=E)
+		self.Sec_4_title_value = Text(Tab, width = Text_Box_Size, height=1, undo=True) 
+		self.Sec_4_title_value.grid(row=Row, column=3, padx=5, pady=5, sticky=E)
+		self.Sec_4_title_value.insert('end', self.Custom_Writer['sec_4_title'])
+
+		Label(Tab, text= 'Section 4 height').grid(row=Row, column=5, padx=5, pady=5, sticky=E)
+		self.Sec_4_height_value = Text(Tab, width = Text_Box_Size, height=1, undo=True) 
+		self.Sec_4_height_value.grid(row=Row, column=7, padx=5, pady=5, sticky=E)
+		self.Sec_4_height_value.insert('end', self.Custom_Writer['sec_4_row'])
+
+		Label(Tab, text= 'Section 4 translate type').grid(row=Row, column=8, padx=5, pady=5, sticky=E)
+		self.Sec_4_translate_variable = StringVar()
+		self.Sec_4_translate_value = OptionMenu(Tab, self.Sec_4_translate_variable, *['Single', 'Bilingual', 'Trilingual'], command = None)
+		self.Sec_4_translate_value.grid(row=Row, column=9, padx=5, pady=5, sticky=E)
+
+		Row += 1
+		Label(Tab, text= 'Section 5 title').grid(row=Row, column=1, padx=5, pady=5, sticky=E)
+		self.Sec_5_title_value = Text(Tab, width = Text_Box_Size, height=1, undo=True)
+		self.Sec_5_title_value.grid(row=Row, column=3, padx=5, pady=5, sticky=E) 
+		self.Sec_5_title_value.insert('end', self.Custom_Writer['sec_5_title'])
+
+		Label(Tab, text= 'Section 5 height').grid(row=Row, column=5, padx=5, pady=5, sticky=E)
+		self.Sec_5_height_value = Text(Tab, width = Text_Box_Size, height=1, undo=True) 
+		self.Sec_5_height_value.grid(row=Row, column=7, padx=5, pady=5, sticky=E)
+		self.Sec_5_height_value.insert('end', self.Custom_Writer['sec_5_row'])
+
+		Label(Tab, text= 'Section 5 translate type').grid(row=Row, column=8, padx=5, pady=5, sticky=E)
+		self.Sec_5_translate_variable = StringVar()
+		self.Sec_5_translate_value = OptionMenu(Tab, self.Sec_5_translate_variable, *['Single', 'Bilingual', 'Trilingual'], command = None)
+		self.Sec_5_translate_value.grid(row=Row, column=9, padx=5, pady=5, sticky=E)
+
+
+		Row += 1
+		Label(Tab, text= 'Section 6 title').grid(row=Row, column=1, padx=5, pady=5, sticky=E)
+		self.Sec_6_title_value = Text(Tab, width = Text_Box_Size, height=1, undo=True) 
+		self.Sec_6_title_value.grid(row=Row, column=3, padx=5, pady=5, sticky=E)
+		self.Sec_6_title_value.insert('end', self.Custom_Writer['sec_6_title'])
+
+		Label(Tab, text= 'Section 6 height').grid(row=Row, column=5, padx=5, pady=5, sticky=E)
+		self.Sec_6_height_value = Text(Tab, width = Text_Box_Size, height=1, undo=True) 
+		self.Sec_6_height_value.grid(row=Row, column=7, padx=5, pady=5, sticky=E)
+		self.Sec_6_height_value.insert('end', self.Custom_Writer['sec_6_row'])
+
+		Label(Tab, text= 'Section 6 translate type').grid(row=Row, column=8, padx=5, pady=5, sticky=E)
+		self.Sec_6_translate_variable = StringVar()
+		self.Sec_6_translate_value = OptionMenu(Tab, self.Sec_6_translate_variable, *['Single', 'Bilingual', 'Trilingual'], command = None)
+		self.Sec_6_translate_value.grid(row=Row, column=9, padx=5, pady=5, sticky=E)
+
 
 
 	def Btn_Select_License_Path(self):
@@ -522,7 +689,21 @@ class MyTranslatorHelper(Frame):
 			print("Error while loading cloud configuration:", e)
 			self.banning_status = False
 			self.latest_version = 1000
-			
+
+		self.Custom_Writer = {}
+		self.Custom_Writer['sec_1_title'] = self.Configuration['Custom_Writer']['sec_1_title']
+		self.Custom_Writer['sec_2_title'] = self.Configuration['Custom_Writer']['sec_2_title']
+		self.Custom_Writer['sec_3_title'] = self.Configuration['Custom_Writer']['sec_3_title']
+		self.Custom_Writer['sec_4_title'] = self.Configuration['Custom_Writer']['sec_4_title']
+		self.Custom_Writer['sec_5_title'] = self.Configuration['Custom_Writer']['sec_5_title']
+		self.Custom_Writer['sec_6_title'] = self.Configuration['Custom_Writer']['sec_6_title']
+
+		self.Custom_Writer['sec_1_row'] = self.Configuration['Custom_Writer']['sec_1_row']
+		self.Custom_Writer['sec_2_row'] = self.Configuration['Custom_Writer']['sec_2_row']
+		self.Custom_Writer['sec_3_row'] = self.Configuration['Custom_Writer']['sec_3_row']
+		self.Custom_Writer['sec_4_row'] = self.Configuration['Custom_Writer']['sec_4_row']
+		self.Custom_Writer['sec_5_row'] = self.Configuration['Custom_Writer']['sec_5_row']
+		self.Custom_Writer['sec_6_row'] = self.Configuration['Custom_Writer']['sec_6_row']
 		
 		#self.Config['bucket_db_list']
 		#self.Config['glossary_data_list']
@@ -550,6 +731,8 @@ class MyTranslatorHelper(Frame):
 			self.simple_secondary_target_language.set('')
 		else:
 			self.simple_secondary_target_language.set(self.language_list[simple_secondary_language])
+
+
 
 
 #######################################################################

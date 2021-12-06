@@ -132,10 +132,10 @@ def  list_glossaries(project_id="credible-bay-281107"):
 
 #create_glossary()
 #list_glossaries()
-my_gloss = 'KW_PC'
-#delete_glossary(glossary_id=my_gloss)
+#my_gloss = 'KW_PC'
+#delete_glossary(glossary_id='ER')
 #create_glossary(glossary_id = my_gloss)
-create_glossary(input_uri="gs://nxvnbucket/DB/KW_PC/KW_PC_db.csv",	glossary_id= my_gloss)
+create_glossary(input_uri= r"gs://nxvnbucket/DB/ER/ER_db.csv",	glossary_id= "ER")
 
 #translate_text_with_glossary(['Use the active skill', 'Use the kaidan fruits.', 'Access to phantom of kaidan'])
 #create_glossary(input_uri="gs://nxvnv4/DB/MSM.csv",	glossary_id="MSM")
