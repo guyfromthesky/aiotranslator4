@@ -17,6 +17,8 @@ from google.cloud import translate_v3 as translator
 from google.cloud import storage
 from google.cloud import logging
 from google.cloud.translate_v3.types.translation_service import Glossary
+from google.api_core.exceptions import Forbidden
+
 from numpy import NaN
 
 import pandas as pd
@@ -1554,8 +1556,14 @@ class Translator:
 
 			supported_language = address['language']
 			print('Uploading to blob:', current_id)
-			blob.upload_from_filename(filename = Upload_Path)
-			print('Uploading done.')
+			try:
+				blob.upload_from_filename(filename = Upload_Path)
+			except Exception as exception:
+				print('Uploading Fail.')
+				if isinstance(exception, Forbidden):
+					return "Forbidden"
+				else:
+					return False
 		print('Create glossary from blob: ', _gloosary_id)
 		return self.update_glossary(glossary_id, _gloosary_id, supported_language)
 	
@@ -1568,8 +1576,6 @@ class Translator:
 		result = operation.result(timeout)
 		print("Deleted: {}".format(result.name))
 
-
-
 	def update_glossary(self, glossary_id, db_uri, supported_language):
 		from google.cloud import storage
 		print('Provided uri:', db_uri)
@@ -1581,10 +1587,15 @@ class Translator:
 			print('Deleting blob')
 		except Exception as e:
 			print('Error while deleting glossary:', glossary_id, e)	
+			return False
+		try:
+			result = self.create_glossary(_uri, glossary_id, supported_language)
+			print('Creating blob')
+		except Exception as e:
+			print('Error while Creating glossary:', glossary_id, e)	
+			return 'LostDB'
 		
-		print('Create glossary')
-		
-		return self.create_glossary(_uri, glossary_id, supported_language)
+		return result
 
 	
 ##########################################################

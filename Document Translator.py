@@ -56,7 +56,7 @@ import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4112
+rev = 4113
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -828,7 +828,7 @@ class DocumentTranslator(Frame):
 			result = messagebox.askquestion ('Notice',message,icon = 'warning')
 			if result == 'yes':
 				glossary_id = self.ProjectList.get()
-				self.Upload_DB_Processor = Process(target=function_upload_db, args=(self.StatusQueue,self.MyTranslator, glossary_id, compare_result))
+				self.Upload_DB_Processor = Process(target=function_upload_db, args=(self.StatusQueue, self.ResultQueue,self.MyTranslator, glossary_id, compare_result))
 				self.Upload_DB_Processor.start()
 				self.after(DELAY, self.Wait_For_Uploader_Processor)	
 			else:
@@ -841,12 +841,22 @@ class DocumentTranslator(Frame):
 		Display information whether the upload is successful in the text box.
 		"""
 		if (self.Upload_DB_Processor.is_alive()):
-			
 			self.after(DELAY, self.Wait_For_Uploader_Processor)
 		else:
-		
 			self.Uploader_Debugger.insert("end", "\n\r")
-			self.Uploader_Debugger.insert("end", "DB is uploaded")
+			try:
+				upload_result = self.ResultQueue.get(0)	
+				if upload_result == "False":
+					self.Uploader_Debugger.insert("end", "Fail to upload DB")
+				elif upload_result == 'Forbidden':
+					self.Uploader_Debugger.insert("end", "No permission")
+				elif upload_result == 'LostDB':
+					self.Uploader_Debugger.insert("end", "WARNING: Project ID is removed from the list, need to recreate again.")
+				else:
+					self.Uploader_Debugger.insert("end", "DB uploaded")
+			except queue.Empty:
+				self.Uploader_Debugger.insert("end", "DB uploaded")
+
 			self.Upload_DB_Processor.terminate()
 	
 	def Confirm_Popup(self, Request, message):
@@ -1459,7 +1469,7 @@ def report_diff(x):
 		#return x[0]
 		return x[0]
 
-def function_upload_db(status_queue, MyTranslator, glossary_id, result):
+def function_upload_db(status_queue, result_queue, MyTranslator, glossary_id, result):
 	print('Upload DB')
 	print(locals())
 	address = result['path']
@@ -1468,9 +1478,20 @@ def function_upload_db(status_queue, MyTranslator, glossary_id, result):
 	changes = result['changed']
 
 	result = MyTranslator.backup_and_update_blob(glossary_id, address)
+	print('backup_and_update_blob', result)
 	if result == False:
 		status_queue.put('Fail to upload DB')
+		result_queue.put("False")
 		return
+	elif result == 'Forbidden':
+		status_queue.put('No permission to upload DB')
+		result_queue.put("Forbidden")
+		return
+	elif result == 'LostDB':
+		status_queue.put('Project ID was Removed but couldn\'t be created.')
+		result_queue.put("LostDB")
+		return
+
 	client = logging.Client()
 	
 	log_name = 'db-update'
