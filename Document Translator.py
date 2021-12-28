@@ -54,12 +54,13 @@ from libs.tkinter_extension import AutocompleteCombobox
 from google.cloud import logging
 import pandas as pd
 
+__all__ = ['DocumentTranslator']
+
 tool_display_name = "Document Translator"
 tool_name = 'document'
 rev = 4112
 ver_num = get_version(rev) 
-version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
-
+version = f'{tool_display_name} {ver_num} | Translator lib {TranslatorVersion}'
 DELAY = 20
 
 #**********************************************************************************
@@ -67,12 +68,13 @@ DELAY = 20
 #**********************************************************************************
 
 class DocumentTranslator(Frame):
-	def __init__(self, Root, process_queue = None, result_queue = None, status_queue = None,
-	my_translator_queue = None, my_db_queue = None, tm_manager = None, ):
+	def __init__(self, Root, process_queue = None, result_queue = None,
+				status_queue = None, my_translator_queue = None,
+				my_db_queue = None, tm_manager = None, ):
 		
 		Frame.__init__(self, Root) 
 		self.pack(side=TOP, expand=Y, fill=X)
-		self.parent = Root 
+		self.parent = Root
 
 		# Queue
 		self.ProcessQueue = process_queue
@@ -165,16 +167,19 @@ class DocumentTranslator(Frame):
 		self.Generate_TranslateSetting_UI(self.TranslateSetting)
 		self.Generate_TM_Manager_UI(self.TM_Manager)
 		self.Generate_DB_Uploader_UI(self.DB_Uploader)
+		self.generate_tm_uploader_ui(self.tm_uploader_tab)
 		self.Generate_Debugger_UI(self.Process)
 
 		
 	def Generate_DocumentTranslator_UI(self, Tab):
 		Row=1
-		Label(Tab, textvariable=self.Progress, width= 40).grid(row=Row, column=1, columnspan=3, padx=5, pady=5, sticky=W)
-		Label(Tab, textvariable=self.Notice, justify=RIGHT).grid(row=Row, column=3, columnspan=6, padx=5, pady=5, sticky= E)
+		Label(Tab, textvariable=self.Progress, width= 40) \
+			.grid(row=Row, column=1, columnspan=3, padx=5, pady=5, sticky=W)
+		Label(Tab, textvariable=self.Notice, justify=RIGHT) \
+			.grid(row=Row, column=3, columnspan=6, padx=5, pady=5, sticky= E)
 
 		Row+=1
-		Label(Tab, text=  self.LanguagePack.Label['Source'], width= 10, font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+		Label(Tab, text=self.LanguagePack.Label['Source'], width= 10, font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 
 		self.source_language = StringVar()
 
@@ -289,10 +294,16 @@ class DocumentTranslator(Frame):
 		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
 		
 		Row += 1
-		Label(Tab, text= self.LanguagePack.Label['TM']).grid(row=Row, column=1, padx=5, pady=5, sticky=W)
-		self.TextLicensePath = Entry(Tab,width = 120, state="readonly", textvariable=self.TMPath)
-		self.TextLicensePath.grid(row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
-		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.SelectTM).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
+		Label(Tab, text= self.LanguagePack.Label['TM']) \
+			.grid(row=Row, column=1,padx=5, pady=5, sticky=W)
+		self.TextLicensePath = Entry(Tab,width = 120, state="readonly",
+										textvariable=self.TMPath)
+		self.TextLicensePath.grid(row=Row, column=3, columnspan=5, padx=5,
+									pady=5, sticky=W)
+		Button(Tab, width=self.HALF_BUTTON_WIDTH,
+				text=self.LanguagePack.Button['Browse'],
+				command=self.SelectTM) \
+			.grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
 		
 
 
@@ -390,6 +401,39 @@ class DocumentTranslator(Frame):
 		self.Uploader_Debugger = scrolledtext.ScrolledText(Tab, width=122, height=13, undo=True, wrap=WORD, )
 		self.Uploader_Debugger.grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E+N+S)
 
+	def generate_tm_uploader_ui(self, Tab):
+		
+		Row =1
+		self.Str_DB_Path = StringVar()
+		#self.Str_DB_Path.set('C:\\Users\\evan\\OneDrive - NEXON COMPANY\\[Demostration] V4 Gacha test\\DB\\db.xlsx')
+		Label(Tab, text=self.LanguagePack.Label['MainDB']) \
+			.grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky= W)
+		self.Entry_Old_File_Path = Entry(Tab,width = 110, state="readonly",
+											textvariable=self.Str_DB_Path)
+		self.Entry_Old_File_Path.grid(row=Row, column=3, columnspan=6, padx=4,
+										pady=5, sticky=E)
+		Button(Tab, width=self.HALF_BUTTON_WIDTH,
+				text=self.LanguagePack.Button['Browse'],
+				command=self.Btn_DB_Uploader_Browse_DB_File) \
+			.grid(row=Row, column=9, columnspan=2, padx=5, pady=5, sticky=E)
+		
+		Row += 1
+		Label(Tab, text= self.LanguagePack.Label['ProjectKey']).grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+		
+		self.ProjectList = AutocompleteCombobox(Tab)
+		self.ProjectList.Set_Entry_Width(30)
+		self.ProjectList.set_completion_list([])
+		if self.glossary_id != None:
+			self.ProjectList.set(self.glossary_id)
+
+		self.ProjectList.grid(row=Row, column=3, columnspan=2, padx=5, pady=5, stick=W)
+
+		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Execute'], command= self.Btn_DB_Uploader_Execute_Script).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
+
+		Row += 1
+		self.Uploader_Debugger = scrolledtext.ScrolledText(Tab, width=122, height=13, undo=True, wrap=WORD, )
+		self.Uploader_Debugger.grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E+N+S)
+
 	def debug_listening(self):
 		while True:
 			try:
@@ -441,9 +485,9 @@ class DocumentTranslator(Frame):
 
 	# Nam will check
 	def load_tm_list(self):
-		"""
-		When clicking the [Load] button in TM Manager tab
-		Display the pair languages in the text box.
+		"""When clicking the [Load] button in TM Manager tab,
+		
+		display the pair languages in the text box.
 		"""
 		self.remove_treeview()
 		tm_size = len(self.MyTranslator.translation_memory)
@@ -464,7 +508,7 @@ class DocumentTranslator(Frame):
 					pass	
 					
 
-	# Nam will check
+	
 	def search_tm_list(self):
 		"""
 		Search text box in TM Manager tab
@@ -547,7 +591,8 @@ class DocumentTranslator(Frame):
 		TAB_CONTROL.add(self.MainTab, text= self.LanguagePack.Tab['Main'])
 		#Tab2
 		self.TranslateSetting = Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.TranslateSetting, text= self.LanguagePack.Tab['Translator'])
+		TAB_CONTROL.add(self.TranslateSetting,
+						text=self.LanguagePack.Tab['Translator'])
 		#Tab5
 		#self.Comparison = ttk.Frame(TAB_CONTROL)
 		#TAB_CONTROL.add(self.Comparison, text=  self.LanguagePack.Tab['Comparison'])
@@ -557,6 +602,10 @@ class DocumentTranslator(Frame):
 
 		self.DB_Uploader = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.DB_Uploader, text= self.LanguagePack.Tab['DBUploader'])
+
+		self.tm_uploader_tab = Frame(TAB_CONTROL)
+		TAB_CONTROL.add(self.tm_uploader_tab,
+						text=self.LanguagePack.Tab['tm_uploader'])
 
 		# Process Details tab
 		self.Process = Frame(TAB_CONTROL)
@@ -747,6 +796,7 @@ class DocumentTranslator(Frame):
 
 	def Wait_For_Creator_Processor(self):
 		"""
+		
 		After [Execute] button processing
 		Display process information in the text box.
 		"""
