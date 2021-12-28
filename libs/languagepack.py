@@ -188,6 +188,7 @@ class LanguagePackEN:
 
 	Tab['TMManager'] = "TM Manager"
 	Tab['DBUploader'] = "DB Uploader"
+	Tab['tm_uploader'] = 'TM Uploader'
 
 	Tab['DBSeacher'] = "Search"
 
