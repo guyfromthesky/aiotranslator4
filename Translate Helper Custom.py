@@ -65,9 +65,9 @@ from google.cloud import logging
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4112
+REV = 4113
 ver_num = get_version(REV) 
-version = tool_display_name  + " " +  ver_num + "* | " + "Translator lib " + TranslatorVersion
+version = tool_display_name  + " " +  ver_num + " * | " + "Translator lib " + TranslatorVersion
 
 DELAY = 20
 
@@ -135,13 +135,12 @@ class MyTranslatorHelper(Frame):
 		
 		self.create_buttom_panel()
 		self.init_ui()
-		
 		self.init_UI_setting()
 		
 
 		if REV < int(self.latest_version):
 			self.Error('Current version is lower than the minimal version allowed. Please update.')	
-			webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/AIO+Translator")
+			webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/Translate+Helper")
 			self.quit()
 			return
 
@@ -158,7 +157,6 @@ class MyTranslatorHelper(Frame):
 		MsgBox = messagebox.askquestion ('Bug Writer', self.LanguagePack.ToolTips['LoadReport'],icon = 'info') 
 		if MsgBox == 'yes':
 			self.LoadTempReport()
-
 		
 	# Menu function
 	def Error(self, ErrorText):
@@ -300,7 +298,7 @@ class MyTranslatorHelper(Frame):
 		
 		self.TextTitle = CustomText(Tab, width=90, height=3, undo=True, wrap=WORD)
 		self.TextTitle.grid(row=Row, column=4, columnspan=7, rowspan=2, padx=5, pady=5, stick=W+E)
-
+		
 		Row+=1
 
 		self.HeaderOptionB = AutocompleteCombobox(Tab)
@@ -329,6 +327,7 @@ class MyTranslatorHelper(Frame):
 		Label(Tab, width=10, text=self.LanguagePack.Label['Report']).grid(row=Row, column=4, columnspan=2, padx=0, pady=5, stick=W)
 
 		#Button(Tab, text=self.LanguagePack.Button['Load'], width=10, command= self.LoadTempReport).grid(row=Row, column=8, padx=5, pady=5, stick=W+E)
+
 		Button(Tab, text=self.LanguagePack.Button['Load'], width=10, command= self._load_report).grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
 		
 		Button(Tab, text=self.LanguagePack.Button['Save'], width=10, command= self._save_report).grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
@@ -336,16 +335,8 @@ class MyTranslatorHelper(Frame):
 		Row+=1
 		self.EnvInfo = Text(Tab, width=40, height=9, undo=True)
 		self.EnvInfo.grid(row=Row, column=1, columnspan=3, rowspan= 9,  padx=5, pady=5, stick=W+E)
-		self.EnvInfo.delete("1.0", END)	
-		self.EnvInfo.insert("end", "Platform:\r\n")
-		self.EnvInfo.insert("end", "DeviceModel:\r\n")
-		self.EnvInfo.insert("end", "BuildType:\r\n")
-		self.EnvInfo.insert("end", "ClientVersion:\r\n")
-		self.EnvInfo.insert("end", "ResVersion:\r\n")
-		self.EnvInfo.insert("end", "VersionCode:\r\n")
-		self.EnvInfo.insert("end", "ScriptVersionCode:\r\n")
-		self.EnvInfo.insert("end", "ClientCommitID:\r\n")
-		self.EnvInfo.insert("end", "ScriptCommitID:\r\n")
+		
+		self.ResetInfoSection()
 		
 
 		self.TextTestReport = CustomText(Tab, width=100, height=9, undo=True, wrap=WORD)
@@ -378,6 +369,7 @@ class MyTranslatorHelper(Frame):
 		self.TextShouldBe = CustomText(Tab, width=50, height=7, undo=True, wrap=WORD) 
 		self.TextShouldBe.grid(row=Row, column=6, columnspan=5, padx=5, pady=5, stick=W+E)
 	
+		self.TextTitle.focus_set()
 		Tab.bind_all('<Key>', self.SaveTempReport)
 
 	### UI of SIMPLE TRANSLATOR ###
@@ -761,6 +753,8 @@ class MyTranslatorHelper(Frame):
 			#self.Error('No Valid Project selected, please update the project ID in Translate Setting tab')	
 			#DBLength = self.MyTranslator.get_glossary_length()
 			#self.DictionaryStatus.set(str(DBLength))
+			
+			#self.TextTitle.focus_set()
 
 			self.TranslatorProcess.join()
 		else:
@@ -1158,6 +1152,7 @@ class MyTranslatorHelper(Frame):
 
 		self.db_highlight.configure(state=NORMAL)
 		#self.db_correction.configure(state=NORMAL)
+		
 
 	def RenewMyTranslator(self):
 		
@@ -1212,6 +1207,7 @@ class MyTranslatorHelper(Frame):
 	def analyze_terminology(self):
 		for term in self.MyTranslator.dictionary:
 			if term not in [' ']:
+				#term = term.lower()
 				self.TextTestReport.highlight_fault_pattern(term, 'blue')
 				self.TextTitle.highlight_fault_pattern(term, 'blue')
 				self.TextReproduceSteps.highlight_fault_pattern(term, 'blue')
@@ -1222,6 +1218,7 @@ class MyTranslatorHelper(Frame):
 	def analyze_fault_terminology(self):
 		for term in self.MyTranslator.dictionary:
 			if term not in [' ']:
+				term = term.lower()
 				self.TextTestReport.highlight_fault_pattern(term, 'red')
 				self.TextTitle.highlight_fault_pattern(term, 'red')
 				self.TextReproduceSteps.highlight_fault_pattern(term, 'red')
@@ -1318,19 +1315,23 @@ class MyTranslatorHelper(Frame):
 		self.TextTestReport.delete("1.0", END)
 		self.TextReproduceSteps.delete("1.0", END)
 		self.TextShouldBe.delete("1.0", END)	
-
-		self.EnvInfo.delete("1.0", END)	
-		self.EnvInfo.insert("end", "Platform:\r\n")
-		self.EnvInfo.insert("end", "DeviceModel:\r\n")
-		self.EnvInfo.insert("end", "BuildType:\r\n")
-		self.EnvInfo.insert("end", "ClientVersion:\r\n")
-		self.EnvInfo.insert("end", "ResVersion:\r\n")
-		self.EnvInfo.insert("end", "VersionCode:\r\n")
-		self.EnvInfo.insert("end", "ScriptVersionCode:\r\n")
-		self.EnvInfo.insert("end", "ClientCommitID:\r\n")
-		self.EnvInfo.insert("end", "ScriptCommitID:\r\n")	
+		
+		self.ResetInfoSection()
+	
 		return
 	#END
+
+	def ResetInfoSection(self):
+		self.EnvInfo.delete("1.0", END)	
+		self.EnvInfo.insert("end", "Platform: ")
+		self.EnvInfo.insert("end", "\nDeviceModel: ")
+		self.EnvInfo.insert("end", "\nBuildType: ")
+		self.EnvInfo.insert("end", "\nClientVersion: ")
+		self.EnvInfo.insert("end", "\nResVersion: ")
+		self.EnvInfo.insert("end", "\nVersionCode: ")
+		self.EnvInfo.insert("end", "\nScriptVersionCode: ")
+		self.EnvInfo.insert("end", "\nClientCommitID: ")
+		self.EnvInfo.insert("end", "\nScriptCommitID: ")
 
 	#GUI function
 	def collect_report_elements(self):
@@ -1340,6 +1341,7 @@ class MyTranslatorHelper(Frame):
 		To_Translate = {}
 
 		EnvInfo = self.EnvInfo.get("1.0", END)
+		
 		Reproducibility = self.Reproducibility.get("1.0", END).replace('\n', '')
 		To_Translate['EnvInfo'] = EnvInfo
 		To_Translate['Reproducibility'] = Reproducibility + '%'
@@ -1535,7 +1537,6 @@ class MyTranslatorHelper(Frame):
 			pass
 
 	def LoadTempReport(self):
-
 		try:
 			self.AppConfig.Refresh_Config_Data()
 			self.Configuration = self.AppConfig.Config
@@ -1566,7 +1567,6 @@ class MyTranslatorHelper(Frame):
 	
 			self.HeaderOptionA.set(self.Configuration['Temp_BugDetails']['HeaderA'])
 			self.HeaderOptionB.set(self.Configuration['Temp_BugDetails']['HeaderB'])
-
 
 		except:
 			print('Fail somewhere')
@@ -1698,8 +1698,7 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 	TextShouldBe_index = []
 	TextReproduceSteps_index = []
 
-	EnvInfo = Object['EnvInfo'].split('\r')
-	Reproducibility = Object['Reproducibility']
+	
 	
 	TextTestReport = Object['TextTestReport'].replace('\r', '').split('\n')
 	TextShouldBe = Object['TextShouldBe'].replace('\r', '').split('\n')
@@ -1781,19 +1780,24 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 	CssText += '\r\n'
 	CssText += strReprodSteps
 	CssText += '\r\n'
-	CssText += '<p><b>[재현빈도 - Reproducibility]</b><br/>' 
+	CssText += '<p><b>[재현빈도 - Reproducibility]</b><br/></p>' 
 	CssText += '\r\n'
 			
+	Reproducibility = Object['Reproducibility']
+
 	CssText += '<p>'+ Reproducibility + '&nbsp;</p>'
 	CssText += '\r\n'
 	CssText += strShouldBe
 	CssText += '\r\n'
-	CssText += '<p><b>[환경정보 - Environmental Information]</b><br/>' 
+	CssText += '<p><b>[환경정보 - Environmental Information]</b><br/></p>' 
+
+
+	EnvInfo = Object['EnvInfo'].split('\n')
 
 	for item in EnvInfo:
-		CssText += '\r\n'
-		item = item.replace('\n', '').replace('\r', '')
-		CssText += '<p>'+ item + '&nbsp;</p>'
+		if str(item) != "":
+			CssText += '\r\n'
+			CssText += '<p>'+ item + '</p>'
 
 	print('Copy to clipboard')
 	copy(CssText)
@@ -1804,36 +1808,35 @@ def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Se
 	x = 1
 	if Lang == 'ko':		
 		for row in Text_List:
-			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
+			Details += '<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
 			x += 1
-		Details += '\r\n================================================='
+		Details += '=================================================\r\n'
 		x = 1
 		for row in Text_List_Old:
-			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
+			Details += '<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
 			x += 1
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '=================================================\r\n'
 			x = 1
 			for row in Text_List_Secondary:
-				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
+				Details += '<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
 				x += 1	
 	else:
 		for row in Text_List_Old:
-			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
+			Details += '<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
 			x += 1
-		Details += '\r\n================================================='
+		Details += '=================================================\r\n'
 		x = 1
 		for row in Text_List:
-			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
+			Details += '<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
 			x += 1
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '=================================================\r\n'
 			x = 1
 			for row in Text_List_Secondary:
-				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
+				Details += '<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
 				x += 1		
-	to_return = '<p><b>[' + Title + ']</b><br />' 
-	to_return += '\r\n'
+	to_return = '<p><b>[' + Title + ']</b><br/></p>\r\n' 
 	to_return += Details
 	return to_return
 
@@ -1843,27 +1846,26 @@ def Simple_Row_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Sec
 	Details = ''
 	if Lang == 'ko':		
 		for row in Text_List:
-			Details += '\r\n<p>'+ row + '&nbsp;</p>'
-		Details += '\r\n================================================='
+			Details += '<p>'+ row + '&nbsp;</p>\r\n'
+		Details += '=================================================\r\n'
 		for row in Text_List_Old:
-			Details += '\r\n<p>' + row + '&nbsp;</p>'
+			Details += '<p>' + row + '&nbsp;</p>\r\n'
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '=================================================\r\n'
 			for row in Text_List_Secondary:
 				Details += '\r\n<p>' + row + '&nbsp;</p>'
 	else:
 		for row in Text_List_Old:
-			Details += '\r\n<p>'+ row + '&nbsp;</p>'
-		Details += '\r\n================================================='
+			Details += '<p>'+ row + '&nbsp;</p>\r\n'
+		Details += '=================================================\r\n'
 		for row in Text_List:
-			Details += '\r\n<p>' + row + '&nbsp;</p>'
+			Details += '<p>' + row + '&nbsp;</p>'
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '=================================================\r\n'
 			for row in Text_List_Secondary:
-				Details += '\r\n<p>' + row + '&nbsp;</p>'
+				Details += '<p>' + row + '&nbsp;</p>\r\n'
 	
-	to_return = '<p><b>[' + Title + ']</b><br />' 
-	to_return += '\r\n'
+	to_return = '<p><b>[' + Title + ']</b><br /></p>\r\n' 
 	to_return += Details
 	return to_return
 
@@ -1896,7 +1898,7 @@ def MainLoop():
 	language_tool_enable = False
 
 	root = Tk()
-
+	root.update_idletasks()
 	style = Style(root)
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
 	#root.geometry("400x350+300+300")

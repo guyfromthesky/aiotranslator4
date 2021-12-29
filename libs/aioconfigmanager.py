@@ -33,7 +33,7 @@ class ConfigLoader:
 
 		# Set default value:
 		self.Writer_Init_Setting()
-		self.Custom_Writer_Init_Setting()
+		#self.Custom_Writer_Init_Setting()
 		self.Doc_Init_Setting()
 		self.Translator_Init_Setting()
 		#self.Initconfig()
@@ -116,35 +116,57 @@ class ConfigLoader:
 			config.add_section(Section)
 			self.Config[Section] = {}
 
-		self.Init_Config_Option(config, Section, 'app_lang', 2)
+		self.Init_Config_Option_Numberic(config, Section, 'app_lang', 2)
 
-		self.Init_Config_Option(config, Section, 'target_lang', 2)
-		self.Init_Config_Option(config, Section, 'source_lang', 3)
-		self.Init_Config_Option(config, Section, 'secondary_target_lang', 5)
+		self.Init_Config_Option_Numberic(config, Section, 'target_lang', 1)
+		self.Init_Config_Option_Numberic(config, Section, 'source_lang', 2)
+		self.Init_Config_Option_Numberic(config, Section, 'secondary_target_lang', 6)
 
-		self.Init_Config_Option(config, Section, 'test_info_inable', 1)
-		self.Init_Config_Option(config, Section, 'use_simple_template', 0)
-		self.Init_Config_Option(config, Section, 'usage', 0)
+		self.Init_Config_Option_Numberic(config, Section, 'test_info_inable', 1)
+		self.Init_Config_Option_Numberic(config, Section, 'use_simple_template', 0)
+		self.Init_Config_Option_Numberic(config, Section, 'usage', 0)
 
 		Section = 'BugDetails'
-		self.Init_Config_Option(config, Section, 'TextTitle', "")
-		self.Init_Config_Option(config, Section, 'TextServer', "")
-		self.Init_Config_Option(config, Section, 'TextClient', "")
-		self.Init_Config_Option(config, Section, 'TextReprodTime', "")
-		self.Init_Config_Option(config, Section, 'TextAccount', "")
-		self.Init_Config_Option(config, Section, 'TextTestReport', "")
-		self.Init_Config_Option(config, Section, 'TextReproduceSteps', "")
-		self.Init_Config_Option(config, Section, 'TextShouldBe', "")
+		self.Init_Config_Option(config, Section, 'TextTitle', "", True)
+		self.Init_Config_Option(config, Section, 'TextServer', "", True)
+		self.Init_Config_Option(config, Section, 'TextClient', "", True)
+		self.Init_Config_Option(config, Section, 'TextReprodTime', "", True)
+		self.Init_Config_Option(config, Section, 'TextAccount', "", True)
+
+		self.Init_Config_Option(config, Section, 'EnvInfo', "", True)
+		self.Init_Config_Option(config, Section, 'Reproducibility', "", True)
+
+		self.Init_Config_Option(config, Section, 'TextTestReport', "", True)
+		self.Init_Config_Option(config, Section, 'TextReproduceSteps', "", True)
+		self.Init_Config_Option(config, Section, 'TextShouldBe', "", True)
 		self.Init_Config_Option(config, Section, 'HeaderA', "")
 		self.Init_Config_Option(config, Section, 'HeaderB', "")
+
+		Section = 'Temp_BugDetails'
+		self.Init_Config_Option(config, Section, 'TextTitle', "", True)
+
+		self.Init_Config_Option(config, Section, 'TextServer', "", True)
+		self.Init_Config_Option(config, Section, 'TextClient', "", True)
+		self.Init_Config_Option(config, Section, 'TextReprodTime', "", True)
+		self.Init_Config_Option(config, Section, 'TextAccount', "", True)
+
+		self.Init_Config_Option(config, Section, 'EnvInfo', "", True)
+		self.Init_Config_Option(config, Section, 'Reproducibility', "", True)
+
+		self.Init_Config_Option(config, Section, 'TextTestReport', "", True)
+		self.Init_Config_Option(config, Section, 'TextReproduceSteps', "", True)
+		self.Init_Config_Option(config, Section, 'TextShouldBe', "", True)
+		self.Init_Config_Option(config, Section, 'HeaderA', "")
+		self.Init_Config_Option(config, Section, 'HeaderB', "")
+
 		
 		Section = 'Simple_Translator'
 		if not config.has_section(Section):
 			config.add_section(Section)
 			self.Config[Section] = {}
-		self.Init_Config_Option(config, Section, 'target_lang', 2)
-		self.Init_Config_Option(config, Section, 'source_lang', 3)
-		self.Init_Config_Option(config, Section, 'secondary_target_lang', 5)
+		self.Init_Config_Option_Numberic(config, Section, 'target_lang', 1)
+		self.Init_Config_Option_Numberic(config, Section, 'source_lang', 2)
+		self.Init_Config_Option_Numberic(config, Section, 'secondary_target_lang', 5)
 
 
 		with open(config_path, 'w') as configfile:
@@ -170,20 +192,22 @@ class ConfigLoader:
 			config.add_section(Section)
 			self.Config[Section] = {}
 
-		self.Init_Config_Option(config, Section, 'app_lang', 2)
+		self.Init_Config_Option_Numberic(config, Section, 'app_lang', 2)
 		
-		self.Init_Config_Option(config, Section, 'target_lang', 1)
-		self.Init_Config_Option(config, Section, 'source_lang', 2)
+		self.Init_Config_Option_Numberic(config, Section, 'target_lang', 1)
+		self.Init_Config_Option_Numberic(config, Section, 'source_lang', 2)
 
-		self.Init_Config_Option(config, Section, 'speed_mode', 0)
-		self.Init_Config_Option(config, Section, 'value_only', 0)
-		self.Init_Config_Option(config, Section, 'file_name_correct', 1)
-		self.Init_Config_Option(config, Section, 'file_name_translate', 1)
-		self.Init_Config_Option(config, Section, 'sheet_name_translate', 1)
-		self.Init_Config_Option(config, Section, 'tm_translate', 1)
-		self.Init_Config_Option(config, Section, 'tm_update', 1)
-		self.Init_Config_Option(config, Section, 'remove_unselected_sheet', 0)
-		self.Init_Config_Option(config, Section, 'usage', 0)
+		
+
+		self.Init_Config_Option_Numberic(config, Section, 'speed_mode', 0)
+		self.Init_Config_Option_Numberic(config, Section, 'value_only', 0)
+		self.Init_Config_Option_Numberic(config, Section, 'file_name_correct', 1)
+		self.Init_Config_Option_Numberic(config, Section, 'file_name_translate', 1)
+		self.Init_Config_Option_Numberic(config, Section, 'sheet_name_translate', 1)
+		self.Init_Config_Option_Numberic(config, Section, 'tm_translate', 1)
+		self.Init_Config_Option_Numberic(config, Section, 'tm_update', 1)
+		self.Init_Config_Option_Numberic(config, Section, 'remove_unselected_sheet', 0)
+		self.Init_Config_Option_Numberic(config, Section, 'usage', 0)
 		
 		with open(config_path, 'w') as configfile:
 			config.write(configfile)
@@ -243,6 +267,25 @@ class ConfigLoader:
 				else:
 					self.Config[Section][Option] = base64.b64decode(Config_Obj[Section][Option]	).decode('utf-8') 	
 
+	def Init_Config_Option_Numberic(self, Config_Obj, Section, Option, Default_Value, Encoded = False):
+		# Config does not exist
+		if not Section in self.Config:
+			self.Config[Section] = {}
+		# Config does not have that section
+		if not Config_Obj.has_section(Section):
+			Config_Obj.add_section(Section)
+			Config_Obj.set(Section, Option, str(Default_Value))
+			self.Config[Section][Option] = Default_Value
+		# Config have that section
+		else:
+			# The section does not have that option
+			if not Config_Obj.has_option(Section, Option):
+				Config_Obj.set(Section, Option,str(Default_Value))
+				self.Config[Section][Option] = Default_Value
+			# The section have that option
+			else:
+				self.Config[Section][Option] = int(Config_Obj[Section][Option])
+				
 	def Config_Save_Path(self, Config_Obj, Section, Path_Value, Default_Value):
 		if not Section in self.Config:
 			self.Config[Section] = {}

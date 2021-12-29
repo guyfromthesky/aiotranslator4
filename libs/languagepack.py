@@ -156,6 +156,10 @@ class LanguagePackEN:
 	Label['MainLanguage'] = "Primary language:"
 	Label['SecondaryLanguage'] = "Secondary language:"
 
+	Label['Reproducibility'] = "Reproducibility:"
+	Label['EnvInfo'] = "Enviromental Information:"
+
+
 	Tab = {}
 	Tab['Main'] = "Main Menu"
 	Tab['General'] = "General Setting"
@@ -251,7 +255,7 @@ class LanguagePackEN:
 	ToolTips['ClipboardRemoved'] = "Content in clipboard is removed."
 	ToolTips['GeneratedBugReport'] = "Bug report is generated."
 	ToolTips['GenerateBugReportFail'] = "Fail to generate bug report."	
-
+	ToolTips['LoadReport'] = "Do you want to load the report from last session?"
 	Notice = {}
 
 
@@ -333,6 +337,9 @@ class LanguagePackKR:
 	Button['Save'] = "저장"	
 	Button['GetReport'] = "보고서 받기"	
 
+	Button['Load'] = "하중"	
+
+
 	Label = {}
 	Label['Language'] = "대상 언어"
 	Label['Translator'] = "번역기"
@@ -409,6 +416,10 @@ class LanguagePackKR:
 	Label['SourceLanguage'] = "소스 언어:"
 	Label['MainLanguage'] = "기본 언어:"
 	Label['SecondaryLanguage'] = "제2언어:"
+
+	Label['Reproducibility'] = "재현빈도:"
+	Label['EnvInfo'] = "환경정보:"
+
 
 	Tab = {}
 	Tab['Main'] = "메인 메뉴"
@@ -505,5 +516,6 @@ class LanguagePackKR:
 	ToolTips['ClipboardRemoved'] = "클립 보드의 내용이 제거되었습니다."
 	ToolTips['GeneratedBugReport'] = "버그 리포트가 생성됩니다."
 	ToolTips['GenerateBugReportFail'] = "버그 보고서를 생성하지 못했습니다."
+	ToolTips['LoadReport'] = "마지막 세션의 보고서를 로드하시겠습니까?"
 
 	Notice = {}
