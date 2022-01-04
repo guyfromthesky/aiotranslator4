@@ -176,7 +176,7 @@ class DocumentTranslator(Frame):
 		Label(Tab, textvariable=self.Progress, width= 40) \
 			.grid(row=Row, column=1, columnspan=3, padx=5, pady=5, sticky=W)
 		Label(Tab, textvariable=self.Notice, justify=RIGHT) \
-			.grid(row=Row, column=3, columnspan=6, padx=5, pady=5, sticky= E)
+			.grid(row=Row, column=3, columnspan=6, padx=5, pady=5, sticky=E)
 
 		Row+=1
 		Label(Tab, text=self.LanguagePack.Label['Source'], width= 10, font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
@@ -402,23 +402,32 @@ class DocumentTranslator(Frame):
 		self.Uploader_Debugger.grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E+N+S)
 
 	def generate_tm_uploader_ui(self, Tab):
+		"""Generate UI in TM Uploader tab.
 		
+		UI Layout:
+		File path Label - File path Entry - Browse Button
+		Project key Label - Project list Combobox - Execute button
+		Debugger scrolledText
+		"""
+
 		Row =1
 		self.Str_DB_Path = StringVar()
 		#self.Str_DB_Path.set('C:\\Users\\evan\\OneDrive - NEXON COMPANY\\[Demostration] V4 Gacha test\\DB\\db.xlsx')
-		Label(Tab, text=self.LanguagePack.Label['MainDB']) \
+		Label(Tab, text=self.LanguagePack.Label['tm_file_path']) \
 			.grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky= W)
 		self.Entry_Old_File_Path = Entry(Tab,width = 110, state="readonly",
 											textvariable=self.Str_DB_Path)
 		self.Entry_Old_File_Path.grid(row=Row, column=3, columnspan=6, padx=4,
 										pady=5, sticky=E)
+		
 		Button(Tab, width=self.HALF_BUTTON_WIDTH,
 				text=self.LanguagePack.Button['Browse'],
-				command=self.Btn_DB_Uploader_Browse_DB_File) \
+				command=self.browse_tm_file) \
 			.grid(row=Row, column=9, columnspan=2, padx=5, pady=5, sticky=E)
 		
 		Row += 1
-		Label(Tab, text= self.LanguagePack.Label['ProjectKey']).grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+		Label(Tab, text= self.LanguagePack.Label['ProjectKey']) \
+			.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		
 		self.ProjectList = AutocompleteCombobox(Tab)
 		self.ProjectList.Set_Entry_Width(30)
@@ -426,13 +435,21 @@ class DocumentTranslator(Frame):
 		if self.glossary_id != None:
 			self.ProjectList.set(self.glossary_id)
 
-		self.ProjectList.grid(row=Row, column=3, columnspan=2, padx=5, pady=5, stick=W)
+		self.ProjectList.grid(row=Row, column=3, columnspan=2, padx=5, pady=5,
+								stick=W)
 
-		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Execute'], command= self.Btn_DB_Uploader_Execute_Script).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
+		Button(Tab, width=self.HALF_BUTTON_WIDTH,
+				text=self.LanguagePack.Button['Execute'],
+				command= self.Btn_DB_Uploader_Execute_Script) \
+			.grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
 
 		Row += 1
-		self.Uploader_Debugger = scrolledtext.ScrolledText(Tab, width=122, height=13, undo=True, wrap=WORD, )
-		self.Uploader_Debugger.grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E+N+S)
+		self.Uploader_Debugger = scrolledtext.ScrolledText(Tab, width=122,
+															height=13,
+															undo=True,
+															wrap=WORD,)
+		self.Uploader_Debugger.grid(row=Row, column=1, columnspan=10, padx=5,
+										pady=5, sticky=W+E+N+S)
 
 	def debug_listening(self):
 		while True:
@@ -878,7 +895,9 @@ class DocumentTranslator(Frame):
 			result = messagebox.askquestion ('Notice',message,icon = 'warning')
 			if result == 'yes':
 				glossary_id = self.ProjectList.get()
-				self.Upload_DB_Processor = Process(target=function_upload_db, args=(self.StatusQueue,self.MyTranslator, glossary_id, compare_result))
+				self.Upload_DB_Processor = Process(target=function_upload_db,
+						args=(self.StatusQueue,self.MyTranslator,
+								glossary_id, compare_result))
 				self.Upload_DB_Processor.start()
 				self.after(DELAY, self.Wait_For_Uploader_Processor)	
 			else:
@@ -908,6 +927,29 @@ class DocumentTranslator(Frame):
 			return False
 
 ###########################################################################################
+
+###############################################################################
+# TM UPLOADER START
+###############################################################################
+
+	def browse_tm_file(self):
+			
+		filename = filedialog \
+			.askopenfilename(title=self.LanguagePack.ToolTips['SelectSource'],
+								filetypes=(("Workbook files",
+											"*.xlsx *.xlsm"),),
+								multiple = False)	
+		if filename != "":
+			self.DB_Path = self.CorrectPath(filename)
+			self.Str_DB_Path.set(self.DB_Path)
+			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
+		else:
+			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
+		return
+
+###############################################################################
+# TM UPLOADER END
+###############################################################################
 
 
 	def onExit(self):
@@ -1522,7 +1564,7 @@ def function_upload_db(status_queue, MyTranslator, glossary_id, result):
 		status_queue.put('Fail to upload DB')
 		return
 	client = logging.Client()
-	
+
 	log_name = 'db-update'
 
 	logger = client.logger(log_name)
