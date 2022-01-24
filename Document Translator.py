@@ -174,9 +174,9 @@ class DocumentTranslator(Frame):
 	def Generate_DocumentTranslator_UI(self, Tab):
 		Row=1
 		Label(Tab, textvariable=self.Progress, width= 40) \
-			.grid(row=Row, column=1, columnspan=3, padx=5, pady=5, sticky=W)
+				.grid(row=Row, column=1, columnspan=3, padx=5, pady=5, sticky=W)
 		Label(Tab, textvariable=self.Notice, justify=RIGHT) \
-			.grid(row=Row, column=3, columnspan=6, padx=5, pady=5, sticky=E)
+				.grid(row=Row, column=3, columnspan=6, padx=5, pady=5, sticky=E)
 
 		Row+=1
 		Label(Tab, text=self.LanguagePack.Label['Source'], width= 10, font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
@@ -892,7 +892,7 @@ class DocumentTranslator(Frame):
 			self.Uploader_Debugger.insert("end", "\n\r")
 			self.Uploader_Debugger.insert("end", message)
 			
-			result = messagebox.askquestion ('Notice',message,icon = 'warning')
+			result = messagebox.askquestion('Notice',message,icon = 'warning')
 			if result == 'yes':
 				glossary_id = self.ProjectList.get()
 				self.Upload_DB_Processor = Process(target=function_upload_db,
