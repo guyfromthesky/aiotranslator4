@@ -313,7 +313,9 @@ class ConfigLoader:
 		else:
 			return Default_Value
 
-	def Save_Config(self, Config_Path, Section, Option, Default_Value = None, Encode = False):	
+	def Save_Config(
+			self, Config_Path, Section, Option,
+			Default_Value=None, Encode=False):
 
 		if Encode == True:
 			Default_Value =  str(base64.b64encode(Default_Value.encode('utf-8')))

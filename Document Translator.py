@@ -282,17 +282,40 @@ class DocumentTranslator(Frame):
 
 
 	def Generate_TranslateSetting_UI(self, Tab):
+		""""""
 		Row = 1
-		Label(Tab, text= self.LanguagePack.Label['LicensePath']).grid(row=Row, column=1, padx=5, pady=5, sticky=W)
-		self.TextLicensePath = Entry(Tab,width = 120, state="readonly", textvariable=self.LicensePath)
-		self.TextLicensePath.grid(row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
-		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
+		
+		# Browse License section
+		Label(Tab, text=self.LanguagePack.Label['LicensePath']) \
+			.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+		self.TextLicensePath = Entry(
+				Tab,width=120, state="readonly",
+				textvariable=self.LicensePath)
+		self.TextLicensePath.grid(
+				row=Row, column=3, columnspan=5,
+				padx=5, pady=5, sticky=W)
+		Button(
+				Tab, width = self.HALF_BUTTON_WIDTH,
+				text=self.LanguagePack.Button['Browse'],
+				command=self.btn_select_license_path) \
+			.grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
 		
 		Row += 1
-		Label(Tab, text= self.LanguagePack.Label['TM']).grid(row=Row, column=1, padx=5, pady=5, sticky=W)
-		self.TextLicensePath = Entry(Tab,width = 120, state="readonly", textvariable=self.TMPath)
-		self.TextLicensePath.grid(row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
-		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.SelectTM).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
+
+		# Browse TM section
+		Label(Tab, text=self.LanguagePack.Label['TM']) \
+			.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+		self.TextLicensePath = Entry(
+				Tab,width=120, state="readonly",
+				textvariable=self.TMPath)
+		self.TextLicensePath.grid(
+				row=Row, column=3, columnspan=5,
+				padx=5, pady=5, sticky=W)
+		Button(
+				Tab, width=self.HALF_BUTTON_WIDTH,
+				text=self.LanguagePack.Button['Browse'],
+				command=self.select_tm) \
+			.grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
 		
 
 
@@ -464,10 +487,9 @@ class DocumentTranslator(Frame):
 					pass	
 					
 
-	# Nam will check
 	def search_tm_list(self):
-		"""
-		Search text box in TM Manager tab
+		"""Search text box in TM Manager tab
+		
 		Display the pair result from the text entered in the search field.
 		"""
 		text = self.search_text.get("1.0", END).replace("\n", "").replace(" ", "")
@@ -511,7 +533,7 @@ class DocumentTranslator(Frame):
 		file.add_command(label =  self.LanguagePack.Menu['SaveSetting'], command = self.save_app_config) 
 		#file.add_command(label =  self.LanguagePack.Menu['LoadException'], command = self.SelectException) 
 		file.add_separator() 
-		file.add_command(label =  self.LanguagePack.Menu['LoadTM'], command = self.SelectTM) 
+		file.add_command(label =  self.LanguagePack.Menu['LoadTM'], command = self.select_tm) 
 		file.add_command(label =  self.LanguagePack.Menu['CreateTM'], command = self.SaveNewTM)
 		file.add_separator() 
 		file.add_command(label =  self.LanguagePack.Menu['Exit'], command = self.parent.destroy) 
@@ -642,31 +664,57 @@ class DocumentTranslator(Frame):
 			return newPath
 
 
-	def Btn_Select_License_Path(self):
-		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectDB'],filetypes = (("JSON files","*.json" ), ), )	
+	def btn_select_license_path(self):
+		"""Save the selected license file path to translator.ini config file.
+		
+		Support json files.
+		"""
+		filename = filedialog.askopenfilename(
+				title=self.LanguagePack.ToolTips['SelectDB'],
+				filetypes=(("JSON files","*.json"),),)
 		if filename != "":
 			LicensePath = self.CorrectPath(filename)
-			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'license_file', LicensePath, True)
+			self.AppConfig.Save_Config(
+					self.AppConfig.Translator_Config_Path,
+					'Translator', 'license_file',
+					LicensePath, True)
 			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LicensePath
 			self.LicensePath.set(LicensePath)
 		else:
 			self.Notice.set("No file is selected")
 
 
-	def SelectTM(self):
-		filename = filedialog.askopenfilename(title = "Select Translation Memory file", filetypes = (("TM files","*.pkl"), ),)
+	def select_tm(self):
+		"""Set the selected TM file via Translate Setting UI or Menu > Load TM.
+		
+		Save the selected TM file path to translator.ini config file.
+		Support pkl files.
+		"""
+		filename = filedialog.askopenfilename(
+				title = "Select Translation Memory file",
+				filetypes=(("TM pkl files", "*.pkl"),))
 		if filename != "":
 			NewTM = self.CorrectPath(filename)
 			self.TMPath.set(NewTM)
-			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'translation_memory', NewTM, True)
+			self.AppConfig.Save_Config(
+					self.AppConfig.Translator_Config_Path,
+					'Translator', 'translation_memory',
+					NewTM, True)
 			self.renew_my_translator()
 			self.Notice.set(self.LanguagePack.ToolTips['TMUpdated'])
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 			
 
-	def SaveNewTM(self):	
-		filename = filedialog.asksaveasfilename(title = "Select file", filetypes = (("Translation Memory", "*.pkl"),),)
+	def SaveNewTM(self):
+		"""Create and set the new TM file via the File > Create TM menu.
+		
+		Save the new TM file path to translator.ini config file.
+		Support pkl files.
+		"""
+		filename = filedialog.asksaveasfilename(
+				title="Select file",
+				filetypes=(("Translation Memory", "*.pkl"),),)
 		filename = self.CorrectExt(filename, "pkl")
 		if filename == "":
 			return
@@ -674,16 +722,24 @@ class DocumentTranslator(Frame):
 			NewTM = self.CorrectPath(filename)
 			with open(NewTM, 'wb') as pickle_file:
 				# New TM format.
-				pickle.dump({'tm_version': 4}, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+				pickle.dump(
+						{'tm_version': 4}, pickle_file,
+						protocol=pickle.HIGHEST_PROTOCOL)
 			self.TMPath.set(NewTM)
-			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'translation_memory', NewTM, True)
+			self.AppConfig.Save_Config(
+					self.AppConfig.Translator_Config_Path,
+					'Translator', 'translation_memory',
+					NewTM, True)
 			self.renew_my_translator()
 
 	def _save_project_key(self, event):
 		glossary_id = self.bottom_panel.project_id_select.get()
 		glossary_id = glossary_id.replace('\n', '')
 
-		self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'glossary_id', glossary_id)
+		self.AppConfig.Save_Config(
+				self.AppConfig.Translator_Config_Path,
+				'Translator', 'glossary_id',
+				glossary_id)
 		self.MyTranslator.glossary_id = glossary_id
 		
 		self.renew_my_translator()
@@ -977,6 +1033,7 @@ class DocumentTranslator(Frame):
 
 		self.glossary_id = self.bottom_panel.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
+		# Get TM file path from Translate Setting UI
 		tm_path = self.TMPath.get()
 		print('Start new process: Generate Translator')
 		self.TranslatorProcess = Process(	target = generate_translator,
