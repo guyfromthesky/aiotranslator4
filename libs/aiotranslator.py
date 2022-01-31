@@ -29,6 +29,8 @@ import unicodedata
 import string
 import socket
 
+from multiprocessing import Process
+
 import pickle
 # Unused
 #import time
@@ -59,7 +61,7 @@ class Translator:
 		source_language_predict = True, 
 		proactive_memory_translate = True, 
 		tm_update = True, 
-		glossary_id = None, 
+		glossary_id = None, # Game project ID
 		temporary_tm = None,
 		tm_path = None,
 		# Tool that is currently use this libs
@@ -1723,7 +1725,7 @@ class Translator:
 			return
 		else:
 			try:
-				file_name, file_ext = os.path.splitext(self.tm_path)
+				file_root, file_ext = os.path.splitext(self.tm_path)
 				# Load data from TM file to tool's self.current_tm
 				# Load data from csv extension
 				if file_ext == '.csv':
@@ -1738,6 +1740,7 @@ class Translator:
 					with open(self.tm_path, 'rb') as pickle_load:
 						all_tm = pickle.load(pickle_load)
 						# print('all tm:', all_tm)
+						self.to_csv_tm(all_tm)
 					_tm_version = self.get_tm_version(all_tm)
 					if _tm_version == 4:
 						if self.glossary_id in all_tm:
@@ -1749,7 +1752,13 @@ class Translator:
 					elif _tm_version == 2:
 						self.import_tm_v2(all_tm)
 					else:
-						print('Broken pickle TM file.')
+						print('Broken pkl TM file.')
+					# # Convert pkl to csv in the same folder
+					# try:
+					# 	file_ext = '.csv'
+					# 	self.tm_path = file_root + file_ext
+					# except Exception as e:
+					# 	print('Error while converting pkl file: ', e)
 				else:
 					print(f'Wrong extension: {file_ext}. Must be csv or pkl')
 			except Exception as e:
@@ -1765,13 +1774,13 @@ class Translator:
 
 		if self.from_language != self.to_language:
 			self.translation_memory = self.current_tm.dropna(
-					subset=[self.from_language])
+				subset=[self.from_language])
 			self.translation_memory = self.translation_memory.dropna(
-					subset=[self.to_language])
+				subset=[self.to_language])
 			#self.translation_memory = self.translation_memory[~self.translation_memory[self.to_language].isin([pd.NA])][[self.from_language, self.to_language]]
 			# Append only the selected languages
 			self.translation_memory = self.translation_memory[
-					[self.from_language, self.to_language]]
+				[self.from_language, self.to_language]]
 			#self.translation_memory.drop_duplicates(inplace=True)
 		else:
 			self.init_translation_memory()
@@ -1846,10 +1855,10 @@ class Translator:
 		return 0
 	
 	def export_current_translation_memory(self):
-		'''This function will overwrite the current self.current_tm to pickle file.
+		"""This function will overwrite the current self.current_tm to pickle file.
 		
 		self.current_tm can be modifed via TM Manager tool.
-		'''
+		"""
 		print('Export current TM into file.')
 		if self.glossary_id == "":
 			_glossary = 'Default'
@@ -2073,6 +2082,39 @@ class Translator:
 				return dataframe
 			else:
 				return dataframe
+
+	def to_csv_tm(self, pickle_file_data):
+		"""Convert TM file extension to .csv extension.
+		
+		Supported extension: .pkl
+
+		Args:
+			pickle_file_data: dict. All data in the tm on pickle load.
+		"""
+		if os.path.isfile(self.tm_path) == False:
+			print('TM file conversion error: File not found.')
+		else:
+			file_root, file_ext = os.path.splitext(self.tm_path)
+			if file_ext == '.pkl':
+				# Change the extension
+				file_ext = '.csv'
+				self.tm_path = file_root + file_ext
+				
+				# Load and put the dataframe of matching project only
+				# Data must be dataframe
+				project_tm_data = pickle_file_data[self.glossary_id]
+				try:
+					if isinstance(project_tm_data, pd.DataFrame) == False:
+						project_tm_df = pd.DataFrame(project_tm_data)
+						project_tm_df.to_csv(self.tm_path)
+					elif isinstance(project_tm_data, pd.DataFrame):
+						project_tm_data.to_csv(self.tm_path)
+				except Exception as e:
+					print('Error while converting file to csv: '
+							+ 'Data is not instance of pd.DataFrame')
+
+
+
 
 
 #########################################################################

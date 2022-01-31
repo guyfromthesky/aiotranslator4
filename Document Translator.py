@@ -666,21 +666,44 @@ class DocumentTranslator(Frame):
 		messagebox.showinfo('Tool error...', ErrorText)	
 
 	def SaveAppLanguage(self, language):
-		self.Notice.set(self.LanguagePack.ToolTips['AppLanuageUpdate'] + " "+ language) 
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'app_lang', language)
+		self.Notice.set(
+				self.LanguagePack.ToolTips['AppLanuageUpdate']
+				+ " "
+				+ language) 
+		self.AppConfig.save_config(
+				self.AppConfig.Doc_Config_Path, 'Document_Translator',
+				'app_lang', language)
 
 	def save_app_config(self):
 		target_language = self.target_language.get()
 		target_language_index = self.language_list.index(target_language)
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', target_language_index)
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'speed_mode', self.TurboTranslate.get())
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'value_only', self.DataOnly.get())
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'file_name_correct', self.TranslateFileName.get())
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'file_name_translate', self.TranslateFileName.get())
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'sheet_name_translate', self.TranslateSheetName.get())
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'tm_translate', self.TMTranslate.get())
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'tm_update', self.TMUpdate.get())
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'remove_unselected_sheet', self.SheetRemoval.get())
+		self.AppConfig.save_config(
+				self.AppConfig.Doc_Config_Path, 'Document_Translator',
+				'target_lang', target_language_index)
+		self.AppConfig.save_config(
+				self.AppConfig.Doc_Config_Path, 'Document_Translator',
+				'speed_mode', self.TurboTranslate.get())
+		self.AppConfig.save_config(
+				self.AppConfig.Doc_Config_Path, 'Document_Translator',
+				'value_only', self.DataOnly.get())
+		self.AppConfig.save_config(
+				self.AppConfig.Doc_Config_Path, 'Document_Translator',
+				'file_name_correct', self.TranslateFileName.get())
+		self.AppConfig.save_config(
+				self.AppConfig.Doc_Config_Path, 'Document_Translator',
+				'file_name_translate', self.TranslateFileName.get())
+		self.AppConfig.save_config(
+				self.AppConfig.Doc_Config_Path, 'Document_Translator',
+				'sheet_name_translate', self.TranslateSheetName.get())
+		self.AppConfig.save_config(
+				self.AppConfig.Doc_Config_Path, 'Document_Translator',
+				'tm_translate', self.TMTranslate.get())
+		self.AppConfig.save_config(
+				self.AppConfig.Doc_Config_Path, 'Document_Translator',
+				'tm_update', self.TMUpdate.get())
+		self.AppConfig.save_config(
+				self.AppConfig.Doc_Config_Path, 'Document_Translator',
+				'remove_unselected_sheet', self.SheetRemoval.get())
 
 	def swap_language(self):
 		
@@ -691,8 +714,8 @@ class DocumentTranslator(Frame):
 		self.target_language.set(source_language)
 		self.source_language.set(target_language)
 
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', source_language_index)
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_lang', target_language_index)
+		self.AppConfig.save_config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', source_language_index)
+		self.AppConfig.save_config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_lang', target_language_index)
 		self.MyTranslator.set_language_pair(target_language = self.language_id_list[source_language_index], source_language = self.language_id_list[target_language_index])
 		#self._dictionary_status.set(str(len(self.MyTranslator.dictionary)))
 		self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
@@ -734,7 +757,7 @@ class DocumentTranslator(Frame):
 				filetypes=(("JSON files","*.json"),),)
 		if filename != "":
 			LicensePath = self.CorrectPath(filename)
-			self.AppConfig.Save_Config(
+			self.AppConfig.save_config(
 					self.AppConfig.Translator_Config_Path,
 					'Translator', 'license_file',
 					LicensePath, True)
@@ -756,7 +779,7 @@ class DocumentTranslator(Frame):
 		if filename != "":
 			NewTM = self.CorrectPath(filename)
 			self.TMPath.set(NewTM)
-			self.AppConfig.Save_Config(
+			self.AppConfig.save_config(
 					self.AppConfig.Translator_Config_Path,
 					'Translator', 'translation_memory',
 					NewTM, True)
@@ -786,7 +809,7 @@ class DocumentTranslator(Frame):
 						{'tm_version': 4}, pickle_file,
 						protocol=pickle.HIGHEST_PROTOCOL)
 			self.TMPath.set(NewTM)
-			self.AppConfig.Save_Config(
+			self.AppConfig.save_config(
 					self.AppConfig.Translator_Config_Path,
 					'Translator', 'translation_memory',
 					NewTM, True)
@@ -796,7 +819,7 @@ class DocumentTranslator(Frame):
 		glossary_id = self.bottom_panel.project_id_select.get()
 		glossary_id = glossary_id.replace('\n', '')
 
-		self.AppConfig.Save_Config(
+		self.AppConfig.save_config(
 				self.AppConfig.Translator_Config_Path,
 				'Translator', 'glossary_id',
 				glossary_id)
@@ -1074,7 +1097,7 @@ class DocumentTranslator(Frame):
 			self.target_language.set(to_language_id)
 			return
 		
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', index)
+		self.AppConfig.save_config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', index)
 
 		self.MyTranslator.set_target_language(to_language)
 		#self._dictionary_status.set(str(len(self.MyTranslator.dictionary)))
@@ -1092,7 +1115,7 @@ class DocumentTranslator(Frame):
 			return
 
 		self.MyTranslator.from_language
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_lang', index)
+		self.AppConfig.save_config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_lang', index)
 
 		self.MyTranslator.set_source_language(from_language)	
 		#self._dictionary_status.set(str(len(self.MyTranslator.dictionary)))
