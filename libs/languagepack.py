@@ -156,6 +156,9 @@ class LanguagePackEN:
 	Label['MainLanguage'] = "Primary language:"
 	Label['SecondaryLanguage'] = "Secondary language:"
 
+	### DOCUMENT TRANSLATOR ONLY ###
+	Label['tm_file_path'] = "TM File"
+
 	Tab = {}
 	Tab['Main'] = "Main Menu"
 	Tab['General'] = "General Setting"
@@ -192,6 +195,9 @@ class LanguagePackEN:
 	Tab['DBSeacher'] = "Search"
 
 	Tab['CustomBugWriter'] = "Custom Writer"
+
+	### DOCUMENT TRANSLATOR ONLY ###
+	Tab['tm_uploader'] = 'TM Uploader'
 
 	ToolTips = {}
 
