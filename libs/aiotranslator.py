@@ -40,6 +40,7 @@ import csv
 from pandas.core.frame import DataFrame
 
 from libs.version import get_version
+from libs.tm_file import tm_file
 
 Tool = "translator"
 rev = 4117
@@ -292,6 +293,21 @@ class Translator:
 
 	def get_timestamp(self):
 		return str(datetime.now())
+
+	def get_timestamp_2(self):
+		"""Return a string of rounded current timestamp."""
+		return str(round(datetime.timestamp(datetime.now())))
+
+	def append_datetime(self):
+		"""Return a string of the current time format using datetime.now().
+		
+		The decimal in second is removed. Purpose is to add the current time
+		to a file name.
+		"""
+		# Convert to string and replace ":" in time format
+		now = str(datetime.now()).split('.')[0].replace(':', '')
+		return ('_' + now.replace('-', ''))
+
 
 	# Might use on DB uploader
 	def get_glossary_list(self):
@@ -1013,7 +1029,7 @@ class Translator:
 			self.set_language_pair( source_language, self.to_language)
 
 	def set_language_pair(self, source_language, target_language):
-		'''Set source and target language for the translator'''
+		"""Set source and target language for the translator"""
 		if self.from_language == source_language and self.to_language == target_language:
 			return
 		print('Set language pair:', 'Source - ', source_language, 'Target -', target_language)
@@ -1601,8 +1617,12 @@ class Translator:
 	# if tm is invalid, use local tm instead
 	def init_tm_path(self, tm_path=None):
 		"""Load and validate tm_path on program start.
-		
-		In Document Translator, loaded from config file via init_App_Setting() 
+
+		In Document Translator, load the path from config file
+		via init_App_Setting() 
+
+		Args:
+			tm_path: Path to TM file.
 		"""
 		if tm_path not in [None, '']:
 			if os.path.isfile(tm_path):
@@ -1753,12 +1773,29 @@ class Translator:
 						self.import_tm_v2(all_tm)
 					else:
 						print('Broken pkl TM file.')
-					# # Convert pkl to csv in the same folder
-					# try:
-					# 	file_ext = '.csv'
-					# 	self.tm_path = file_root + file_ext
-					# except Exception as e:
-					# 	print('Error while converting pkl file: ', e)
+
+					# Move the pickle file to backup folder.
+					# Must move at the end to prevent [WinError 32].
+					# [WinError 32] The file is being used by another process
+					backup_file_name = self.config_path \
+						+ '\\AIO Translator\\Backup\\' \
+						+ os.path.basename(file_root)
+					try:
+						if not os.path.exists(backup_file_name + '.pkl'):
+							os.rename(
+								file_root + '.pkl',
+								backup_file_name + '.pkl')
+						else:
+							# Add timestamp to the file if a backup file
+							# already exists to distinguish them.
+							os.rename(
+								file_root + '.pkl',
+								backup_file_name
+									+ self.append_datetime()
+									+ '.pkl')
+					except Exception as e:
+						print('Error while moving TM file: ', e)
+					
 				else:
 					print(f'Wrong extension: {file_ext}. Must be csv or pkl')
 			except Exception as e:
@@ -2089,29 +2126,34 @@ class Translator:
 		Supported extension: .pkl
 
 		Args:
-			pickle_file_data: dict. All data in the tm on pickle load.
+			pickle_file_data: dict. All data in the TM on pickle load.
 		"""
-		if os.path.isfile(self.tm_path) == False:
+		if not os.path.isfile(self.tm_path):
 			print('TM file conversion error: File not found.')
 		else:
 			file_root, file_ext = os.path.splitext(self.tm_path)
+			# Create a backup folder to move the pickle file in
+			# import_translation_memory() function
+			backup_dir = self.config_path + '\\AIO Translator\\Backup\\'
+			if not os.path.exists(backup_dir):
+				os.mkdir(backup_dir)
 			if file_ext == '.pkl':
 				# Change the extension
 				file_ext = '.csv'
-				self.tm_path = file_root + file_ext
-				
+				self.tm_path = file_root + self.append_datetime() + file_ext
 				# Load and put the dataframe of matching project only
-				# Data must be dataframe
 				project_tm_data = pickle_file_data[self.glossary_id]
-				try:
-					if isinstance(project_tm_data, pd.DataFrame) == False:
+				# Data must be DataFrame instance
+				if not isinstance(project_tm_data, pd.DataFrame):
+					try:
 						project_tm_df = pd.DataFrame(project_tm_data)
 						project_tm_df.to_csv(self.tm_path)
-					elif isinstance(project_tm_data, pd.DataFrame):
-						project_tm_data.to_csv(self.tm_path)
-				except Exception as e:
-					print('Error while converting file to csv: '
-							+ 'Data is not instance of pd.DataFrame')
+					except Exception as e:
+						print('Error while converting file to csv - '
+							+ 'Data is not instance of pd.DataFrame: ' + e)
+				elif isinstance(project_tm_data, pd.DataFrame):
+					project_tm_data.to_csv(self.tm_path)
+				
 
 
 
