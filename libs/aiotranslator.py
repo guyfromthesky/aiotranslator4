@@ -1753,39 +1753,41 @@ class Translator:
 				# Load data from TM file to tool's self.current_tm
 				# Load data from csv extension
 				if file_ext == '.csv':
+					# Without dtype paramater, "DtypeWarning: Columns (x)
+					# have mixed types" warning will occur
 					all_tm = pd.read_csv(
 						self.tm_path,
 						dtype={supported_lang: str for supported_lang in
 							['en', 'ko', 'vi', 'jp', 'cn']})
 					self.current_tm = all_tm
-				# Load data from pkl extension
-				elif file_ext == '.pkl':
-					with open(self.tm_path, 'rb') as pickle_load:
-						all_tm = pickle.load(pickle_load)
-						# print('all tm:', all_tm)
-					_tm_version = self.get_tm_version(all_tm)
-					# Check if the matching project is in the TM
-					if _tm_version == 4:
-						if self.glossary_id in all_tm:
-							self.current_tm = all_tm[self.glossary_id]
-						else:
-							print('New project')
-					elif _tm_version == 3:
-						self.import_tm_v3(all_tm)
-					elif _tm_version == 2:
-						self.import_tm_v2(all_tm)
-					else:
-						print('Broken pkl TM file.')
-					self.to_csv_tm(all_tm)
+				##### NO LONGER SUPPORT .PKL EXTENSION AFTER CLOUD TM
+				# # Load data from pkl extension
+				# elif file_ext == '.pkl':
+				# 	with open(self.tm_path, 'rb') as pickle_load:
+				# 		all_tm = pickle.load(pickle_load)
+				# 		# print('all tm:', all_tm)
+				# 	_tm_version = self.get_tm_version(all_tm)
+				# 	# Check if the matching project is in the TM
+				# 	if _tm_version == 4:
+				# 		if self.glossary_id in all_tm:
+				# 			self.current_tm = all_tm[self.glossary_id]
+				# 		else:
+				# 			print('New project')
+				# 	elif _tm_version == 3:
+				# 		self.import_tm_v3(all_tm)
+				# 	elif _tm_version == 2:
+				# 		self.import_tm_v2(all_tm)
+				# 	else:
+				# 		print('Broken pkl TM file.')
 				else:
-					print(f'Wrong extension: {file_ext}. Must be csv or pkl')
+					print(f'Wrong extension: {file_ext}. Must be .csv.')
 			except Exception as e:
-				print('Error while opening TM file:', e)
+				print('Error while importing translation memory:', e)
 		self.update_tm_from_dataframe()
 
 
 	def update_tm_from_dataframe(self):
-		"""Drop empty values in self.current_tm."""
+		"""Drop empty values of selected languages in self.current_tm."""
 		print('Update TM from dataframe')
 		#print('Current Dataframe:', self.current_tm)
 

@@ -138,9 +138,11 @@ class DocumentTranslator(Frame):
 			if os.path.isfile(self.LicensePath.get()):
 				self.generate_translator_engine()
 			else:
-				self.Error('No license selected, please select the key in Translate setting.')	
+				self.Error('No license selected, please select the key'
+					'in Translate setting.')
 		else:
-			self.Error('No license selected, please select the key in Translate setting.')	
+			self.Error('No license selected, please select the key'
+				'in Translate setting.')
 
 		self.after(DELAY, self.debug_listening)	
 
@@ -392,15 +394,31 @@ class DocumentTranslator(Frame):
 		#self.Debugger.grid(row=Row, column=1, columnspan=Max_Size, padx=5, pady=5, sticky = (N,S,W,E))
 
 	def Generate_DB_Uploader_UI(self, Tab):
+		"""Generate UI in DB Uploader tab.
 		
+		UI Widget Layout:
+			MainDB Label - Entry_Old_File_Path Entry - Browse Button
+			ProjectKey Label - ProjectList Combobox - Execute Button
+			Debugger scrolledText
+		"""
+		### DB upload section ###
 		Row =1
 		self.Str_DB_Path = StringVar()
 		#self.Str_DB_Path.set('C:\\Users\\evan\\OneDrive - NEXON COMPANY\\[Demostration] V4 Gacha test\\DB\\db.xlsx')
-		Label(Tab, text=  self.LanguagePack.Label['MainDB']).grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky= W)
-		self.Entry_Old_File_Path = Entry(Tab,width = 110, state="readonly", textvariable=self.Str_DB_Path)
-		self.Entry_Old_File_Path.grid(row=Row, column=3, columnspan=6, padx=4, pady=5, sticky=E)
-		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.Btn_DB_Uploader_Browse_DB_File).grid(row=Row, column=9, columnspan=2, padx=5, pady=5, sticky=E)
+		Label(Tab, text=self.LanguagePack.Label['MainDB']) \
+			.grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky= W)
+		self.Entry_Old_File_Path = Entry(
+			Tab,width = 110, state="readonly", textvariable=self.Str_DB_Path)
+		self.Entry_Old_File_Path \
+			.grid(row=Row, column=3, columnspan=6, padx=4, pady=5, sticky=E)
+		Button(
+				Tab,
+				width=self.HALF_BUTTON_WIDTH,
+				text=self.LanguagePack.Button['Browse'],
+				command=self.Btn_DB_Uploader_Browse_DB_File) \
+			.grid(row=Row, column=9, columnspan=2, padx=5, pady=5, sticky=E)
 		
+		### Project selection section ###
 		Row += 1
 		Label(Tab, text= self.LanguagePack.Label['ProjectKey']).grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		
@@ -412,7 +430,11 @@ class DocumentTranslator(Frame):
 
 		self.ProjectList.grid(row=Row, column=3, columnspan=2, padx=5, pady=5, stick=W)
 
-		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Execute'], command= self.Btn_DB_Uploader_Execute_Script).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
+		Button(
+				Tab, width=self.HALF_BUTTON_WIDTH,
+				text=self.LanguagePack.Button['Execute'],
+				command=self.Btn_DB_Uploader_Execute_Script) \
+			.grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
 
 		Row += 1
 		self.Uploader_Debugger = scrolledtext.ScrolledText(Tab, width=122, height=13, undo=True, wrap=WORD, )
@@ -421,27 +443,58 @@ class DocumentTranslator(Frame):
 	def generate_tm_uploader_ui(self, Tab):
 		"""Generate UI in TM Uploader tab.
 		
-		UI Layout:
-		File path Label - File path Entry - Browse Button
-		Project key Label - Project list Combobox - Execute button
-		Debugger scrolledText
+		UI Widget Layout:
+			TMFileConversion Label - entry_file_path Entry
+				- Browse Button - Convert Button
+			TMFileUpload Label - entry_file_path Entry
+				- Browse Button - Upload Button
+			ProjectKey Label - ProjectList Combobox
+			Debugger scrolledText
 		"""
 
-		Row =1
-		self.Str_DB_Path = StringVar()
-		#self.Str_DB_Path.set('C:\\Users\\evan\\OneDrive - NEXON COMPANY\\[Demostration] V4 Gacha test\\DB\\db.xlsx')
-		Label(Tab, text=self.LanguagePack.Label['tm_file_path']) \
-			.grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky= W)
-		self.Entry_Old_File_Path = Entry(Tab,width = 110, state="readonly",
-											textvariable=self.Str_DB_Path)
-		self.Entry_Old_File_Path.grid(row=Row, column=3, columnspan=6, padx=4,
-										pady=5, sticky=E)
-		
-		Button(Tab, width=self.HALF_BUTTON_WIDTH,
+		### TM conversion section ###
+		Row = 1
+		self.textvar_convert_tm_path = StringVar()
+		Label(Tab, text=self.LanguagePack.Label['TMFileConversion']) \
+			.grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky=W)
+		self.entry_file_path = Entry(
+			Tab, width = 110, state="readonly",
+			textvariable=self.textvar_convert_tm_path)
+		self.entry_file_path.grid(
+			row=Row, column=3, columnspan=6, padx=4, pady=5, sticky=E)
+		Button(
+				Tab, width=self.HALF_BUTTON_WIDTH,
 				text=self.LanguagePack.Button['Browse'],
-				command=self.browse_tm_file) \
+				command=self.browse_convert_tm_file) \
 			.grid(row=Row, column=9, columnspan=2, padx=5, pady=5, sticky=E)
+		Button(
+				Tab, width=self.HALF_BUTTON_WIDTH,
+				text=self.LanguagePack.Button['Convert'],
+				command=None) \
+			.grid(row=Row, column=11, columnspan=2, padx=5, pady=5, sticky=E)
 		
+		### TM upload section ###
+		Row += 1
+		self.textvar_upload_tm_path = StringVar()
+		Label(Tab, text=self.LanguagePack.Label['TMFileUpload']) \
+			.grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky=W)
+		self.entry_file_path = Entry(
+			Tab, width = 110, state="readonly",
+			textvariable=self.textvar_upload_tm_path)
+		self.entry_file_path.grid(
+			row=Row, column=3, columnspan=6, padx=4, pady=5, sticky=E)
+		Button(
+				Tab, width=self.HALF_BUTTON_WIDTH,
+				text=self.LanguagePack.Button['Browse'],
+				command= self.browse_upload_tm_file) \
+			.grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
+		Button(
+				Tab, width=self.HALF_BUTTON_WIDTH,
+				text=self.LanguagePack.Button['Upload'],
+				command=None) \
+			.grid(row=Row, column=11, columnspan=2, padx=5, pady=5, sticky=E)
+
+		### Project selection section ###
 		Row += 1
 		Label(Tab, text= self.LanguagePack.Label['ProjectKey']) \
 			.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
@@ -452,14 +505,8 @@ class DocumentTranslator(Frame):
 		if self.glossary_id != None:
 			self.ProjectList.set(self.glossary_id)
 
-		self.ProjectList.grid(row=Row, column=3, columnspan=2, padx=5, pady=5,
-								stick=W)
-
-		Button(
-				Tab, width=self.HALF_BUTTON_WIDTH,
-				text=self.LanguagePack.Button['Execute'],
-				command= self.Btn_DB_Uploader_Execute_Script) \
-			.grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
+		self.ProjectList.grid(
+			row=Row, column=3, columnspan=2, padx=5, pady=5, stick=W)
 
 		Row += 1
 		self.Uploader_Debugger = scrolledtext.ScrolledText(
@@ -646,8 +693,8 @@ class DocumentTranslator(Frame):
 		TAB_CONTROL.add(self.DB_Uploader, text= self.LanguagePack.Tab['DBUploader'])
 
 		self.tm_uploader_tab = Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.tm_uploader_tab,
-						text=self.LanguagePack.Tab['tm_uploader'])
+		TAB_CONTROL.add(
+			self.tm_uploader_tab, text=self.LanguagePack.Tab['TMUploader'])
 
 		# Process Details tab
 		self.Process = Frame(TAB_CONTROL)
@@ -879,7 +926,10 @@ class DocumentTranslator(Frame):
 
 	def Btn_DB_Uploader_Browse_DB_File(self):
 			
-		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectSource'],filetypes = (("Workbook files", "*.xlsx *.xlsm"), ), multiple = False)	
+		filename = filedialog.askopenfilename(
+			title=self.LanguagePack.ToolTips['SelectSource'],
+			filetypes=(("Workbook files", "*.xlsx *.xlsm"), ),
+			multiple = False)	
 		if filename != "":
 			self.DB_Path = self.CorrectPath(filename)
 			self.Str_DB_Path.set(self.DB_Path)
@@ -890,11 +940,14 @@ class DocumentTranslator(Frame):
 
 	def Btn_DB_Uploader_Execute_Script(self):
 		glossary_id = self.ProjectList.get()
-		result = self.Confirm_Popup(glossary_id, 'Please type \''+ glossary_id + "\' to confirm.")
+		result = self.Confirm_Popup(
+			glossary_id, 'Please type \''+ glossary_id + "\' to confirm.")
 		
 		if result == True:
-			DB = self.Str_DB_Path.get()
-			self.Generate_DB_Processor = Process(target=function_create_csv_db, args=(self.StatusQueue, self.ResultQueue, DB))
+			DB_Path = self.Str_DB_Path.get()
+			self.Generate_DB_Processor = Process(
+				target=function_create_csv_db,
+				args=(self.StatusQueue, self.ResultQueue, DB_Path))
 			self.Generate_DB_Processor.start()
 			self.after(DELAY, self.Wait_For_Creator_Processor)	
 
@@ -908,7 +961,7 @@ class DocumentTranslator(Frame):
 				if db_path != False:
 		
 					self.Uploader_Debugger.insert("end", "\n\r")
-					self.Uploader_Debugger.insert("end", "CSV DB is generaterd")
+					self.Uploader_Debugger.insert("end", "CSV DB is generated")
 					self.Uploader_Debugger.insert("end", "\n\r")
 					self.Uploader_Debugger.insert("end", "Compare generated DB with the current version")
 			except queue.Empty:
@@ -919,7 +972,7 @@ class DocumentTranslator(Frame):
 				db_path = self.ResultQueue.get(0)
 				if db_path != False:
 					self.Uploader_Debugger.insert("end", "\n\r")
-					self.Uploader_Debugger.insert("end", "CSV DB is generaterd")
+					self.Uploader_Debugger.insert("end", "CSV DB is generated")
 					self.Uploader_Debugger.insert("end", "\n\r")
 					self.Uploader_Debugger.insert("end", "Compare generated DB with the current version")
 			except queue.Empty:
@@ -1005,27 +1058,49 @@ class DocumentTranslator(Frame):
 		else:
 			return False
 
-###########################################################################################
-
-###############################################################################
-# TM UPLOADER START
 ###############################################################################
 
-	def browse_tm_file(self):
+###############################################################################
+# TM UPLOADER FUNCTION START
+###############################################################################
+
+	def browse_convert_tm_file(self):
+		"""Browse the local TM file for conversion to csv.
+
+		Display the selected path to the corresponding entry_file_path Entry.
+		Supported extensions: .pkl
+		"""
 		filename = filedialog.askopenfilename(
 			title=self.LanguagePack.ToolTips['SelectSource'],
-			filetypes=(("Workbook files", "*.xlsx *.xlsm"),),
-			multiple = False)	
+			filetypes=(("Pickle files", "*.pkl"),),
+			multiple=False)
 		if filename != "":
-			self.DB_Path = self.CorrectPath(filename)
-			self.Str_DB_Path.set(self.DB_Path)
+			self.convert_tm_path = self.CorrectPath(filename)
+			self.textvar_convert_tm_path.set(self.convert_tm_path)
 			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
-		return
+
+	def browse_upload_tm_file(self):
+		"""Browse the local TM file to upload the TM to Google cloud.
+
+		Display the selected path to the corresponding entry_file_path Entry.
+		Supported extensions: .csv
+			File name must start with "TM_"
+		"""
+		filename = filedialog.askopenfilename(
+			title=self.LanguagePack.ToolTips['SelectSource'],
+			filetypes=(("TM Comma-separated Values files", "TM_*.csv"),),
+			multiple=False)
+		if filename != "":
+			self.upload_tm_path = self.CorrectPath(filename)
+			self.textvar_upload_tm_path.set(self.upload_tm_path)
+			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
+		else:
+			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 
 ###############################################################################
-# TM UPLOADER END
+# TM UPLOADER FUNCTION END
 ###############################################################################
 
 
@@ -1717,6 +1792,10 @@ def get_datestamp():
 # db_object['db'] = @dict
 
 def function_create_db_data(DB_Path):
+	"""Return a dict _address.
+	 
+	The _address dict includes path of files that contain info about the DB. 
+	"""
 	print('Create DB from:', DB_Path)
 	from openpyxl import load_workbook
 	import csv
