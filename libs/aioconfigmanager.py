@@ -19,7 +19,7 @@ class ConfigLoader:
 		# Config file
 		self.Doc_Config_Path = self.appdata + '\\doc.ini'
 		self.Writer_Config_Path = self.appdata + '\\writer.ini'
-		self.Translator_Config_Path = self.appdata + '\\translator.ini'
+		self.translator_config_path = self.appdata + '\\translator.ini'
 		self.Custom_Writer_Config_Path = self.appdata + '\\custom_writer.ini'
 		# Folder
 		self.TM_Backup_Folder_Path = self.appdata + '\\TM'
@@ -191,7 +191,7 @@ class ConfigLoader:
 	def Translator_Init_Setting(self):
 		Section = 'Translator'
 
-		config_path = self.Translator_Config_Path
+		config_path = self.translator_config_path
 
 		if not os.path.isfile(config_path):
 			config = configparser.ConfigParser()
@@ -313,8 +313,8 @@ class ConfigLoader:
 		else:
 			return Default_Value
 
-	def save_config(
-			self, config_path, Section, Option,
+	def save_config(self,
+			config_path, Section, Option,
 			Default_Value=None, Encode=False):
 		if Encode == True:
 			Default_Value =  str(base64.b64encode(Default_Value.encode('utf-8')))

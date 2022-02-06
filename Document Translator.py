@@ -68,9 +68,10 @@ DELAY = 20
 #**********************************************************************************
 
 class DocumentTranslator(Frame):
-	def __init__(self, Root, process_queue = None, result_queue = None,
-				status_queue = None, my_translator_queue = None,
-				my_db_queue = None, tm_manager = None, ):
+	def __init__(self,
+		Root, process_queue = None, result_queue = None,
+		status_queue = None, my_translator_queue = None,
+		my_db_queue = None, tm_manager = None, ):
 		
 		Frame.__init__(self, Root) 
 		self.pack(side=TOP, expand=Y, fill=X)
@@ -287,18 +288,17 @@ class DocumentTranslator(Frame):
 
 
 	def Generate_TranslateSetting_UI(self, Tab):
-		""""""
 		Row = 1
 		
 		# Browse License section
 		Label(Tab, text=self.LanguagePack.Label['LicensePath']) \
 			.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		self.TextLicensePath = Entry(
-				Tab,width=120, state="readonly",
-				textvariable=self.LicensePath)
+			Tab,width=120, state="readonly",
+			textvariable=self.LicensePath)
 		self.TextLicensePath.grid(
-				row=Row, column=3, columnspan=5,
-				padx=5, pady=5, sticky=W)
+			row=Row, column=3, columnspan=5,
+			padx=5, pady=5, sticky=W)
 		Button(
 				Tab, width = self.HALF_BUTTON_WIDTH,
 				text=self.LanguagePack.Button['Browse'],
@@ -310,18 +310,18 @@ class DocumentTranslator(Frame):
 		# Browse TM section
 		Label(Tab, text=self.LanguagePack.Label['TM']) \
 			.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
-		self.TextLicensePath = Entry(
-				Tab,width=120, state="readonly",
-				textvariable=self.TMPath)
-		self.TextLicensePath.grid(
-				row=Row, column=3, columnspan=5,
-				padx=5, pady=5, sticky=W)
+		self.TextTMPath = Entry(
+			Tab,width=120, state="readonly",
+			textvariable=self.TMPath)
+		self.TextTMPath.grid(
+			row=Row, column=3, columnspan=5,
+			padx=5, pady=5, sticky=W)
 		Button(
 				Tab, width=self.HALF_BUTTON_WIDTH,
-				text=self.LanguagePack.Button['Browse'],
-				command=self.select_tm) \
+				text=self.LanguagePack.Button['Browse'],) \
 			.grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
-		
+		#command=self.select_tm_path) \ TEMPORARY DISABLED TO CHECK CLOUD TM
+		# FUNCTION
 
 
 	def Generate_Debugger_UI(self, Tab):	
@@ -455,18 +455,17 @@ class DocumentTranslator(Frame):
 		self.ProjectList.grid(row=Row, column=3, columnspan=2, padx=5, pady=5,
 								stick=W)
 
-		Button(Tab, width=self.HALF_BUTTON_WIDTH,
+		Button(
+				Tab, width=self.HALF_BUTTON_WIDTH,
 				text=self.LanguagePack.Button['Execute'],
 				command= self.Btn_DB_Uploader_Execute_Script) \
 			.grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
 
 		Row += 1
-		self.Uploader_Debugger = scrolledtext.ScrolledText(Tab, width=122,
-															height=13,
-															undo=True,
-															wrap=WORD,)
-		self.Uploader_Debugger.grid(row=Row, column=1, columnspan=10, padx=5,
-										pady=5, sticky=W+E+N+S)
+		self.Uploader_Debugger = scrolledtext.ScrolledText(
+			Tab, width=122, height=13, undo=True, wrap=WORD,)
+		self.Uploader_Debugger.grid(
+			row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E+N+S)
 
 	def debug_listening(self):
 		while True:
@@ -517,7 +516,6 @@ class DocumentTranslator(Frame):
 		#self.pair_list.insert("end", text)
 		#print(child)
 
-	# Nam will check
 	def load_tm_list(self):
 		"""When clicking the [Load] button in TM Manager tab,
 		
@@ -526,8 +524,16 @@ class DocumentTranslator(Frame):
 		self.remove_treeview()
 		tm_size = len(self.MyTranslator.translation_memory)
 		
-		self.Treeview.heading('Source', text='Source' + ' (' + self.MyTranslator.from_language.upper() + ') ', anchor=CENTER)
-		self.Treeview.heading('Target', text='Target' + ' (' + self.MyTranslator.to_language.upper() + ') ',  anchor=CENTER)
+		self.Treeview.heading(
+			'Source',
+			text='Source' + ' ('
+				+ self.MyTranslator.from_language.upper() + ') ',
+			anchor=CENTER)
+		self.Treeview.heading(
+			'Target',
+			text='Target'
+				+ ' (' + self.MyTranslator.to_language.upper() + ') ',
+			anchor=CENTER)
 		
 		for index, pair in self.MyTranslator.translation_memory.iterrows():	
 			from_str = pair[self.MyTranslator.from_language]
@@ -536,10 +542,12 @@ class DocumentTranslator(Frame):
 				#print("Pair:", ko_str, en_str)
 				try:
 					#self.Treeview.insert('', 'end', text= str(pair['ko']), values=([str(pair['en'])]))
-					self.Treeview.insert('', 'end', text= '', values=( index, str(from_str), str(to_str)))
+					self.Treeview.insert(
+						'', 'end', text= '',
+						values=(index, str(from_str), str(to_str)))
 					#print('Inserted id:', id)
 				except:
-					pass	
+					pass
 					
 
 	def search_tm_list(self):
@@ -587,8 +595,9 @@ class DocumentTranslator(Frame):
 		menubar.add_cascade(label =  self.LanguagePack.Menu['File'], menu = file) 
 		file.add_command(label =  self.LanguagePack.Menu['SaveSetting'], command = self.save_app_config) 
 		#file.add_command(label =  self.LanguagePack.Menu['LoadException'], command = self.SelectException) 
-		file.add_separator() 
-		file.add_command(label =  self.LanguagePack.Menu['LoadTM'], command = self.select_tm) 
+		file.add_separator()
+		##### TEMPORARY DISABLED TO CHECK CLOUD TM FUNCTION
+		# file.add_command(label =  self.LanguagePack.Menu['LoadTM'], command = self.select_tm_path) 
 		file.add_command(label =  self.LanguagePack.Menu['CreateTM'], command = self.SaveNewTM)
 		file.add_separator() 
 		file.add_command(label =  self.LanguagePack.Menu['Exit'], command = self.parent.destroy) 
@@ -678,32 +687,32 @@ class DocumentTranslator(Frame):
 		target_language = self.target_language.get()
 		target_language_index = self.language_list.index(target_language)
 		self.AppConfig.save_config(
-				self.AppConfig.Doc_Config_Path, 'Document_Translator',
-				'target_lang', target_language_index)
+			self.AppConfig.Doc_Config_Path, 'Document_Translator',
+			'target_lang', target_language_index)
 		self.AppConfig.save_config(
-				self.AppConfig.Doc_Config_Path, 'Document_Translator',
-				'speed_mode', self.TurboTranslate.get())
+			self.AppConfig.Doc_Config_Path, 'Document_Translator',
+			'speed_mode', self.TurboTranslate.get())
 		self.AppConfig.save_config(
-				self.AppConfig.Doc_Config_Path, 'Document_Translator',
-				'value_only', self.DataOnly.get())
+			self.AppConfig.Doc_Config_Path, 'Document_Translator',
+			'value_only', self.DataOnly.get())
 		self.AppConfig.save_config(
-				self.AppConfig.Doc_Config_Path, 'Document_Translator',
-				'file_name_correct', self.TranslateFileName.get())
+			self.AppConfig.Doc_Config_Path, 'Document_Translator',
+			'file_name_correct', self.TranslateFileName.get())
 		self.AppConfig.save_config(
-				self.AppConfig.Doc_Config_Path, 'Document_Translator',
-				'file_name_translate', self.TranslateFileName.get())
+			self.AppConfig.Doc_Config_Path, 'Document_Translator',
+			'file_name_translate', self.TranslateFileName.get())
 		self.AppConfig.save_config(
-				self.AppConfig.Doc_Config_Path, 'Document_Translator',
-				'sheet_name_translate', self.TranslateSheetName.get())
+			self.AppConfig.Doc_Config_Path, 'Document_Translator',
+			'sheet_name_translate', self.TranslateSheetName.get())
 		self.AppConfig.save_config(
-				self.AppConfig.Doc_Config_Path, 'Document_Translator',
-				'tm_translate', self.TMTranslate.get())
+			self.AppConfig.Doc_Config_Path, 'Document_Translator',
+			'tm_translate', self.TMTranslate.get())
 		self.AppConfig.save_config(
-				self.AppConfig.Doc_Config_Path, 'Document_Translator',
-				'tm_update', self.TMUpdate.get())
+			self.AppConfig.Doc_Config_Path, 'Document_Translator',
+			'tm_update', self.TMUpdate.get())
 		self.AppConfig.save_config(
-				self.AppConfig.Doc_Config_Path, 'Document_Translator',
-				'remove_unselected_sheet', self.SheetRemoval.get())
+			self.AppConfig.Doc_Config_Path, 'Document_Translator',
+			'remove_unselected_sheet', self.SheetRemoval.get())
 
 	def swap_language(self):
 		
@@ -714,9 +723,15 @@ class DocumentTranslator(Frame):
 		self.target_language.set(source_language)
 		self.source_language.set(target_language)
 
-		self.AppConfig.save_config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', source_language_index)
-		self.AppConfig.save_config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_lang', target_language_index)
-		self.MyTranslator.set_language_pair(target_language = self.language_id_list[source_language_index], source_language = self.language_id_list[target_language_index])
+		self.AppConfig.save_config(
+			self.AppConfig.Doc_Config_Path, 'Document_Translator',
+			'target_lang', source_language_index)
+		self.AppConfig.save_config(
+			self.AppConfig.Doc_Config_Path,'Document_Translator',
+			'source_lang', target_language_index)
+		self.MyTranslator.set_language_pair(
+			target_language=self.language_id_list[source_language_index],
+			source_language=self.language_id_list[target_language_index])
 		#self._dictionary_status.set(str(len(self.MyTranslator.dictionary)))
 		self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
@@ -753,40 +768,39 @@ class DocumentTranslator(Frame):
 		Support json files.
 		"""
 		filename = filedialog.askopenfilename(
-				title=self.LanguagePack.ToolTips['SelectDB'],
-				filetypes=(("JSON files","*.json"),),)
+			title=self.LanguagePack.ToolTips['SelectDB'],
+			filetypes=(("JSON files","*.json"),),)
 		if filename != "":
 			LicensePath = self.CorrectPath(filename)
 			self.AppConfig.save_config(
-					self.AppConfig.Translator_Config_Path,
-					'Translator', 'license_file',
-					LicensePath, True)
+				self.AppConfig.translator_config_path,
+				'Translator', 'license_file',
+				LicensePath, True)
 			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LicensePath
 			self.LicensePath.set(LicensePath)
 		else:
 			self.Notice.set("No file is selected")
 
-
-	def select_tm(self):
-		"""Set the selected TM file via Translate Setting UI or Menu > Load TM.
+	##### TEMPORARY DISABLED TO CHECK CLOUD TM FUNCTION
+	# def select_tm_path(self):
+	# 	"""Set the selected TM file via Translate Setting UI or Menu > Load TM.
 		
-		Save the selected TM file path to translator.ini config file.
-		Support pkl files.
-		"""
-		filename = filedialog.askopenfilename(
-				title = "Select Translation Memory file",
-				filetypes=(("TM pkl files", "*.pkl"),))
-		if filename != "":
-			NewTM = self.CorrectPath(filename)
-			self.TMPath.set(NewTM)
-			self.AppConfig.save_config(
-					self.AppConfig.Translator_Config_Path,
-					'Translator', 'translation_memory',
-					NewTM, True)
-			self.renew_my_translator()
-			self.Notice.set(self.LanguagePack.ToolTips['TMUpdated'])
-		else:
-			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
+	# 	Save the selected TM file path to translator.ini config file.
+	# 	Support pkl files.
+	# 	"""
+	# 	filename = filedialog.askopenfilename(
+	# 		title = "Select Translation Memory file",
+	# 		filetypes=(("TM pkl files", "*.pkl"),))
+	# 	if filename != "":
+	# 		NewTM = self.CorrectPath(filename)
+	# 		self.TMPath.set(NewTM)
+	# 		self.AppConfig.save_config(
+	# 			self.AppConfig.translator_config_path,
+	# 			'Translator', 'translation_memory', NewTM, True)
+	# 		self.renew_my_translator()
+	# 		self.Notice.set(self.LanguagePack.ToolTips['TMUpdated'])
+	# 	else:
+	# 		self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 			
 
 	def SaveNewTM(self):
@@ -796,8 +810,8 @@ class DocumentTranslator(Frame):
 		Support pkl files.
 		"""
 		filename = filedialog.asksaveasfilename(
-				title="Select file",
-				filetypes=(("Translation Memory", "*.pkl"),),)
+			title="Select file",
+			filetypes=(("Translation Memory", "*.pkl"),),)
 		filename = self.CorrectExt(filename, "pkl")
 		if filename == "":
 			return
@@ -806,13 +820,13 @@ class DocumentTranslator(Frame):
 			with open(NewTM, 'wb') as pickle_file:
 				# New TM format.
 				pickle.dump(
-						{'tm_version': 4}, pickle_file,
-						protocol=pickle.HIGHEST_PROTOCOL)
+					{'tm_version': 4}, pickle_file,
+					protocol=pickle.HIGHEST_PROTOCOL)
 			self.TMPath.set(NewTM)
 			self.AppConfig.save_config(
-					self.AppConfig.Translator_Config_Path,
-					'Translator', 'translation_memory',
-					NewTM, True)
+				self.AppConfig.translator_config_path,
+				'Translator', 'translation_memory',
+				NewTM, True)
 			self.renew_my_translator()
 
 	def _save_project_key(self, event):
@@ -820,7 +834,7 @@ class DocumentTranslator(Frame):
 		glossary_id = glossary_id.replace('\n', '')
 
 		self.AppConfig.save_config(
-				self.AppConfig.Translator_Config_Path,
+				self.AppConfig.translator_config_path,
 				'Translator', 'glossary_id',
 				glossary_id)
 		self.MyTranslator.glossary_id = glossary_id
@@ -885,11 +899,7 @@ class DocumentTranslator(Frame):
 			self.after(DELAY, self.Wait_For_Creator_Processor)	
 
 	def Wait_For_Creator_Processor(self):
-		"""
-		
-		After [Execute] button processing
-		Display process information in the text box.
-		"""
+		"""Display process information in the text box."""
 		db_path = None
 		if (self.Generate_DB_Processor.is_alive()):
 
@@ -931,10 +941,7 @@ class DocumentTranslator(Frame):
 		'''
 		
 	def Wait_For_DB_Compare_Processor(self):
-		"""
-		After wait_for_creator_processor() process
-		Display the old and new DB comparison in the text box.
-		"""
+		"""Display the old and new DB comparison in the text box."""
 		compare_result = None
 		if (self.Compare_DB_Processor.is_alive()):
 			self.after(DELAY, self.Wait_For_DB_Compare_Processor)
@@ -979,7 +986,6 @@ class DocumentTranslator(Frame):
 	
 	def Wait_For_Uploader_Processor(self):
 		"""
-		After wait_for_db_compare_processor() process
 		Display information whether the upload is successful in the text box.
 		"""
 		if (self.Upload_DB_Processor.is_alive()):
@@ -1006,12 +1012,10 @@ class DocumentTranslator(Frame):
 ###############################################################################
 
 	def browse_tm_file(self):
-			
-		filename = filedialog \
-			.askopenfilename(title=self.LanguagePack.ToolTips['SelectSource'],
-								filetypes=(("Workbook files",
-											"*.xlsx *.xlsm"),),
-								multiple = False)	
+		filename = filedialog.askopenfilename(
+			title=self.LanguagePack.ToolTips['SelectSource'],
+			filetypes=(("Workbook files", "*.xlsx *.xlsm"),),
+			multiple = False)	
 		if filename != "":
 			self.DB_Path = self.CorrectPath(filename)
 			self.Str_DB_Path.set(self.DB_Path)
@@ -1064,17 +1068,29 @@ class DocumentTranslator(Frame):
 
 		print('Config:', self.Configuration)
 
-		self.target_language.set(self.language_list[self.Configuration['Document_Translator']['target_lang']])
-		self.source_language.set(self.language_list[self.Configuration['Document_Translator']['source_lang']])
+		self.target_language.set(
+			self.language_list[
+				self.Configuration['Document_Translator']['target_lang']])
+		self.source_language.set(
+			self.language_list[
+				self.Configuration['Document_Translator']['source_lang']])
 		
-		self.TurboTranslate.set(self.Configuration['Document_Translator']['speed_mode'])
-		self.DataOnly.set(self.Configuration['Document_Translator']['value_only'])
-		self.FixCorruptFileName.set(self.Configuration['Document_Translator']['file_name_correct'])
-		self.TranslateFileName.set(self.Configuration['Document_Translator']['file_name_translate'])
-		self.TranslateSheetName.set(self.Configuration['Document_Translator']['sheet_name_translate'])
-		self.TMTranslate.set(self.Configuration['Document_Translator']['tm_translate'])
-		self.TMUpdate.set(self.Configuration['Document_Translator']['tm_update'])
-		self.SheetRemoval.set(self.Configuration['Document_Translator']['remove_unselected_sheet'])
+		self.TurboTranslate.set(
+			self.Configuration['Document_Translator']['speed_mode'])
+		self.DataOnly.set(
+			self.Configuration['Document_Translator']['value_only'])
+		self.FixCorruptFileName.set(
+			self.Configuration['Document_Translator']['file_name_correct'])
+		self.TranslateFileName.set(
+			self.Configuration['Document_Translator']['file_name_translate'])
+		self.TranslateSheetName.set(
+			self.Configuration['Document_Translator']['sheet_name_translate'])
+		self.TMTranslate.set(
+			self.Configuration['Document_Translator']['tm_translate'])
+		self.TMUpdate.set(
+			self.Configuration['Document_Translator']['tm_update'])
+		self.SheetRemoval.set(
+			self.Configuration['Document_Translator']['remove_unselected_sheet'])
 		
 		try:
 			self.Usage = self.Configuration['Document_Translator']['usage']
@@ -1142,22 +1158,27 @@ class DocumentTranslator(Frame):
 
 		self.glossary_id = self.bottom_panel.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
+		###### TEMPORARY DISABLED TO CHECK CLOUD TM FUNCTION
+		### Removed this tm_path as the TM file will be automatically
+		### selected in appdata\\AIO Translator\\TM when cloud TM is applied.
 		# Get TM file path from Translate Setting UI
-		tm_path = self.TMPath.get()
+		# tm_path = self.TMPath.get()
 		print('Start new process: Generate Translator')
-		self.TranslatorProcess = Process(	target = generate_translator,
-											kwargs= {	'my_translator_queue' : self.MyTranslator_Queue, 
-														'temporary_tm' : self.TMManager, 
-														'from_language' : source_language, 
-														'to_language' : target_language, 
-														'glossary_id' : self.glossary_id, 
-														'used_tool' : tool_name,
-														'tm_path' : tm_path,
-														'bucket_id' : self.bucket_id, 
-														'db_list_uri' : self.db_list_uri, 
-														'project_bucket_id' : self.project_bucket_id,
-													},
-										)
+		self.TranslatorProcess = Process(
+			target=generate_translator,
+			kwargs={
+				'my_translator_queue' : self.MyTranslator_Queue, 
+				'temporary_tm' : self.TMManager, 
+				'from_language' : source_language, 
+				'to_language' : target_language, 
+				'glossary_id' : self.glossary_id, 
+				'used_tool' : tool_name,
+				# 'tm_path' : tm_path, ##### TEMPORARY DISABLED TO CHECK CLOUD TM FUNCTION
+				'bucket_id' : self.bucket_id, 
+				'db_list_uri' : self.db_list_uri, 
+				'project_bucket_id' : self.project_bucket_id,
+			},
+		)
 		self.TranslatorProcess.start()
 		self.after(DELAY, self.GetMyTranslator)
 		return
@@ -1206,7 +1227,7 @@ class DocumentTranslator(Frame):
 				Date = '-'
 
 
-			self.TMPath.set(str(self.MyTranslator.tm_path))
+			# self.TMPath.set(str(self.MyTranslator.tm_path))
 			self._version_status.set(version)
 			self._update_day.set(Date)
 			
@@ -1530,8 +1551,10 @@ def function_compare_db(status_queue, result_queue, MyTranslator, glossary_id, a
 			status_queue.put('OLD DB file is not existed.')
 			result_queue.put(result)
 			return
-		old_db = pd.read_csv(old_csv_db, usecols = ['en', 'ko', 'vi', 'ja', 'zh-TW'])
-		new_db = pd.read_csv(new_csv_path, usecols = ['en', 'ko', 'vi', 'ja', 'zh-TW'])
+		old_db = pd.read_csv(
+			old_csv_db, usecols=['en', 'ko', 'vi', 'ja', 'zh-TW'])
+		new_db = pd.read_csv(
+			new_csv_path, usecols=['en', 'ko', 'vi', 'ja', 'zh-TW'])
 		old_db['version'] = "old"
 		new_db['version'] = "new"	
 		

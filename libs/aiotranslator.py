@@ -40,7 +40,7 @@ import csv
 from pandas.core.frame import DataFrame
 
 from libs.version import get_version
-from libs.tm_file import tm_file
+# from libs.tm_file import tm_file
 
 Tool = "translator"
 rev = 4117
@@ -57,26 +57,26 @@ Translatorversion = Tool + " " + ver_num
 
 class Translator:
 	def __init__(self, 
-		from_language = 'ko', 
-		to_language = 'en', 
-		source_language_predict = True, 
-		proactive_memory_translate = True, 
-		tm_update = True, 
-		glossary_id = None, # Game project ID
-		temporary_tm = None,
-		tm_path = None,
-		# Tool that is currently use this libs
-		used_tool = 'writer',
-		tool_version = None,
-		bucket_id = 'nxvnbucket',
-		db_list_uri = 'config/db_list.csv',
-		project_bucket_id = 'credible-bay-281107',
-		**kwargs
-	):
-		
+			from_language='ko', 
+			to_language='en', 
+			source_language_predict=True, 
+			proactive_memory_translate=True, 
+			tm_update=True,
+			glossary_id=None, # Game project ID
+			temporary_tm=None,
+			tm_path=None,
+			# Tool that is currently use this libs
+			used_tool='writer',
+			tool_version=None,
+			bucket_id='nxvnbucket',
+			db_list_uri='config/db_list.csv',
+			project_bucket_id='credible-bay-281107',
+			**kwargs):
 		self.from_language = from_language
 		self.to_language = to_language
-		self.default_exception = ['pass', 'fail', 'n/a', 'n/t', 'result', '\t', '\r', '\n', '', '\r\n', ' ', 'sort', 'function', 'data' , 'x', 'o']
+		self.default_exception = [
+			'pass', 'fail', 'n/a', 'n/t', 'result','\t', '\r', '\n', '',
+			'\r\n', ' ', 'sort', 'function', 'data' , 'x', 'o']
 
 		self.source_language_predict = source_language_predict
 		self.tm_update = tm_update
@@ -104,9 +104,7 @@ class Translator:
 		# Get the temp folder location for Windows/Mac
 		self.init_config_path()
 
-		# Check and get the location of TM file
-		# If path is invalid or not stated, use local TM
-		self.init_tm_path(tm_path)
+		self.init_tm_path()
 	
 		# Select correct log file.
 		self.init_logging_file()
@@ -1189,7 +1187,8 @@ class Translator:
 				return
 
 			# Load DB as DataFrame
-			self.all_header = pd.read_csv(_download_path, usecols=self.supported_language)
+			self.all_header = pd.read_csv(
+				_download_path, usecols=self.supported_language)
 			try:
 				os.remove(_download_path)
 			except Exception as e:
@@ -1309,7 +1308,9 @@ class Translator:
 
 	# Create the glossary that use for glossary_translate
 	# Currently not use
-	def create_glossary(self, input_uri= None, glossary_id=None, supported_language = ['en', 'ko'], timeout=180,):
+	def create_glossary(self,
+			input_uri= None, glossary_id=None,
+			supported_language=['en', 'ko'], timeout=180,):
 
 		client = translator.TranslationServiceClient()
 
@@ -1484,7 +1485,7 @@ class Translator:
 
 ################################################################################################
 # Bucket manager
-# Backet is the storage that store DB
+# Bucket is the storage that store DB
 # Main bucket that this tool use is "nxvnbucket"
 ################################################################################################
 
@@ -1548,7 +1549,7 @@ class Translator:
 		try:
 			blob_id = self.get_glossary_path(glossary_id)
 		except:
-			return False	
+			return False
 		
 		_blob_name, _ext = os.path.splitext(blob_id)
 
@@ -1569,11 +1570,11 @@ class Translator:
 					print('Fail to backup blob:', e)
 				_gloosary_id = current_id
 
-			Upload_Path = address[file_name]
+			upload_path = address[file_name]
 
 			supported_language = address['language']
 			print('Uploading to blob:', current_id)
-			blob.upload_from_filename(filename = Upload_Path)
+			blob.upload_from_filename(filename = upload_path)
 			print('Uploading done.')
 		print('Create glossary from blob: ', _gloosary_id)
 		return self.update_glossary(glossary_id, _gloosary_id, supported_language)
@@ -1615,26 +1616,29 @@ class Translator:
 
 	# Get the tm's path.
 	# if tm is invalid, use local tm instead
-	def init_tm_path(self, tm_path=None):
+	def init_tm_path(self):
 		"""Load and validate tm_path on program start.
-
-		In Document Translator, load the path from config file
-		via init_App_Setting() 
-
-		Args:
-			tm_path: Path to TM file.
+		
+		Extension: .csv
 		"""
-		if tm_path not in [None, '']:
-			if os.path.isfile(tm_path):
-				self.tm_path = self.correct_path_os(tm_path)
-				return
+		##### No longer allow TM selection after cloud TM is applied.
+		# if tm_path not in [None, '']:
+		# 	if os.path.isfile(tm_path):
+		# 		self.tm_path = self.correct_path_os(tm_path)
+		# 		return
+		
+		# Default local TM path
+		self.tm_path = self.correct_path_os(
+			self.config_path + '\\AIO Translator\\TM\\TM_'
+				+ self.glossary_id + '.csv')
+		if not os.path.exists(self.tm_path):
+			try:
+				self.download_tm_file_blob()
+			except Exception as e:
+				print('Error while creating TM path on start ', e)
 		if self.used_tool == 'writer':
 			self.tm_path = None
 			return
-		# Use local TM if tm_path is not stated
-		tm_path = self.config_path + '\\AIO Translator\\Local.pkl'
-		self.tm_path = self.correct_path_os(tm_path)
-		return
 
 	def init_translation_memory(self):
 		"""Set an empty current_tm as DataFrame with supported languages."""
@@ -1749,19 +1753,18 @@ class Translator:
 				# Load data from TM file to tool's self.current_tm
 				# Load data from csv extension
 				if file_ext == '.csv':
-					all_tm = pd.read_csv(self.tm_path)
-					# Check if the matching project is in the TM
-					if self.glossary_id in all_tm:
-						self.current_tm = all_tm[self.glossary_id]
-					else:
-						print('New project')
+					all_tm = pd.read_csv(
+						self.tm_path,
+						dtype={supported_lang: str for supported_lang in
+							['en', 'ko', 'vi', 'jp', 'cn']})
+					self.current_tm = all_tm
 				# Load data from pkl extension
 				elif file_ext == '.pkl':
 					with open(self.tm_path, 'rb') as pickle_load:
 						all_tm = pickle.load(pickle_load)
 						# print('all tm:', all_tm)
-						self.to_csv_tm(all_tm)
 					_tm_version = self.get_tm_version(all_tm)
+					# Check if the matching project is in the TM
 					if _tm_version == 4:
 						if self.glossary_id in all_tm:
 							self.current_tm = all_tm[self.glossary_id]
@@ -1773,34 +1776,11 @@ class Translator:
 						self.import_tm_v2(all_tm)
 					else:
 						print('Broken pkl TM file.')
-
-					# Move the pickle file to backup folder.
-					# Must move at the end to prevent [WinError 32].
-					# [WinError 32] The file is being used by another process
-					backup_file_name = self.config_path \
-						+ '\\AIO Translator\\Backup\\' \
-						+ os.path.basename(file_root)
-					try:
-						if not os.path.exists(backup_file_name + '.pkl'):
-							os.rename(
-								file_root + '.pkl',
-								backup_file_name + '.pkl')
-						else:
-							# Add timestamp to the file if a backup file
-							# already exists to distinguish them.
-							os.rename(
-								file_root + '.pkl',
-								backup_file_name
-									+ self.append_datetime()
-									+ '.pkl')
-					except Exception as e:
-						print('Error while moving TM file: ', e)
-					
+					self.to_csv_tm(all_tm)
 				else:
 					print(f'Wrong extension: {file_ext}. Must be csv or pkl')
 			except Exception as e:
 				print('Error while opening TM file:', e)
-
 		self.update_tm_from_dataframe()
 
 
@@ -2120,6 +2100,7 @@ class Translator:
 			else:
 				return dataframe
 
+	# Can be refactored to libs.tm_file.py in the future
 	def to_csv_tm(self, pickle_file_data):
 		"""Convert TM file extension to .csv extension.
 		
@@ -2128,9 +2109,7 @@ class Translator:
 		Args:
 			pickle_file_data: dict. All data in the TM on pickle load.
 		"""
-		if not os.path.isfile(self.tm_path):
-			print('TM file conversion error: File not found.')
-		else:
+		if os.path.isfile(self.tm_path):
 			file_root, file_ext = os.path.splitext(self.tm_path)
 			# Create a backup folder to move the pickle file in
 			# import_translation_memory() function
@@ -2140,23 +2119,55 @@ class Translator:
 			if file_ext == '.pkl':
 				# Change the extension
 				file_ext = '.csv'
-				self.tm_path = file_root + self.append_datetime() + file_ext
 				# Load and put the dataframe of matching project only
-				project_tm_data = pickle_file_data[self.glossary_id]
+				tm_data = pickle_file_data[self.glossary_id]
 				# Data must be DataFrame instance
-				if not isinstance(project_tm_data, pd.DataFrame):
+				if not isinstance(tm_data, pd.DataFrame):
 					try:
-						project_tm_df = pd.DataFrame(project_tm_data)
-						project_tm_df.to_csv(self.tm_path)
+						tm_df = pd.DataFrame(tm_data)
+						# Create the csv file in local TM folder
+						tm_df.to_csv(
+							self.config_path + '\\AIO Translator\\TM\\TM_'
+								+ self.glossary_id + file_ext)
 					except Exception as e:
 						print('Error while converting file to csv - '
 							+ 'Data is not instance of pd.DataFrame: ' + e)
-				elif isinstance(project_tm_data, pd.DataFrame):
-					project_tm_data.to_csv(self.tm_path)
+				elif isinstance(tm_data, pd.DataFrame):
+					# Create the csv file in local TM folder
+					tm_data.to_csv(
+						self.config_path + '\\AIO Translator\\TM\\TM_'
+							+ self.glossary_id + file_ext,
+						index=False)
+				self.tm_path = self.config_path+ '\\AIO Translator\\TM\\TM_' \
+					+ self.glossary_id + file_ext
+				# Move the pickle file to backup folder.
+				# Must move at the end to prevent [WinError 32].
+				# [WinError 32] The file is being used by another process
+				backup_file_name = backup_dir + os.path.basename(file_root)
+				try:
+					# Append datetime to distinguish other backups
+					os.rename(
+						file_root + '.pkl',
+						backup_file_name
+							+ self.append_datetime()
+							+ '.pkl')
+				except Exception as e:
+					print('Error while moving TM file: ', e)
+		else:
+			raise Exception('TM file conversion error: File not found.')
 				
-
-
-
+	def download_tm_file_blob(self):
+		"""Download the TM file of the matching project on Google cloud."""
+		storage_client = storage.Client()
+		tm_file_blob = storage_client.get_bucket(self.bucket_id).get_blob(
+			f'TM/{self.glossary_id}/TM_{self.glossary_id}.csv')
+		try:
+			if tm_file_blob.exists():
+				tm_file_blob.download_to_filename(self.tm_path)
+			else:
+				print("TM file blob doesn't exist.")
+		except Exception as e:
+			print('Error while downloading TM file blob: ', e)
 
 
 #########################################################################

@@ -13,7 +13,7 @@ import datetime
 # Data module
 import pandas as pd
 
-class TMFile:
+class TranslationMemoryFile:
     """TM file object.
     
     Info about TM file such as file name, data in the TM and methods to
@@ -26,8 +26,14 @@ class TMFile:
         ext: File extension. Must be .pkl or .csv.
         data: Data in the TM. Accept only DataFrame class from pandas.
     """
-    def __init__(self, tm_info_obj):
-        """Raises: Exception: Error while initializing TM."""
+    def __init__(self, tm_info_obj: dict):
+        """
+        Args:
+            tm_info_obj: 
+
+        Raises:
+            Exception: Error while initializing TM.
+        """
         try:
             # Support only pickle and csv extension
             if tm_info_obj['ext'] in ['.pkl', '.csv']:
@@ -53,6 +59,6 @@ tm_info = {
     'data': pd.DataFrame(),
 }
 
-tm_file = TMFile(tm_info)
+tm_file = TranslationMemoryFile(tm_info)
 
 print(tm_file)
