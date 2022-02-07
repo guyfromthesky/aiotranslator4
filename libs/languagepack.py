@@ -52,6 +52,17 @@ class LanguagePackEN:
 	Button['Update'] = "Update"
 	Button['RelativeSearch'] = "Relative Search"
 
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY START
+	###########################################################################
+
+	Button['Convert'] = "Convert"
+	Button['Upload'] = "Upload"
+
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY END
+	###########################################################################
+
 	Option = {}
 	Option['TranslateFileName'] = "Translate file name"
 	Option['UpdateTMFile'] = "Update TM file"
@@ -156,9 +167,16 @@ class LanguagePackEN:
 	Label['MainLanguage'] = "Primary language:"
 	Label['SecondaryLanguage'] = "Secondary language:"
 
-	Label['Reproducibility'] = "Reproducibility:"
-	Label['EnvInfo'] = "Enviromental Information:"
-
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY START
+	###########################################################################
+	
+	Label['TMFileConversion'] = "TM File Conversion"
+	Label['TMFileUpload'] = "TM File Upload"
+	
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY END
+	###########################################################################
 
 	Tab = {}
 	Tab['Main'] = "Main Menu"
@@ -196,6 +214,16 @@ class LanguagePackEN:
 	Tab['DBSeacher'] = "Search"
 
 	Tab['CustomBugWriter'] = "Custom Writer"
+
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY START
+	###########################################################################
+
+	Tab['TMUploader'] = "TM Uploader"
+
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY END
+	###########################################################################
 
 	ToolTips = {}
 

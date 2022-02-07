@@ -19,7 +19,7 @@ class ConfigLoader:
 		# Config file
 		self.Doc_Config_Path = self.appdata + '\\doc.ini'
 		self.Writer_Config_Path = self.appdata + '\\writer.ini'
-		self.Translator_Config_Path = self.appdata + '\\translator.ini'
+		self.translator_config_path = self.appdata + '\\translator.ini'
 		self.Custom_Writer_Config_Path = self.appdata + '\\custom_writer.ini'
 		# Folder
 		self.TM_Backup_Folder_Path = self.appdata + '\\TM'
@@ -215,7 +215,7 @@ class ConfigLoader:
 	def Translator_Init_Setting(self):
 		Section = 'Translator'
 
-		config_path = self.Translator_Config_Path
+		config_path = self.translator_config_path
 
 		if not os.path.isfile(config_path):
 			config = configparser.ConfigParser()
@@ -356,8 +356,9 @@ class ConfigLoader:
 		else:
 			return Default_Value
 
-	def Save_Config(self, Config_Path, Section, Option, Default_Value = None, Encode = False):	
-
+	def save_config(self,
+			config_path, Section, Option,
+			Default_Value=None, Encode=False):
 		if Encode == True:
 			Default_Value =  str(base64.b64encode(Default_Value.encode('utf-8')))
 			Default_Value = re.findall(r'b\'(.+?)\'', Default_Value)[0]
@@ -366,13 +367,13 @@ class ConfigLoader:
 		#print('Target file:', Config_Path)
 
 
-		if not os.path.isfile(Config_Path):
+		if not os.path.isfile(config_path):
 			config = configparser.ConfigParser()
-			with open(Config_Path, 'w') as configfile:
+			with open(config_path, 'w') as configfile:
 				config.write(configfile)
 
 		Config_Obj = configparser.ConfigParser()
-		Config_Obj.read(Config_Path)
+		Config_Obj.read(config_path)
 
 		if not Config_Obj.has_section(Section):
 			Config_Obj.add_section(Section)
@@ -388,7 +389,7 @@ class ConfigLoader:
 			else:
 				Config_Obj.set(Section, Option, str(Default_Value))
 
-		with open(Config_Path, 'w') as configfile:
+		with open(config_path, 'w') as configfile:
 			Config_Obj.write(configfile)
 		
 	def Refresh_Config_Data(self):
