@@ -509,9 +509,9 @@ class DocumentTranslator(Frame):
 			row=Row, column=3, columnspan=2, padx=5, pady=5, stick=W)
 
 		Row += 1
-		self.Uploader_Debugger = scrolledtext.ScrolledText(
+		self.tm_uploader_debugger = scrolledtext.ScrolledText(
 			Tab, width=122, height=13, undo=True, wrap=WORD,)
-		self.Uploader_Debugger.grid(
+		self.tm_uploader_debugger.grid(
 			row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E+N+S)
 
 	def debug_listening(self):
@@ -1106,6 +1106,19 @@ class DocumentTranslator(Frame):
 			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
+	
+	def upload_tm_file_to_cloud(self):
+		glossary_id = self.ProjectList.get()
+		result = self.Confirm_Popup(
+			glossary_id, 'Please type \''+ glossary_id + "\' to confirm.")
+		
+		if result == True:
+			tm_path = self.upload_tm_path.get()
+			self.Generate_DB_Processor = Process(
+				target=None,
+				args=(self.StatusQueue, self.ResultQueue, tm_path))
+			self.Generate_DB_Processor.start()
+			self.after(DELAY, None)
 
 ###############################################################################
 # TM UPLOADER FUNCTION END

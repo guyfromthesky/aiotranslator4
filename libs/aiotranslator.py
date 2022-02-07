@@ -4,6 +4,7 @@ import re
 import base64
 #http request and parser
 from html import unescape
+from this import d
 # Unuseds
 # import urllib.request
 #import urllib.parse
@@ -40,6 +41,7 @@ from datetime import datetime
 import csv
 
 from pandas.core.frame import DataFrame
+from libs import tm_file
 
 from libs.version import get_version
 # from libs.tm_file import tm_file
@@ -67,6 +69,7 @@ class Translator:
 			glossary_id=None, # Game project ID
 			temporary_tm=None,
 			tm_path=None,
+			backup_path=None,
 			# Tool that is currently use this libs
 			used_tool='writer',
 			tool_version=None,
@@ -228,7 +231,13 @@ class Translator:
 			return str(path).replace('\\', '//')
 		return path
 	
-
+	### NOT COMPLETE
+	# def init_backup_path(self):
+	# 	"""Load the back up path of the tool on start."""
+	# 	if sys.platform.startswith('win'):
+	# 		self.backup_path = os.environ['APPDATA']
+	# 	else:
+	# 		self.config_path = os.getcwd()
 
 	def get_user_name(self):
 		try:
@@ -1576,19 +1585,14 @@ class Translator:
 
 			supported_language = address['language']
 			print('Uploading to blob:', current_id)
-<<<<<<< HEAD
 			try:
-				blob.upload_from_filename(filename = Upload_Path)
+				blob.upload_from_filename(filename = upload_path)
 			except Exception as exception:
 				print('Uploading Fail.')
 				if isinstance(exception, Forbidden):
 					return "Forbidden"
 				else:
 					return False
-=======
-			blob.upload_from_filename(filename = upload_path)
-			print('Uploading done.')
->>>>>>> ded693549f5e9648b155181fa6513c501951dc55
 		print('Create glossary from blob: ', _gloosary_id)
 		return self.update_glossary(glossary_id, _gloosary_id, supported_language)
 	
@@ -1649,7 +1653,7 @@ class Translator:
 				+ self.glossary_id + '.csv')
 		if not os.path.exists(self.tm_path):
 			try:
-				self.download_tm_file_blob()
+				self.download_tm_file_from_blob()
 			except Exception as e:
 				print('Error while creating TM path on start ', e)
 		if self.used_tool == 'writer':
@@ -2174,9 +2178,10 @@ class Translator:
 		else:
 			raise Exception('TM file conversion error: File not found.')
 				
-	def download_tm_file_blob(self):
+	def download_tm_file_from_blob(self):
 		"""Download the TM file of the matching project on Google cloud."""
 		storage_client = storage.Client()
+		# TM file name blob always starts with 'TM_'
 		tm_file_blob = storage_client.get_bucket(self.bucket_id).get_blob(
 			f'TM/{self.glossary_id}/TM_{self.glossary_id}.csv')
 		try:
@@ -2185,8 +2190,17 @@ class Translator:
 			else:
 				print("TM file blob doesn't exist.")
 		except Exception as e:
-			print('Error while downloading TM file blob: ', e)
+			print('Error while downloading TM file: ', e)
 
+	def upload_tm_file_to_blob(self, tm_path):
+		"""Upload the TM file on default local path to Google cloud."""
+		storage_client = storage.Client()
+		tm_file_blob = storage_client.get_bucket(self.bucket_id).get_blob(
+			f'TM/{self.glossary_id}/TM_{self.glossary_id}.csv')
+		try:
+			tm_file_blob.upload_from_filename(tm_path)
+		except Exception as e:
+			print('Error while uploading TM file: ', e)
 
 #########################################################################
 # Toggle function
