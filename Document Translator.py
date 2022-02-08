@@ -320,10 +320,9 @@ class DocumentTranslator(Frame):
 			padx=5, pady=5, sticky=W)
 		Button(
 				Tab, width=self.HALF_BUTTON_WIDTH,
-				text=self.LanguagePack.Button['Browse'],) \
+				text=self.LanguagePack.Button['Browse'],
+				command=self.select_tm_path) \
 			.grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
-		#command=self.select_tm_path) \ TEMPORARY DISABLED TO CHECK CLOUD TM
-		# FUNCTION
 
 
 	def Generate_Debugger_UI(self, Tab):	
@@ -643,8 +642,7 @@ class DocumentTranslator(Frame):
 		file.add_command(label =  self.LanguagePack.Menu['SaveSetting'], command = self.save_app_config) 
 		#file.add_command(label =  self.LanguagePack.Menu['LoadException'], command = self.SelectException) 
 		file.add_separator()
-		##### TEMPORARY DISABLED TO CHECK CLOUD TM FUNCTION
-		# file.add_command(label =  self.LanguagePack.Menu['LoadTM'], command = self.select_tm_path) 
+		file.add_command(label =  self.LanguagePack.Menu['LoadTM'], command = self.select_tm_path) 
 		file.add_command(label =  self.LanguagePack.Menu['CreateTM'], command = self.SaveNewTM)
 		file.add_separator() 
 		file.add_command(label =  self.LanguagePack.Menu['Exit'], command = self.parent.destroy) 
@@ -828,26 +826,25 @@ class DocumentTranslator(Frame):
 		else:
 			self.Notice.set("No file is selected")
 
-	##### TEMPORARY DISABLED TO CHECK CLOUD TM FUNCTION
-	# def select_tm_path(self):
-	# 	"""Set the selected TM file via Translate Setting UI or Menu > Load TM.
+	def select_tm_path(self):
+		"""Set the selected TM file via Translate Setting UI or Menu > Load TM.
 		
-	# 	Save the selected TM file path to translator.ini config file.
-	# 	Support pkl files.
-	# 	"""
-	# 	filename = filedialog.askopenfilename(
-	# 		title = "Select Translation Memory file",
-	# 		filetypes=(("TM pkl files", "*.pkl"),))
-	# 	if filename != "":
-	# 		NewTM = self.CorrectPath(filename)
-	# 		self.TMPath.set(NewTM)
-	# 		self.AppConfig.save_config(
-	# 			self.AppConfig.translator_config_path,
-	# 			'Translator', 'translation_memory', NewTM, True)
-	# 		self.renew_my_translator()
-	# 		self.Notice.set(self.LanguagePack.ToolTips['TMUpdated'])
-	# 	else:
-	# 		self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
+		Save the selected TM file path to translator.ini config file.
+		Support pkl files.
+		"""
+		filename = filedialog.askopenfilename(
+			title = "Select Translation Memory file",
+			filetypes=(("TM pkl files", "*.pkl"),))
+		if filename != "":
+			NewTM = self.CorrectPath(filename)
+			self.TMPath.set(NewTM)
+			self.AppConfig.save_config(
+				self.AppConfig.translator_config_path,
+				'Translator', 'translation_memory', NewTM, True)
+			self.renew_my_translator()
+			self.Notice.set(self.LanguagePack.ToolTips['TMUpdated'])
+		else:
+			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 			
 
 	def SaveNewTM(self):
@@ -1254,11 +1251,8 @@ class DocumentTranslator(Frame):
 
 		self.glossary_id = self.bottom_panel.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
-		###### TEMPORARY DISABLED TO CHECK CLOUD TM FUNCTION
-		### Removed this tm_path as the TM file will be automatically
-		### selected in appdata\\AIO Translator\\TM when cloud TM is applied.
 		# Get TM file path from Translate Setting UI
-		# tm_path = self.TMPath.get()
+		tm_path = self.TMPath.get()
 		print('Start new process: Generate Translator')
 		self.TranslatorProcess = Process(
 			target=generate_translator,
@@ -1269,7 +1263,7 @@ class DocumentTranslator(Frame):
 				'to_language' : target_language, 
 				'glossary_id' : self.glossary_id, 
 				'used_tool' : tool_name,
-				# 'tm_path' : tm_path, ##### TEMPORARY DISABLED TO CHECK CLOUD TM FUNCTION
+				'tm_path' : tm_path,
 				'bucket_id' : self.bucket_id, 
 				'db_list_uri' : self.db_list_uri, 
 				'project_bucket_id' : self.project_bucket_id,

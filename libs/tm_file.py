@@ -8,6 +8,7 @@ __author__ = 'anonymous'
 
 # System, standard lib
 import os
+import sys
 import datetime
 
 # Data module
@@ -20,45 +21,47 @@ class TranslationMemoryFile:
     modify them.
 
     Attributes:
-        name: File name.
-        dirname: Directory/Folder name of the TM file.
-        tm_version: TM version. Format version x.y. Ex: version 1.0
-        ext: File extension. Must be .pkl or .csv.
-        data: Data in the TM. Accept only DataFrame class from pandas.
+        name -- File name.
+        dirname -- Directory/Folder name of the TM file.
+        backup_dirname -- Directory name of the backup file.
+        tm_version -- TM version. Format version x.y. Ex: version 1.0
+        ext -- File extension. Currently only support .csv.
+        data -- Data in the TM. Accept only DataFrame class from pandas.
     """
-    def __init__(self, tm_info_obj: dict):
+    def __init__(self, test=[]):
         """
-        Args:
-            tm_info_obj: 
-
         Raises:
-            Exception: Error while initializing TM.
+            Exception -- Error while initializing TM.
         """
+        # Set up default value
         try:
-            # Support only pickle and csv extension
-            if tm_info_obj['ext'] in ['.pkl', '.csv']:
-                # Only accept DataFrame
-                if isinstance(tm_info_obj['data'], pd.DataFrame):
-                    self.name = tm_info_obj['name']
-                    self.ext = tm_info_obj['ext']
-                    self.dirname = tm_info_obj['dirname']
-                    self.tm_version = tm_info_obj['tm_version']
-                    self.data = tm_info_obj['data']
-                else:
-                    print('Cannot create TM due to incorrect data type.')
-            else:
-                print('Cannot create TM due to incorrect extension.')
+            self.name = 'hello'
+            self.dirname = self.correct_path_os(
+                f"{os.environ['appdata']}\\AIO Translator\\TM\\")
+            self.backup_dirname = self.correct_path_os(
+                f"{os.environ['appdata']}\\AIO Translator\\Backup\\")
+            # Only support Comma-separated Values
+            self.ext = '.csv'
+            self.tm_version = 4
+            # Only accept DataFrame type data
+            self.data = pd.DataFrame()
         except Exception as e:
             print('Error while initializing TM: ', e)
 
-tm_info = {
-    'name': None,
-    'dirname': None,
-    'tm_version': 4,
-    'ext': '.csv',
-    'data': pd.DataFrame(),
-}
+    def correct_path_os(self, path):
+        """Replace backward slash with forward slash if OS is not Windows."""
+        if not sys.platform.startswith('win'):
+            return str(path).replace('\\', '//')
+        return path
 
-tm_file = TranslationMemoryFile(tm_info)
+    def get_path(self):
+        """Return the path to the TM file."""
+        return self.correct_path_os(
+            f'{self.dirname}\\{self.name}{self.ext}')
 
-print(tm_file)
+    def get_backup_path(self):
+        """Return the path to the backup TM file."""
+        return self.correct_path_os(
+            f'{self.backup_dirname}\\{self.name}_backup{self.ext}')
+
+tm_file = TranslationMemoryFile()

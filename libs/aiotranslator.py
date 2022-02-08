@@ -41,7 +41,6 @@ from datetime import datetime
 import csv
 
 from pandas.core.frame import DataFrame
-from libs import tm_file
 
 from libs.version import get_version
 # from libs.tm_file import tm_file
@@ -109,7 +108,7 @@ class Translator:
 		# Get the temp folder location for Windows/Mac
 		self.init_config_path()
 
-		self.init_tm_path()
+		self.init_tm_path(tm_path)
 	
 		# Select correct log file.
 		self.init_logging_file()
@@ -1636,29 +1635,27 @@ class Translator:
 
 	# Get the tm's path.
 	# if tm is invalid, use local tm instead
-	def init_tm_path(self):
-		"""Load and validate tm_path on program start.
+	def init_tm_path(self, tm_path):
+		"""Load and validate tm_path on program start."""
+		if tm_path not in [None, '']:
+			if os.path.isfile(tm_path):
+				self.tm_path = self.correct_path_os(tm_path)
+				return
 		
-		Extension: .csv
-		"""
-		##### No longer allow TM selection after cloud TM is applied.
-		# if tm_path not in [None, '']:
-		# 	if os.path.isfile(tm_path):
-		# 		self.tm_path = self.correct_path_os(tm_path)
-		# 		return
+		###### FOR CLOUD TM
+		# if not os.path.exists(self.tm_path):
+		# 	try:
+		# 		self.download_tm_file_from_blob()
+		# 	except Exception as e:
+		# 		print('Error while creating TM path on start ', e)
+		if self.used_tool == 'writer':
+			self.tm_path = None
+			return
 		
 		# Default local TM path
 		self.tm_path = self.correct_path_os(
 			self.config_path + '\\AIO Translator\\TM\\TM_'
 				+ self.glossary_id + '.csv')
-		if not os.path.exists(self.tm_path):
-			try:
-				self.download_tm_file_from_blob()
-			except Exception as e:
-				print('Error while creating TM path on start ', e)
-		if self.used_tool == 'writer':
-			self.tm_path = None
-			return
 
 	def init_translation_memory(self):
 		"""Set an empty current_tm as DataFrame with supported languages."""
