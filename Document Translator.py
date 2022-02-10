@@ -584,6 +584,7 @@ class DocumentTranslator(Frame):
 		messagebox.showinfo('Tool error...', ErrorText)	
 
 	def SaveAppLanguage(self, language):
+		print('Save language:', language)
 		self.Notice.set(self.LanguagePack.ToolTips['AppLanuageUpdate'] + " "+ language) 
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'app_lang', language)
 
@@ -591,6 +592,11 @@ class DocumentTranslator(Frame):
 		target_language = self.target_language.get()
 		target_language_index = self.language_list.index(target_language)
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', target_language_index)
+		
+		source_language = self.source_language.get()
+		source_language_index = self.language_list.index(source_language)
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_language', source_language_index)
+
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'speed_mode', self.TurboTranslate.get())
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'value_only', self.DataOnly.get())
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'file_name_correct', self.TranslateFileName.get())
@@ -616,16 +622,16 @@ class DocumentTranslator(Frame):
 		self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
 	def SetLanguageKorean(self):
-		self.AppLanguage = 'kr'
+		self.AppLanguage = '1'
 		self.SaveAppLanguage(self.AppLanguage)
 
 	
 	def SetLanguageEnglish(self):
-		self.AppLanguage = 'en'
+		self.AppLanguage = '2'
 		self.SaveAppLanguage(self.AppLanguage)
 
 	def OpenWeb(self):
-		webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/AIO+Translator")
+		webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/%5BTranslation%5D+AIO+Translator")
 
 	def CorrectPath(self, path):
 		if sys.platform.startswith('win'):
@@ -891,7 +897,11 @@ class DocumentTranslator(Frame):
 
 		self.AppConfig = ConfigLoader()
 		self.Configuration = self.AppConfig.Config
-		self.AppLanguage  = self.Configuration['Document_Translator']['app_lang']
+		_app_language = self.Configuration['Document_Translator']['app_lang']
+		if _app_language == 1:
+			self.AppLanguage  = 'kr'
+		else:
+			self.AppLanguage  = 'en'
 		
 		license_file_path = self.Configuration['Translator']['license_file']
 		self.LicensePath.set(license_file_path)
