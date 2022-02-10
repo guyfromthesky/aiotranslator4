@@ -33,7 +33,6 @@ from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, BOTTOM
 # Config state
 from tkinter import DISABLED, NORMAL
 
-
 #from tkinter import filedialog
 #from tkinter import messagebox
 #from tkinter import ttk
@@ -88,6 +87,8 @@ class MyTranslatorHelper(Frame):
 		self.pack(side=TOP, expand=Y, fill=X)
 
 		self.parent = parent
+		self.parent.protocol("WM_DELETE_WINDOW", self.on_closing)
+
 		self.MyTranslator_Queue = MyTranslator_Queue
 		self.MyTranslator = None
 
@@ -156,12 +157,17 @@ class MyTranslatorHelper(Frame):
 		
 		MsgBox = messagebox.askquestion ('Bug Writer', self.LanguagePack.ToolTips['LoadReport'],icon = 'info') 
 		if MsgBox == 'yes':
+			self.parent.withdraw()
+			self.parent.update_idletasks()
 			self.LoadTempReport()
+			self.parent.deiconify()
 			
-
-		
-		
 	# Menu function
+	def on_closing(self):
+		if messagebox.askokcancel("Quit", "Do you want to quit?"):
+			self.parent.destroy()
+			self.TranslatorProcess.terminate()
+
 	def Error(self, ErrorText):
 		messagebox.showinfo('Translate error...', ErrorText)	
 
@@ -1937,17 +1943,17 @@ def fixed_map(style, option):
 	  elm[:2] != ('!disabled', '!selected')]
 
 def MainLoop():
-
+	print('Create shareable Memory variable')
 	MyTranslator = Queue()
 	return_text = Queue()
 	MyManager = Manager()
 	grammar_check_result = MyManager.list()
 	tm_manager = MyManager.list()
 	language_tool_enable = False
-
+	print('Create UI')
 	root = Tk()
-	root.withdraw()
-	root.update_idletasks()
+	#root.withdraw()
+	#root.update_idletasks()
 	style = Style(root)
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
 	#root.geometry("400x350+300+300")
@@ -1957,10 +1963,11 @@ def MainLoop():
 	#root.mainloop()
 	
 	try:
-		
+		print('Update UI')
 		application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
-		root.deiconify()
+		#root.deiconify()
 		root.mainloop()
+		print('Send usage report')
 		application.MyTranslator.send_tracking_record()
 	except Exception as e:
 		
@@ -1997,7 +2004,7 @@ def MainLoop():
 		print("error message:", e)	
 		messagebox.showinfo(title='Critical error', message=e)
 
-
+	print('Initial Done')
 
 if __name__ == '__main__':
 	if sys.platform.startswith('win'):
