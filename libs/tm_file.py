@@ -8,6 +8,7 @@ __author__ = 'anonymous'
 
 # System, standard lib
 import os
+import re
 import sys
 import datetime
 
@@ -28,23 +29,24 @@ class TranslationMemoryFile:
         ext -- File extension. Currently only support .csv.
         data -- Data in the TM. Accept only DataFrame class from pandas.
     """
-    def __init__(self, test=[]):
+    def __init__(self):
         """
         Raises:
             Exception -- Error while initializing TM.
         """
         # Set up default value
         try:
-            self.name = 'hello'
+            self.name = None
+            self.ext = '.csv' # Only support Comma-separated Values
             self.dirname = self.correct_path_os(
                 f"{os.environ['appdata']}\\AIO Translator\\TM\\")
             self.backup_dirname = self.correct_path_os(
                 f"{os.environ['appdata']}\\AIO Translator\\Backup\\")
-            # Only support Comma-separated Values
-            self.ext = '.csv'
+            self.path = self.get_path()
+            self.backup_path = self.get_backup_path()
+            
             self.tm_version = 4
-            # Only accept DataFrame type data
-            self.data = pd.DataFrame()
+            self.data = None # Only accept DataFrame type data
         except Exception as e:
             print('Error while initializing TM: ', e)
 
@@ -53,6 +55,15 @@ class TranslationMemoryFile:
         if not sys.platform.startswith('win'):
             return str(path).replace('\\', '//')
         return path
+
+    def set_path(self, path: str=None):
+        """Set path of the file based on file name, ext, dirname.
+        
+        Args:
+            path -- New selected path for TM file.
+        """
+        if path not in [None, '']:
+            print('false is true')
 
     def get_path(self):
         """Return the path to the TM file."""
@@ -64,4 +75,18 @@ class TranslationMemoryFile:
         return self.correct_path_os(
             f'{self.backup_dirname}\\{self.name}_backup{self.ext}')
 
+    def get_data(self):
+        """Return the data in the csv TM file.
+        
+        Only allow DataFrame from pandas and csv extension.
+        """
+        # path = self.get_path()
+        # # Only accept DataFrame type data
+        # if isinstance(self.data, pd.DataFrame):
+        #     self.data = pd.read_csv(path, )
+            
+
+
 tm_file = TranslationMemoryFile()
+tm_file.name = 'hello'
+print(tm_file.path)

@@ -43,7 +43,7 @@ import csv
 from pandas.core.frame import DataFrame
 
 from libs.version import get_version
-# from libs.tm_file import tm_file
+from libs.tm_file import tm_file
 
 Tool = "translator"
 rev = 4117
@@ -1641,13 +1641,6 @@ class Translator:
 			if os.path.isfile(tm_path):
 				self.tm_path = self.correct_path_os(tm_path)
 				return
-		
-		###### FOR CLOUD TM
-		# if not os.path.exists(self.tm_path):
-		# 	try:
-		# 		self.download_tm_file_from_blob()
-		# 	except Exception as e:
-		# 		print('Error while creating TM path on start ', e)
 		if self.used_tool == 'writer':
 			self.tm_path = None
 			return
@@ -1694,8 +1687,8 @@ class Translator:
 		for Pair in pickle_data:
 			#new_row = {'en': Pair[1], 'ko':Pair[0], 'cn': NaN, 'jp': NaN, 'vi': NaN}
 			new_row = {
-					'en': Pair[1], 'ko':Pair[0],
-					'cn': NaN, 'jp': NaN, 'vi': NaN}
+				'en': Pair[1], 'ko':Pair[0],
+				'cn': NaN, 'jp': NaN, 'vi': NaN}
 			self.current_tm = self.current_tm.append(new_row, ignore_index=True)	
 		pickle_data = {}
 		if self.glossary_id == "":
@@ -1710,8 +1703,8 @@ class Translator:
 			with open(self.tm_path, 'wb') as pickle_file:
 				print("Updating pickle file....", self.tm_path)
 				pickle.dump(
-						pickle_data, pickle_file,
-						protocol=pickle.HIGHEST_PROTOCOL)
+					pickle_data, pickle_file,
+					protocol=pickle.HIGHEST_PROTOCOL)
 				return True
 		except Exception as e:
 			print("Error while convert TM v2 to TM v4:", e)
@@ -1722,8 +1715,8 @@ class Translator:
 		self.init_translation_memory()
 		
 		self.current_tm = pd.DataFrame(
-				{'en': pickle_data['EN'],
-				'ko': pickle_data['KO']})
+			{'en': pickle_data['EN'],
+			'ko': pickle_data['KO']})
 		#self.current_tm['cn'] = NaN
 		#self.current_tm['jp'] = NaN
 		#self.current_tm['vi'] = NaN
@@ -1741,8 +1734,8 @@ class Translator:
 			with open(self.tm_path, 'wb') as pickle_file:
 				print("Updating pickle file....", self.tm_path)
 				pickle.dump(
-						pickle_data, pickle_file,
-						protocol=pickle.HIGHEST_PROTOCOL)
+					pickle_data, pickle_file,
+					protocol=pickle.HIGHEST_PROTOCOL)
 
 		except Exception  as e:
 			print("Error while convert TM v3 to TM v4:", e)		
@@ -1757,7 +1750,7 @@ class Translator:
 
 		self.init_temporary_tm()
 		self.init_translation_memory()
-
+		tm_file.getdata()
 		# Validate tm_path
 		if self.tm_path == None:
 			return
@@ -1777,25 +1770,24 @@ class Translator:
 						dtype={supported_lang: str for supported_lang in
 							['en', 'ko', 'vi', 'jp', 'cn']})
 					self.current_tm = all_tm
-				##### NO LONGER SUPPORT .PKL EXTENSION AFTER CLOUD TM
-				# # Load data from pkl extension
-				# elif file_ext == '.pkl':
-				# 	with open(self.tm_path, 'rb') as pickle_load:
-				# 		all_tm = pickle.load(pickle_load)
-				# 		# print('all tm:', all_tm)
-				# 	_tm_version = self.get_tm_version(all_tm)
-				# 	# Check if the matching project is in the TM
-				# 	if _tm_version == 4:
-				# 		if self.glossary_id in all_tm:
-				# 			self.current_tm = all_tm[self.glossary_id]
-				# 		else:
-				# 			print('New project')
-				# 	elif _tm_version == 3:
-				# 		self.import_tm_v3(all_tm)
-				# 	elif _tm_version == 2:
-				# 		self.import_tm_v2(all_tm)
-				# 	else:
-				# 		print('Broken pkl TM file.')
+				# Load data from pkl extension
+				elif file_ext == '.pkl':
+					with open(self.tm_path, 'rb') as pickle_load:
+						all_tm = pickle.load(pickle_load)
+						# print('all tm:', all_tm)
+					_tm_version = self.get_tm_version(all_tm)
+					# Check if the matching project is in the TM
+					if _tm_version == 4:
+						if self.glossary_id in all_tm:
+							self.current_tm = all_tm[self.glossary_id]
+						else:
+							print('New project')
+					elif _tm_version == 3:
+						self.import_tm_v3(all_tm)
+					elif _tm_version == 2:
+						self.import_tm_v2(all_tm)
+					else:
+						print('Broken pkl TM file.')
 				else:
 					print(f'Wrong extension: {file_ext}. Must be .csv.')
 			except Exception as e:

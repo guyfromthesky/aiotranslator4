@@ -642,7 +642,9 @@ class DocumentTranslator(Frame):
 		file.add_command(label =  self.LanguagePack.Menu['SaveSetting'], command = self.save_app_config) 
 		#file.add_command(label =  self.LanguagePack.Menu['LoadException'], command = self.SelectException) 
 		file.add_separator()
-		file.add_command(label =  self.LanguagePack.Menu['LoadTM'], command = self.select_tm_path) 
+		file.add_command(
+			label=self.LanguagePack.Menu['LoadTM'],
+			command=self.select_tm_path) 
 		file.add_command(label =  self.LanguagePack.Menu['CreateTM'], command = self.SaveNewTM)
 		file.add_separator() 
 		file.add_command(label =  self.LanguagePack.Menu['Exit'], command = self.parent.destroy) 
@@ -845,7 +847,6 @@ class DocumentTranslator(Frame):
 			self.Notice.set(self.LanguagePack.ToolTips['TMUpdated'])
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
-			
 
 	def SaveNewTM(self):
 		"""Create and set the new TM file via the File > Create TM menu.
@@ -1103,19 +1104,6 @@ class DocumentTranslator(Frame):
 			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
-	
-	def upload_tm_file_to_cloud(self):
-		glossary_id = self.ProjectList.get()
-		result = self.Confirm_Popup(
-			glossary_id, 'Please type \''+ glossary_id + "\' to confirm.")
-		
-		if result == True:
-			tm_path = self.upload_tm_path.get()
-			self.Generate_DB_Processor = Process(
-				target=None,
-				args=(self.StatusQueue, self.ResultQueue, tm_path))
-			self.Generate_DB_Processor.start()
-			self.after(DELAY, None)
 
 ###############################################################################
 # TM UPLOADER FUNCTION END
