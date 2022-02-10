@@ -849,13 +849,13 @@ class DocumentTranslator(Frame):
 				if upload_result == "False":
 					self.Uploader_Debugger.insert("end", "Fail to upload DB")
 				elif upload_result == 'Forbidden':
-					self.Uploader_Debugger.insert("end", "No permission")
+					self.Uploader_Debugger.insert("end", "License file hss no permission")
 				elif upload_result == 'LostDB':
-					self.Uploader_Debugger.insert("end", "WARNING: Project ID is removed from the list, need to recreate again.")
+					self.Uploader_Debugger.insert("end", "WARNING: Project ID is removed from the list, please try to upload the DB again.")
 				else:
-					self.Uploader_Debugger.insert("end", "DB uploaded")
+					self.Uploader_Debugger.insert("end", "DB updated")
 			except queue.Empty:
-				self.Uploader_Debugger.insert("end", "DB uploaded")
+				self.Uploader_Debugger.insert("end", "DB updated")
 
 			self.Upload_DB_Processor.terminate()
 	
