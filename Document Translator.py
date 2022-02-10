@@ -721,6 +721,7 @@ class DocumentTranslator(Frame):
 		messagebox.showinfo('Tool error...', ErrorText)	
 
 	def SaveAppLanguage(self, language):
+<<<<<<< HEAD
 		self.Notice.set(
 				self.LanguagePack.ToolTips['AppLanuageUpdate']
 				+ " "
@@ -728,10 +729,16 @@ class DocumentTranslator(Frame):
 		self.AppConfig.save_config(
 				self.AppConfig.Doc_Config_Path, 'Document_Translator',
 				'app_lang', language)
+=======
+		print('Save language:', language)
+		self.Notice.set(self.LanguagePack.ToolTips['AppLanuageUpdate'] + " "+ language) 
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'app_lang', language)
+>>>>>>> main
 
 	def save_app_config(self):
 		target_language = self.target_language.get()
 		target_language_index = self.language_list.index(target_language)
+<<<<<<< HEAD
 		self.AppConfig.save_config(
 			self.AppConfig.Doc_Config_Path, 'Document_Translator',
 			'target_lang', target_language_index)
@@ -759,6 +766,22 @@ class DocumentTranslator(Frame):
 		self.AppConfig.save_config(
 			self.AppConfig.Doc_Config_Path, 'Document_Translator',
 			'remove_unselected_sheet', self.SheetRemoval.get())
+=======
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', target_language_index)
+		
+		source_language = self.source_language.get()
+		source_language_index = self.language_list.index(source_language)
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_language', source_language_index)
+
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'speed_mode', self.TurboTranslate.get())
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'value_only', self.DataOnly.get())
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'file_name_correct', self.TranslateFileName.get())
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'file_name_translate', self.TranslateFileName.get())
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'sheet_name_translate', self.TranslateSheetName.get())
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'tm_translate', self.TMTranslate.get())
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'tm_update', self.TMUpdate.get())
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'remove_unselected_sheet', self.SheetRemoval.get())
+>>>>>>> main
 
 	def swap_language(self):
 		
@@ -782,16 +805,16 @@ class DocumentTranslator(Frame):
 		self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 
 	def SetLanguageKorean(self):
-		self.AppLanguage = 'kr'
+		self.AppLanguage = '1'
 		self.SaveAppLanguage(self.AppLanguage)
 
 	
 	def SetLanguageEnglish(self):
-		self.AppLanguage = 'en'
+		self.AppLanguage = '2'
 		self.SaveAppLanguage(self.AppLanguage)
 
 	def OpenWeb(self):
-		webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/AIO+Translator")
+		webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/%5BTranslation%5D+AIO+Translator")
 
 	def CorrectPath(self, path):
 		if sys.platform.startswith('win'):
@@ -1049,13 +1072,13 @@ class DocumentTranslator(Frame):
 				if upload_result == "False":
 					self.Uploader_Debugger.insert("end", "Fail to upload DB")
 				elif upload_result == 'Forbidden':
-					self.Uploader_Debugger.insert("end", "No permission")
+					self.Uploader_Debugger.insert("end", "License file hss no permission")
 				elif upload_result == 'LostDB':
-					self.Uploader_Debugger.insert("end", "WARNING: Project ID is removed from the list, need to recreate again.")
+					self.Uploader_Debugger.insert("end", "WARNING: Project ID is removed from the list, please try to upload the DB again.")
 				else:
-					self.Uploader_Debugger.insert("end", "DB uploaded")
+					self.Uploader_Debugger.insert("end", "DB updated")
 			except queue.Empty:
-				self.Uploader_Debugger.insert("end", "DB uploaded")
+				self.Uploader_Debugger.insert("end", "DB updated")
 
 			self.Upload_DB_Processor.terminate()
 	
@@ -1145,7 +1168,11 @@ class DocumentTranslator(Frame):
 
 		self.AppConfig = ConfigLoader()
 		self.Configuration = self.AppConfig.Config
-		self.AppLanguage  = self.Configuration['Document_Translator']['app_lang']
+		_app_language = self.Configuration['Document_Translator']['app_lang']
+		if _app_language == 1:
+			self.AppLanguage  = 'kr'
+		else:
+			self.AppLanguage  = 'en'
 		
 		license_file_path = self.Configuration['Translator']['license_file']
 		self.LicensePath.set(license_file_path)

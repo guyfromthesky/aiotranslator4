@@ -21,7 +21,8 @@ class CloudConfigLoader:
 		# Folder
 		print('Load id from json')
 		self.project_id = self.load_project_id_from_json()
-		self.uuid = self.generate_device_unique_id()
+		#self.uuid = self.generate_device_unique_id()
+		self.uuid = "N/A"
 		
 		self.Config = {}
 
@@ -101,7 +102,7 @@ class CloudConfigLoader:
 		self.Config['banned'] = False
 		if self.uuid in _my_banning_list:
 			self.Config['banned'] = True
-	
+
 	def generate_device_unique_id(self):
 		print('generate_device_unique_id')
 		try:

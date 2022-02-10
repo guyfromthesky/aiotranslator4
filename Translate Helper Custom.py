@@ -33,7 +33,6 @@ from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, BOTTOM
 # Config state
 from tkinter import DISABLED, NORMAL
 
-
 #from tkinter import filedialog
 #from tkinter import messagebox
 #from tkinter import ttk
@@ -65,7 +64,7 @@ from google.cloud import logging
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4113
+REV = 4115
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num + " * | " + "Translator lib " + TranslatorVersion
 
@@ -88,6 +87,8 @@ class MyTranslatorHelper(Frame):
 		self.pack(side=TOP, expand=Y, fill=X)
 
 		self.parent = parent
+		self.parent.protocol("WM_DELETE_WINDOW", self.on_closing)
+
 		self.MyTranslator_Queue = MyTranslator_Queue
 		self.MyTranslator = None
 
@@ -156,9 +157,17 @@ class MyTranslatorHelper(Frame):
 		
 		MsgBox = messagebox.askquestion ('Bug Writer', self.LanguagePack.ToolTips['LoadReport'],icon = 'info') 
 		if MsgBox == 'yes':
+			self.parent.withdraw()
+			self.parent.update_idletasks()
 			self.LoadTempReport()
-		
+			self.parent.deiconify()
+			
 	# Menu function
+	def on_closing(self):
+		if messagebox.askokcancel("Quit", "Do you want to quit?"):
+			self.parent.destroy()
+			self.TranslatorProcess.terminate()
+
 	def Error(self, ErrorText):
 		messagebox.showinfo('Translate error...', ErrorText)	
 
@@ -1771,25 +1780,29 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 	Lang = my_translator.to_language
 	
 
-	strReport = Simple_Row_CSS_Template(Lang, "상세설명 - Detail Description", New_TextTestReport, Old_TextTestReport, secondary_TextTestReport)	
-	strReprodSteps = Simple_Step_CSS_Template(Lang, "재현스텝 - Reproduce Steps", New_TextReproduceSteps, Old_TextReproduceSteps, secondary_TextReproduceSteps)	
-	strShouldBe = Simple_Row_CSS_Template(Lang, "기대결과 - Expected Result", New_TextShouldBe, Old_TextShouldBe, secondary_TextShouldBe)	
+	strReport_to_language = Create_Row_CSS_Section("상세설명", New_TextTestReport)	
+	strReprodSteps_to_language = Create_Step_CSS_Section("재현스텝", New_TextReproduceSteps)	
+	strShouldBe_to_language = Create_Row_CSS_Section("기대결과", New_TextShouldBe)	
 
+	strReport_from_language = Create_Row_CSS_Section("Detail Description", Old_TextTestReport)	
+	strReprodSteps_from_language = Create_Step_CSS_Section("Reproduce Steps", Old_TextReproduceSteps)	
+	strShouldBe_from_language = Create_Row_CSS_Section("기Expected Result", Old_TextShouldBe)	
+	
 	CssText = ''
-	CssText += strReport
+	CssText += strReport_to_language
 	CssText += '\r\n'
-	CssText += strReprodSteps
+	CssText += strReprodSteps_to_language
 	CssText += '\r\n'
-	CssText += '<p><b>[재현빈도 - Reproducibility]</b><br/></p>' 
+	CssText += '<p><b>[재현빈도]</b><br/></p>' 
 	CssText += '\r\n'
 			
 	Reproducibility = Object['Reproducibility']
 
 	CssText += '<p>'+ Reproducibility + '&nbsp;</p>'
 	CssText += '\r\n'
-	CssText += strShouldBe
+	CssText += strShouldBe_to_language
 	CssText += '\r\n'
-	CssText += '<p><b>[환경정보 - Environmental Information]</b><br/></p>' 
+	CssText += '<p><b>[환경정보]</b><br/></p>' 
 
 
 	EnvInfo = Object['EnvInfo'].split('\n')
@@ -1799,9 +1812,50 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 			CssText += '\r\n'
 			CssText += '<p>'+ item + '</p>'
 
+	CssText += '\r\n'
+	CssText += '<p><span style="font-size:14pt"><span style="color:#3498db"><b>제2언어 - Secondary language</b></span></span></p>'
+	CssText += strReport_from_language
+	CssText += '\r\n'
+	CssText += strReprodSteps_from_language
+	CssText += '\r\n'
+	CssText += '<p><b>[Reproducibility]</b><br/></p>' 
+	CssText += '\r\n'
+			
+	Reproducibility = Object['Reproducibility']
+
+	CssText += '<p>'+ Reproducibility + '&nbsp;</p>'
+	CssText += '\r\n'
+	CssText += strShouldBe_from_language
+	CssText += '\r\n'
+	
 	print('Copy to clipboard')
 	copy(CssText)
 
+def Create_Step_CSS_Section(Title, Text_List):
+	
+	Details = ''
+	x = 1
+	
+	for row in Text_List:
+		Details += '<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
+		x += 1
+	x = 1
+
+	to_return = '<p><b>[' + Title + ']</b><br/></p>\r\n' 
+	to_return += Details
+	return to_return
+
+def Create_Row_CSS_Section(Title, Text_List):
+	Details = ''
+	
+	for row in Text_List:
+		Details += '<p>'+ row + '&nbsp;</p>\r\n'
+	
+	to_return = '<p><b>[' + Title + ']</b><br /></p>\r\n' 
+	to_return += Details
+	return to_return
+
+# Obsoleted
 def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
 	#print('Text_List_Secondary', Text_List_Secondary)
 	Details = ''
@@ -1840,7 +1894,7 @@ def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Se
 	to_return += Details
 	return to_return
 
-
+# Obsoleted
 def Simple_Row_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
 	print('Text_List_Secondary', Text_List_Secondary)
 	Details = ''
@@ -1889,16 +1943,17 @@ def fixed_map(style, option):
 	  elm[:2] != ('!disabled', '!selected')]
 
 def MainLoop():
-
+	print('Create shareable Memory variable')
 	MyTranslator = Queue()
 	return_text = Queue()
 	MyManager = Manager()
 	grammar_check_result = MyManager.list()
 	tm_manager = MyManager.list()
 	language_tool_enable = False
-
+	print('Create UI')
 	root = Tk()
-	root.update_idletasks()
+	#root.withdraw()
+	#root.update_idletasks()
 	style = Style(root)
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
 	#root.geometry("400x350+300+300")
@@ -1908,8 +1963,11 @@ def MainLoop():
 	#root.mainloop()
 	
 	try:
+		print('Update UI')
 		application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
+		#root.deiconify()
 		root.mainloop()
+		print('Send usage report')
 		application.MyTranslator.send_tracking_record()
 	except Exception as e:
 		
@@ -1946,7 +2004,7 @@ def MainLoop():
 		print("error message:", e)	
 		messagebox.showinfo(title='Critical error', message=e)
 
-
+	print('Initial Done')
 
 if __name__ == '__main__':
 	if sys.platform.startswith('win'):
