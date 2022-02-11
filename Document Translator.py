@@ -173,107 +173,207 @@ class DocumentTranslator(Frame):
 		self.generate_tm_uploader_ui(self.tm_uploader_tab)
 		self.Generate_Debugger_UI(self.Process)
 
-		
+	### Main Menu tab
 	def Generate_DocumentTranslator_UI(self, Tab):
 		Row=1
 		Label(Tab, textvariable=self.Progress, width= 40) \
-				.grid(row=Row, column=1, columnspan=3, padx=5, pady=5, sticky=W)
+			.grid(row=Row, column=1, columnspan=3, padx=5, pady=5, sticky=W)
 		Label(Tab, textvariable=self.Notice, justify=RIGHT) \
-				.grid(row=Row, column=3, columnspan=6, padx=5, pady=5, sticky=E)
+			.grid(row=Row, column=3, columnspan=6, padx=5, pady=5, sticky=E)
 
+		### Language control section
 		Row+=1
-		Label(Tab, text=self.LanguagePack.Label['Source'], width= 10, font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+		# Source language
+		Label(
+				Tab, text=self.LanguagePack.Label['Source'],
+				width=10, font='calibri 11 bold') \
+			.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 
 		self.source_language = StringVar()
 
-		self.source_language_select = OptionMenu(Tab, self.source_language, *self.language_list, command = self.set_source_language)
+		self.source_language_select = OptionMenu(
+			Tab, self.source_language, *self.language_list,
+			command=self.set_source_language)
 		self.source_language_select.config(width=self.HALF_BUTTON_WIDTH)
-		self.source_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
+		self.source_language_select.grid(
+			row=Row, column=2, padx=0, pady=5, sticky=W)
 
 
-
-		Label(Tab, text=  self.LanguagePack.Label['Language'], width= 10, font='calibri 11 bold').grid(row=Row, column=3, padx=5, pady=5, sticky=W)
+		# Target language
+		Label(
+				Tab, text=self.LanguagePack.Label['Language'],
+				width=10, font='calibri 11 bold') \
+			.grid(row=Row, column=3, padx=5, pady=5, sticky=W)
 
 		self.target_language = StringVar()
 
-		self.target_language_select = OptionMenu(Tab, self.target_language, *self.language_list, command = self.set_target_language)
+		self.target_language_select = OptionMenu(
+			Tab, self.target_language, *self.language_list,
+			command=self.set_target_language)
 		self.target_language_select.config(width=self.HALF_BUTTON_WIDTH)
-		self.target_language_select.grid(row=Row, column=4, padx=0, pady=5, sticky=W)
+		self.target_language_select.grid(
+			row=Row, column=4, padx=0, pady=5, sticky=W)
 
 		'''
 		self.Language = IntVar()	
 		Radiobutton(Tab, width= 10, text=  self.LanguagePack.Option['Hangul'], value=1, variable=self.Language, command= self.set_target_language).grid(row=Row, column=2, padx=0, pady=5, sticky=W)
 		Radiobutton(Tab, width= 10, text=  self.LanguagePack.Option['English'], value=2, variable=self.Language, command= self.set_target_language).grid(row=Row, column=3, padx=0, pady=5, sticky=W)
 		'''
-		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['Swap'], command= self.swap_language).grid(row=Row, column=7, padx=5, pady=5, sticky=E)		
+		# Swap button
+		Button(
+				Tab, width=self.BUTTON_WIDTH,
+				text=self.LanguagePack.Button['Swap'],
+				command=self.swap_language) \
+			.grid(row=Row, column=7, padx=5, pady=5, sticky=E)		
 
 		#Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['RenewDatabase'], command= self.renew_my_translator).grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=E)
-		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['OpenOutput'], command= self.OpenOutput).grid(row=Row, column=8, padx=5, pady=5, sticky=E)
+		Button(
+				Tab, width=self.BUTTON_WIDTH,
+				text=self.LanguagePack.Button['OpenOutput'],
+				command=self.OpenOutput) \
+			.grid(row=Row, column=8, padx=5, pady=5, sticky=E)
 
+		### FILE PATH SECTION
 		Row+=1
-		Label(Tab, width= 10, text=  self.LanguagePack.Label['Source'], font='calibri 11 bold').grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+		# Path selection output
+		Label(
+				Tab, width=10,
+				text=self.LanguagePack.Label['Source'],
+				font='calibri 11 bold') \
+			.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		self.CurrentSourceFile = StringVar()
-		self.TextFilePath = Entry(Tab,width = 128, text= self.LanguagePack.ToolTips['SelectSource'], state="readonly", textvariable=self.CurrentSourceFile)
-		self.TextFilePath.grid(row=Row, column=2, columnspan=6, padx=5, pady=5, sticky=W+E)
-		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.BtnLoadDocument).grid(row=Row, column=8, columnspan=1, padx=5, pady=5, sticky=E)
+		self.TextFilePath = Entry(
+			Tab, width=128,
+			text=self.LanguagePack.ToolTips['SelectSource'],
+			state="readonly",
+			textvariable=self.CurrentSourceFile)
+		self.TextFilePath.grid(
+			row=Row, column=2, columnspan=6, padx=5, pady=5, sticky=W+E)
+		Button(
+				Tab, width=self.BUTTON_WIDTH,
+				text=self.LanguagePack.Button['Browse'],
+				command=self.BtnLoadDocument) \
+			.grid(row=Row, column=8, columnspan=1, padx=5, pady=5, sticky=E)
 		
+		### TRANSLATION CONTROL SECTION
 		Row += 1
-		Label(Tab, text=  self.LanguagePack.Label['ToolOptions']).grid(row=Row, column=1, padx=5, pady=5, sticky= W)
-		Label(Tab, text= self.LanguagePack.Label['TMOptions']).grid(row=Row, column=3, columnspan=2, padx=5, pady=5, sticky=W)
-		Label(Tab, text= self.LanguagePack.Label['TranslateOptions']).grid(row=Row, column=5, columnspan=2, padx=5, pady=5, sticky=W)
+		# Option names
+		Label(Tab, text=self.LanguagePack.Label['ToolOptions']) \
+			.grid(row=Row, column=1, padx=5, pady=5, sticky= W)
+		Label(Tab, text= self.LanguagePack.Label['TMOptions']) \
+			.grid(row=Row, column=3, columnspan=2, padx=5, pady=5, sticky=W)
+		Label(Tab, text= self.LanguagePack.Label['TranslateOptions']) \
+			.grid(row=Row, column=5, columnspan=2, padx=5, pady=5, sticky=W)
 		#Label(Tab, text= self.LanguagePack.Label['OtherOptions']).grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=W)
 
-		Button(Tab, width = 20, text=  self.LanguagePack.Button['Stop'], command= self.Stop).grid(row=Row, column=7, columnspan=1,padx=5, pady=0, sticky=E)	
-		self.btn_translate = Button(Tab, width = 20, text=  self.LanguagePack.Button['Translate'], command= self.Translate, state=DISABLED)
-		self.btn_translate.grid(row=Row, column=8, columnspan=1, padx=5, pady=0, sticky=E)
-
+		# Stop translation process button
+		Button(
+				Tab, width=20,
+				text=self.LanguagePack.Button['Stop'],
+				command=self.Stop) \
+			.grid(row=Row, column=7, columnspan=1,padx=5, pady=0, sticky=E)
+		# Start translation process button
+		self.btn_translate = Button(
+			Tab, width=20,
+			text=self.LanguagePack.Button['Translate'],
+			command=self.Translate,
+			state=DISABLED)
+		self.btn_translate.grid(
+			row=Row, column=8, columnspan=1, padx=5, pady=0, sticky=E)
+		
+		### TOOL OPTIONS SECTION
 		Row += 1
 		self.TranslateFileName = IntVar()
-		TranslateFileNameBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['TranslateFileName'], variable = self.TranslateFileName)
-		TranslateFileNameBtn.grid(row=Row, column=1, columnspan=2,padx=5, pady=5, sticky=W)
-		TranslateFileNameBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['TranslateFileName']))
+		TranslateFileNameBtn = Checkbutton(
+			Tab, text=self.LanguagePack.Option['TranslateFileName'],
+			variable=self.TranslateFileName)
+		TranslateFileNameBtn.grid(
+			row=Row, column=1, columnspan=2,padx=5, pady=5, sticky=W)
+		TranslateFileNameBtn.bind(
+			"<Enter>",
+			lambda event : self.Notice.set(
+				self.LanguagePack.ToolTips['TranslateFileName']))
 		self.TranslateFileName.set(1)
 
 		self.TMUpdate = IntVar()
-		TMUpdateBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['UpdateTMFile'], variable = self.TMUpdate)
-		TMUpdateBtn.grid(row=Row, column=3, columnspan=2,padx=0, pady=5, sticky=W)
-		TMUpdateBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['UpdateTMFile'])) 
+		TMUpdateBtn = Checkbutton(
+			Tab, text=self.LanguagePack.Option['UpdateTMFile'],
+			variable=self.TMUpdate)
+		TMUpdateBtn.grid(
+			row=Row, column=3, columnspan=2,padx=0, pady=5, sticky=W)
+		TMUpdateBtn.bind(
+			"<Enter>",
+			lambda event : self.Notice.set(
+				self.LanguagePack.ToolTips['UpdateTMFile'])) 
 		self.TMUpdate.set(1)
 
 		self.DataOnly = IntVar()
-		DataOnlyBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['DataOnly'], variable = self.DataOnly)
-		DataOnlyBtn.grid(row=Row, column=5,padx=0, pady=5, sticky=W)
-		DataOnlyBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['DataOnly'])) 
+		DataOnlyBtn = Checkbutton(
+			Tab, text=self.LanguagePack.Option['DataOnly'],
+			variable=self.DataOnly)
+		DataOnlyBtn.grid(
+			row=Row, column=5,padx=0, pady=5, sticky=W)
+		DataOnlyBtn.bind(
+			"<Enter>",
+			lambda event : self.Notice.set(
+				self.LanguagePack.ToolTips['DataOnly'])) 
 
 
+		### TM OPTIONS SECTION
 		Row+=1
 
 		self.TranslateSheetName = IntVar()
-		TranslateSheetNameBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['TranslateSheetName'], variable = self.TranslateSheetName)
-		TranslateSheetNameBtn.grid(row=Row, column=1, columnspan=2,padx=5, pady=5, sticky=W)	
-		TranslateSheetNameBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['TranslateSheetName']))
+		TranslateSheetNameBtn = Checkbutton(
+			Tab, text=self.LanguagePack.Option['TranslateSheetName'],
+			variable=self.TranslateSheetName)
+		TranslateSheetNameBtn.grid(
+			row=Row, column=1, columnspan=2,padx=5, pady=5, sticky=W)	
+		TranslateSheetNameBtn.bind(
+			"<Enter>",
+			lambda event : self.Notice.set(
+				self.LanguagePack.ToolTips['TranslateSheetName']))
 		self.TranslateSheetName.set(1)
 
 		self.TMTranslate = IntVar()
-		TMTranslateBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['TMTranslate'], variable = self.TMTranslate, command=self.TMTranslateModeToggle)
-		TMTranslateBtn.grid(row=Row, column=3, columnspan=2, padx=0, pady=5, sticky=W)
-		TMTranslateBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['TMTranslate']))
+		TMTranslateBtn = Checkbutton(
+			Tab, text=self.LanguagePack.Option['TMTranslate'],
+			variable=self.TMTranslate,
+			command=self.TMTranslateModeToggle)
+		TMTranslateBtn.grid(
+			row=Row, column=3, columnspan=2, padx=0, pady=5, sticky=W)
+		TMTranslateBtn.bind(
+			"<Enter>",
+			lambda event : self.Notice.set(
+				self.LanguagePack.ToolTips['TMTranslate']))
 		self.TMTranslate.set(1)
 
 		self.TurboTranslate = IntVar()
-		TurboTranslateBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['TurboTranslate'], variable = self.TurboTranslate)
-		TurboTranslateBtn.grid(row=Row, column=5,padx=0, pady=5, sticky=W)
-		TurboTranslateBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['TurboTranslate']))
+		TurboTranslateBtn = Checkbutton(
+			Tab, text=  self.LanguagePack.Option['TurboTranslate'],
+			variable=self.TurboTranslate)
+		TurboTranslateBtn.grid(
+			row=Row, column=5, padx=0, pady=5, sticky=W)
+		TurboTranslateBtn.bind(
+			"<Enter>",
+			lambda event : self.Notice.set(
+				self.LanguagePack.ToolTips['TurboTranslate']))
 
+		### TRANSLATE OPTIONS
 		Row+=1
 
 		self.FixCorruptFileName = IntVar()
-		FixCorruptFileNameBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['CorruptFileName'], variable = self.FixCorruptFileName)
-		FixCorruptFileNameBtn.grid(row=Row, column=1, columnspan=2,padx=5, pady=5, sticky=W)	
-		FixCorruptFileNameBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['FixCorruptedName']))
-		self.FixCorruptFileName.set(1)	
+		FixCorruptFileNameBtn = Checkbutton(
+			Tab, text=self.LanguagePack.Option['CorruptFileName'],
+			variable=self.FixCorruptFileName)
+		FixCorruptFileNameBtn.grid(
+			row=Row, column=1, columnspan=2,padx=5, pady=5, sticky=W)	
+		FixCorruptFileNameBtn.bind(
+			"<Enter>",
+			lambda event : self.Notice.set(
+				self.LanguagePack.ToolTips['FixCorruptedName']))
+		self.FixCorruptFileName.set(1)
 
-		self.SheetRemoval = IntVar() 
+		self.SheetRemoval = IntVar()
 		SheetRemoveBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['SheetRemoval'], variable = self.SheetRemoval)
 		SheetRemoveBtn.grid(row=Row, column=5, columnspan=2,padx=0, pady=5, sticky=W)
 		SheetRemoveBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['SheetRemoval']))
@@ -721,24 +821,13 @@ class DocumentTranslator(Frame):
 		messagebox.showinfo('Tool error...', ErrorText)	
 
 	def SaveAppLanguage(self, language):
-<<<<<<< HEAD
-		self.Notice.set(
-				self.LanguagePack.ToolTips['AppLanuageUpdate']
-				+ " "
-				+ language) 
-		self.AppConfig.save_config(
-				self.AppConfig.Doc_Config_Path, 'Document_Translator',
-				'app_lang', language)
-=======
 		print('Save language:', language)
 		self.Notice.set(self.LanguagePack.ToolTips['AppLanuageUpdate'] + " "+ language) 
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'app_lang', language)
->>>>>>> main
 
 	def save_app_config(self):
 		target_language = self.target_language.get()
 		target_language_index = self.language_list.index(target_language)
-<<<<<<< HEAD
 		self.AppConfig.save_config(
 			self.AppConfig.Doc_Config_Path, 'Document_Translator',
 			'target_lang', target_language_index)
@@ -766,22 +855,6 @@ class DocumentTranslator(Frame):
 		self.AppConfig.save_config(
 			self.AppConfig.Doc_Config_Path, 'Document_Translator',
 			'remove_unselected_sheet', self.SheetRemoval.get())
-=======
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', target_language_index)
-		
-		source_language = self.source_language.get()
-		source_language_index = self.language_list.index(source_language)
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_language', source_language_index)
-
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'speed_mode', self.TurboTranslate.get())
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'value_only', self.DataOnly.get())
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'file_name_correct', self.TranslateFileName.get())
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'file_name_translate', self.TranslateFileName.get())
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'sheet_name_translate', self.TranslateSheetName.get())
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'tm_translate', self.TMTranslate.get())
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'tm_update', self.TMUpdate.get())
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'remove_unselected_sheet', self.SheetRemoval.get())
->>>>>>> main
 
 	def swap_language(self):
 		
@@ -850,26 +923,25 @@ class DocumentTranslator(Frame):
 		else:
 			self.Notice.set("No file is selected")
 
-	##### TEMPORARY DISABLED TO CHECK CLOUD TM FUNCTION
-	# def select_tm_path(self):
-	# 	"""Set the selected TM file via Translate Setting UI or Menu > Load TM.
+	def select_tm_path(self):
+		"""Set the selected TM file via Translate Setting UI or Menu > Load TM.
 		
-	# 	Save the selected TM file path to translator.ini config file.
-	# 	Support pkl files.
-	# 	"""
-	# 	filename = filedialog.askopenfilename(
-	# 		title = "Select Translation Memory file",
-	# 		filetypes=(("TM pkl files", "*.pkl"),))
-	# 	if filename != "":
-	# 		NewTM = self.CorrectPath(filename)
-	# 		self.TMPath.set(NewTM)
-	# 		self.AppConfig.save_config(
-	# 			self.AppConfig.translator_config_path,
-	# 			'Translator', 'translation_memory', NewTM, True)
-	# 		self.renew_my_translator()
-	# 		self.Notice.set(self.LanguagePack.ToolTips['TMUpdated'])
-	# 	else:
-	# 		self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
+		Save the selected TM file path to translator.ini config file.
+		Support pkl files.
+		"""
+		filename = filedialog.askopenfilename(
+			title = "Select Translation Memory file",
+			filetypes=(("TM pkl files", "*.pkl"),))
+		if filename != "":
+			NewTM = self.CorrectPath(filename)
+			self.TMPath.set(NewTM)
+			self.AppConfig.save_config(
+				self.AppConfig.translator_config_path,
+				'Translator', 'translation_memory', NewTM, True)
+			self.renew_my_translator()
+			self.Notice.set(self.LanguagePack.ToolTips['TMUpdated'])
+		else:
+			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 			
 
 	def SaveNewTM(self):
@@ -1280,11 +1352,8 @@ class DocumentTranslator(Frame):
 
 		self.glossary_id = self.bottom_panel.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
-		###### TEMPORARY DISABLED TO CHECK CLOUD TM FUNCTION
-		### Removed this tm_path as the TM file will be automatically
-		### selected in appdata\\AIO Translator\\TM when cloud TM is applied.
 		# Get TM file path from Translate Setting UI
-		# tm_path = self.TMPath.get()
+		tm_path = self.TMPath.get()
 		print('Start new process: Generate Translator')
 		self.TranslatorProcess = Process(
 			target=generate_translator,
@@ -1295,7 +1364,7 @@ class DocumentTranslator(Frame):
 				'to_language' : target_language, 
 				'glossary_id' : self.glossary_id, 
 				'used_tool' : tool_name,
-				# 'tm_path' : tm_path, ##### TEMPORARY DISABLED TO CHECK CLOUD TM FUNCTION
+				'tm_path' : tm_path,
 				'bucket_id' : self.bucket_id, 
 				'db_list_uri' : self.db_list_uri, 
 				'project_bucket_id' : self.project_bucket_id,
