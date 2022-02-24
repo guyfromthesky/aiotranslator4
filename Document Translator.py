@@ -27,7 +27,7 @@ from tkinter.ttk import Entry, Label, Treeview, Scrollbar, OptionMenu
 from tkinter.ttk import Checkbutton, Button, Notebook
 from tkinter.ttk import Progressbar, Style
 
-from tkinter import Tk, Frame
+from tkinter import BooleanVar, Tk, Frame
 from tkinter import Menu, filedialog, messagebox
 from tkinter import Text
 from tkinter import IntVar, StringVar
@@ -175,8 +175,8 @@ class DocumentTranslator(Frame):
 		self.Generate_DB_Uploader_UI(self.DB_Uploader)
 		self.Generate_Debugger_UI(self.Process)
 
-	### Main Menu tab
 	def Generate_DocumentTranslator_UI(self, Tab):
+		"""Create the Main Menu tab and its UI."""
 		Row=1
 		Label(Tab, textvariable=self.Progress, width= 40) \
 			.grid(row=Row, column=1, columnspan=3, padx=5, pady=5, sticky=W)
@@ -259,15 +259,6 @@ class DocumentTranslator(Frame):
 		
 		### TRANSLATION CONTROL SECTION
 		Row += 1
-		# Option names
-		Label(Tab, text=self.LanguagePack.Label['ToolOptions']) \
-			.grid(row=Row, column=1, padx=5, pady=5, sticky= W)
-		Label(Tab, text= self.LanguagePack.Label['TMOptions']) \
-			.grid(row=Row, column=3, columnspan=2, padx=5, pady=5, sticky=W)
-		Label(Tab, text= self.LanguagePack.Label['TranslateOptions']) \
-			.grid(row=Row, column=5, columnspan=2, padx=5, pady=5, sticky=W)
-		#Label(Tab, text= self.LanguagePack.Label['OtherOptions']).grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=W)
-
 		# Stop translation process button
 		Button(
 				Tab, width=20,
@@ -283,14 +274,28 @@ class DocumentTranslator(Frame):
 		self.btn_translate.grid(
 			row=Row, column=8, columnspan=1, padx=5, pady=0, sticky=E)
 		
-		### TOOL OPTIONS SECTION
+		### LABEL FOR OPTIONS SECTION
+		Row += 1
+		# Option names
+		Label(Tab, text=self.LanguagePack.Label['ToolOptions']) \
+			.grid(row=Row, column=1, padx=5, pady=5, sticky= W)
+		Label(Tab, text=self.LanguagePack.Label['TMOptions']) \
+			.grid(row=Row, column=3, columnspan=2, padx=5, pady=5, sticky=W)
+		Label(Tab, text=self.LanguagePack.Label['TranslateOptions']) \
+			.grid(row=Row, column=5, columnspan=2, padx=5, pady=5, sticky=W)
+		Label(Tab, text=self.LanguagePack.Label['CloudTMOptions']) \
+			.grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=W)
+		# Label(Tab, text=self.LanguagePack.Label['OtherOptions']) \
+		# 	.grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=W)
+
+		### 1ST ROW OF OPTIONS SECTION
 		Row += 1
 		self.TranslateFileName = IntVar()
 		TranslateFileNameBtn = Checkbutton(
 			Tab, text=self.LanguagePack.Option['TranslateFileName'],
 			variable=self.TranslateFileName)
 		TranslateFileNameBtn.grid(
-			row=Row, column=1, columnspan=2,padx=5, pady=5, sticky=W)
+			row=Row, column=1, columnspan=2, padx=5, pady=5, sticky=W)
 		TranslateFileNameBtn.bind(
 			"<Enter>",
 			lambda event : self.Notice.set(
@@ -302,7 +307,7 @@ class DocumentTranslator(Frame):
 			Tab, text=self.LanguagePack.Option['UpdateTMFile'],
 			variable=self.TMUpdate)
 		TMUpdateBtn.grid(
-			row=Row, column=3, columnspan=2,padx=0, pady=5, sticky=W)
+			row=Row, column=3, columnspan=2, padx=0, pady=5, sticky=W)
 		TMUpdateBtn.bind(
 			"<Enter>",
 			lambda event : self.Notice.set(
@@ -314,14 +319,27 @@ class DocumentTranslator(Frame):
 			Tab, text=self.LanguagePack.Option['DataOnly'],
 			variable=self.DataOnly)
 		DataOnlyBtn.grid(
-			row=Row, column=5,padx=0, pady=5, sticky=W)
+			row=Row, column=5, padx=0, pady=5, sticky=W)
 		DataOnlyBtn.bind(
 			"<Enter>",
 			lambda event : self.Notice.set(
-				self.LanguagePack.ToolTips['DataOnly'])) 
+				self.LanguagePack.ToolTips['DataOnly']))
 
+		# Checkbutton to check if Cloud TM is used instead of local TM.
+		# Default is not using the Cloud TM
+		self.use_cloud_tm_intvar = IntVar()
+		use_cloud_tm_cbtn = Checkbutton(
+			Tab, text=self.LanguagePack.Option['UseCloudTM'],
+			variable=self.use_cloud_tm_intvar,
+			command=self.use_cloud_tm_option)
+		use_cloud_tm_cbtn.grid(
+			row=Row, column=7, padx=0, pady=5, sticky=W)
+		use_cloud_tm_cbtn.bind(
+			"<Enter>",
+			lambda event : self.Notice.set(
+				self.LanguagePack.ToolTips['UseCloudTM']))
 
-		### TM OPTIONS SECTION
+		### 2ND ROW OF OPTIONS SECTION
 		Row+=1
 
 		self.TranslateSheetName = IntVar()
@@ -360,7 +378,7 @@ class DocumentTranslator(Frame):
 			lambda event : self.Notice.set(
 				self.LanguagePack.ToolTips['TurboTranslate']))
 
-		### TRANSLATE OPTIONS
+		### 3RD ROW OF OPTIONS SECTION
 		Row+=1
 
 		self.FixCorruptFileName = IntVar()
@@ -767,29 +785,42 @@ class DocumentTranslator(Frame):
 		# Adding File Menu and commands 
 		file = Menu(menubar, tearoff = 0)
 		# Adding Load Menu 
-		menubar.add_cascade(label =  self.LanguagePack.Menu['File'], menu = file) 
-		file.add_command(label =  self.LanguagePack.Menu['SaveSetting'], command = self.save_app_config) 
-		#file.add_command(label =  self.LanguagePack.Menu['LoadException'], command = self.SelectException) 
+		menubar.add_cascade(label=self.LanguagePack.Menu['File'], menu=file) 
+		file.add_command(
+			label=self.LanguagePack.Menu['SaveSetting'],
+			command=self.save_app_config) 
+		#file.add_command(
+		# label=self.LanguagePack.Menu['LoadException'],
+		# command=self.SelectException) 
 		file.add_separator()
-		##### TEMPORARY DISABLED TO CHECK CLOUD TM FUNCTION
-		# file.add_command(label =  self.LanguagePack.Menu['LoadTM'], command = self.select_tm_path) 
-		file.add_command(label =  self.LanguagePack.Menu['CreateTM'], command = self.SaveNewTM)
+		file.add_command(label =  self.LanguagePack.Menu['LoadTM'], command = self.select_tm_path) 
+		file.add_command(
+			label=self.LanguagePack.Menu['CreateTM'], command=self.SaveNewTM)
 		file.add_separator() 
-		file.add_command(label =  self.LanguagePack.Menu['Exit'], command = self.parent.destroy) 
+		file.add_command(
+			label=self.LanguagePack.Menu['Exit'], command=self.parent.destroy) 
 		# Adding Help Menu
 		help_ = Menu(menubar, tearoff = 0) 
-		menubar.add_cascade(label =  self.LanguagePack.Menu['Help'], menu = help_) 
-		help_.add_command(label =  self.LanguagePack.Menu['GuideLine'], command = self.OpenWeb) 
+		menubar.add_cascade(
+			label=self.LanguagePack.Menu['Help'], menu=help_) 
+		help_.add_command(
+			label=self.LanguagePack.Menu['GuideLine'], command=self.OpenWeb) 
 		help_.add_separator()
-		help_.add_command(label =  self.LanguagePack.Menu['About'], command = self.About) 
-		self.parent.config(menu = menubar)
+		help_.add_command(
+			label=self.LanguagePack.Menu['About'], command=self.About) 
+		self.parent.config(menu=menubar)
 
 		# Adding Help Menu
 		language = Menu(menubar, tearoff = 0) 
-		menubar.add_cascade(label =  self.LanguagePack.Menu['Language'], menu = language) 
-		language.add_command(label =  self.LanguagePack.Menu['Hangul'], command = self.SetLanguageKorean) 
-		language.add_command(label =  self.LanguagePack.Menu['English'], command = self.SetLanguageEnglish) 
-		self.parent.config(menu = menubar) 
+		menubar.add_cascade(
+			label=self.LanguagePack.Menu['Language'], menu=language) 
+		language.add_command(
+			label=self.LanguagePack.Menu['Hangul'],
+			command=self.SetLanguageKorean) 
+		language.add_command(
+			label=self.LanguagePack.Menu['English'],
+			command=self.SetLanguageEnglish) 
+		self.parent.config(menu=menubar) 
 
 	def Generate_Tab_UI(self):
 
@@ -855,8 +886,11 @@ class DocumentTranslator(Frame):
 
 	def SaveAppLanguage(self, language):
 		print('Save language:', language)
-		self.Notice.set(self.LanguagePack.ToolTips['AppLanuageUpdate'] + " "+ language) 
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'app_lang', language)
+		self.Notice.set(self.LanguagePack.ToolTips['AppLanuageUpdate'] \
+			+ " "+ language) 
+		self.AppConfig.save_config(
+			self.AppConfig.Doc_Config_Path, 'Document_Translator',
+			'app_lang', language)
 
 	def save_app_config(self):
 		target_language = self.target_language.get()
@@ -1086,10 +1120,29 @@ class DocumentTranslator(Frame):
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 		return
 
+#############################################################################
+# CLOUD TM OPTIONS CHECKBUTTON FUNCTIONS
+#############################################################################
 
-###########################################################################################
-# DB UPLOADER 
-###########################################################################################
+	def use_cloud_tm_option(self):
+		"""Decide whether or not to use the Cloud TM.
+		
+		Save the 'Use Cloud TM' option to doc.ini config when toggling
+		the option.
+		"""
+		selected_option_value = self.use_cloud_tm_intvar.get()
+		
+		self.AppConfig.save_config(
+			self.AppConfig.Doc_Config_Path,
+			'Document_Translator', 'use_cloud_tm', selected_option_value)
+		if selected_option_value:
+			print('true')
+		else:
+			print('false')
+
+#############################################################################
+# DB UPLOADER FUNCTIONS
+#############################################################################
 
 	def Btn_DB_Uploader_Browse_DB_File(self):
 			
@@ -1235,62 +1288,57 @@ class DocumentTranslator(Frame):
 		else:
 			return False
 
-###############################################################################
-# TM UPLOADER FUNCTION START
-###############################################################################
+# ###############################################################################
+# # TM UPLOADER FUNCTIONs
+# ###############################################################################
 
-	def browse_convert_tm_file(self):
-		"""Browse the local TM file for conversion to csv.
+# 	def browse_convert_tm_file(self):
+# 		"""Browse the local TM file for conversion to csv.
 
-		Display the selected path to the corresponding entry_file_path Entry.
-		Supported extensions: .pkl
-		"""
-		filename = filedialog.askopenfilename(
-			title=self.LanguagePack.ToolTips['SelectSource'],
-			filetypes=(("Pickle files", "*.pkl"),),
-			multiple=False)
-		if filename != "":
-			self.convert_tm_path = self.CorrectPath(filename)
-			self.textvar_convert_tm_path.set(self.convert_tm_path)
-			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
-		else:
-			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
+# 		Display the selected path to the corresponding entry_file_path Entry.
+# 		Supported extensions: .pkl
+# 		"""
+# 		filename = filedialog.askopenfilename(
+# 			title=self.LanguagePack.ToolTips['SelectSource'],
+# 			filetypes=(("Pickle files", "*.pkl"),),
+# 			multiple=False)
+# 		if filename != "":
+# 			self.convert_tm_path = self.CorrectPath(filename)
+# 			self.textvar_convert_tm_path.set(self.convert_tm_path)
+# 			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
+# 		else:
+# 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 
-	def browse_upload_tm_file(self):
-		"""Browse the local TM file to upload the TM to Google cloud.
+# 	def browse_upload_tm_file(self):
+# 		"""Browse the local TM file to upload the TM to Google cloud.
 
-		Display the selected path to the corresponding entry_file_path Entry.
-		Supported extensions: .csv
-			File name must start with "TM_"
-		"""
-		filename = filedialog.askopenfilename(
-			title=self.LanguagePack.ToolTips['SelectSource'],
-			filetypes=(("TM Comma-separated Values files", "TM_*.csv"),),
-			multiple=False)
-		if filename != "":
-			self.upload_tm_path = self.CorrectPath(filename)
-			self.textvar_upload_tm_path.set(self.upload_tm_path)
-			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
-		else:
-			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
+# 		Display the selected path to the corresponding entry_file_path Entry.
+# 		Supported extensions: .csv
+# 			File name must start with "TM_"
+# 		"""
+# 		filename = filedialog.askopenfilename(
+# 			title=self.LanguagePack.ToolTips['SelectSource'],
+# 			filetypes=(("TM Comma-separated Values files", "TM_*.csv"),),
+# 			multiple=False)
+# 		if filename != "":
+# 			self.upload_tm_path = self.CorrectPath(filename)
+# 			self.textvar_upload_tm_path.set(self.upload_tm_path)
+# 			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
+# 		else:
+# 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 	
-	def upload_tm_file_to_cloud(self):
-		glossary_id = self.ProjectList.get()
-		result = self.Confirm_Popup(
-			glossary_id, 'Please type \''+ glossary_id + "\' to confirm.")
+# 	def upload_tm_file_to_cloud(self):
+# 		glossary_id = self.ProjectList.get()
+# 		result = self.Confirm_Popup(
+# 			glossary_id, 'Please type \''+ glossary_id + "\' to confirm.")
 		
-		if result == True:
-			tm_path = self.upload_tm_path.get()
-			self.Generate_DB_Processor = Process(
-				target=None,
-				args=(self.StatusQueue, self.ResultQueue, tm_path))
-			self.Generate_DB_Processor.start()
-			self.after(DELAY, None)
-
-###############################################################################
-# TM UPLOADER FUNCTION END
-###############################################################################
-
+# 		if result == True:
+# 			tm_path = self.upload_tm_path.get()
+# 			self.Generate_DB_Processor = Process(
+# 				target=None,
+# 				args=(self.StatusQueue, self.ResultQueue, tm_path))
+# 			self.Generate_DB_Processor.start()
+# 			self.after(DELAY, None)
 
 	def onExit(self):
 		self.quit()
@@ -1357,7 +1405,10 @@ class DocumentTranslator(Frame):
 		self.TMUpdate.set(
 			self.Configuration['Document_Translator']['tm_update'])
 		self.SheetRemoval.set(
-			self.Configuration['Document_Translator']['remove_unselected_sheet'])
+			self.Configuration[
+				'Document_Translator']['remove_unselected_sheet'])
+		self.use_cloud_tm_intvar.set(
+			self.Configuration['Document_Translator']['use_cloud_tm'])
 		
 		try:
 			self.Usage = self.Configuration['Document_Translator']['usage']
@@ -1380,7 +1431,9 @@ class DocumentTranslator(Frame):
 			self.target_language.set(to_language_id)
 			return
 		
-		self.AppConfig.save_config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', index)
+		self.AppConfig.save_config(
+			self.AppConfig.Doc_Config_Path, 'Document_Translator',
+			'target_lang', index)
 
 		self.MyTranslator.set_target_language(to_language)
 		#self._dictionary_status.set(str(len(self.MyTranslator.dictionary)))
@@ -1398,7 +1451,9 @@ class DocumentTranslator(Frame):
 			return
 
 		self.MyTranslator.from_language
-		self.AppConfig.save_config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_lang', index)
+		self.AppConfig.save_config(
+			self.AppConfig.Doc_Config_Path, 'Document_Translator',
+			'source_lang', index)
 
 		self.MyTranslator.set_source_language(from_language)	
 		#self._dictionary_status.set(str(len(self.MyTranslator.dictionary)))
@@ -1509,11 +1564,19 @@ class DocumentTranslator(Frame):
 			self.MyTranslator.tm_translate_enable(False)
 
 	def GetOptions(self):
+		"""
+		Create keys:value for self.Options and convert value
+		from int to boolean in for UI config options.
+		"""
 		#Get and set language
-		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
-		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
+		target_language = self.language_id_list[
+			self.language_list.index(self.target_language.get())]
+		source_language = self.language_id_list[
+			self.language_list.index(self.source_language.get())]
 
-		self.MyTranslator.set_language_pair(target_language = target_language, source_language = source_language)
+		self.MyTranslator.set_language_pair(
+			target_language=target_language,
+			source_language=source_language)
 		
 		#Add Subscription key
 		#self.MyTranslator.SetSubscriptionKey(self.SubscriptionKey)	
@@ -1583,6 +1646,11 @@ class DocumentTranslator(Frame):
 		else:
 			self.Options['FixCorruptFileName'] = False	
 
+		if self.use_cloud_tm_intvar.get() == 1:
+			self.Options['use_cloud_tm'] == True
+		else:
+			self.Options['use_cloud_tm'] == False
+
 		#Get sheet list
 		try:
 			Raw = self.SheetList.get("1.0", END).replace("\n", "").replace(" ", "")	
@@ -1596,8 +1664,9 @@ class DocumentTranslator(Frame):
 			self.Notice.set(self.LanguagePack.ToolTips['SourceNotSelected']) 
 			return
 		else:
-			self.Notice.set(self.LanguagePack.ToolTips['DocumentLoad']) 
+			self.Notice.set(self.LanguagePack.ToolTips['DocumentLoad'])
 
+		
 
 	def Translate(self):
 

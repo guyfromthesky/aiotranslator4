@@ -2193,64 +2193,6 @@ class Translator:
 			error_queue.put(Exception(
 				'TM file conversion error: File not found.'))
 
-
-
-	# # Can be refactored to libs.tm_file.py in the future
-	# def to_csv_tm(self, pickle_file_data: dict):
-	# 	"""Convert TM file to .csv extension.
-		
-	# 	Supported extension: .pkl
-
-	# 	Args:
-	# 		pickle_file_data -- All data in the TM on pickle load.
-	# 	"""
-	# 	if os.path.isfile(self.tm_path):
-	# 		file_root, file_ext = os.path.splitext(self.tm_path)
-	# 		# Create a backup folder to move the pickle file in
-	# 		# import_translation_memory() function
-	# 		backup_dir = self.config_path + '\\AIO Translator\\Backup\\'
-	# 		if not os.path.exists(backup_dir):
-	# 			os.mkdir(backup_dir)
-	# 		if file_ext == '.pkl':
-	# 			# Change the extension
-	# 			file_ext = '.csv'
-	# 			# Load and put the dataframe of matching project only
-	# 			tm_data = pickle_file_data[self.glossary_id]
-	# 			# Data must be DataFrame instance
-	# 			if not isinstance(tm_data, pd.DataFrame):
-	# 				try:
-	# 					tm_df = pd.DataFrame(tm_data)
-	# 					# Create the csv file in local TM folder
-	# 					tm_df.to_csv(
-	# 						self.config_path + '\\AIO Translator\\TM\\TM_'
-	# 							+ self.glossary_id + file_ext)
-	# 				except Exception as e:
-	# 					print('Error while converting file to csv - '
-	# 						+ 'Data is not instance of pd.DataFrame: ' + e)
-	# 			elif isinstance(tm_data, pd.DataFrame):
-	# 				# Create the csv file in local TM folder
-	# 				tm_data.to_csv(
-	# 					self.config_path + '\\AIO Translator\\TM\\TM_'
-	# 						+ self.glossary_id + file_ext,
-	# 					index=False)
-	# 			self.tm_path = self.config_path+ '\\AIO Translator\\TM\\TM_' \
-	# 				+ self.glossary_id + file_ext
-	# 			# Move the pickle file to backup folder.
-	# 			# Must move at the end to prevent [WinError 32].
-	# 			# [WinError 32] The file is being used by another process
-	# 			backup_file_name = backup_dir + os.path.basename(file_root)
-	# 			try:
-	# 				# Append datetime to distinguish other backups
-	# 				os.rename(
-	# 					file_root + '.pkl',
-	# 					backup_file_name
-	# 						+ self.append_datetime()
-	# 						+ '.pkl')
-	# 			except Exception as e:
-	# 				print('Error while moving TM file: ', e)
-	# 	else:
-	# 		raise Exception('TM file conversion error: File not found.')
-				
 	def download_tm_file_from_blob(self):
 		"""Download the TM file of the matching project on Google cloud."""
 		storage_client = storage.Client()

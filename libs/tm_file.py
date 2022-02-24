@@ -29,8 +29,11 @@ class TranslationMemoryFile:
         ext -- File extension. Currently only support .csv.
         data -- Data in the TM. Accept only DataFrame class from pandas.
     """
-    def __init__(self):
+    def __init__(self, path: str):
         """
+        Args:
+            path -- Path of the TM file.
+
         Raises:
             Exception -- Error while initializing TM.
         """
@@ -48,7 +51,7 @@ class TranslationMemoryFile:
             self.tm_version = 4
             self.data = None # Only accept DataFrame type data
         except Exception as e:
-            print('Error while initializing TM: ', e)
+            print('Error while initializing TM file: ', e)
 
     def correct_path_os(self, path):
         """Replace backward slash with forward slash if OS is not Windows."""

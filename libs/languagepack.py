@@ -57,7 +57,6 @@ class LanguagePackEN:
 	###########################################################################
 
 	Button['Convert'] = "Convert"
-	Button['Upload'] = "Upload"
 
 	###########################################################################
 	# DOCUMENT TRANSLATOR ONLY END
@@ -87,7 +86,15 @@ class LanguagePackEN:
 
 	Option['Bold'] = "Bold"
 	Option['UnderLine'] = "UnderLine"
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY START
+	###########################################################################
 
+	Option['UseCloudTM'] = 'Use Cloud TM'
+
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY END
+	###########################################################################
 	
 
 	Label = {}
@@ -173,6 +180,7 @@ class LanguagePackEN:
 	
 	Label['TMFileConversion'] = "TM File Conversion"
 	Label['TMFileUpload'] = "TM File Upload"
+	Label['CloudTMOptions'] = "Cloud TM Options:"
 	
 	###########################################################################
 	# DOCUMENT TRANSLATOR ONLY END
@@ -284,6 +292,16 @@ class LanguagePackEN:
 	ToolTips['GeneratedBugReport'] = "Bug report is generated."
 	ToolTips['GenerateBugReportFail'] = "Fail to generate bug report."	
 	ToolTips['LoadReport'] = "Do you want to load the report from last session?"
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY START
+	###########################################################################
+
+	ToolTips['UseCloudTM'] = 'Use the Cloud TM instead of local TM.'
+	
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY END
+	###########################################################################
+
 	Notice = {}
 
 

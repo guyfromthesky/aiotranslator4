@@ -208,6 +208,7 @@ class ConfigLoader:
 		self.Init_Config_Option_Numberic(config, Section, 'tm_update', 1)
 		self.Init_Config_Option_Numberic(config, Section, 'remove_unselected_sheet', 0)
 		self.Init_Config_Option_Numberic(config, Section, 'usage', 0)
+		self.Init_Config_Option_Numberic(config, Section, 'use_cloud_tm', 0)
 		
 		with open(config_path, 'w') as configfile:
 			config.write(configfile)
@@ -328,7 +329,12 @@ class ConfigLoader:
 			Config_Obj.set(Section, Option, str(Default_Value))
 			self.Config[Section][Option] = Default_Value
 
-	def Get_Config(self, FileName, Section, Option, Default_Value = None, Encode = False):
+	def get_config(self,
+			FileName,
+			Section,
+			Option,
+			Default_Value=None,
+			Encode=False):
 		
 		if FileName in self:
 			config_path = self.FileName
@@ -360,7 +366,8 @@ class ConfigLoader:
 			config_path, Section, Option,
 			Default_Value=None, Encode=False):
 		if Encode == True:
-			Default_Value =  str(base64.b64encode(Default_Value.encode('utf-8')))
+			Default_Value = str(
+				base64.b64encode(Default_Value.encode('utf-8')))
 			Default_Value = re.findall(r'b\'(.+?)\'', Default_Value)[0]
 
 		#print('Update value:', Default_Value)
