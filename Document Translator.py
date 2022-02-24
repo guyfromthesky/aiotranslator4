@@ -2066,7 +2066,10 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 		elif ext == '.pptx':
 			#Result = translate_presentation(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:
-				Result = translate_presentation(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
+				Result = translate_presentation(
+					progress_queue=ProgressQueue, result_queue=ResultQueue,
+					status_queue=StatusQueue, MyTranslator=MyTranslator,
+					Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
 				StatusQueue.put(str(ErrorMsg))

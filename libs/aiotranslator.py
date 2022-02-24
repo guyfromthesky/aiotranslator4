@@ -43,7 +43,7 @@ import csv
 from pandas.core.frame import DataFrame
 
 from libs.version import get_version
-from libs.tm_file import tm_file
+from libs.tm_file import TranslationMemoryFile
 
 Tool = "translator"
 rev = 4117
@@ -1750,7 +1750,6 @@ class Translator:
 
 		self.init_temporary_tm()
 		self.init_translation_memory()
-		tm_file.getdata()
 		# Validate tm_path
 		if self.tm_path == None:
 			return

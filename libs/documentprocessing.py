@@ -418,7 +418,12 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 #pptx handle **********************************************************************
 #**********************************************************************************
 
-def translate_presentation(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
+def translate_presentation(
+		progress_queue=None,
+		result_queue=None,
+		status_queue=None,
+		MyTranslator=None,
+		Options = {}):
 	from pptx import Presentation
 	
 	
@@ -436,7 +441,8 @@ def translate_presentation(progress_queue=None, result_queue=None, status_queue=
 		output_dir = os.path.dirname(SourceDocument)
 		base_name = os.path.basename(SourceDocument)
 		source_name, ext = os.path.splitext(base_name)
-		OutputDocument = output_dir + '/' + 'Translated_' + source_name + '_' + timestamp + ext
+		OutputDocument = output_dir + '/' + 'Translated_' + source_name \
+			+ '_' + timestamp + ext
 	else:
 		OutputDocument = Options['OutputDocument']
 
@@ -487,7 +493,7 @@ def translate_presentation(progress_queue=None, result_queue=None, status_queue=
 					for j in range(len(paragraph.runs)):
 						run = paragraph.runs[j]
 						if FirstRun == None:
-							FirstRun = j		
+							FirstRun = j
 						if run.text == '':
 							if current_text != '':
 								list_text = current_text.split('\n')
