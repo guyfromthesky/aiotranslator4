@@ -108,5 +108,3 @@ class TranslationMemoryFile:
         #     self.data = pd.read_csv(path, )
             
 
-
-tm_file = TranslationMemoryFile()
