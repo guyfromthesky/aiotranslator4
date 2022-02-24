@@ -219,7 +219,7 @@ class LanguagePackEN:
 	# DOCUMENT TRANSLATOR ONLY START
 	###########################################################################
 
-	Tab['TMUploader'] = "TM Uploader"
+	Tab['TMConverter'] = "TM Converter"
 
 	###########################################################################
 	# DOCUMENT TRANSLATOR ONLY END

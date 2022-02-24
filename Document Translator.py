@@ -41,6 +41,8 @@ from tkinter import simpledialog
 # Web redirect
 import webbrowser
 
+from proto import message
+
 from libs.aiotranslator import ver_num as TranslatorVersion
 from libs.aiotranslator import generate_translator
 
@@ -69,9 +71,9 @@ DELAY = 20
 
 class DocumentTranslator(Frame):
 	def __init__(self,
-		Root, process_queue = None, result_queue = None,
-		status_queue = None, my_translator_queue = None,
-		my_db_queue = None, tm_manager = None, ):
+			Root, process_queue = None, result_queue = None,
+			status_queue = None, my_translator_queue = None,
+			my_db_queue = None, tm_manager = None, ):
 		
 		Frame.__init__(self, Root) 
 		self.pack(side=TOP, expand=Y, fill=X)
@@ -105,7 +107,6 @@ class DocumentTranslator(Frame):
 		self.from_language = ""
 		#self.Shallow = True	
 		self.AppLanguage = "en"
-		
 		self.language_id_list = ['', 'ko', 'en', 'cn', 'jp', 'vi']
 		self.language_list = ['', 'Hangul', 'English', 'Chinese', 'Japanese', 'Vietnamese']
 		
@@ -165,12 +166,13 @@ class DocumentTranslator(Frame):
 		self.Debug = StringVar()
 		self.Info = StringVar()
 		self.Progress = StringVar()
+		self.tm_convert_path_var = StringVar() # str path used in TM Converter tab
 		
 		self.Generate_DocumentTranslator_UI(self.MainTab)
 		self.Generate_TranslateSetting_UI(self.TranslateSetting)
 		self.Generate_TM_Manager_UI(self.TM_Manager)
+		self.generate_tm_converter_ui(self.tm_converter_tab)
 		self.Generate_DB_Uploader_UI(self.DB_Uploader)
-		self.generate_tm_uploader_ui(self.tm_uploader_tab)
 		self.Generate_Debugger_UI(self.Process)
 
 	### Main Menu tab
@@ -392,7 +394,7 @@ class DocumentTranslator(Frame):
 	def Generate_TranslateSetting_UI(self, Tab):
 		Row = 1
 		
-		# Browse License section
+		### Browse License section
 		Label(Tab, text=self.LanguagePack.Label['LicensePath']) \
 			.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		self.TextLicensePath = Entry(
@@ -409,21 +411,43 @@ class DocumentTranslator(Frame):
 		
 		Row += 1
 
-		# Browse TM section
+		### Browse TM section
 		Label(Tab, text=self.LanguagePack.Label['TM']) \
 			.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		self.TextTMPath = Entry(
-			Tab,width=120, state="readonly",
-			textvariable=self.TMPath)
+			Tab, width=120, state="readonly", textvariable=self.TMPath)
 		self.TextTMPath.grid(
-			row=Row, column=3, columnspan=5,
-			padx=5, pady=5, sticky=W)
+			row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
 		Button(
 				Tab, width=self.HALF_BUTTON_WIDTH,
-				text=self.LanguagePack.Button['Browse'],) \
+				text=self.LanguagePack.Button['Browse'],
+				command=self.select_tm_path) \
 			.grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
-		#command=self.select_tm_path) \ TEMPORARY DISABLED TO CHECK CLOUD TM
-		# FUNCTION
+
+	def generate_tm_converter_ui(self, Tab):
+		"""Create the TM Converter tab and its UI."""
+		Row = 0
+		
+		### Browse TM section
+		Label(Tab, text=self.LanguagePack.Label['TMFileConversion']) \
+			.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+		self.text_tm_convert_path = Entry(
+			Tab, width=120, state="readonly",
+			textvariable=self.tm_convert_path_var)
+		self.text_tm_convert_path.grid(
+			row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
+		# Browse button
+		Button(
+				Tab, width=self.HALF_BUTTON_WIDTH,
+				text=self.LanguagePack.Button['Browse'],
+				command=self.select_pkl_tm_path) \
+			.grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
+		# Convert button
+		Button(
+				Tab, width=self.HALF_BUTTON_WIDTH,
+				text=self.LanguagePack.Button['Convert'],
+				command=self.convert_tm_to_csv) \
+			.grid(row=Row, column=10, columnspan=2, padx=5, pady=5, sticky=E)
 
 
 	def Generate_Debugger_UI(self, Tab):	
@@ -486,12 +510,14 @@ class DocumentTranslator(Frame):
 		styles.configure('Treeview',rowheight=22)
 
 		self.Treeview.bind("<Delete>", self.delete_treeview_line)	
-		self.Treeview.bind("<Double-1>", self.double_right_click_treeview)	
+		self.Treeview.bind("<Double-1>", self.double_right_click_treeview)
 
 		
 		#Row +=1
 		#self.Debugger = scrolledtext.ScrolledText(Tab, width=125, height=6, undo=True, wrap=WORD, )
 		#self.Debugger.grid(row=Row, column=1, columnspan=Max_Size, padx=5, pady=5, sticky = (N,S,W,E))
+
+	
 
 	def Generate_DB_Uploader_UI(self, Tab):
 		"""Generate UI in DB Uploader tab.
@@ -540,78 +566,81 @@ class DocumentTranslator(Frame):
 		self.Uploader_Debugger = scrolledtext.ScrolledText(Tab, width=122, height=13, undo=True, wrap=WORD, )
 		self.Uploader_Debugger.grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E+N+S)
 
-	def generate_tm_uploader_ui(self, Tab):
-		"""Generate UI in TM Uploader tab.
-		
-		UI Widget Layout:
-			TMFileConversion Label - entry_file_path Entry
-				- Browse Button - Convert Button
-			TMFileUpload Label - entry_file_path Entry
-				- Browse Button - Upload Button
-			ProjectKey Label - ProjectList Combobox
-			Debugger scrolledText
-		"""
-		### TM conversion section ###
-		Row = 1
-		self.textvar_convert_tm_path = StringVar()
-		Label(Tab, text=self.LanguagePack.Label['TMFileConversion']) \
-			.grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky=W)
-		self.entry_file_path = Entry(
-			Tab, width = 110, state="readonly",
-			textvariable=self.textvar_convert_tm_path)
-		self.entry_file_path.grid(
-			row=Row, column=3, columnspan=6, padx=4, pady=5, sticky=E)
-		Button(
-				Tab, width=self.HALF_BUTTON_WIDTH,
-				text=self.LanguagePack.Button['Browse'],
-				command=self.browse_convert_tm_file) \
-			.grid(row=Row, column=9, columnspan=2, padx=5, pady=5, sticky=E)
-		Button(
-				Tab, width=self.HALF_BUTTON_WIDTH,
-				text=self.LanguagePack.Button['Convert'],
-				command=None) \
-			.grid(row=Row, column=11, columnspan=2, padx=5, pady=5, sticky=E)
-		
-		### TM upload section ###
-		Row += 1
-		self.textvar_upload_tm_path = StringVar()
-		Label(Tab, text=self.LanguagePack.Label['TMFileUpload']) \
-			.grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky=W)
-		self.entry_file_path = Entry(
-			Tab, width = 110, state="readonly",
-			textvariable=self.textvar_upload_tm_path)
-		self.entry_file_path.grid(
-			row=Row, column=3, columnspan=6, padx=4, pady=5, sticky=E)
-		Button(
-				Tab, width=self.HALF_BUTTON_WIDTH,
-				text=self.LanguagePack.Button['Browse'],
-				command= self.browse_upload_tm_file) \
-			.grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
-		Button(
-				Tab, width=self.HALF_BUTTON_WIDTH,
-				text=self.LanguagePack.Button['Upload'],
-				command=None) \
-			.grid(row=Row, column=11, columnspan=2, padx=5, pady=5, sticky=E)
+	
 
-		### Project selection section ###
-		Row += 1
-		Label(Tab, text= self.LanguagePack.Label['ProjectKey']) \
-			.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+	### NO LONGER ALLOW MANUAL UPLOAD
+	# def generate_tm_uploader_ui(self, Tab):
+	# 	"""Generate UI in TM Uploader tab.
 		
-		self.ProjectList = AutocompleteCombobox(Tab)
-		self.ProjectList.Set_Entry_Width(30)
-		self.ProjectList.set_completion_list([])
-		if self.glossary_id != None:
-			self.ProjectList.set(self.glossary_id)
+	# 	UI Widget Layout:
+	# 		TMFileConversion Label - entry_file_path Entry
+	# 			- Browse Button - Convert Button
+	# 		TMFileUpload Label - entry_file_path Entry
+	# 			- Browse Button - Upload Button
+	# 		ProjectKey Label - ProjectList Combobox
+	# 		Debugger scrolledText
+	# 	"""
+	# 	### TM conversion section ###
+	# 	Row = 1
+	# 	self.textvar_convert_tm_path = StringVar()
+	# 	Label(Tab, text=self.LanguagePack.Label['TMFileConversion']) \
+	# 		.grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky=W)
+	# 	self.entry_file_path = Entry(
+	# 		Tab, width = 110, state="readonly",
+	# 		textvariable=self.textvar_convert_tm_path)
+	# 	self.entry_file_path.grid(
+	# 		row=Row, column=3, columnspan=6, padx=4, pady=5, sticky=E)
+	# 	Button(
+	# 			Tab, width=self.HALF_BUTTON_WIDTH,
+	# 			text=self.LanguagePack.Button['Browse'],
+	# 			command=self.browse_convert_tm_file) \
+	# 		.grid(row=Row, column=9, columnspan=2, padx=5, pady=5, sticky=E)
+	# 	Button(
+	# 			Tab, width=self.HALF_BUTTON_WIDTH,
+	# 			text=self.LanguagePack.Button['Convert'],
+	# 			command=None) \
+	# 		.grid(row=Row, column=11, columnspan=2, padx=5, pady=5, sticky=E)
+		
+	# 	### TM upload section ###
+	# 	Row += 1
+	# 	self.textvar_upload_tm_path = StringVar()
+	# 	Label(Tab, text=self.LanguagePack.Label['TMFileUpload']) \
+	# 		.grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky=W)
+	# 	self.entry_file_path = Entry(
+	# 		Tab, width = 110, state="readonly",
+	# 		textvariable=self.textvar_upload_tm_path)
+	# 	self.entry_file_path.grid(
+	# 		row=Row, column=3, columnspan=6, padx=4, pady=5, sticky=E)
+	# 	Button(
+	# 			Tab, width=self.HALF_BUTTON_WIDTH,
+	# 			text=self.LanguagePack.Button['Browse'],
+	# 			command= self.browse_upload_tm_file) \
+	# 		.grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
+	# 	Button(
+	# 			Tab, width=self.HALF_BUTTON_WIDTH,
+	# 			text=self.LanguagePack.Button['Upload'],
+	# 			command=None) \
+	# 		.grid(row=Row, column=11, columnspan=2, padx=5, pady=5, sticky=E)
 
-		self.ProjectList.grid(
-			row=Row, column=3, columnspan=2, padx=5, pady=5, stick=W)
+	# 	### Project selection section ###
+	# 	Row += 1
+	# 	Label(Tab, text= self.LanguagePack.Label['ProjectKey']) \
+	# 		.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+		
+	# 	self.ProjectList = AutocompleteCombobox(Tab)
+	# 	self.ProjectList.Set_Entry_Width(30)
+	# 	self.ProjectList.set_completion_list([])
+	# 	if self.glossary_id != None:
+	# 		self.ProjectList.set(self.glossary_id)
 
-		Row += 1
-		self.tm_uploader_debugger = scrolledtext.ScrolledText(
-			Tab, width=122, height=13, undo=True, wrap=WORD,)
-		self.tm_uploader_debugger.grid(
-			row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E+N+S)
+	# 	self.ProjectList.grid(
+	# 		row=Row, column=3, columnspan=2, padx=5, pady=5, stick=W)
+
+	# 	Row += 1
+	# 	self.tm_uploader_debugger = scrolledtext.ScrolledText(
+	# 		Tab, width=122, height=13, undo=True, wrap=WORD,)
+	# 	self.tm_uploader_debugger.grid(
+	# 		row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E+N+S)
 
 	def debug_listening(self):
 		while True:
@@ -776,28 +805,32 @@ class DocumentTranslator(Frame):
 		#TAB_CONTROL = Notebook(self.parent)
 		#Tab1
 		self.MainTab = Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.MainTab, text= self.LanguagePack.Tab['Main'])
+		TAB_CONTROL.add(
+			self.MainTab, text= self.LanguagePack.Tab['Main'])
 		#Tab2
 		self.TranslateSetting = Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.TranslateSetting,
-						text=self.LanguagePack.Tab['Translator'])
-		#Tab5
+		TAB_CONTROL.add(
+			self.TranslateSetting, text=self.LanguagePack.Tab['Translator'])
+		#Tab3
 		#self.Comparison = ttk.Frame(TAB_CONTROL)
 		#TAB_CONTROL.add(self.Comparison, text=  self.LanguagePack.Tab['Comparison'])
-		#Tab6
+		#Tab3
 		self.TM_Manager = Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.TM_Manager, text= self.LanguagePack.Tab['TMManager'])
-
-		self.DB_Uploader = Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.DB_Uploader, text= self.LanguagePack.Tab['DBUploader'])
-
-		self.tm_uploader_tab = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(
-			self.tm_uploader_tab, text=self.LanguagePack.Tab['TMUploader'])
-
+			self.TM_Manager, text=self.LanguagePack.Tab['TMManager'])
+		#Tab4
+		self.tm_converter_tab = Frame(TAB_CONTROL)
+		TAB_CONTROL.add(
+			self.tm_converter_tab, text=self.LanguagePack.Tab['TMConverter'])
+		#Tab5
+		self.DB_Uploader = Frame(TAB_CONTROL)
+		TAB_CONTROL.add(
+			self.DB_Uploader, text=self.LanguagePack.Tab['DBUploader'])
+		
 		# Process Details tab
 		self.Process = Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.Process, text = self.LanguagePack.Tab['Debug'])
+		TAB_CONTROL.add(
+			self.Process, text=self.LanguagePack.Tab['Debug'])
 
 		#TAB_CONTROL.pack(expand=1, fill="both")
 		TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
@@ -927,11 +960,11 @@ class DocumentTranslator(Frame):
 		"""Set the selected TM file via Translate Setting UI or Menu > Load TM.
 		
 		Save the selected TM file path to translator.ini config file.
-		Support pkl files.
+		Support extension: .csv
 		"""
 		filename = filedialog.askopenfilename(
 			title = "Select Translation Memory file",
-			filetypes=(("TM pkl files", "*.pkl"),))
+			filetypes=(("TM csv files", "*.csv"),))
 		if filename != "":
 			NewTM = self.CorrectPath(filename)
 			self.TMPath.set(NewTM)
@@ -942,7 +975,47 @@ class DocumentTranslator(Frame):
 			self.Notice.set(self.LanguagePack.ToolTips['TMUpdated'])
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
-			
+
+	def select_pkl_tm_path(self):
+		"""Set the selected TM file in TM Converter tab.
+		
+		Support extension: .pkl
+		"""
+		filename = filedialog.askopenfilename(
+			title = "Select Translation Memory file",
+			filetypes=(("TM pkl files", "*.pkl"),))
+		if filename != "":
+			selected_tm_path = self.CorrectPath(filename)
+			self.tm_convert_path_var.set(selected_tm_path)
+			# Initilize a variable used to convert the TM file
+			self.tm_convert_path = selected_tm_path
+		else:
+			messagebox.showerror(
+				title='File Selection Error',
+				message='No file is selected.')
+	
+	def convert_tm_to_csv(self):
+		"""Convert the TM file using functions in aiotranslator.py.
+
+		If there is any error, shows a messagebox.
+		"""
+		self.MyTranslator.to_csv_tm(self.tm_convert_path)
+		error_queue = Queue()
+		p = Process(
+			target=self.MyTranslator.to_csv_tm,
+			args=(self.tm_convert_path, error_queue))
+		p.start()
+		p.join()
+
+		if not error_queue.empty():
+			error_message = str(error_queue.get())
+			messagebox.showerror(
+				title='TM File Conversion',
+				message='Error while converting TM file: ' + error_message)
+		else:
+			messagebox.showinfo(
+				title='TM File Conversion',
+				message='Conversion is completed.')
 
 	def SaveNewTM(self):
 		"""Create and set the new TM file via the File > Create TM menu.

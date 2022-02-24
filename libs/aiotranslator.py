@@ -109,6 +109,7 @@ class Translator:
 		self.init_config_path()
 
 		self.init_tm_path(tm_path)
+		
 	
 		# Select correct log file.
 		self.init_logging_file()
@@ -1653,7 +1654,7 @@ class Translator:
 	def init_translation_memory(self):
 		"""Set an empty current_tm as DataFrame with supported languages."""
 		self.current_tm = pd.DataFrame(columns=self.supported_language)
-		self.translation_memory_size = len(self.current_tm)	
+		self.translation_memory_size = len(self.current_tm)
 
 	def init_temporary_tm(self):
 		self.temporary_tm[:] = []
@@ -2110,61 +2111,145 @@ class Translator:
 			else:
 				return dataframe
 
-	# Can be refactored to libs.tm_file.py in the future
-	def to_csv_tm(self, pickle_file_data):
-		"""Convert TM file extension to .csv extension.
-		
-		Supported extension: .pkl
+	def to_csv_tm(self, tm_path: str, error_queue=None):
+		"""Convert TM file to .csv extension.
 
+		Used in TM Converter tab in Document Translator.
+		Supported extension: .pkl
+		
 		Args:
-			pickle_file_data: dict. All data in the TM on pickle load.
+			tm_path --- Path to the TM file.
+			error_queue --- Multiprocessing Queue instance used to output the
+				error message to the UI.
+		
+		Returns:
+			A str of the converted path.
+
+		Raises:
+			Exception --- Error while converting file to csv - Data is not
+				an instance of pd.DataFrame.
+			Exception --- Error while moving the backup pkl TM file during
+				file conversion.
 		"""
-		if os.path.isfile(self.tm_path):
-			file_root, file_ext = os.path.splitext(self.tm_path)
-			# Create a backup folder to move the pickle file in
-			# import_translation_memory() function
-			backup_dir = self.config_path + '\\AIO Translator\\Backup\\'
-			if not os.path.exists(backup_dir):
-				os.mkdir(backup_dir)
+		if os.path.isfile(tm_path):
+			file_root, file_ext = os.path.splitext(tm_path)
+			# # Create a backup folder in which the pickle file will be moved
+			# backup_dir = self.config_path + '\\AIO Translator\\Backup\\'
+			# if not os.path.exists(backup_dir):
+			# 	os.mkdir(backup_dir)
 			if file_ext == '.pkl':
-				# Change the extension
-				file_ext = '.csv'
+				with open(self.tm_path, 'rb') as pickle_file:
+					all_tm = pickle.load(pickle_file)
+				_tm_version = self.get_tm_version(all_tm)
+				# Check if the matching project is in the TM
+				# Make sure that pickle format in the TM is correct
+				if _tm_version == 4:
+					if self.glossary_id in all_tm:
+						self.current_tm = all_tm[self.glossary_id]
+					else:
+						print('New project')
+				elif _tm_version == 3:
+					self.import_tm_v3(all_tm)
+				elif _tm_version == 2:
+					self.import_tm_v2(all_tm)
+				else:
+					print('Broken pkl TM file.')
+				
+				file_ext = '.csv'	
 				# Load and put the dataframe of matching project only
-				tm_data = pickle_file_data[self.glossary_id]
+				tm_data = all_tm[self.glossary_id]
 				# Data must be DataFrame instance
 				if not isinstance(tm_data, pd.DataFrame):
 					try:
 						tm_df = pd.DataFrame(tm_data)
-						# Create the csv file in local TM folder
 						tm_df.to_csv(
-							self.config_path + '\\AIO Translator\\TM\\TM_'
-								+ self.glossary_id + file_ext)
+							self.correct_path_os(file_root + file_ext))
 					except Exception as e:
 						print('Error while converting file to csv - '
-							+ 'Data is not instance of pd.DataFrame: ' + e)
+							+ 'Data is not an instance of pd.DataFrame: ' + e)
+						error_queue.put(e)
 				elif isinstance(tm_data, pd.DataFrame):
-					# Create the csv file in local TM folder
-					tm_data.to_csv(
-						self.config_path + '\\AIO Translator\\TM\\TM_'
-							+ self.glossary_id + file_ext,
-						index=False)
-				self.tm_path = self.config_path+ '\\AIO Translator\\TM\\TM_' \
-					+ self.glossary_id + file_ext
-				# Move the pickle file to backup folder.
-				# Must move at the end to prevent [WinError 32].
-				# [WinError 32] The file is being used by another process
-				backup_file_name = backup_dir + os.path.basename(file_root)
-				try:
-					# Append datetime to distinguish other backups
-					os.rename(
-						file_root + '.pkl',
-						backup_file_name
-							+ self.append_datetime()
-							+ '.pkl')
-				except Exception as e:
-					print('Error while moving TM file: ', e)
+					# Create the csv file in the same folder as
+					# the original file
+					tm_data.to_csv(self.correct_path_os(file_root + file_ext))
+				
+				# # Move the pickle file to backup folder.
+				# # Must move at the end to prevent [WinError 32].
+				# # [WinError 32] The file is being used by another process
+				# backup_file_name = backup_dir + os.path.basename(file_root)
+				# try:
+				# 	# Append datetime to distinguish other backups
+				# 	os.rename(
+				# 		file_root + '.pkl',
+				# 		backup_file_name
+				# 			+ self.append_datetime()
+				# 			+ '.pkl')
+				# except Exception as e:
+				# 	print('Error while moving the backup pkl TM file '
+				# 		+ 'during file conversion: ', e)
+				# 	error_queue.put(e)
 		else:
-			raise Exception('TM file conversion error: File not found.')
+			print('TM file conversion error: File not found.')
+			error_queue.put(Exception(
+				'TM file conversion error: File not found.'))
+
+
+
+	# # Can be refactored to libs.tm_file.py in the future
+	# def to_csv_tm(self, pickle_file_data: dict):
+	# 	"""Convert TM file to .csv extension.
+		
+	# 	Supported extension: .pkl
+
+	# 	Args:
+	# 		pickle_file_data -- All data in the TM on pickle load.
+	# 	"""
+	# 	if os.path.isfile(self.tm_path):
+	# 		file_root, file_ext = os.path.splitext(self.tm_path)
+	# 		# Create a backup folder to move the pickle file in
+	# 		# import_translation_memory() function
+	# 		backup_dir = self.config_path + '\\AIO Translator\\Backup\\'
+	# 		if not os.path.exists(backup_dir):
+	# 			os.mkdir(backup_dir)
+	# 		if file_ext == '.pkl':
+	# 			# Change the extension
+	# 			file_ext = '.csv'
+	# 			# Load and put the dataframe of matching project only
+	# 			tm_data = pickle_file_data[self.glossary_id]
+	# 			# Data must be DataFrame instance
+	# 			if not isinstance(tm_data, pd.DataFrame):
+	# 				try:
+	# 					tm_df = pd.DataFrame(tm_data)
+	# 					# Create the csv file in local TM folder
+	# 					tm_df.to_csv(
+	# 						self.config_path + '\\AIO Translator\\TM\\TM_'
+	# 							+ self.glossary_id + file_ext)
+	# 				except Exception as e:
+	# 					print('Error while converting file to csv - '
+	# 						+ 'Data is not instance of pd.DataFrame: ' + e)
+	# 			elif isinstance(tm_data, pd.DataFrame):
+	# 				# Create the csv file in local TM folder
+	# 				tm_data.to_csv(
+	# 					self.config_path + '\\AIO Translator\\TM\\TM_'
+	# 						+ self.glossary_id + file_ext,
+	# 					index=False)
+	# 			self.tm_path = self.config_path+ '\\AIO Translator\\TM\\TM_' \
+	# 				+ self.glossary_id + file_ext
+	# 			# Move the pickle file to backup folder.
+	# 			# Must move at the end to prevent [WinError 32].
+	# 			# [WinError 32] The file is being used by another process
+	# 			backup_file_name = backup_dir + os.path.basename(file_root)
+	# 			try:
+	# 				# Append datetime to distinguish other backups
+	# 				os.rename(
+	# 					file_root + '.pkl',
+	# 					backup_file_name
+	# 						+ self.append_datetime()
+	# 						+ '.pkl')
+	# 			except Exception as e:
+	# 				print('Error while moving TM file: ', e)
+	# 	else:
+	# 		raise Exception('TM file conversion error: File not found.')
 				
 	def download_tm_file_from_blob(self):
 		"""Download the TM file of the matching project on Google cloud."""
