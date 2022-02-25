@@ -646,7 +646,6 @@ class DocumentTranslator(Frame):
 			self.parent.destroy()
 			self.TranslatorProcess.terminate()
 
-
 	def CorrectPath(self, path):
 		if sys.platform.startswith('win'):
 			return str(path).replace('/', '\\')
