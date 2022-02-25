@@ -73,6 +73,7 @@ class DocumentTranslator(Frame):
 		Frame.__init__(self, Root) 
 		self.pack(side=TOP, expand=Y, fill=X)
 		self.parent = Root 
+		self.parent.protocol("WM_DELETE_WINDOW", self.on_closing)
 
 		# Queue
 		self.ProcessQueue = process_queue
@@ -639,6 +640,12 @@ class DocumentTranslator(Frame):
 
 	def OpenWeb(self):
 		webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/%5BTranslation%5D+AIO+Translator")
+
+	def on_closing(self):
+		if messagebox.askokcancel("Quit", "Do you want to quit?"):
+			self.parent.destroy()
+			self.TranslatorProcess.terminate()
+
 
 	def CorrectPath(self, path):
 		if sys.platform.startswith('win'):
