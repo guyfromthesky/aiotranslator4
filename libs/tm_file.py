@@ -50,30 +50,35 @@ class TranslationMemoryFile:
             
             self.tm_version = 4
             self.supported_languages = ['ko', 'en', 'cn', 'jp', 'vi']
-            self.data = self.init_data() # Only accept DataFrame type data
+            self._data = None
         except Exception as e:
             print('Error while initializing TM file: ', e)
 
     @property
     def path(self):
-        """path attribute of the class.
+        """path attribute of the class."""
+        return self._path
+
+    @path.setter
+    def path(self, path):
+        """Set path attribute via self._path.
         
         Validate the path to TM file when initializing a class instance.
         Also set the basename of the TM file.
         Supported extension: .csv
 
+        Args:
+            path -- str path that gets directly on initialization.
+
         Raises:
             Exception -- Error while initializing TM path in {__class__}
-
-        Returns:
-            str path of the TM file.
         """
         try:
-            if os.path.isfile(self._path):
-                file_root, file_ext = os.path.splitext(self._path)
+            if os.path.isfile(path):
+                file_root, file_ext = os.path.splitext(path)
                 if file_ext == '.csv':
-                    self.basename = os.path.basename(self._path)
-                    return self.correct_path_os(self._path)
+                    self.basename = os.path.basename(path)
+                    self._path = self.correct_path_os(path)
                 else:
                     print(f'Incorrect file format: {file_ext}')
             else:
@@ -82,24 +87,43 @@ class TranslationMemoryFile:
         except Exception as e:
             raise(f'Error while initializing TM path in {__class__}: ', e)
 
-    def init_data(self):
-        """Set self.data by getting data in the TM File in self.path.
+    @property
+    def data(self):
+        """data attribute of the class"""
+        print('value data')
+        return self._data
 
+    @data.setter
+    def data(self, data):
+        """Set data attribute via self._data
+
+        Get the data directly from the TM file.
         Only allow DataFrame from pandas and csv extension.
+
+        Args:
+            data -- An instance of pandas DataFrame. Empty dataframe
+                by default.
+
+        Raises:
+            TypeError -- Data type is not an instance of DataFrame
         """
         # Only accept DataFrame type data
-        if isinstance(self.data, pd.DataFrame):
-            self.data = pd.read_csv(
+        print('set value...')
+        if isinstance(data, pd.DataFrame):
+            print('true')
+            data = pd.read_csv(
                 self.path, usecols=self.supported_languages)
+            self._data = data
         else:
-            print('Data type is not an instance of DataFrame: ',
-                type(self.data))
+            print('false')
+            # raise TypeError('Data type is not an instance of DataFrame: ',
+            #     type(data))
 
     def correct_path_os(self, path):
         """Replace backward slash with forward slash if OS is not Windows.
         
         Args:
-            path -- Path to replace bkacward slash.
+            path -- Path to replace backward slash.
         """
         if not sys.platform.startswith('win'):
             return str(path).replace('\\', '//')
@@ -173,7 +197,9 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             f"{os.environ['appdata']}\\AIO Translator\\TM\\")
         self.data = None
 
-test_path = r"C:\Users\ndtn\NWV\Translation Tool\Source Code\TM_MSM.csv"
+test_path = r"D:\Translation Tool\TM_MSM.csv"
 
 tm_file = TranslationMemoryFile(test_path)
-tm_file.get_data()
+print(tm_file.path)
+print(tm_file.data)
+print(tm_file._data)
