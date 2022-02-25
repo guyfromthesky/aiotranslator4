@@ -201,11 +201,14 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 	from openpyxl import load_workbook, worksheet, Workbook
 	from openpyxl.styles import Font
 
+
 	if 'SourceDocument' not in Options:
 		status_queue.put('No source document input')
 		return False
 	else:
 		SourceDocument = Options['SourceDocument']
+
+		
 
 	if 'OutputDocument' not in Options:
 		now = datetime.now()
@@ -241,7 +244,13 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 		SheetRemovalMode = False
 	else:
 		SheetRemovalMode = Options['SheetRemovalMode']
-	print('Data only:', DataOnly)
+	
+	if 'Bilingual' not in Options:
+		BilingualMode = False
+	else:
+		BilingualMode = True
+		from openpyxl.comments import Comment
+
 	try:
 		if DataOnly == True:
 			print('Data only')
@@ -310,6 +319,9 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 								memory_translation+=1
 							else:
 								list_string = current_string.split('\n')
+								if BilingualMode == True:
+									_comment = Comment(current_string, "Translator")
+									cell.comment = _comment
 								sheet_name = sheet.title
 								cell_address = cell.column_letter + str(cell.row)
 								Task = CellData(sheet_name, cell_address, list_string)

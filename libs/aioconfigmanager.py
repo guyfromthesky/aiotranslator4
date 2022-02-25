@@ -200,6 +200,7 @@ class ConfigLoader:
 		
 
 		self.Init_Config_Option_Numberic(config, Section, 'speed_mode', 0)
+		self.Init_Config_Option_Numberic(config, Section, 'bilingual', 0)
 		self.Init_Config_Option_Numberic(config, Section, 'value_only', 0)
 		self.Init_Config_Option_Numberic(config, Section, 'file_name_correct', 1)
 		self.Init_Config_Option_Numberic(config, Section, 'file_name_translate', 1)

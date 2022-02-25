@@ -56,7 +56,7 @@ import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4113
+rev = 4114
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -256,6 +256,11 @@ class DocumentTranslator(Frame):
 		TurboTranslateBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['TurboTranslate'], variable = self.TurboTranslate)
 		TurboTranslateBtn.grid(row=Row, column=5,padx=0, pady=5, sticky=W)
 		TurboTranslateBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['TurboTranslate']))
+
+		self.Bilingual = IntVar()
+		TurboTranslateBtn = Checkbutton(Tab, text= self.LanguagePack.Option['Bilingual'], variable = self.Bilingual)
+		TurboTranslateBtn.grid(row=Row, column=7, columnspan=1,padx=5, pady=0, sticky=W)
+		TurboTranslateBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['Bilingual']))
 
 		Row+=1
 
@@ -598,6 +603,8 @@ class DocumentTranslator(Frame):
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_language', source_language_index)
 
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'speed_mode', self.TurboTranslate.get())
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'bilingual_mode', self.Bilingual.get())
+
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'value_only', self.DataOnly.get())
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'file_name_correct', self.TranslateFileName.get())
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'file_name_translate', self.TranslateFileName.get())
@@ -923,6 +930,7 @@ class DocumentTranslator(Frame):
 		self.source_language.set(self.language_list[self.Configuration['Document_Translator']['source_lang']])
 		
 		self.TurboTranslate.set(self.Configuration['Document_Translator']['speed_mode'])
+		self.Bilingual.set(self.Configuration['Document_Translator']['bilingual'])
 		self.DataOnly.set(self.Configuration['Document_Translator']['value_only'])
 		self.FixCorruptFileName.set(self.Configuration['Document_Translator']['file_name_correct'])
 		self.TranslateFileName.set(self.Configuration['Document_Translator']['file_name_translate'])
@@ -1098,6 +1106,11 @@ class DocumentTranslator(Frame):
 			self.MyTranslator.source_language_predict_enable(True)
 		else:
 			self.MyTranslator.source_language_predict_enable(False)
+
+		if self.Bilingual.get() == 1:
+			self.Options['Bilingual']  = True
+		else:
+			self.Options['Bilingual'] = False
 
 		#Set Data Mode
 		if self.DataOnly.get() == 1:
@@ -1812,7 +1825,7 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 			StatusQueue.put('Total time spent: ' + str(Total) + ' second.')
 			StatusQueue.put('Translated file: ' + Preflix + ' ' + TranslatedName + '_' + timestamp + ext)
 		else:
-			Message = 'Fail to translate document, details: \n' + Result
+			Message = 'Fail to translate document, details: \n' + str(Result)
 			ResultQueue.put(str(Message))
 		try:
 			mem_tm = len(MyTranslator.temporary_tm)
