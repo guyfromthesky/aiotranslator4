@@ -1137,8 +1137,10 @@ class DocumentTranslator(Frame):
 			'Document_Translator', 'use_cloud_tm', selected_option_value)
 		if selected_option_value:
 			print('true')
+			self.renew_my_translator()
 		else:
 			print('false')
+			self.renew_my_translator()
 
 #############################################################################
 # DB UPLOADER FUNCTIONS

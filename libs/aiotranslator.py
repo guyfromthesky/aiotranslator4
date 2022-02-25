@@ -2118,17 +2118,17 @@ class Translator:
 		Supported extension: .pkl
 		
 		Args:
-			tm_path --- Path to the TM file.
-			error_queue --- Multiprocessing Queue instance used to output the
+			tm_path -- Path to the TM file.
+			error_queue -- Multiprocessing Queue instance used to output the
 				error message to the UI.
 		
 		Returns:
 			A str of the converted path.
 
 		Raises:
-			Exception --- Error while converting file to csv - Data is not
+			Exception -- Error while converting file to csv - Data is not
 				an instance of pd.DataFrame.
-			Exception --- Error while moving the backup pkl TM file during
+			Exception -- Error while moving the backup pkl TM file during
 				file conversion.
 		"""
 		if os.path.isfile(tm_path):

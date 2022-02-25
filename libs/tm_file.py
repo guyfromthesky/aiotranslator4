@@ -3,7 +3,7 @@
 Include the info about the TM and methods to modify TM data.
 """
 
-__version__ = '1.0'
+__version__ = '1.1'
 __author__ = 'anonymous'
 
 # System, standard lib
@@ -22,92 +22,158 @@ class TranslationMemoryFile:
     modify them.
 
     Attributes:
-        name -- File name.
-        dirname -- Directory/Folder name of the TM file.
+        path -- Path to the TM file.
+        basename -- File basename.
         backup_dirname -- Directory name of the backup file.
         tm_version -- TM version. Format version x.y. Ex: version 1.0
         ext -- File extension. Currently only support .csv.
+        supported_languages -- Languages that the TM supports. Used as columns
+            in DataFrame.
         data -- Data in the TM. Accept only DataFrame class from pandas.
     """
     def __init__(self, path: str):
         """
         Args:
-            path -- Path of the TM file.
+            path -- Path to the TM file.
 
         Raises:
             Exception -- Error while initializing TM.
         """
         # Set up default value
         try:
-            self.name = None
+            self._path = path # Set up property for self.path
+            self.basename = None
             self.ext = '.csv' # Only support Comma-separated Values
-            self.dirname = self.correct_path_os(
-                f"{os.environ['appdata']}\\AIO Translator\\TM\\")
             self.backup_dirname = self.correct_path_os(
                 f"{os.environ['appdata']}\\AIO Translator\\Backup\\")
-            self.path = self.init_path()
             self.backup_path = self.init_backup_path()
             
             self.tm_version = 4
-            self.data = None # Only accept DataFrame type data
+            self.supported_languages = ['ko', 'en', 'cn', 'jp', 'vi']
+            self.data = self.init_data() # Only accept DataFrame type data
         except Exception as e:
             print('Error while initializing TM file: ', e)
 
+    @property
+    def path(self):
+        """path attribute of the class.
+        
+        Validate the path to TM file when initializing a class instance.
+        Also set the basename of the TM file.
+        Supported extension: .csv
+
+        Raises:
+            Exception -- Error while initializing TM path in {__class__}
+
+        Returns:
+            str path of the TM file.
+        """
+        try:
+            if os.path.isfile(self._path):
+                file_root, file_ext = os.path.splitext(self._path)
+                if file_ext == '.csv':
+                    self.basename = os.path.basename(self._path)
+                    return self.correct_path_os(self._path)
+                else:
+                    print(f'Incorrect file format: {file_ext}')
+            else:
+                print('Cannot initialize TM file path '
+                    'because path is not a file: ', path)
+        except Exception as e:
+            raise(f'Error while initializing TM path in {__class__}: ', e)
+
+    def init_data(self):
+        """Set self.data by getting data in the TM File in self.path.
+
+        Only allow DataFrame from pandas and csv extension.
+        """
+        # Only accept DataFrame type data
+        if isinstance(self.data, pd.DataFrame):
+            self.data = pd.read_csv(
+                self.path, usecols=self.supported_languages)
+        else:
+            print('Data type is not an instance of DataFrame: ',
+                type(self.data))
+
     def correct_path_os(self, path):
-        """Replace backward slash with forward slash if OS is not Windows."""
+        """Replace backward slash with forward slash if OS is not Windows.
+        
+        Args:
+            path -- Path to replace bkacward slash.
+        """
         if not sys.platform.startswith('win'):
             return str(path).replace('\\', '//')
         return path
 
-    def set_path(self, file_path: str=None):
-        """Set a new path of the TM file.
+    
+    ### DEPRICATED: VER 1.0
+    # def set_path(self, file_path: str=None):
+    #     """Set a new path of the TM file.
         
-        Args:
-            path -- New selected path for TM file.
-        Raises:
-            Exception -- Error while setting TM file path.
-            Exception -- Incorrect extension while setting TM file path.
-            Exception -- The path is not a file while setting TM file path.
-        """
-        try:
-            file_path = self.correct_path_os(file_path)
-            if os.path.isfile(file_path):
-                file_basename = os.path.basename(file_path)
-                file_name, file_ext = os.path.splitext(file_basename)
-                # Only support .csv
-                if file_ext == '.csv':
-                    self.path = file_path
-                    self.name = file_name
-                else:
-                    raise Exception('Incorrect extension while'
-                        'setting TM file path.')
-            else:
-                raise Exception('The path is not a file while'
-                    'setting TM file path.')
-        except Exception as e:
-            print('Error while setting TM file path: ', e)
+    #     Args:
+    #         path -- New selected path for TM file.
+    #     Raises:
+    #         Exception -- Error while setting TM file path.
+    #         Exception -- Incorrect extension while setting TM file path.
+    #         Exception -- The path is not a file while setting TM file path.
+    #     """
+    #     try:
+    #         file_path = self.correct_path_os(file_path)
+    #         if os.path.isfile(file_path):
+    #             file_basename = os.path.basename(file_path)
+    #             file_name, file_ext = os.path.splitext(file_basename)
+    #             # Only support .csv
+    #             if file_ext == '.csv':
+    #                 self.path = file_path
+    #                 self.name = file_name
+    #             else:
+    #                 raise Exception('Incorrect extension while'
+    #                     'setting TM file path.')
+    #         else:
+    #             raise Exception('The path is not a file while'
+    #                 'setting TM file path.')
+    #     except Exception as e:
+    #         print('Error while setting TM file path: ', e)
 
-    def init_path(self):
-        """Return str of the path to the TM file."""
-        return self.correct_path_os(
-            f'{self.dirname}\\{self.name}{self.ext}')
+    ### DEPRICATED: VER 1.0
+    # def init_path(self):
+    #     """Return str of the path to the TM file."""
+    #     return self.correct_path_os(
+    #         f'{self.dirname}\\{self.name}{self.ext}')
 
     def init_backup_path(self):
         """Return str of the path to the backup TM file."""
         return self.correct_path_os(
-            f'{self.backup_dirname}\\{self.name}_backup{self.ext}')
+            f"{os.environ['appdata']}\\AIO Translator\\Backup\\"
+                f"{self.basename}_backup{self.ext}")
 
-    def get_data(self):
-        """Return data in the csv TM file.
-        
-        Only allow DataFrame from pandas and csv extension.
+class CloudTranslationMemoryFile(TranslationMemoryFile):
+    """TM file object in Google Cloud Storage.
+    
+    Info about TM file such as file name, data in the TM and methods to
+    modify them.
+    This class inherits from TranslationMemoryFile class with methods to
+    access Google Cloud Storage and get the data.
 
-        Returns:
-            data: DataFrame instance from pandas
-        """
-        # path = self.get_path()
-        # # Only accept DataFrame type data
-        # if isinstance(self.data, pd.DataFrame):
-        #     self.data = pd.read_csv(path, )
-            
+    Attributes:
+        path -- Path to the TM file.
+        basename -- File basename.
+        local_dirname -- Directory/Folder name of the TM file on the local
+            computer of a user.
+        backup_dirname -- Directory name of the backup file.
+        tm_version -- TM version. Format version x.y. Ex: version 1.0
+        ext -- File extension. Currently only support .csv.
+        supported_languages -- Languages that the TM supports. Used as columns
+            in DataFrame.
+        data -- Data in the TM. Accept only DataFrame class from pandas.
+    """
+    def __init__(self, path):
+        super().__init__(path)
+        self.local_dirname = self.correct_path_os(
+            f"{os.environ['appdata']}\\AIO Translator\\TM\\")
+        self.data = None
 
+test_path = r"C:\Users\ndtn\NWV\Translation Tool\Source Code\TM_MSM.csv"
+
+tm_file = TranslationMemoryFile(test_path)
+tm_file.get_data()
