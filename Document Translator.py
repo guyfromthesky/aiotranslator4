@@ -327,11 +327,13 @@ class DocumentTranslator(Frame):
 
 		# Checkbutton to check if Cloud TM is used instead of local TM.
 		# Default is not using the Cloud TM
-		self.use_cloud_tm_intvar = IntVar()
+		# self.is_cloud_tm_used_intvar is used as a wrapper in askquestion to
+		# transfer value to self.is_cloud_tm_used
+		self.is_cloud_tm_used_intvar = IntVar()
 		use_cloud_tm_cbtn = Checkbutton(
 			Tab, text=self.LanguagePack.Option['UseCloudTM'],
-			variable=self.use_cloud_tm_intvar,
-			command=self.use_cloud_tm_option)
+			variable=self.is_cloud_tm_used_intvar,
+			command=self.toggle_use_cloud_tm)
 		use_cloud_tm_cbtn.grid(
 			row=Row, column=7, padx=0, pady=5, sticky=W)
 		use_cloud_tm_cbtn.bind(
@@ -1164,23 +1166,42 @@ class DocumentTranslator(Frame):
 # CLOUD TM OPTIONS CHECKBUTTON FUNCTIONS
 #############################################################################
 
-	def use_cloud_tm_option(self):
+	def toggle_use_cloud_tm(self):
 		"""Decide whether or not to use the Cloud TM.
 		
-		Save the 'Use Cloud TM' option to doc.ini config when toggling
-		the option.
+		Handle the process of using the cloud TM and not using it.
+		Save the 'Use Cloud TM' option to doc.ini config when toggle
+		is successful.
 		"""
-		selected_option_value = self.use_cloud_tm_intvar.get()
-		
-		self.AppConfig.save_config(
-			self.AppConfig.Doc_Config_Path,
-			'Document_Translator', 'use_cloud_tm', selected_option_value)
-		if selected_option_value:
-			print('true')
-			self.renew_my_translator()
-		else:
-			print('false')
-			self.renew_my_translator()
+		try:
+			selected_option_value = self.is_cloud_tm_used_intvar.get()
+			ask_result = messagebox.askquestion(
+				title='Confirmation',
+				message='Are you sure you want to change use cloud TM option?'
+			)
+			if ask_result == 'yes':
+				self.AppConfig.save_config(
+					self.AppConfig.Doc_Config_Path,
+					'Document_Translator', 'use_cloud_tm', selected_option_value)
+				self.is_cloud_tm_used = selected_option_value
+				print(self.is_cloud_tm_used)
+				# self.renew_my_translator()
+			else:
+				# Set the UI back to the previous state
+				# Must convert True/False to 1/0 for intvar
+				if self.is_cloud_tm_used == True:
+					is_cloud_tm_used_intvar = 1
+				else:
+					is_cloud_tm_used_intvar = 0
+				self.is_cloud_tm_used_intvar.set(is_cloud_tm_used_intvar)
+				self.Notice.set('Cloud TM option selection is canceled.')
+				print(self.is_cloud_tm_used)
+				# self.renew_my_translator()
+		except Exception as e:
+			messagebox.showerror(
+				title='Error',
+				message=f'Error while toggling use cloud TM: {e}'
+			)
 
 #############################################################################
 # DB UPLOADER FUNCTIONS
@@ -1290,12 +1311,14 @@ class DocumentTranslator(Frame):
 			self.Uploader_Debugger.insert("end", "\n\r")
 			self.Uploader_Debugger.insert("end", message)
 			
-			result = messagebox.askquestion('Notice',message,icon = 'warning')
+			result = messagebox.askquestion('Notice', message, icon='warning')
 			if result == 'yes':
 				glossary_id = self.ProjectList.get()
-				self.Upload_DB_Processor = Process(target=function_upload_db,
-						args=(self.StatusQueue,self.MyTranslator,
-								glossary_id, compare_result))
+				self.Upload_DB_Processor = Process(
+					target=function_upload_db,
+					args=(
+						self.StatusQueue, self.MyTranslator, glossary_id,
+						compare_result))
 				self.Upload_DB_Processor.start()
 				self.after(DELAY, self.Wait_For_Uploader_Processor)	
 			else:
@@ -1460,7 +1483,7 @@ class DocumentTranslator(Frame):
 		self.SheetRemoval.set(
 			self.Configuration[
 				'Document_Translator']['remove_unselected_sheet'])
-		self.use_cloud_tm_intvar.set(
+		self.is_cloud_tm_used_intvar.set(
 			self.Configuration['Document_Translator']['use_cloud_tm'])
 		
 		try:
@@ -1537,8 +1560,8 @@ class DocumentTranslator(Frame):
 
 		self.glossary_id = self.bottom_panel.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
-		# Get TM file path from Translate Setting UI
-		tm_path = self.TMPath.get()
+		tm_path = self.TMPath.get() # TM file path from Translate Setting UI
+		self.is_cloud_tm_used = self.is_cloud_tm_used_intvar.get()
 		print('Start new process: Generate Translator')
 		self.TranslatorProcess = Process(
 			target=generate_translator,
@@ -1550,6 +1573,7 @@ class DocumentTranslator(Frame):
 				'glossary_id' : self.glossary_id, 
 				'used_tool' : tool_name,
 				'tm_path' : tm_path,
+				'is_cloud_tm_used' : self.is_cloud_tm_used,
 				'bucket_id' : self.bucket_id, 
 				'db_list_uri' : self.db_list_uri, 
 				'project_bucket_id' : self.project_bucket_id,
@@ -1704,7 +1728,7 @@ class DocumentTranslator(Frame):
 		else:
 			self.Options['FixCorruptFileName'] = False	
 
-		if self.use_cloud_tm_intvar.get() == 1:
+		if self.is_cloud_tm_used_intvar.get() == 1:
 			self.Options['use_cloud_tm'] == True
 		else:
 			self.Options['use_cloud_tm'] == False

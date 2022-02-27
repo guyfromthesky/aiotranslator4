@@ -43,7 +43,7 @@ import csv
 from pandas.core.frame import DataFrame
 
 from libs.version import get_version
-from libs.tm_file import TranslationMemoryFile
+from libs.tm_file import LocalTranslationMemoryFile, CloudTranslationMemoryFile
 
 Tool = "translator"
 rev = 4117
@@ -68,7 +68,7 @@ class Translator:
 			glossary_id=None, # Game project ID
 			temporary_tm=None,
 			tm_path=None,
-			backup_path=None,
+			is_cloud_tm_used=False,
 			# Tool that is currently use this libs
 			used_tool='writer',
 			tool_version=None,
@@ -1759,19 +1759,9 @@ class Translator:
 			return
 		else:
 			try:
-				file_root, file_ext = os.path.splitext(self.tm_path)
-				# Load data from TM file to tool's self.current_tm
-				# Load data from csv extension
-				if file_ext == '.csv':
-					# Without dtype paramater, "DtypeWarning: Columns (x)
-					# have mixed types" warning will occur
-					all_tm = pd.read_csv(
-						self.tm_path,
-						dtype={supported_lang: str for supported_lang in
-							['en', 'ko', 'vi', 'jp', 'cn']})
-					self.current_tm = all_tm
+				_, file_ext = os.path.splitext(self.tm_path)
 				# Load data from pkl extension
-				elif file_ext == '.pkl':
+				if file_ext == '.pkl':
 					with open(self.tm_path, 'rb') as pickle_load:
 						all_tm = pickle.load(pickle_load)
 						# print('all tm:', all_tm)
@@ -2242,7 +2232,8 @@ def generate_translator(
 		to_language = 'en', 
 		glossary_id = None,
 		used_tool = None,
-		tm_path= None, 
+		tm_path = None,
+		is_cloud_tm_used = False,
 		bucket_id = 'nxvnbucket',
 		db_list_uri = 'config/db_list.csv',
 		project_bucket_id = 'credible-bay-281107'):	
@@ -2251,7 +2242,8 @@ def generate_translator(
 								to_language = to_language, 
 								glossary_id =  glossary_id, 
 								temporary_tm = temporary_tm,
-								tm_path = tm_path, 
+								tm_path = tm_path,
+								is_cloud_tm_used = is_cloud_tm_used,
 								used_tool = used_tool, 
 								tool_version = ver_num,
 								bucket_id = bucket_id,
