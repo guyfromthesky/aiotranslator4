@@ -356,8 +356,10 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
 
 
 ### TEST RUN ################################################################
-# bucket_id = 'nxvnbucket'
-# glossary_id = 'MSM'
+test_path = ''
+license_path = ''
+bucket_id = 'nxvnbucket'
+glossary_id = 'MSM'
 
 
 # tm_file = LocalTranslationMemoryFile(test_path)

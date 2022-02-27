@@ -394,19 +394,32 @@ class DocumentTranslator(Frame):
 		self.FixCorruptFileName.set(1)
 
 		self.SheetRemoval = IntVar()
-		SheetRemoveBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['SheetRemoval'], variable = self.SheetRemoval)
-		SheetRemoveBtn.grid(row=Row, column=5, columnspan=2,padx=0, pady=5, sticky=W)
-		SheetRemoveBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['SheetRemoval']))
+		SheetRemoveBtn = Checkbutton(
+			Tab, text=self.LanguagePack.Option['SheetRemoval'],
+			variable=self.SheetRemoval)
+		SheetRemoveBtn.grid(
+			row=Row, column=5, columnspan=2,padx=0, pady=5, sticky=W)
+		SheetRemoveBtn.bind(
+			"<Enter>",
+			lambda event : self.Notice.set(
+				self.LanguagePack.ToolTips['SheetRemoval']))
+		
+		### SHEET SELECTION SECTION
 		Row+=1
 
-		Label(Tab, text="Sheet: ").grid(row=Row, column=1, padx=5, pady=5, sticky=W)
-		self.SheetList = Text(Tab, width = 110, height=1) #
-		self.SheetList.grid(row=Row, column=2, columnspan=7, padx=5, pady=5, sticky=E)
+		Label(Tab, text="Sheet: ").grid(
+			row=Row, column=1, padx=5, pady=5, sticky=W)
+		self.SheetList = Text(Tab, width=110, height=1) #
+		self.SheetList.grid(
+			row=Row, column=2, columnspan=7, padx=5, pady=5, sticky=E)
 
+		### PROGRESS BAR
 		Row+=1
-		self.progressbar = Progressbar(Tab, orient=HORIZONTAL, length=1000,  mode='determinate')
+		self.progressbar = Progressbar(
+			Tab, orient=HORIZONTAL, length=1000,  mode='determinate')
 		self.progressbar["maximum"] = 1000
-		self.progressbar.grid(row=Row, column=1, columnspan=8, padx=5, pady=5, sticky=W)
+		self.progressbar.grid(
+			row=Row, column=1, columnspan=8, padx=5, pady=5, sticky=W)
 
 
 	def Generate_TranslateSetting_UI(self, Tab):
@@ -690,7 +703,8 @@ class DocumentTranslator(Frame):
 		#print('Current TM pair: ', len(self.MyTranslator.translation_memory))
 		print('Current Dataframe pair: ', len(self.MyTranslator.current_tm))
 		try:
-			self.MyTranslator.current_tm = self.MyTranslator.current_tm.drop(to_remove)
+			self.MyTranslator.current_tm = self.MyTranslator.current_tm.drop(
+				to_remove)
 		except Exception as e:
 			print('Error:', e)
 		
@@ -748,7 +762,8 @@ class DocumentTranslator(Frame):
 		
 		Display the pair result from the text entered in the search field.
 		"""
-		text = self.search_text.get("1.0", END).replace("\n", "").replace(" ", "")
+		text = self.search_text.get("1.0", END).replace("\n", "").replace(
+			" ", "")
 		self.remove_treeview()
 		print("Text to search: ", text)
 		text = text.lower()
@@ -756,14 +771,25 @@ class DocumentTranslator(Frame):
 			try:
 				if len(self.MyTranslator.translation_memory) > 0:
 					#translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
-					result_from = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory[self.MyTranslator.from_language].str.match(text)]
-					result_to = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory[self.MyTranslator.to_language].str.match(text)]
+					result_from = \
+						self.MyTranslator.translation_memory[
+							self.MyTranslator.translation_memory[
+									self.MyTranslator.from_language] \
+										.str.match(text)]
+					result_to = self.MyTranslator.translation_memory[
+						self.MyTranslator.translation_memory[
+							self.MyTranslator.to_language].str.match(text)]
 					result = result_from.append(result_to)
 					#print('type', type(result), 'total', len(result))
 					if len(result) > 0:
 						for index, pair in result.iterrows():
 							#self.Treeview.insert('', 'end', text= str(pair['ko']), values=([str(pair['en'])]))
-							self.Treeview.insert('', 'end', text= '', values=(index, str(pair[self.MyTranslator.to_language]), str(pair[self.MyTranslator.from_language])))
+							self.Treeview.insert(
+								'', 'end', text='',
+								values=(
+									index,
+									str(pair[self.MyTranslator.to_language]),
+									str(pair[self.MyTranslator.from_language])))
 			except Exception  as e:
 				#print('Error message (TM):', e)
 				pass
@@ -775,7 +801,8 @@ class DocumentTranslator(Frame):
 
 	def save_tm(self):
 		print('Saving config')
-		UpdateProcess = Process(target=self.MyTranslator.export_current_translation_memory,)
+		UpdateProcess = Process(
+			target=self.MyTranslator.export_current_translation_memory,)
 		UpdateProcess.start()
 		self.removed_list = []
 
@@ -793,7 +820,9 @@ class DocumentTranslator(Frame):
 		# label=self.LanguagePack.Menu['LoadException'],
 		# command=self.SelectException) 
 		file.add_separator()
-		file.add_command(label =  self.LanguagePack.Menu['LoadTM'], command = self.select_tm_path) 
+		file.add_command(
+			label=self.LanguagePack.Menu['LoadTM'],
+			command=self.select_tm_path) 
 		file.add_command(
 			label=self.LanguagePack.Menu['CreateTM'], command=self.SaveNewTM)
 		file.add_separator() 
@@ -879,7 +908,8 @@ class DocumentTranslator(Frame):
 
 	# Menu Function
 	def About(self):
-		messagebox.showinfo("About....", "Creator: Giang - evan@nexonnetworks.com")
+		messagebox.showinfo(
+			"About....", "Creator: Giang - evan@nexonnetworks.com")
 
 	def Error(self, ErrorText):
 		messagebox.showinfo('Tool error...', ErrorText)	
@@ -1099,7 +1129,16 @@ class DocumentTranslator(Frame):
 			self.Error('No file selected')	
 		
 	def BtnLoadDocument(self):
-		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectSource'],filetypes = (("All type files","*.docx *.xlsx *.xlsm *.pptx *.msg"), ("Workbook files","*.xlsx *.xlsm"), ("Document files","*.docx"), ("Presentation files","*.pptx"), ("Email files","*.msg"), ("PDF files","*.pdf")), multiple = True)	
+		filename = filedialog.askopenfilename(
+			title=self.LanguagePack.ToolTips['SelectSource'],
+			filetypes=(
+				("All type files","*.docx *.xlsx *.xlsm *.pptx *.msg"),
+				("Workbook files","*.xlsx *.xlsm"),
+				("Document files","*.docx"),
+				("Presentation files","*.pptx"),
+				("Email files","*.msg"),
+				("PDF files","*.pdf")),
+				multiple=True)	
 		if filename != "":
 			self.ListFile = list(filename)
 			self.CurrentSourceFile.set(str(self.ListFile[0]))
@@ -1110,7 +1149,8 @@ class DocumentTranslator(Frame):
 
 	def BtnLoadRawSource(self):
 		#filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectSource'],filetypes = (("Workbook files","*.xlsx *.xlsm *xlsb"), ("Document files","*.docx")), multiple = True)	
-		FolderName = filedialog.askdirectory(title =  self.LanguagePack.ToolTips['SelectSource'])	
+		FolderName = filedialog.askdirectory(
+			title=self.LanguagePack.ToolTips['SelectSource'])	
 		if FolderName != "":
 			self.RawFile = FolderName
 			self.RawSource.set(str(FolderName))
@@ -1185,7 +1225,8 @@ class DocumentTranslator(Frame):
 					self.Uploader_Debugger.insert("end", "\n\r")
 					self.Uploader_Debugger.insert("end", "CSV DB is generated")
 					self.Uploader_Debugger.insert("end", "\n\r")
-					self.Uploader_Debugger.insert("end", "Compare generated DB with the current version")
+					self.Uploader_Debugger.insert(
+						"end", "Compare generated DB with the current version")
 			except queue.Empty:
 				pass	
 			self.after(DELAY, self.Wait_For_Creator_Processor)
@@ -1196,7 +1237,8 @@ class DocumentTranslator(Frame):
 					self.Uploader_Debugger.insert("end", "\n\r")
 					self.Uploader_Debugger.insert("end", "CSV DB is generated")
 					self.Uploader_Debugger.insert("end", "\n\r")
-					self.Uploader_Debugger.insert("end", "Compare generated DB with the current version")
+					self.Uploader_Debugger.insert(
+						"end", "Compare generated DB with the current version")
 			except queue.Empty:
 				pass
 			self.Generate_DB_Processor.terminate()
@@ -1224,7 +1266,8 @@ class DocumentTranslator(Frame):
 			try:
 				compare_result = self.ResultQueue.get(0)
 				self.Uploader_Debugger.insert("end", "\n\r")
-				self.Uploader_Debugger.insert("end", "Wait for user's confirmation.")
+				self.Uploader_Debugger.insert(
+					"end", "Wait for user's confirmation.")
 			except queue.Empty:
 				pass
 			self.Compare_DB_Processor.terminate()
@@ -1257,7 +1300,8 @@ class DocumentTranslator(Frame):
 				self.after(DELAY, self.Wait_For_Uploader_Processor)	
 			else:
 				self.Uploader_Debugger.insert("end", "\n\r")
-				self.Uploader_Debugger.insert("end", 'Canceled, no change is made.')
+				self.Uploader_Debugger.insert(
+					"end", 'Canceled, no change is made.')
 	
 	def Wait_For_Uploader_Processor(self):
 		"""
@@ -1272,9 +1316,13 @@ class DocumentTranslator(Frame):
 				if upload_result == "False":
 					self.Uploader_Debugger.insert("end", "Fail to upload DB")
 				elif upload_result == 'Forbidden':
-					self.Uploader_Debugger.insert("end", "License file hss no permission")
+					self.Uploader_Debugger.insert(
+						"end", "License file hss no permission")
 				elif upload_result == 'LostDB':
-					self.Uploader_Debugger.insert("end", "WARNING: Project ID is removed from the list, please try to upload the DB again.")
+					self.Uploader_Debugger.insert(
+						"end",
+						"WARNING: Project ID is removed from the list, "
+							"please try to upload the DB again.")
 				else:
 					self.Uploader_Debugger.insert("end", "DB updated")
 			except queue.Empty:
@@ -1283,7 +1331,8 @@ class DocumentTranslator(Frame):
 			self.Upload_DB_Processor.terminate()
 	
 	def Confirm_Popup(self, Request, message):
-		MsgBox = simpledialog.askstring(title="Confirmation popup", prompt=message)
+		MsgBox = simpledialog.askstring(
+			title="Confirmation popup", prompt=message)
 
 		if MsgBox == Request:
 			return True
@@ -1373,11 +1422,13 @@ class DocumentTranslator(Frame):
 		self.LicensePath.set(license_file_path)
 		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = license_file_path
 
-		self.TMPath.set(self.Configuration['Translator']['translation_memory'])
+		self.TMPath.set(
+			self.Configuration['Translator']['translation_memory'])
 
 		self.bucket_id = self.Configuration['Translator']['bucket_id']
 		self.db_list_uri = self.Configuration['Translator']['db_list_uri']
-		self.project_bucket_id = self.Configuration['Translator']['project_bucket_id']
+		self.project_bucket_id = \
+			self.Configuration['Translator']['project_bucket_id']
 
 		self.glossary_id = self.Configuration['Translator']['glossary_id']
 
@@ -1446,8 +1497,10 @@ class DocumentTranslator(Frame):
 		index = self.language_list.index(source_language)
 		from_language = self.language_id_list[index]
 		if from_language == self.MyTranslator.to_language:
-			messagebox.showinfo('Error', 'Source and Target language is the same.')	
-			index = self.language_id_list.index(self.MyTranslator.from_language)
+			messagebox.showinfo(
+				'Error', 'Source and Target language is the same.')	
+			index = self.language_id_list.index(
+				self.MyTranslator.from_language)
 			from_language_id = self.language_list[index]
 			self.source_language.set(from_language_id)
 			return
@@ -1477,8 +1530,10 @@ class DocumentTranslator(Frame):
 	def generate_translator_engine(self):
 		self.Notice.set(self.LanguagePack.ToolTips['AppInit'])
 
-		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
-		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
+		target_language = self.language_id_list[
+			self.language_list.index(self.target_language.get())]
+		source_language = self.language_id_list[
+			self.language_list.index(self.source_language.get())]
 
 		self.glossary_id = self.bottom_panel.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
@@ -1523,7 +1578,8 @@ class DocumentTranslator(Frame):
 
 			glossary_list = [""] + self.MyTranslator.glossary_list
 			bucket_db_list = [""] + self.MyTranslator.bucket_db_list
-			self.bottom_panel.project_id_select.set_completion_list(glossary_list)
+			self.bottom_panel.project_id_select \
+				.set_completion_list(glossary_list)
 			self.ProjectList.set_completion_list(bucket_db_list)
 
 			if self.glossary_id in self.MyTranslator.glossary_list:
@@ -1700,7 +1756,10 @@ class DocumentTranslator(Frame):
 
 		#self.TranslatorProcess = Process(target=Execuser, args=(self.MyTranslator, self.ProcessQueue ,self.ResultQueue, self.StatusQueue, SourceDocument, 
 		#Multiple, TranslateFileName, TranslateSheetName, FixCorruptFileName, Sheet, DataMode, SheetRemovalMode, TMUpdateMode, SkipMode, TMTranslate,LastDocument, ))
-		self.TranslatorProcess = Process(target=execute_document_translate, args=(self.MyTranslator, self.ProcessQueue ,self.ResultQueue, self.StatusQueue, self.Options,))
+		self.TranslatorProcess = Process(
+			target=execute_document_translate, args=(
+				self.MyTranslator, self.ProcessQueue, self.ResultQueue,
+				self.StatusQueue, self.Options,))
 		self.TranslatorProcess.start()
 		self.after(DELAY, self.GetCompleteStatus)
 
@@ -1724,21 +1783,26 @@ class DocumentTranslator(Frame):
 					self.Progress.set("Progress: " + str(100) + '%')
 					
 				elif '[Errno 13] Permission denied' in Result:
-					self.Notice.set(self.LanguagePack.ToolTips['TranslateFail'])
-					Result = Result.replace('[Errno 13] Permission denied','File is being in used')
+					self.Notice.set(
+						self.LanguagePack.ToolTips['TranslateFail'])
+					Result = Result.replace(
+						'[Errno 13] Permission denied','File is being in used')
 					self.Error(str(Result))
 					self.progressbar["value"] = 0
 					self.progressbar.update()
 					self.Progress.set("Progress: " + str(0) + '%')
 				elif 'Package not found at' in Result:
-					self.Notice.set(self.LanguagePack.ToolTips['TranslateFail'])
-					Result = Result.replace(' Package not found at ','File is being in used: ')
+					self.Notice.set(
+						self.LanguagePack.ToolTips['TranslateFail'])
+					Result = Result.replace(
+						' Package not found at ','File is being in used: ')
 					self.Error(str(Result))
 					self.progressbar["value"] = 0
 					self.progressbar.update()
 					self.Progress.set("Progress: " + str(0) + '%')
 				else:	
-					self.Notice.set(self.LanguagePack.ToolTips['TranslateFail'])
+					self.Notice.set(
+						self.LanguagePack.ToolTips['TranslateFail'])
 					self.Error(str(Result))
 					self.progressbar["value"] = 0
 					self.progressbar.update()
@@ -1772,26 +1836,37 @@ class BottomPanel(Frame):
 		#Separator(orient=HORIZONTAL).grid(in_=self, row=0, column=1, sticky=E+W, pady=5)
 		Row = 1
 		Col = 1
-		Label(text='Update', width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5, stick=E)
+		Label(text='Update', width=15).grid(
+			in_=self, row=Row, column=Col, padx=5, pady=5, stick=E)
 		Col += 1
-		Label(textvariable=master._update_day, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5, stick=E)
+		Label(textvariable=master._update_day, width=15).grid(
+			in_=self, row=Row, column=Col, padx=0, pady=5, stick=E)
 		master._update_day.set('-')
 		Col += 1
-		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
-		DictionaryLabelA.grid(in_=self, row=Row, column=Col, padx=5, pady=5, stick=E)
+		DictionaryLabelA = Label(
+			text=master.LanguagePack.Label['Database'], width=15)
+		DictionaryLabelA.grid(
+			in_=self, row=Row, column=Col, padx=5, pady=5, stick=E)
 		Col += 1
-		Label(textvariable=master._dictionary_status, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5, stick=E)
+		Label(textvariable=master._dictionary_status, width=15).grid(
+			in_=self, row=Row, column=Col, padx=0, pady=5, stick=E)
 		master._dictionary_status.set('-')
 		Col += 1
-		TMLabel=Label(text=  master.LanguagePack.Label['TM'], width=15)
+		TMLabel=Label(text=master.LanguagePack.Label['TM'], width=15)
 		TMLabel.grid(in_=self, row=Row, column=Col, padx=5, pady=5, sticky=E)
-		TMLabel.bind("<Enter>", lambda event : master.Notice.set(master.LanguagePack.ToolTips['FilePath'] + master.TMPath.get()))
+		TMLabel.bind(
+			"<Enter>",
+			lambda event : master.Notice.set(
+				master.LanguagePack.ToolTips['FilePath'] \
+					+ master.TMPath.get()))
 		Col += 1
-		Label( width= 15, textvariable=master.TMStatus).grid(in_=self, row=Row, column=Col, padx=0, pady=5, sticky=E)
+		Label(width=15, textvariable=master.TMStatus).grid(
+			in_=self, row=Row, column=Col, padx=0, pady=5, sticky=E)
 		master.TMStatus.set('-')
 
 		Col += 1
-		Label(text='Project', width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5, stick=E)
+		Label(text='Project', width=15).grid(
+			in_=self, row=Row, column=Col, padx=5, pady=5, stick=E)
 
 		Col += 1
 		self.project_id_select = AutocompleteCombobox()
@@ -1801,10 +1876,14 @@ class BottomPanel(Frame):
 		if master.glossary_id != None:
 			self.project_id_select.set(master.glossary_id )
 
-		self.project_id_select.bind("<<ComboboxSelected>>", master._save_project_key)
+		self.project_id_select.bind(
+			"<<ComboboxSelected>>", master._save_project_key)
 		Col += 1
-		self.btn_renew_translator = Button(text=master.LanguagePack.Button['RenewDatabase'], width=15, command= master.renew_my_translator, state=DISABLED)
-		self.btn_renew_translator.grid(in_=self, row=Row, column=Col, padx=10, pady=5, stick=E)
+		self.btn_renew_translator = Button(
+			text=master.LanguagePack.Button['RenewDatabase'],
+			width=15, command=master.renew_my_translator, state=DISABLED)
+		self.btn_renew_translator.grid(
+			in_=self, row=Row, column=Col, padx=10, pady=5, stick=E)
 		
 		
 		self.rowconfigure(0, weight=1)
@@ -1840,7 +1919,8 @@ def Optimize(SourceDocument, StatusQueue):
 					output_file = Outputdir + sourcename + ext
 				except OSError:
 					print ("Creation of the directory %s failed" % Outputdir)
-					output_file = os.path.dirname(File) + '/' + sourcename + '_Optmized' + ext
+					output_file = os.path.dirname(File) \
+						+ '/' + sourcename + '_Optmized' + ext
 			else:
 				output_file = Outputdir + sourcename + ext	
 			
@@ -1862,7 +1942,8 @@ def function_create_csv_db(status_queue, result_queue, db_path):
 	except Exception as e:
 		status_queue.put('Error while creating csv db: ' + str(e))
 	
-def function_compare_db(status_queue, result_queue, MyTranslator, glossary_id, address):
+def function_compare_db(
+		status_queue, result_queue, MyTranslator, glossary_id, address):
 	print('Compare DB')
 	print(locals())
 	try:
@@ -1906,7 +1987,8 @@ def function_compare_db(status_queue, result_queue, MyTranslator, glossary_id, a
 
 		all_data = pd.concat([old_db,new_db], ignore_index=True)
 		changes = all_data.drop_duplicates(subset=None, keep= 'last')
-		dupe_accts = changes[changes[Old_Index_ID].duplicated() == True][Old_Index_ID].tolist()
+		dupe_accts = changes[changes[Old_Index_ID].duplicated() == True] \
+			[Old_Index_ID].tolist()
 		dupes = changes[changes[Old_Index_ID].isin(dupe_accts)]
 		
 		change_new = dupes[(dupes["version"] == "new")]
@@ -1927,10 +2009,12 @@ def function_compare_db(status_queue, result_queue, MyTranslator, glossary_id, a
 										axis='columns',
 										keys=['old', 'new'],
 										join='outer')
-			df_all_changes = df_all_changes.swaplevel(axis='columns')[change_new.columns[0:]]
+			df_all_changes = df_all_changes.swaplevel(axis='columns')[
+				change_new.columns[0:]]
 			#df_all_changes.fillna("#NA")
 			
-			df_changed = df_all_changes.groupby(level=0, axis=1).apply(lambda frame: frame.apply(report_diff, axis=1))
+			df_changed = df_all_changes.groupby(level=0, axis=1).apply(
+				lambda frame: frame.apply(report_diff, axis=1))
 			#create a list of text columns (int columns do not have '{} ---> {}')
 			df_changed = df_changed.reset_index()
 			
@@ -1983,7 +2067,8 @@ def report_diff(x):
 		#return x[0]
 		return x[0]
 
-def function_upload_db(status_queue, result_queue, MyTranslator, glossary_id, result):
+def function_upload_db(
+		status_queue, result_queue, MyTranslator, glossary_id, result):
 	print('Upload DB')
 	print(locals())
 	address = result['path']
@@ -2142,15 +2227,19 @@ def function_create_db_data(DB_Path):
 									#print('Current language: ', language)
 									if list_col[language] != '':
 										
-										cell_adress = list_col[language] + str(i+1)
+										cell_adress = list_col[language] \
+											+ str(i+1)
 										try:
-											raw_cell_value = str(database[cell_adress].value)
+											raw_cell_value = str(
+												database[cell_adress].value)
 										except:
 											raw_cell_value = None	
 
 										if raw_cell_value not in ['', None]:
 											valid = True
-											cell_value = raw_cell_value.replace('\r', '').replace('\n', '')	
+											cell_value = raw_cell_value \
+												.replace('\r', '') \
+												.replace('\n', '')	
 
 											#if sheetname != 'header':
 											#	cell_value = cell_value.lower()
@@ -2164,9 +2253,22 @@ def function_create_db_data(DB_Path):
 										db_entry[language] = ''
 								if valid:
 									if sheetname != 'header':
-										db_writer.writerow(['', db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP'], db_entry['VI'], sheetname])
+										db_writer.writerow([
+											'',
+											db_entry['KO'],
+											db_entry['EN'],
+											db_entry['CN'],
+											db_entry['JP'],
+											db_entry['VI'],
+											sheetname])
 									elif sheetname != 'info':
-										header_writer.writerow([db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP'], db_entry['VI'], sheetname])
+										header_writer.writerow([
+											db_entry['KO'],
+											db_entry['EN'],
+											db_entry['CN'],
+											db_entry['JP'],
+											db_entry['VI'],
+											sheetname])
 								#db_object['db'][sheetname].append(db_entry)
 
 				
@@ -2192,7 +2294,8 @@ def function_create_db_data(DB_Path):
 def basse64_encode(string_to_encode):
 	if string_to_encode == '':
 		return string_to_encode
-	raw_encoded_string =  str(base64.b64encode(string_to_encode.encode('utf-8')))
+	raw_encoded_string =  str(
+		base64.b64encode(string_to_encode.encode('utf-8')))
 	encoded_string = re.findall(r'b\'(.+?)\'', raw_encoded_string)[0]
 	
 	return encoded_string
@@ -2205,7 +2308,8 @@ def base64_decode(string_to_decode):
 
 ###########################################################################################
 
-def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQueue, Options,):
+def execute_document_translate(
+		MyTranslator, ProgressQueue, ResultQueue, StatusQueue, Options,):
 	print('Creating process for Translator...')
 	Start = time.time()
 
@@ -2262,15 +2366,18 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 			if Options['TranslateFileName']:
 				Translated = MyTranslator.translate(Newsourcename)
 				if Translated != False:
-					TranslatedName = re.sub(r'[\\/\:*"<>\|\.%\$\^&£]', '', Translated)
+					TranslatedName = re.sub(
+						r'[\\/\:*"<>\|\.%\$\^&£]', '', Translated)
 				else:
 					TranslatedName = Newsourcename
 			else:
 				TranslatedName	= Newsourcename
 			if '.xls' not in ext:
-				output_file = Outputdir + '/' + Preflix + TranslatedName + '_' + timestamp + ext
+				output_file = Outputdir + '/' + Preflix + TranslatedName + \
+					'_' + timestamp + ext
 			else:
-				output_file = Outputdir + '/' + Preflix + TranslatedName + '_' + timestamp + '.xlsx'
+				output_file = Outputdir + '/' + Preflix + TranslatedName + \
+					'_' + timestamp + '.xlsx'
 			#print('Output file name: ', output_file)
 		
 		Options['SourceDocument'] = newPath
@@ -2279,7 +2386,10 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 		if ext == '.docx':
 			#Result = translate_docx(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:
-				Result = translate_docx(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
+				Result = translate_docx(
+					progress_queue=ProgressQueue, result_queue=ResultQueue,
+					status_queue=StatusQueue, MyTranslator=MyTranslator,
+					Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
 				StatusQueue.put(str(ErrorMsg))
@@ -2288,7 +2398,10 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 		elif ext in ['.xlsx', '.xlsm']:
 			#Result = translate_workbook(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			try:
-				Result = translate_workbook(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
+				Result = translate_workbook(
+					progress_queue=ProgressQueue, result_queue=ResultQueue,
+					status_queue=StatusQueue, MyTranslator=MyTranslator,
+					Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
 				StatusQueue.put(str(ErrorMsg))
@@ -2296,7 +2409,10 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 		elif ext == '.msg':
 			#Result = translate_msg(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
 			try:
-				Result = translate_msg(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
+				Result = translate_msg(
+					progress_queue=ProgressQueue, result_queue=ResultQueue,
+					status_queue=StatusQueue, MyTranslator=MyTranslator,
+					Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
 
@@ -2321,7 +2437,8 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 			End = time.time()
 			Total = End - Start
 			StatusQueue.put('Total time spent: ' + str(Total) + ' second.')
-			StatusQueue.put('Translated file: ' + Preflix + ' ' + TranslatedName + '_' + timestamp + ext)
+			StatusQueue.put('Translated file: ' + Preflix + ' ' + \
+				TranslatedName + '_' + timestamp + ext)
 		else:
 			Message = 'Fail to translate document, details: \n' + Result
 			ResultQueue.put(str(Message))
@@ -2330,9 +2447,12 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 			newTM = MyTranslator.append_translation_memory()
 			MyTranslator.send_tracking_record(file_name = baseName)
 			StatusQueue.put('Source: ' + str(baseName))
-			StatusQueue.put('TM usage: ' + str(MyTranslator.last_section_tm_request))
-			StatusQueue.put('API usage: ' + str(MyTranslator.last_section_api_usage))
-			StatusQueue.put('Invalid request: ' + str(MyTranslator.last_section_invalid_request))
+			StatusQueue.put('TM usage: ' + str(
+				MyTranslator.last_section_tm_request))
+			StatusQueue.put('API usage: ' + str(
+				MyTranslator.last_section_api_usage))
+			StatusQueue.put('Invalid request: ' + str(
+				MyTranslator.last_section_invalid_request))
 			StatusQueue.put('TM In-memory: ' + str(mem_tm))
 			StatusQueue.put('TM append this section: ' + str(newTM))
 			#StatusQueue.put('TM In-memory: ' + str(len(MyTranslator.TMManager)))
@@ -2358,7 +2478,8 @@ def send_fail_request(error_message):
 		AppConfig = ConfigLoader()
 		Configuration = AppConfig.Config
 		print('JSON file: ', Configuration['license_file']['path'])
-		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = Configuration['license_file']['path']
+		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = \
+			Configuration['license_file']['path']
 		client = logging.Client()
 	except:
 
@@ -2418,8 +2539,10 @@ def main():
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
 
 	try:
-		application = DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue, status_queue = StatusQueue
-		, my_translator_queue = MyTranslatorQueue, my_db_queue = MyDB, tm_manager = TMManager)
+		application = DocumentTranslator(
+			root, process_queue=ProcessQueue, result_queue=ResultQueue,
+			status_queue=StatusQueue, my_translator_queue=MyTranslatorQueue,
+			my_db_queue=MyDB, tm_manager=TMManager)
 		root.mainloop()
 		#print('Root is terminated sending logging from current session')
 		#app.MyTranslator.send_tracking_record()
