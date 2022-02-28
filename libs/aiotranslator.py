@@ -115,7 +115,9 @@ class Translator:
 		self.init_logging_file()
 
 		#self.SpecialSheets = ['kr_only', 'en_only', 'name']
-		self.special_tag = ['header', 'name', 'en_only', 'kr_only', 'cn_only', 'jp_only', 'vi_only', 'exception']
+		self.special_tag = [
+			'header', 'name', 'en_only', 'kr_only', 'cn_only', 'jp_only',
+			'vi_only', 'exception']
 		self.supported_language = ['ko', 'en', 'cn', 'jp', 'vi']
 		self.supported_language_code = ['ko', 'en', 'zh-TW', 'ja', 'vi']
 		self.glossary_language = ['ko', 'en']

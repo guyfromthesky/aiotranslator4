@@ -9,9 +9,10 @@ __author__ = 'anonymous'
 # System, standard libs
 import os
 import sys
-import datetime
+from datetime import datetime
 import re
 from io import StringIO
+import json
 
 # Data modules
 import pandas as pd
@@ -27,15 +28,21 @@ class TranslationMemoryFile:
 
     Attributes:
         ext -- TM file extension. Only support .csv (default '.csv')
+        info_ext -- TM info file extension. Support .json (default '.json')
         data -- @property Data in the TM. Accept only pandas DataFrame class.
         supported_languages -- Languages that the TM supports. Used to
             select columns in self.data DataFrame.
+        length -- Length len(data) of the DataFrame data in TM file.
+        last_modified -- Time when data is modified.
     """
     def __init__(self):
         # Set up default value
         self.ext = '.csv'
+        self.info_ext = '.json'
         self._data = pd.DataFrame()
         self.supported_languages = ['ko', 'en', 'cn', 'jp', 'vi']
+        self.length = 0
+        self.last_modified = None
 
     @property
     def data(self):
@@ -47,6 +54,7 @@ class TranslationMemoryFile:
         """Validate data set to self.data.
 
         Only allow pandas DataFrame type.
+        Also update the last modified time.
 
         Args:
             data -- Data assigned to the TM. Must be an instance of
@@ -59,11 +67,26 @@ class TranslationMemoryFile:
         # Only accept DataFrame type data
         if isinstance(data, pd.DataFrame):
             self._data = data
+            self.length = len(data)
+            self.last_modified = datetime.now()
         else:
             raise TypeError('Invalid data type. Data type is not '
                 f'an instance of DataFrame: {type(data)}' )
+    
 
+    def append_datetime(self):
+        """Return a string of the current time format using datetime.now().
+        
+        The decimal in second is removed. Purpose is to add the current time
+        to a file name.
+        """
+        # Convert to string and replace ":" in time format
+        now = str(datetime.now()).split('.')[0].replace(':', '')
+        return ('_' + now.replace('-', ''))
 
+###############################################################################
+### LocalTranslationMemoryFile CLASS
+###############################################################################
 class LocalTranslationMemoryFile(TranslationMemoryFile):
     """TM file object on a user computer.
     
@@ -73,12 +96,17 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
     Attributes:
         path -- @property path to the TM file.
         ext -- TM file extension. Only support .csv. (default '.csv')
-        basename -- Full filename of the TM.
+        info_ext -- TM info file extension. Support .json (default '.json')
         backup_path -- Path of the backup TM file.
         tm_version -- TM version. (default 4)
         supported_languages -- Languages that the TM supports. Used to
             select columns in self.data DataFrame.
         data -- @property Data in the TM. Accept only pandas DataFrame class.
+        length -- Length len(data) of the DataFrame data in TM file.
+        info_path -- Path to the TM info file.
+        info_ext -- Extension of TM info file.
+        last_modified -- Time when data is modified. Loads value from
+            TM info file on init. If there's no info file, create a new one.
     """
     def __init__(self, path: str):
         """
@@ -86,32 +114,61 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
             path -- Path to the TM file.
 
         Raises:
-            Exception -- Error while initializing TM file.
+            Exception -- Error while initializing path: Not a file path
+                or csv extension.
+            Exception -- Error while loading TM info file on init.
             TypeError -- Error while initializing data.
                 Invalid TM data type. Must be pandas DataFrame.
         """
         super().__init__()
         # Set up default value
         try:
-            ### INIT SELF.PATH
+            ### INIT SELF.PATH, SELF.INFO_PATH, SELF.INFO_EXT,
+            ### SELF.LAST_MODIFIED
             # Only accepts file path and csv extension
+            # Init other paths along the way
             if os.path.isfile(path) and path.endswith('.csv'):
                 self._path = path # Set up property for self.path
-                _, self.ext = os.path.splitext(path)
-                self.basename = os.path.basename(path)
+                tm_file_root, self.ext = os.path.splitext(path)
+                tm_filename = os.path.basename(tm_file_root)
+                self.info_path = f'{tm_file_root}_info.{self.info_ext}'
+                # Load the TM info file to get last_modified value in a
+                # json format.
+                try:
+                    if os.path.exists(self.info_path) and \
+                            os.path.isfile(self.info_path):
+                        with open(self.info_path, 'r') as tm_info_file:
+                            tm_info_data = json.loads(tm_info_file.read())
+                            self.last_modified = datetime.fromtimestamp(
+                                tm_info_data['last_modified'])
+                    # Create a new file if the file doesn't exist
+                    else:
+                        with open(self.info_path, 'w') as tm_info_file:
+                            self.last_modified = datetime.now()
+                            tm_info_data = {
+                                'last_modified': datetime.timestamp(
+                                    self.last_modified)
+                            }
+                            tm_info_file.write(json.dumps(tm_info_data))
+                except Exception as e:
+                    print(f'Error while loading TM info file on init: {e}')
             else:
                 raise Exception('Error while initializing path: '
                     f'Not a file path or csv extension: {path}')
             
             self.backup_path = self.correct_path_os(
                 f"{os.environ['appdata']}\\AIO Translator\\Backup\\"
-                    f"{self.basename}_backup{self.ext}")
+                    f"{tm_filename}_backup{self.ext}")
             self.tm_version = 4
-            ### INIT SELF.DATA
+            ### INIT SELF.DATA, SELF.LENGTH
             data = pd.read_csv(self.path, usecols=self.supported_languages)
             # Only retrieve data from pandas DataFrame
             if isinstance(data, pd.DataFrame):
+                # Use self._data instead of self.data so that last_modified
+                # attribute won't be changed when loading the TM
+                # on program start because of the parent class
                 self._data = data
+                self.length = len(data)
             else:
                 raise TypeError('Error while initializing TM data. '
                     f'Invalid TM data type: {type(data)}. '
@@ -132,6 +189,7 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
         Validate the path to TM file when initializing a class instance.
         Also set the basename of the TM file.
         Supported extension: .csv
+        Assign value to the path to the TM info file along the way.
 
         Args:
             path -- str path that gets directly on initialization.
@@ -144,14 +202,14 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
         """
         try:
             if os.path.isfile(path):
-                _, file_ext = os.path.splitext(path)
-                if file_ext == '.csv':
-                    self.basename = os.path.basename(path)
+                tm_file_root, tm_file_ext = os.path.splitext(path)
+                if tm_file_ext == '.csv':
                     self.ext = '.csv'
                     self._path = self.correct_path_os(path)
+                    self.info_path = f'{tm_file_root}_info.{self.info_ext}'
                 else:
-                    raise TypeError(f'Incorrect file format: {file_ext}. '
-                        'Must be .csv.')
+                    raise TypeError(f'Incorrect file extension: '
+                        f'{tm_file_ext}. Must be .csv.')
             else:
                 raise Exception('Cannot initialize TM file path '
                     'because path is not a file: ', path)
@@ -175,85 +233,33 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
             return str(path).replace('\\', '//')
         return path
 
-    def export_data_to_file(self):
-        """Create a csv file with the data."""
-        self.data.to_csv(self.path)
-
-    ### NOT USED: VER 1.1
-    # def is_csv(self, path: str):
-    #     """Validate if a file is csv extension.
+    def write_file(self):
+        """Create a csv file with the data and json file with info data.
         
-    #     Args:
-    #         path -- Path of the TM file to validate.
-    #     """
-    #     if path.endswith('.csv'):
-    #         return True
-    #     else:
-    #         return False
+        Raises:
+            Exception -- Error while writing TM files.
+        """
+        try:
+            self.data.to_csv(self.path)
+            with open(self.info_path, 'w') as tm_info_file:
+                tm_info_data = {
+                    'last_modified': self.last_modified
+                }
+                tm_info_file.write(json.dumps(tm_info_data))
+        except Exception as e:
+            print(f'Error while writing TM files: {e}')
 
-    ### DEPRICATED: VER 1.0
-    # def get_data(self):
-    #     """Retrieve data from TM File.
 
-    #     Only allow pandas DataFrame type.
-
-    #     Returns:
-    #         pandas DataFrame in the TM file.
-
-    #     Raises:
-    #         TypeError -- Invalid data type.
-    #             Data type is not an instance of DataFrame
-    #     """
-    #     # Only accept DataFrame type data
-    #     data = pd.read_csv(self.path, usecols=self.supported_languages)
-    #     if isinstance(data, pd.DataFrame):
-    #         return data
-    #     else:
-    #         raise TypeError('Invalid data type. Data type is not '
-    #             'an instance of DataFrame: ', type(data))
-    
-    ### DEPRICATED: VER 1.0
-    # def set_path(self, file_path: str=None):
-    #     """Set a new path of the TM file.
-        
-    #     Args:
-    #         path -- New selected path for TM file.
-    #     Raises:
-    #         Exception -- Error while setting TM file path.
-    #         Exception -- Incorrect extension while setting TM file path.
-    #         Exception -- The path is not a file while setting TM file path.
-    #     """
-    #     try:
-    #         file_path = self.correct_path_os(file_path)
-    #         if os.path.isfile(file_path):
-    #             file_basename = os.path.basename(file_path)
-    #             file_name, file_ext = os.path.splitext(file_basename)
-    #             # Only support .csv
-    #             if file_ext == '.csv':
-    #                 self.path = file_path
-    #                 self.name = file_name
-    #             else:
-    #                 raise Exception('Incorrect extension while'
-    #                     'setting TM file path.')
-    #         else:
-    #             raise Exception('The path is not a file while'
-    #                 'setting TM file path.')
-    #     except Exception as e:
-    #         print('Error while setting TM file path: ', e)
-
-    ### DEPRICATED: VER 1.0
-    # def init_path(self):
-    #     """Return str of the path to the TM file."""
-    #     return self.correct_path_os(
-    #         f'{self.dirname}\\{self.name}{self.ext}')
-
+###############################################################################
+### CloudTranslationMemoryFile CLASS
+###############################################################################
 class CloudTranslationMemoryFile(TranslationMemoryFile):
     """TM file object in Google Cloud Storage.
     
     Info about TM file such as file name, data in the TM and methods to
     modify them.
-    Most of the attributes should not be changed by any means except the
-    following: data.
+    Most of the attributes should not be changed by value assignment
+    except the following: data.
 
     Attributes:
         bucket -- Bucket in the cloud storage. Currently using Google Cloud
@@ -261,13 +267,21 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
         glossary_id -- Name of the project.
         path -- The URI path of the TM in cloud storage.
         ext -- TM file extension. Only support .csv. (default '.csv')
-        blob -- A dict/object containing info and data of a specific
+        blob -- A dict/object containing the data of TM file on a specific
             cloud storage.
         basename -- File basename.
         tm_version -- TM version. (default 4)
         supported_languages -- Languages that the TM supports. Used to
             select columns in self.data DataFrame.
         data -- @property Data in the TM. Accept only pandas DataFrame class.
+        length -- Length len(data) of the DataFrame data in TM file.
+        info_ext -- TM info file extension. Support .json (default '.json')
+        info_path -- The URI path of the TM info file in cloud storage.
+        info_blob -- A dict/object containing the data of TM info file
+            on a specific cloud storage.
+        last_modified -- Time when data is modified. Currently this class
+            is not used this attribute.
+        upload_time -- Time when TM file is uploaded to the cloud storage.
     """
     def __init__(self,
             license_path: str, *,
@@ -304,8 +318,17 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
                 self.blob = self.bucket.get_blob(self.path)
             except Exception as e:
                 print('Error while intitializing blob in Cloud TM file: ', e)
+            ### INIT SELF.INFO_BLOB
+            self.info_ext = '.json'
+            self.info_path = f"TM/{self.glossary_id}/TM_{self.glossary_id}" \
+                f"_info{self.info_ext}"
+            self.info_blob = self.bucket.get_blob(self.info_path)
             
-            ### INIT SELF.DATA
+            self.upload_time = None
+            ### INIT SELF.DATA, SELF.LENGTH
+            # Use self._data instead of self.data so that last_modified
+            # attribute won't be changed when loading the TM
+            # on program start because of the parent class
             self._data = self.get_data_from_blob()
         except Exception as e:
             print('Error while initializing Cloud TM file: ', e)
@@ -313,6 +336,8 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
 
     def get_data_from_blob(self):
         """Retreive and return TM data from the blob.
+
+        Also retreive the TM info from info blob.
         
         Raises:
             Exception -- Error while getting data from Cloud TM blob.
@@ -323,11 +348,17 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             # instance.
             # Without dtype paramater, "DtypeWarning: Columns (x)
             # have mixed types" warning will occur
-            df = pd.read_csv(
+            data = pd.read_csv(
                 stringio_data,
                 sep=',',
                 dtype={lang: str for lang in self.supported_languages})
-            return df
+            self.length = len(data)
+            # TM info
+            # tm_info_data is json format
+            tm_info_data = json.loads(self.info_blob.download_as_text())
+            self.upload_time = datetime.fromtimestamp(
+                tm_info_data['upload_timestamp'])
+            return data
         except Exception as e:
             print(f'Error while getting data from Cloud TM blob: {e}')
 
@@ -335,46 +366,53 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
         """Upload the TM file to the blob.
         
         Args:
-            path -- Path to the local TM file on user computer.
+            path -- Path to the local TM file on user computer to upload
+                the file.
 
         Raises:
             Exception -- Error while uploading TM file to Cloud TM blob.
         """
         try:
-            if self.blob != None:
+            tm_info_data = {
+                'upload_timestamp': datetime.now().timestamp(),
+            }
+
+            if self.blob != None or self.info_blob != None:
                 self.blob.upload_from_filename(path)
-                print('Uploaded the blob to cloud.')
+                # Record the upload time and length in another blob
+                self.info_blob.upload_from_string(json.dumps(tm_info_data))
+                print('Uploaded TM to cloud.')
             # Create a new blob if not exist by using blob object
             # instead of get_blob method
             else:
                 blob = self.bucket.blob(self.path)
+                info_blob = self.bucket.blob(self.info_path)
                 blob.upload_from_filename(path)
-                print('A new blob has been created for cloud TM upload.')
+                # Record the upload time and length in another blob
+                info_blob.upload_from_string(json.dumps(tm_info_data))
+                print('New blobs have been created for cloud TM upload.')
         except Exception as e:
-            print(f'Error while uploading TM file to the Cloud TM blob: {e}')
+            print('Error while uploading TM file and info file to the '
+                f'cloud storage: {e}')
 
 
 
 ### TEST RUN ################################################################
-test_path = ''
-license_path = ''
+test_path = r''
+license_path = r''
 bucket_id = 'nxvnbucket'
 glossary_id = 'MSM'
 
-
 # tm_file = LocalTranslationMemoryFile(test_path)
-# # tm_file.path = 'bca'
 # print(tm_file.path)
 # print(tm_file.ext)
-# # print(tm_file.data)
-
+# print(tm_file.length)
+# print(tm_file.last_modified)
 
 # gcs_tm_file = CloudTranslationMemoryFile(
 #     license_path,
 #     bucket_id=bucket_id,
 #     glossary_id=glossary_id)
 # # print(gcs_tm_file.data)
-# gcs_tm_file.upload_to_blob(test_path)
-
-# mydata = gcs_tm_file.get_data()
-# print(type(mydata))
+# # gcs_tm_file.upload_to_blob(test_path)
+# gcs_tm_file.get_data_from_blob()
