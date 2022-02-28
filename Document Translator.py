@@ -1362,58 +1362,6 @@ class DocumentTranslator(Frame):
 		else:
 			return False
 
-# ###############################################################################
-# # TM UPLOADER FUNCTIONs
-# ###############################################################################
-
-# 	def browse_convert_tm_file(self):
-# 		"""Browse the local TM file for conversion to csv.
-
-# 		Display the selected path to the corresponding entry_file_path Entry.
-# 		Supported extensions: .pkl
-# 		"""
-# 		filename = filedialog.askopenfilename(
-# 			title=self.LanguagePack.ToolTips['SelectSource'],
-# 			filetypes=(("Pickle files", "*.pkl"),),
-# 			multiple=False)
-# 		if filename != "":
-# 			self.convert_tm_path = self.CorrectPath(filename)
-# 			self.textvar_convert_tm_path.set(self.convert_tm_path)
-# 			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
-# 		else:
-# 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
-
-# 	def browse_upload_tm_file(self):
-# 		"""Browse the local TM file to upload the TM to Google cloud.
-
-# 		Display the selected path to the corresponding entry_file_path Entry.
-# 		Supported extensions: .csv
-# 			File name must start with "TM_"
-# 		"""
-# 		filename = filedialog.askopenfilename(
-# 			title=self.LanguagePack.ToolTips['SelectSource'],
-# 			filetypes=(("TM Comma-separated Values files", "TM_*.csv"),),
-# 			multiple=False)
-# 		if filename != "":
-# 			self.upload_tm_path = self.CorrectPath(filename)
-# 			self.textvar_upload_tm_path.set(self.upload_tm_path)
-# 			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
-# 		else:
-# 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
-	
-# 	def upload_tm_file_to_cloud(self):
-# 		glossary_id = self.ProjectList.get()
-# 		result = self.Confirm_Popup(
-# 			glossary_id, 'Please type \''+ glossary_id + "\' to confirm.")
-		
-# 		if result == True:
-# 			tm_path = self.upload_tm_path.get()
-# 			self.Generate_DB_Processor = Process(
-# 				target=None,
-# 				args=(self.StatusQueue, self.ResultQueue, tm_path))
-# 			self.Generate_DB_Processor.start()
-# 			self.after(DELAY, None)
-
 	def onExit(self):
 		self.quit()
 

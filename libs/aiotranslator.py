@@ -44,6 +44,7 @@ from pandas.core.frame import DataFrame
 
 from libs.version import get_version
 from libs.tm_file import LocalTranslationMemoryFile, CloudTranslationMemoryFile
+from libs.aioconfigmanager import ConfigLoader
 
 Tool = "translator"
 rev = 4117
@@ -123,7 +124,30 @@ class Translator:
 		self.glossary_language = ['ko', 'en']
 		# Obsoleted
 		#self.init_db_data()
-
+		
+		### INIT APP CONFIG: SELF.APPCONFIG
+		self.app_config = ConfigLoader()
+		### INIT TM FILE OBJECTS: SELF.TM_FILE, SELF.GCS_TM_FILE
+		if is_cloud_tm_used:
+			print('Cloud TM is used.')
+			# Use a default path when using Cloud TM to get data from
+			# cloud storage more conveniently
+			self.gcs_tm_file = CloudTranslationMemoryFile(
+				self.app_config.Config['Translator']['license_file'],
+				bucket_id=bucket_id,
+				glossary_id=glossary_id)
+			if os.path.exists(self.gcs_tm_file.local_path):
+				self.tm_file = LocalTranslationMemoryFile(
+					self.gcs_tm_file.local_path)
+			else:
+				os.mkdir(self.gcs_tm_file.local_path)
+				self.tm_file = LocalTranslationMemoryFile(
+					self.gcs_tm_file.local_path)
+			
+		else:
+			self.tm_file = LocalTranslationMemoryFile(tm_path)
+			print('Cloud TM is not used.')
+		
 		self.temporary_tm = temporary_tm
 
 		self.translation_memory = None
@@ -154,7 +178,8 @@ class Translator:
 			# List of the glossary uploaded.
 			# The list is also the list that display in the tool.
 			self.load_config_from_bucket()
-			print('Total time to load bucket list:', str(datetime.now() - current_time))
+			print('Total time to load bucket list:',
+				str(datetime.now() - current_time))
 			current_time = datetime.now()
 			# Replace this function with the glossary init
 			# Get the glossary list and length
@@ -165,7 +190,8 @@ class Translator:
 			self.prepare_glossary_info()
 
 
-			print('Total time to load db + glossary:', str(datetime.now() - current_time))
+			print('Total time to load db + glossary:',
+				str(datetime.now() - current_time))
 		except Exception  as e:
 			print("Error when loading bucket:", e)
 
@@ -214,14 +240,20 @@ class Translator:
 	
 	def init_logging_file(self):
 		if self.used_tool == 'document':
-			self.tracking_log = self.config_path + '\\AIO Translator\\d_logging.pkl'
-			self.invalid_request_log = self.config_path + '\\AIO Translator\\d_invalid_request_logging.pkl'
-			self.tm_request_log = self.config_path + '\\AIO Translator\\d_tm_request_logging.pkl'
+			self.tracking_log = self.config_path \
+				+ '\\AIO Translator\\d_logging.pkl'
+			self.invalid_request_log = self.config_path \
+				+ '\\AIO Translator\\d_invalid_request_logging.pkl'
+			self.tm_request_log = self.config_path \
+				+ '\\AIO Translator\\d_tm_request_logging.pkl'
 			#self.false_request = self.config_path + '\\AIO Translator\\false_request.pkl'
 		else:
-			self.tracking_log = self.config_path + '\\AIO Translator\\logging.pkl'
-			self.invalid_request_log = self.config_path + '\\AIO Translator\\invalid_request_logging.pkl'
-			self.tm_request_log = self.config_path + '\\AIO Translator\\tm_request_logging.pkl'
+			self.tracking_log = self.config_path \
+				+ '\\AIO Translator\\logging.pkl'
+			self.invalid_request_log = self.config_path \
+				+ '\\AIO Translator\\invalid_request_logging.pkl'
+			self.tm_request_log = self.config_path \
+				+ '\\AIO Translator\\tm_request_logging.pkl'
 		
 		self.tracking_log = self.correct_path_os(self.tracking_log)
 		self.invalid_request_log = self.correct_path_os(self.invalid_request_log)
@@ -233,14 +265,6 @@ class Translator:
 			return str(path).replace('\\', '//')
 		return path
 	
-	### NOT COMPLETE
-	# def init_backup_path(self):
-	# 	"""Load the back up path of the tool on start."""
-	# 	if sys.platform.startswith('win'):
-	# 		self.backup_path = os.environ['APPDATA']
-	# 	else:
-	# 		self.config_path = os.getcwd()
-
 	def get_user_name(self):
 		try:
 			if self.OS == 'win':
@@ -291,8 +315,10 @@ class Translator:
 	def init_glossary(self):
 		self.Client = translator.TranslationServiceClient()	
 		self.Parent = f"projects/{self.project_id}/locations/{self.location}"
-		self.Glossary = self.Client.glossary_path(self.project_id, self.location, self.glossary_id)
-		self.Glossary_Config = translator.TranslateTextGlossaryConfig(glossary=self.Glossary)
+		self.Glossary = self.Client.glossary_path(
+			self.project_id, self.location, self.glossary_id)
+		self.Glossary_Config = translator.TranslateTextGlossaryConfig(
+			glossary=self.Glossary)
 
 	# Check and remove later
 	def get_time_stamp(self):

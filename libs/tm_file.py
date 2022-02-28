@@ -84,6 +84,22 @@ class TranslationMemoryFile:
         now = str(datetime.now()).split('.')[0].replace(':', '')
         return ('_' + now.replace('-', ''))
 
+    def correct_path_os(self, path) -> str:
+        """Replace backward slash with forward slash.
+
+        Replace if OS is not Windows.
+        
+        Args:
+            path -- Path to replace backward slash.
+
+        Returns:
+            A str path with backward slash is replaced with forward slash
+            if OS is not Windows.
+        """
+        if not sys.platform.startswith('win'):
+            return str(path).replace('\\', '//')
+        return path
+
 ###############################################################################
 ### LocalTranslationMemoryFile CLASS
 ###############################################################################
@@ -94,16 +110,19 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
     modify them.
 
     Attributes:
-        path -- @property path to the TM file.
+        path -- @property path to the TM file. Path is validated depending
+            on the OS.
+        backup_path -- Path of the backup TM file. Path is validated depending
+            on the OS.
+        info_path -- Path to the TM info file. Path is validated depending
+            on the OS.
         ext -- TM file extension. Only support .csv. (default '.csv')
         info_ext -- TM info file extension. Support .json (default '.json')
-        backup_path -- Path of the backup TM file.
         tm_version -- TM version. (default 4)
         supported_languages -- Languages that the TM supports. Used to
             select columns in self.data DataFrame.
         data -- @property Data in the TM. Accept only pandas DataFrame class.
         length -- Length len(data) of the DataFrame data in TM file.
-        info_path -- Path to the TM info file.
         info_ext -- Extension of TM info file.
         last_modified -- Time when data is modified. Loads value from
             TM info file on init. If there's no info file, create a new one.
@@ -131,7 +150,8 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
                 self._path = path # Set up property for self.path
                 tm_file_root, self.ext = os.path.splitext(path)
                 tm_filename = os.path.basename(tm_file_root)
-                self.info_path = f'{tm_file_root}_info.{self.info_ext}'
+                self.info_path = self.correct_path_os(
+                    f'{tm_file_root}_info.{self.info_ext}')
                 # Load the TM info file to get last_modified value in a
                 # json format.
                 try:
@@ -156,9 +176,13 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
                 raise Exception('Error while initializing path: '
                     f'Not a file path or csv extension: {path}')
             
-            self.backup_path = self.correct_path_os(
-                f"{os.environ['appdata']}\\AIO Translator\\Backup\\"
-                    f"{tm_filename}_backup{self.ext}")
+            ### INIT BACKUP PATH: SELF.BACKUP_PATH
+            if sys.platform.startswith('win'):
+                self.backup_path = self.correct_path_os(
+                    f"{os.environ['APPDATA']}\\AIO Translator\\Backup\\"
+                        f"{tm_filename}_backup{self.ext}")
+            else:
+                self.backup_path = os.getcwd()
             self.tm_version = 4
             ### INIT SELF.DATA, SELF.LENGTH
             data = pd.read_csv(self.path, usecols=self.supported_languages)
@@ -187,6 +211,7 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
         """Set path attribute via self._path.
         
         Validate the path to TM file when initializing a class instance.
+        Path is validated depending on the OS.
         Also set the basename of the TM file.
         Supported extension: .csv
         Assign value to the path to the TM info file along the way.
@@ -216,22 +241,6 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
         except Exception as e:
             print(f'Error while initializing TM path in {__class__}: ', e)
 
-
-    def correct_path_os(self, path) -> str:
-        """Replace backward slash with forward slash.
-
-        Replace if OS is not Windows.
-        
-        Args:
-            path -- Path to replace backward slash.
-
-        Returns:
-            A str path with backward slash is replaced with forward slash
-            if OS is not Windows.
-        """
-        if not sys.platform.startswith('win'):
-            return str(path).replace('\\', '//')
-        return path
 
     def write_file(self):
         """Create a csv file with the data and json file with info data.
@@ -266,19 +275,23 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             Storage by default.
         glossary_id -- Name of the project.
         path -- The URI path of the TM in cloud storage.
+        info_path -- The URI path of the TM info file in cloud storage.
+        local_path -- Path to the local file on user computer. The local
+            file is used to load data when there's no new update about
+            the TM on cloud storage. Path is validated depending
+            on the OS.
         ext -- TM file extension. Only support .csv. (default '.csv')
+        info_ext -- TM info file extension. Support .json (default '.json')
         blob -- A dict/object containing the data of TM file on a specific
             cloud storage.
+        info_blob -- A dict/object containing the data of TM info file
+            on a specific cloud storage.
         basename -- File basename.
         tm_version -- TM version. (default 4)
         supported_languages -- Languages that the TM supports. Used to
             select columns in self.data DataFrame.
         data -- @property Data in the TM. Accept only pandas DataFrame class.
         length -- Length len(data) of the DataFrame data in TM file.
-        info_ext -- TM info file extension. Support .json (default '.json')
-        info_path -- The URI path of the TM info file in cloud storage.
-        info_blob -- A dict/object containing the data of TM info file
-            on a specific cloud storage.
         last_modified -- Time when data is modified. Currently this class
             is not used this attribute.
         upload_time -- Time when TM file is uploaded to the cloud storage.
@@ -290,7 +303,7 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
         """
         Args:
             license_path -- Path to the required license file
-                to access the cloud storage.
+                to access the cloud storage. Mostly selected from the UI.
             bucket_id -- Name of the bucket in the cloud storage.
             glossary_id -- Name of the project.
         
@@ -330,6 +343,13 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             # attribute won't be changed when loading the TM
             # on program start because of the parent class
             self._data = self.get_data_from_blob()
+            ### INIT LOCAL PATH: SELF.LOCAL_PATH
+            if sys.platform.startswith('win'):
+                self.local_path = self.correct_path_os(
+                    f"{os.environ['APPDATA']}\\AIO Translator\\TM\\"
+                        f"TM_{glossary_id}{self.ext}")
+            else:
+                self.local_path = os.getcwd()
         except Exception as e:
             print('Error while initializing Cloud TM file: ', e)
 
