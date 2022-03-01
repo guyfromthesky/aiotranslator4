@@ -207,7 +207,7 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
         return self._path
 
     @path.setter
-    def path(self, path: str):
+    def path(self, tm_path: str):
         """Set path attribute via self._path.
         
         Validate the path to TM file when initializing a class instance.
@@ -226,18 +226,18 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
             TypeError -- Incorrect file extension. Must be .csv.
         """
         try:
-            if os.path.isfile(path):
-                tm_file_root, tm_file_ext = os.path.splitext(path)
+            if os.path.isfile(tm_path):
+                tm_file_root, tm_file_ext = os.path.splitext(tm_path)
                 if tm_file_ext == '.csv':
                     self.ext = '.csv'
-                    self._path = self.correct_path_os(path)
+                    self._path = self.correct_path_os(tm_path)
                     self.info_path = f'{tm_file_root}_info.{self.info_ext}'
                 else:
                     raise TypeError(f'Incorrect file extension: '
                         f'{tm_file_ext}. Must be .csv.')
             else:
                 raise Exception('Cannot initialize TM file path '
-                    'because path is not a file: ', path)
+                    'because path is not a file: ', tm_path)
         except Exception as e:
             print(f'Error while initializing TM path in {__class__}: ', e)
 
@@ -291,6 +291,7 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
         supported_languages -- Languages that the TM supports. Used to
             select columns in self.data DataFrame.
         data -- @property Data in the TM. Accept only pandas DataFrame class.
+            Data first checks the data from local_path
         length -- Length len(data) of the DataFrame data in TM file.
         last_modified -- Time when data is modified. Currently this class
             is not used this attribute.
@@ -301,6 +302,8 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             bucket_id: str,
             glossary_id: str):
         """
+        A local path to local TM file will be created if it doesn't exist.
+
         Args:
             license_path -- Path to the required license file
                 to access the cloud storage. Mostly selected from the UI.
@@ -308,7 +311,10 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             glossary_id -- Name of the project.
         
         Raises:
-            Exception - Error while setting up license.
+            Exception -- Error while setting up license in Cloud TM file.
+            Exception -- Error while loading TM data in cloud TM class on init.
+            Exception -- Error while intitializing blob in Cloud TM file.
+            Exception -- Error while initializing Cloud TM file.
         """
         super().__init__()
         try:
@@ -327,6 +333,7 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
                 f"{self.ext}"
             self.basename = os.path.basename(self.path)
             ### INIT SELF.BLOB
+            # The exceptions already include empty blob handling
             try:
                 self.blob = self.bucket.get_blob(self.path)
             except Exception as e:
@@ -338,26 +345,56 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             self.info_blob = self.bucket.get_blob(self.info_path)
             
             self.upload_time = None
+            ### INIT LOCAL PATH: SELF.LOCAL_PATH
+            if sys.platform.startswith('win'):
+                local_dir = self.correct_path_os(
+                    f"{os.environ['APPDATA']}\\AIO Translator\\TM")
+                self.local_path = self.correct_path_os(
+                    f'{local_dir}\\TM_{glossary_id}{self.ext}')
+            else:
+                self.local_path = os.getcwd()
             ### INIT SELF.DATA, SELF.LENGTH
             # Use self._data instead of self.data so that last_modified
             # attribute won't be changed when loading the TM
-            # on program start because of the parent class
-            self._data = self.get_data_from_blob()
-            ### INIT LOCAL PATH: SELF.LOCAL_PATH
-            if sys.platform.startswith('win'):
-                self.local_path = self.correct_path_os(
-                    f"{os.environ['APPDATA']}\\AIO Translator\\TM\\"
-                        f"TM_{glossary_id}{self.ext}")
-            else:
-                self.local_path = os.getcwd()
+            # on program start because of the parent class.
+            # Check if local path is a TM file, it means that there's
+            # already a local TM file to load the data from. If there's
+            # no TM file, download file from the blob and load data from it.
+            try:
+                if os.path.exists(self.local_path) and \
+                        os.path.isfile(self.local_path):
+                    self._data = pd.read_csv(self.local_path)
+                    print('Successfully loaded data from local TM.')
+                else:
+                    os.mkdir(local_dir)
+                    self.download_from_blob(self.local_path)
+                    self._data = pd.read_csv(self.local_path)
+                    print('Successfully loaded data from local TM.')
+            except Exception as e:
+                print('Error while loading TM data in cloud TM class on init: '
+                    f'{e}')
         except Exception as e:
             print('Error while initializing Cloud TM file: ', e)
 
 
-    def get_data_from_blob(self):
-        """Retreive and return TM data from the blob.
+    def download_from_blob(self, destination_path):
+        """Download TM file on cloud storage.
+        
+        Raises:
+            Exception -- Error while downloading TM file on cloud storage.
+        """
+        try:
+            self.blob.download_to_filename(destination_path)
+            print(f'Downloaded TM file from {self.path} blob to '
+                f'{destination_path} on local device.')
+        except Exception as e:
+            print(f'Error while downloading TM file on cloud storage: {e}')
 
-        Also retreive the TM info from info blob.
+
+    def download_data_from_blob(self):
+        """Download and return TM data from the blob.
+
+        Also download the TM info from info blob.
         
         Raises:
             Exception -- Error while getting data from Cloud TM blob.
@@ -382,12 +419,12 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
         except Exception as e:
             print(f'Error while getting data from Cloud TM blob: {e}')
 
-    def upload_to_blob(self, path: str):
+    def upload_to_blob(self, local_path: str):
         """Upload the TM file to the blob.
         
         Args:
-            path -- Path to the local TM file on user computer to upload
-                the file.
+            local_path -- Path to the local TM file on user computer
+            to upload the file.
 
         Raises:
             Exception -- Error while uploading TM file to Cloud TM blob.
@@ -398,16 +435,16 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             }
 
             if self.blob != None or self.info_blob != None:
-                self.blob.upload_from_filename(path)
+                self.blob.upload_from_filename(local_path)
                 # Record the upload time and length in another blob
                 self.info_blob.upload_from_string(json.dumps(tm_info_data))
                 print('Uploaded TM to cloud.')
             # Create a new blob if not exist by using blob object
             # instead of get_blob method
             else:
-                blob = self.bucket.blob(self.path)
+                blob = self.bucket.blob(self.local_path)
                 info_blob = self.bucket.blob(self.info_path)
-                blob.upload_from_filename(path)
+                blob.upload_from_filename(local_path)
                 # Record the upload time and length in another blob
                 info_blob.upload_from_string(json.dumps(tm_info_data))
                 print('New blobs have been created for cloud TM upload.')
