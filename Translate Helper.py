@@ -1444,19 +1444,6 @@ class MyTranslatorHelper(Frame):
 		HeaderA = self.HeaderOptionA.get()
 		HeaderB = self.HeaderOptionB.get()
 		try:
-<<<<<<< HEAD
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTitle', TextTitle, True)
-
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'EnvInfo', EnvInfo, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'Reproducibility', Reproducibility, True)
-			
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTestReport', TextTestReport, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextShouldBe', TextShouldBe, True)
-
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)
-=======
 			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTitle', TextTitle)
 			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextServer', TextServer)
 			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextClient', TextClient)
@@ -1468,7 +1455,6 @@ class MyTranslatorHelper(Frame):
 
 			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)
->>>>>>> ded693549f5e9648b155181fa6513c501951dc55
 		except:
 			pass
 
@@ -1484,19 +1470,6 @@ class MyTranslatorHelper(Frame):
 		HeaderA = self.HeaderOptionA.get()
 		HeaderB = self.HeaderOptionB.get()
 		try:
-<<<<<<< HEAD
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTitle', TextTitle, True)
-			
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'EnvInfo', EnvInfo, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'Reproducibility', Reproducibility, True)
-
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTestReport', TextTestReport, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextShouldBe', TextShouldBe, True)
-
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderA', HeaderA)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)
-=======
 			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTitle', TextTitle)
 			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextServer', TextServer)
 			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextClient', TextClient)
@@ -1508,7 +1481,6 @@ class MyTranslatorHelper(Frame):
 
 			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)
->>>>>>> ded693549f5e9648b155181fa6513c501951dc55
 		except:
 			pass
 
