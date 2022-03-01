@@ -877,7 +877,8 @@ class Translator:
 			#translation[to_translate_index[i]] = translated[i]
 			if self.tm_update == True:
 				#print('Append TM: ', translated[i], raw_source[i] )
-				self.append_temporary_tm(str_translated = translated[i], str_input = raw_source[i])
+				self.append_temporary_tm(
+					str_translated=translated[i], str_input=raw_source[i])
 
 		if isinstance(Input, str):
 			return translation[0]
@@ -1752,12 +1753,8 @@ class Translator:
 	# self.current_tm[all supported language] -> self.translation_memory[from language, to language]
 	def import_translation_memory(self):
 		"""Load TM data into the translation tool from TM file."""
-		#print('Import TM from pickle file', str(self.tm_path))
-
-		## BEFORE UPGRADE
-		# self.init_temporary_tm()
-		# self.init_translation_memory()
-		
+		# Empty self.temporary_tm for later translation appending
+		self.init_temporary_tm()
 		if self.tm_path == None:
 			return
 		if not os.path.isfile(self.tm_path):
@@ -1767,8 +1764,22 @@ class Translator:
 			try:
 				self.current_tm = self.tm_file.data
 			except Exception as e:
-				print('Error while importing translation memory:', e)
-			## BEFORE UPGRADE
+				print(f'Error while importing translation memory: {e}')
+		self.update_tm_from_dataframe()
+		
+		## BEFORE UPGRADE
+########################################################################
+		#print('Import TM from pickle file', str(self.tm_path))
+
+		# self.init_temporary_tm()
+		# self.init_translation_memory()
+		
+		# if self.tm_path == None:
+		# 	return
+		# if not os.path.isfile(self.tm_path):
+		# 	print('TM file not found')
+		# 	return
+		# else:
 			# try:
 				# _, file_ext = os.path.splitext(self.tm_path)
 				# # Load data from pkl extension
@@ -1793,14 +1804,18 @@ class Translator:
 				# 	print(f'Wrong extension: {file_ext}. Must be .csv.')
 			# except Exception as e:
 			# 	print('Error while importing translation memory:', e)
-		self.update_tm_from_dataframe()
+		# self.update_tm_from_dataframe()
 
 
 	def update_tm_from_dataframe(self):
-		"""Drop empty values of selected languages in self.current_tm."""
+		"""Drop empty values of selected languages in self.current_tm.
+		
+		Assign TM length to self.translation_memory.
+		"""
 		print('Update TM from dataframe')
 		#print('Current Dataframe:', self.current_tm)
 
+		### PERFORMANCE OPTIMIZE! MERGE THE 2 DROPNA?
 		if self.from_language != self.to_language:
 			self.translation_memory = self.current_tm.dropna(
 				subset=[self.from_language])
@@ -1820,65 +1835,106 @@ class Translator:
 
 	# Update TM from temporary_tm to pickle file
 	def append_translation_memory(self):
+		"""Update TM from temporary_tm to TM file."""
 		print('Append translation memory')
 		new_tm_size = len(self.temporary_tm)
 		print('Size of temporary TM: ', new_tm_size)
-		if self.glossary_id == "":
-			_glossary = 'Default'
-		else:
-			_glossary = self.glossary_id
-
+		
 		if len(self.temporary_tm) > 0:
 			while True:
 				try:
-					with open(self.tm_path, 'rb') as pickle_load:
-						all_tm = pickle.load(pickle_load)
-					#print('All tm:', all_tm)
-					_tm_version = self.get_tm_version(all_tm)
-					print('TM version:', _tm_version)
-					if _tm_version == 4:
-						print('Valid')
-					elif _tm_version == 3:
-						self.import_tm_v3(all_tm)
-						all_tm = {}
-					elif _tm_version == 2:
-						self.import_tm_v2(all_tm)
-						all_tm = {}
-					else:
-						all_tm = {}
-
-					if 'tm_version' not in all_tm:
-						all_tm['tm_version'] = 4
-
-					if _glossary not in all_tm:
-						self.init_translation_memory()
-						all_tm[_glossary] = self.current_tm
-					else:
-						self.current_tm = all_tm[_glossary]
-
-					for Pair in self.temporary_tm:
+					for pair in self.temporary_tm:
 						try:
-							self.current_tm = self.append_tm_dataframe(self.current_tm, Pair)
+							self.tm_file.data = self.append_tm_dataframe(
+								self.tm_file.data, pair)
+							self.current_tm = self.tm_file.data
 						except Exception as e:
-							print('Append TM DF error:', e)	
+							print('Error while appending temporary tm to'
+								f'{self.tm_file} in '
+								f'{self.append_translation_memory.__name__}: '
+								f'{e}')	
+					# Fill empty values with NaN
 					self.current_tm = self.current_tm.reindex()
-					all_tm[_glossary] = self.current_tm
+					self.tm_file.data = self.current_tm
 					
 					try:
-						with open(self.tm_path, 'wb') as pickle_file:
-							print("Updating pickle file....", self.tm_path)
-							pickle.dump(all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+						print("Updating TM file....", self.tm_file.path)
+						self.tm_file.write_file()
 						print('Size TM in memory', len(self.temporary_tm))
 						self.init_temporary_tm()
 						return new_tm_size
 					except Exception  as e:
-						print("Error:", e)
+						print(f'Error while writing file with {self.tm_file} '
+							 f'in {self.append_translation_memory.__name__}: '
+							 f'{e}')
 				except Exception  as e:
 					print("Error:", e)		
 		return 0
+
+		## BEFORE UPGRADE
+########################################################################		
+		# print('Append translation memory')
+		# new_tm_size = len(self.temporary_tm)
+		# print('Size of temporary TM: ', new_tm_size)
+		# if self.glossary_id == "":
+		# 	_glossary = 'Default'
+		# else:
+		# 	_glossary = self.glossary_id
+
+		# if len(self.temporary_tm) > 0:
+		# 	while True:
+		# 		try:
+		# 			with open(self.tm_path, 'rb') as pickle_load:
+		# 				all_tm = pickle.load(pickle_load)
+		# 			#print('All tm:', all_tm)
+		# 			_tm_version = self.get_tm_version(all_tm)
+		# 			print('TM version:', _tm_version)
+		# 			if _tm_version == 4:
+		# 				print('Valid')
+		# 			elif _tm_version == 3:
+		# 				self.import_tm_v3(all_tm)
+		# 				all_tm = {}
+		# 			elif _tm_version == 2:
+		# 				self.import_tm_v2(all_tm)
+		# 				all_tm = {}
+		# 			else:
+		# 				all_tm = {}
+
+		# 			if 'tm_version' not in all_tm:
+		# 				all_tm['tm_version'] = 4
+					
+		# 			# Add 'Default' if no game project found in TM!?
+		# 			if _glossary not in all_tm:
+		# 				self.init_translation_memory()
+		# 				all_tm[_glossary] = self.current_tm
+		# 			else:
+		# 				self.current_tm = all_tm[_glossary]
+
+		# 			for Pair in self.temporary_tm:
+		# 				try:
+		# 					self.current_tm = self.append_tm_dataframe(self.current_tm, Pair)
+		# 				except Exception as e:
+		# 					print('Append TM DF error:', e)	
+		# 			# Fill empty values with NaN
+		# 			self.current_tm = self.current_tm.reindex()
+		# 			all_tm[_glossary] = self.current_tm
+					
+		# 			try:
+		# 				with open(self.tm_path, 'wb') as pickle_file:
+		# 					print("Updating pickle file....", self.tm_path)
+		# 					pickle.dump(all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+		# 				print('Size TM in memory', len(self.temporary_tm))
+		# 				self.init_temporary_tm()
+		# 				return new_tm_size
+		# 			except Exception  as e:
+		# 				print("Error:", e)
+		# 		except Exception  as e:
+		# 			print("Error:", e)		
+		# return 0
 	
 	def export_current_translation_memory(self):
-		"""This function will overwrite the current self.current_tm to pickle file.
+		"""This function will overwrite the current self.current_tm to
+		pickle file.
 		
 		self.current_tm can be modifed via TM Manager tool.
 		"""
@@ -2032,7 +2088,9 @@ class Translator:
 			try:
 				if len(self.translation_memory) > 0:
 					#translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
-					translated = self.translation_memory.loc[self.translation_memory[self.from_language] == source_text]
+					translated = self.translation_memory.loc[
+						self.translation_memory[self.from_language] == \
+							source_text]
 					#print('Mem translated:', translated)
 					if len(translated) > 0:
 						#print('TM translate', translated)
@@ -2106,25 +2164,29 @@ class Translator:
 			else:
 				return dataframe
 
-	def to_csv_tm(self, tm_path: str, error_queue=None):
+	def to_csv_tm(self, tm_path: str, error_queue=None) -> str:
 		"""Convert TM file to .csv extension.
 
 		Used in TM Converter tab in Document Translator.
 		Supported extension: .pkl
 		
 		Args:
-			tm_path -- Path to the TM file.
-			error_queue -- Multiprocessing Queue instance used to output the
-				error message to the UI.
+			tm_path --
+				Path to the TM file.
+			error_queue --
+				Multiprocessing Queue instance used to output the error
+				message to the UI.
 		
 		Returns:
 			A str of the converted path.
 
 		Raises:
-			Exception -- Error while converting file to csv - Data is not
-				an instance of pd.DataFrame.
-			Exception -- Error while moving the backup pkl TM file during
-				file conversion.
+			Exception --
+				Error while converting file to csv - Data is not an
+				instance of pd.DataFrame.
+			Exception --
+				Error while moving the backup pkl TM file during file
+				conversion.
 		"""
 		if os.path.isfile(tm_path):
 			file_root, file_ext = os.path.splitext(tm_path)
@@ -2188,29 +2250,6 @@ class Translator:
 			error_queue.put(Exception(
 				'TM file conversion error: File not found.'))
 
-	def download_tm_file_from_blob(self):
-		"""Download the TM file of the matching project on Google cloud."""
-		storage_client = storage.Client()
-		# TM file name blob always starts with 'TM_'
-		tm_file_blob = storage_client.get_bucket(self.bucket_id).get_blob(
-			f'TM/{self.glossary_id}/TM_{self.glossary_id}.csv')
-		try:
-			if tm_file_blob.exists():
-				tm_file_blob.download_to_filename(self.tm_path)
-			else:
-				print("TM file blob doesn't exist.")
-		except Exception as e:
-			print('Error while downloading TM file: ', e)
-
-	def upload_tm_file_to_blob(self, tm_path):
-		"""Upload the TM file on default local path to Google cloud."""
-		storage_client = storage.Client()
-		tm_file_blob = storage_client.get_bucket(self.bucket_id).get_blob(
-			f'TM/{self.glossary_id}/TM_{self.glossary_id}.csv')
-		try:
-			tm_file_blob.upload_from_filename(tm_path)
-		except Exception as e:
-			print('Error while uploading TM file: ', e)
 
 #########################################################################
 # Toggle function

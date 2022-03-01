@@ -65,6 +65,9 @@ class TranslationMemoryFile:
         Only allow pandas DataFrame type.
         Also update the last modified time.
 
+        Attrs modified:
+            self.length, self.last_modified
+
         Args:
             data --
                 Data assigned to the TM. Must be an instance of pandas
@@ -85,7 +88,7 @@ class TranslationMemoryFile:
                 f'an instance of DataFrame: {type(data)}' )
     
 
-    def append_datetime(self):
+    def append_datetime(self) -> str:
         """Return a string of the current time format using
         datetime.now().
         
@@ -162,8 +165,6 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
 
         Raises:
             Exception --
-                Error while initializing Cloud TM path.
-            Exception --
                 Error while initializing path: Not a file path or csv
                 extension.
             Exception --
@@ -180,10 +181,7 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
             # Only accepts file path and csv extension
             # Init other paths along the way
             if os.path.isfile(path) and path.endswith('.csv'):
-                try:
-                    self._path = path # Set up property for self.path
-                except Exception:
-                    print(f'Error while initializing Cloud TM path: {e}')
+                self._path = path # Set up property for self.path
                 tm_file_root, self.ext = os.path.splitext(path)
                 tm_filename = os.path.basename(tm_file_root)
                 self.info_path = self.correct_path_os(
@@ -238,7 +236,7 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
             print('Error while initializing TM file: ', e)
 
     def __repr__(self):
-        return f'Local TM file {self.path}'
+        return f'Local TM file: {self.path}'
 
     @property
     def path(self):
@@ -442,7 +440,7 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             print('Error while initializing Cloud TM file: ', e)
 
     def __repr__(self):
-        return f'Cloud TM file {self.path}'
+        return f'Cloud TM file: {self.path}'
 
 
     def download_from_blob(self, destination_path):
@@ -527,12 +525,13 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
 
 
 ### TEST RUN ################################################################
-test_path = r''
+test_path = r'C:\Users\ndtn\NWV\Translation Tool\Source Code\TM_MSM.csv'
 license_path = r''
 bucket_id = 'nxvnbucket'
 glossary_id = 'MSM'
 
 # tm_file = LocalTranslationMemoryFile(test_path)
+# print(tm_file)
 # print(tm_file.path)
 # print(tm_file.ext)
 # print(tm_file.length)

@@ -1515,7 +1515,7 @@ class DocumentTranslator(Frame):
 			target=generate_translator,
 			kwargs={
 				'my_translator_queue' : self.MyTranslator_Queue, 
-				'temporary_tm' : self.TMManager, 
+				'temporary_tm' : self.TMManager, # a mp Manager.list()
 				'from_language' : source_language, 
 				'to_language' : target_language, 
 				'glossary_id' : self.glossary_id, 
