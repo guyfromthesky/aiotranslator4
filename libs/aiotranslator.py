@@ -1766,7 +1766,10 @@ class Translator:
 		else:
 			try:
 				self.current_tm = self.tm_file.data
-				## BEFORE UPGRADE
+			except Exception as e:
+				print('Error while importing translation memory:', e)
+			## BEFORE UPGRADE
+			# try:
 				# _, file_ext = os.path.splitext(self.tm_path)
 				# # Load data from pkl extension
 				# if file_ext == '.pkl':
@@ -1788,8 +1791,8 @@ class Translator:
 				# 		print('Broken pkl TM file.')
 				# else:
 				# 	print(f'Wrong extension: {file_ext}. Must be .csv.')
-			except Exception as e:
-				print('Error while importing translation memory:', e)
+			# except Exception as e:
+			# 	print('Error while importing translation memory:', e)
 		self.update_tm_from_dataframe()
 
 
@@ -1817,12 +1820,6 @@ class Translator:
 
 	# Update TM from temporary_tm to pickle file
 	def append_translation_memory(self):
-		"""Save the current temporary memory into pickle file.
-		
-		self.temporaty_tm >>> self.current_tm >>> glossary entry >>> pickle file
-		If a sentence is existed in an entry, that entry will be modified
-		instead of create new one.
-		"""
 		print('Append translation memory')
 		new_tm_size = len(self.temporary_tm)
 		print('Size of temporary TM: ', new_tm_size)
