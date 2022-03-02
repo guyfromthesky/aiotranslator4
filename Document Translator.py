@@ -56,7 +56,7 @@ import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4114
+rev = 4115
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -478,14 +478,16 @@ class DocumentTranslator(Frame):
 		"""
 		text = self.search_text.get("1.0", END).replace("\n", "").replace(" ", "")
 		self.remove_treeview()
-		print("Text to search: ", text)
+		print("Text to search:", text)
 		text = text.lower()
 		if text != None:
 			try:
 				if len(self.MyTranslator.translation_memory) > 0:
 					#translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
-					result_from = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory[self.MyTranslator.from_language].str.match(text)]
-					result_to = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory[self.MyTranslator.to_language].str.match(text)]
+					#result_from = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory[self.MyTranslator.from_language].str.match(text)]
+					#result_to = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory[self.MyTranslator.to_language].str.match(text)]
+					result_from = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory[self.MyTranslator.from_language].str.contains(text)]
+					result_to = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory[self.MyTranslator.to_language].str.contains(text)]
 					result = result_from.append(result_to)
 					#print('type', type(result), 'total', len(result))
 					if len(result) > 0:
@@ -908,7 +910,7 @@ class DocumentTranslator(Frame):
 		self._version_status  = StringVar()
 		self._update_day = StringVar()
 
-		self.AppConfig = ConfigLoader(Translator = True, Document = True)
+		self.AppConfig = ConfigLoader(Document = True)
 		self.Configuration = self.AppConfig.Config
 		_app_language = self.Configuration['Document_Translator']['app_lang']
 		if _app_language == 1:

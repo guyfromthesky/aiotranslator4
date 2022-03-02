@@ -315,6 +315,9 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 							if result == False:
 								fail_request+=1
 							elif result != True:
+								if BilingualMode == True:
+									_comment = Comment(current_string, "Translator")
+									cell.comment = _comment
 								cell.value = result
 								memory_translation+=1
 							else:

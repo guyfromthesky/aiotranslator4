@@ -1809,8 +1809,9 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 	
 	CssText = ''
 	CssText += strPrecondition
-	CssText += strReport
+	
 	CssText += strReprodSteps
+	CssText += strReport
 	CssText += strShouldBe
 	print('Copy to clipboard')
 	copy(CssText)
