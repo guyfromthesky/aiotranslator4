@@ -161,6 +161,7 @@ class LanguagePackEN:
 	Label['Reproducibility'] = "Reproducibility:"
 	Label['EnvInfo'] = "Enviromental Information:"
 
+	Label['PreConition'] = "Pre-condition:"
 
 	Tab = {}
 	Tab['Main'] = "Main Menu"
@@ -427,6 +428,7 @@ class LanguagePackKR:
 	Label['Reproducibility'] = "재현빈도:"
 	Label['EnvInfo'] = "환경정보:"
 
+	Label['PreConition'] = "전제 조건"
 
 	Tab = {}
 	Tab['Main'] = "메인 메뉴"

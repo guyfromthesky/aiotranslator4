@@ -908,7 +908,7 @@ class DocumentTranslator(Frame):
 		self._version_status  = StringVar()
 		self._update_day = StringVar()
 
-		self.AppConfig = ConfigLoader()
+		self.AppConfig = ConfigLoader(Translator = True, Document = True)
 		self.Configuration = self.AppConfig.Config
 		_app_language = self.Configuration['Document_Translator']['app_lang']
 		if _app_language == 1:
@@ -1863,7 +1863,7 @@ def fixed_map(style, option):
 def send_fail_request(error_message):
 	try:
 		from google.cloud import logging
-		AppConfig = ConfigLoader()
+		AppConfig = ConfigLoader(Document=True)
 		Configuration = AppConfig.Config
 		print('JSON file: ', Configuration['license_file']['path'])
 		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = Configuration['license_file']['path']
