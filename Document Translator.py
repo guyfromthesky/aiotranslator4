@@ -139,7 +139,7 @@ class DocumentTranslator(Frame):
 		
 
 		self.after(DELAY, self.debug_listening)
-		self.after(DELAY, self.error_listening)
+		# self.after(DELAY, self.error_listening)
 
 	def create_buttom_panel(self):
 		self.bottom_panel = BottomPanel(self)
@@ -319,17 +319,14 @@ class DocumentTranslator(Frame):
 				self.LanguagePack.ToolTips['DataOnly']))
 
 		# Checkbutton to check if Cloud TM is used instead of local TM.
-		# Default is not using the Cloud TM
-		# self.is_cloud_tm_used_intvar is used as a wrapper in askquestion to
-		# transfer value to self.is_cloud_tm_used
+		# Default is not using the Cloud TM (aioconfigmanager)
 		self.is_cloud_tm_used_intvar = IntVar()
-		cbtn_use_cloud_tm = Checkbutton(
+		self.cbtn_use_cloud_tm = Checkbutton(
 			Tab, text=self.LanguagePack.Option['UseCloudTM'],
 			variable=self.is_cloud_tm_used_intvar,
 			command=self.toggle_use_cloud_tm)
-		cbtn_use_cloud_tm.grid(
-			row=Row, column=7, padx=0, pady=5, sticky=W)
-		cbtn_use_cloud_tm.bind(
+		self.cbtn_use_cloud_tm.grid(row=Row, column=7, padx=0, pady=5, sticky=W)
+		self.cbtn_use_cloud_tm.bind(
 			"<Enter>",
 			lambda event : self.Notice.set(
 				self.LanguagePack.ToolTips['UseCloudTM']))
@@ -420,7 +417,7 @@ class DocumentTranslator(Frame):
 	def Generate_TranslateSetting_UI(self, Tab):
 		Row = 1
 		
-		### Browse License section
+		### BROWSE LICENSE SECTION
 		Label(Tab, text=self.LanguagePack.Label['LicensePath']) \
 			.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		self.TextLicensePath = Entry(
@@ -437,18 +434,19 @@ class DocumentTranslator(Frame):
 		
 		Row += 1
 
-		### Browse TM section
+		### BROWSE TM SECTION
 		Label(Tab, text=self.LanguagePack.Label['TM']) \
 			.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		self.TextTMPath = Entry(
 			Tab, width=120, state="readonly", textvariable=self.TMPath)
 		self.TextTMPath.grid(
 			row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
-		Button(
-				Tab, width=self.HALF_BUTTON_WIDTH,
-				text=self.LanguagePack.Button['Browse'],
-				command=self.select_tm_path) \
-			.grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
+		self.btn_browse_tm_path = Button(
+			Tab, width=self.HALF_BUTTON_WIDTH,
+			text=self.LanguagePack.Button['Browse'],
+			command=self.select_tm_path)
+		self.btn_browse_tm_path.grid(
+			row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
 
 	def generate_tm_converter_ui(self, Tab):
 		"""Create the TM Converter tab and its UI."""
@@ -469,11 +467,12 @@ class DocumentTranslator(Frame):
 				command=self.select_pkl_tm_path) \
 			.grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
 		# Convert button
-		Button(
-				Tab, width=self.HALF_BUTTON_WIDTH,
-				text=self.LanguagePack.Button['Convert'],
-				command=self.convert_tm_to_csv) \
-			.grid(row=Row, column=10, columnspan=2, padx=5, pady=5, sticky=E)
+		self.btn_convert_tm = Button(
+			Tab, width=self.HALF_BUTTON_WIDTH,
+			text=self.LanguagePack.Button['Convert'],
+			command=self.convert_tm_to_csv)
+		self.btn_convert_tm.grid(
+			row=Row, column=10, columnspan=2, padx=5, pady=5, sticky=E)
 
 
 	def Generate_Debugger_UI(self, Tab):	
@@ -681,6 +680,7 @@ class DocumentTranslator(Frame):
 				break
 		self.after(DELAY, self.debug_listening)
 
+	# Currently not used because function doesn't work
 	def error_listening(self):
 		"""Output error messages to the screen coming from functions in
 		aiotranslator."""
@@ -703,8 +703,8 @@ class DocumentTranslator(Frame):
 				break
 			self.after(DELAY, self.error_listening)
 		except:
-			print(f'{self.error_listening.__name__} cannot run because '
-				'appropriate TM is not selected.')
+			print(f'{self.error_listening.__name__} cannot run because a '
+				'valid TM is not selected.')
 
 	def search_tm_event(self, event):
 		self.search_tm_list()
@@ -916,7 +916,6 @@ class DocumentTranslator(Frame):
 	def disable_button(self):
 		_state = DISABLED
 		self.bottom_panel.btn_renew_translator.configure(state=_state)
-		
 		self.btn_translate.configure(state=_state)
 		
 	def enable_button(self):
@@ -1191,15 +1190,16 @@ class DocumentTranslator(Frame):
 		"""
 		try:
 			selected_option_value = self.is_cloud_tm_used_intvar.get()
+			print(selected_option_value)
 			ask_result = messagebox.askquestion(
 				title='Confirmation',
 				message='Are you sure you want to change use cloud TM option?')
+			print(ask_result)
 			if ask_result == 'yes':
 				self.AppConfig.save_config(
 					self.AppConfig.Doc_Config_Path,
 					'Document_Translator', 'use_cloud_tm',
 					selected_option_value)
-				print(selected_option_value)
 				self.renew_my_translator()
 			else:
 				# Set the UI back to the previous state
@@ -1208,10 +1208,8 @@ class DocumentTranslator(Frame):
 				# be False, therefore 0 and vice versa.
 				if selected_option_value == True:
 					previous_intvar = 0
-					print('Cloud TM is not used.')
 				else:
 					previous_intvar = 1
-					print('Cloud TM is used.')
 				self.is_cloud_tm_used_intvar.set(previous_intvar)
 				self.Notice.set('Cloud TM option selection is canceled.')
 		except Exception as e:
@@ -1569,8 +1567,13 @@ class DocumentTranslator(Frame):
 	def generate_translator_engine(self):
 		"""Run the aiotranslator."""
 		is_cloud_tm_used = self.is_cloud_tm_used_intvar.get()
+		# Disable the browse TM path button to prevent exceptions
+		if is_cloud_tm_used:
+			self.btn_browse_tm_path.configure(state=DISABLED)
+		else:
+			self.btn_browse_tm_path.configure(state=NORMAL)
+		
 		if is_cloud_tm_used or self.engine_condition_satisfied():
-			print('Cloud TM is used.')
 			self.Notice.set(self.LanguagePack.ToolTips['AppInit'])
 
 			target_language = self.language_id_list[
