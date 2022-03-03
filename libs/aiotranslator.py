@@ -1,5 +1,6 @@
 #Regular expression handling
 from logging import error
+from multiprocessing.queues import Queue
 import re
 import base64
 #http request and parser
@@ -77,6 +78,7 @@ class Translator:
 			db_list_uri='config/db_list.csv',
 			project_bucket_id='credible-bay-281107',
 			**kwargs):
+
 		self.from_language = from_language
 		self.to_language = to_language
 		self.default_exception = [
@@ -125,11 +127,15 @@ class Translator:
 		
 		### INIT APP CONFIG: SELF.APPCONFIG
 		self.app_config = ConfigLoader()
+		saved_tm_path = self.app_config.Config['Translator'][
+			'translation_memory']
+		_, tm_path_ext = os.path.splitext(tm_path)
 		### INIT TM FILE OBJECTS: SELF.TM_FILE, SELF.GCS_TM_FILE
-		if is_cloud_tm_used and used_tool != 'writer':
+		if is_cloud_tm_used == True and used_tool != 'writer':
 			print('Cloud TM is used.')
 			# Use a default path when using Cloud TM to get data from
-			# cloud storage more conveniently
+			# cloud storage more conveniently.
+			# Default dir: %appdata%/AIO Translator/TM
 			self.gcs_tm_file = CloudTranslationMemoryFile(
 				self.app_config.Config['Translator']['license_file'],
 				bucket_id=bucket_id,
@@ -139,8 +145,7 @@ class Translator:
 		elif is_cloud_tm_used == False and used_tool != 'writer':
 			print('Cloud TM is not used.')
 			self.tm_file = LocalTranslationMemoryFile(tm_path)
-		self.tm_path = self.tm_file.path
-		
+
 		self.temporary_tm = temporary_tm
 
 		self.translation_memory = None
@@ -445,7 +450,7 @@ class Translator:
 				'tm_usage': self.last_section_tm_request,
 				'invalid_request': self.last_section_invalid_request,
 				'tm_size': self.translation_memory_size,
-				'tm_path': self.tm_path
+				'tm_path': self.tm_file.path
 			}
 			if 	file_name != None:
 				try:
@@ -932,7 +937,7 @@ class Translator:
 				'tool_ver': self.tool_version,
 				'translator_ver': ver_num,
 				'tm_size': self.translation_memory_size,
-				'tm_path': self.tm_path,
+				'tm_path': self.tm_file.path,
 				'error_message': str(_error_message),
 			}
 
@@ -1707,8 +1712,8 @@ class Translator:
 		pickle_data['tm_version'] = 4
 
 		try:
-			with open(self.tm_path, 'wb') as pickle_file:
-				print("Updating pickle file....", self.tm_path)
+			with open(self.tm_file.path, 'wb') as pickle_file:
+				print("Updating pickle file....", self.tm_file.path)
 				pickle.dump(
 					pickle_data, pickle_file,
 					protocol=pickle.HIGHEST_PROTOCOL)
@@ -1738,8 +1743,8 @@ class Translator:
 		pickle_data['tm_version'] = 4
 
 		try:
-			with open(self.tm_path, 'wb') as pickle_file:
-				print("Updating pickle file....", self.tm_path)
+			with open(self.tm_file.path, 'wb') as pickle_file:
+				print("Updating pickle file....", self.tm_file.path)
 				pickle.dump(
 					pickle_data, pickle_file,
 					protocol=pickle.HIGHEST_PROTOCOL)
@@ -1755,9 +1760,9 @@ class Translator:
 		"""Load TM data into the translation tool from TM file."""
 		# Empty self.temporary_tm for later translation appending
 		self.init_temporary_tm()
-		if self.tm_path == None:
+		if self.tm_file.path == None:
 			return
-		if not os.path.isfile(self.tm_path):
+		if not os.path.isfile(self.tm_file.path):
 			print('TM file not found')
 			return
 		else:
@@ -1835,7 +1840,11 @@ class Translator:
 
 	# Update TM from temporary_tm to pickle file
 	def append_translation_memory(self):
-		"""Update TM from temporary_tm to TM file."""
+		"""Update TM from temporary_tm to TM file.
+		
+		Attrs modified:
+			self.tm_file.data, self.current_tm
+		"""
 		print('Append translation memory')
 		new_tm_size = len(self.temporary_tm)
 		print('Size of temporary TM: ', new_tm_size)
@@ -1948,7 +1957,7 @@ class Translator:
 		#self.init_translation_memory()
 		while True:
 			try:
-				with open(self.tm_path, 'rb') as pickle_load:
+				with open(self.tm_file.path, 'rb') as pickle_load:
 					all_tm = pickle.load(pickle_load)
 				#print('All tm:', all_tm)
 				_tm_version = self.get_tm_version(all_tm)
@@ -1974,8 +1983,8 @@ class Translator:
 			all_tm[_glossary] = self.current_tm
 			
 			try:
-				with open(self.tm_path, 'wb') as pickle_file:
-					print("Updating pickle file....", self.tm_path)
+				with open(self.tm_file.path, 'wb') as pickle_file:
+					print("Updating pickle file....", self.tm_file.path)
 					pickle.dump(all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 				self.init_temporary_tm()
 				return
@@ -2042,7 +2051,7 @@ class Translator:
 
 		while True:
 			try:
-				with open(self.tm_path, 'rb') as pickle_load:
+				with open(self.tm_file.path, 'rb') as pickle_load:
 					all_tm = pickle.load(pickle_load)
 				if isinstance(all_tm, dict):
 					# TM format v4
@@ -2065,8 +2074,8 @@ class Translator:
 			all_tm[self.glossary_id] = save_data
 			
 			try:
-				with open(self.tm_path, 'wb') as pickle_file:
-					print("Updating pickle file....", self.tm_path)
+				with open(self.tm_file.path, 'wb') as pickle_file:
+					print("Updating pickle file....", self.tm_file.path)
 					pickle.dump(all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 				
 				self.init_temporary_tm()
@@ -2164,7 +2173,7 @@ class Translator:
 			else:
 				return dataframe
 
-	def to_csv_tm(self, tm_path: str, error_queue=None) -> str:
+	def to_csv_tm(self, tm_path: str, err_queue=None) -> str:
 		"""Convert TM file to .csv extension.
 
 		Used in TM Converter tab in Document Translator.
@@ -2173,7 +2182,7 @@ class Translator:
 		Args:
 			tm_path --
 				Path to the TM file.
-			error_queue --
+			err_queue --
 				Multiprocessing Queue instance used to output the error
 				message to the UI.
 		
@@ -2195,7 +2204,7 @@ class Translator:
 			# if not os.path.exists(backup_dir):
 			# 	os.mkdir(backup_dir)
 			if file_ext == '.pkl':
-				with open(self.tm_path, 'rb') as pickle_file:
+				with open(self.tm_file.path, 'rb') as pickle_file:
 					all_tm = pickle.load(pickle_file)
 				_tm_version = self.get_tm_version(all_tm)
 				# Check if the matching project is in the TM
@@ -2224,7 +2233,7 @@ class Translator:
 					except Exception as e:
 						print('Error while converting file to csv - '
 							+ 'Data is not an instance of pd.DataFrame: ' + e)
-						error_queue.put(e)
+						err_queue.put(e)
 				elif isinstance(tm_data, pd.DataFrame):
 					# Create the csv file in the same folder as
 					# the original file
@@ -2247,7 +2256,7 @@ class Translator:
 				# 	error_queue.put(e)
 		else:
 			print('TM file conversion error: File not found.')
-			error_queue.put(Exception(
+			err_queue.put(Exception(
 				'TM file conversion error: File not found.'))
 
 

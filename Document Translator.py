@@ -6,7 +6,7 @@ import os
 #Regular expression handling
 import re
 # Multi-process support
-from multiprocessing import Process , Queue, Manager, freeze_support
+from multiprocessing import Process, Queue, Manager, freeze_support
 import queue 
 
 from urllib.parse import urlparse
@@ -71,9 +71,9 @@ DELAY = 20
 
 class DocumentTranslator(Frame):
 	def __init__(self,
-			Root, process_queue = None, result_queue = None,
-			status_queue = None, my_translator_queue = None,
-			my_db_queue = None, tm_manager = None, ):
+			Root, process_queue=None, result_queue=None,
+			status_queue=None, my_translator_queue=None,
+			my_db_queue=None, tm_manager=None, ):
 		
 		Frame.__init__(self, Root) 
 		self.pack(side=TOP, expand=Y, fill=X)
@@ -134,18 +134,12 @@ class DocumentTranslator(Frame):
 		
 		self.init_UI_setting()
 
-		#Create Translator
-		if self.LicensePath.get() != "":
-			if os.path.isfile(self.LicensePath.get()):
-				self.generate_translator_engine()
-			else:
-				self.Error('No license selected, please select the key'
-					'in Translate setting.')
-		else:
-			self.Error('No license selected, please select the key'
-				'in Translate setting.')
+		# Create Translator
+		self.generate_translator_engine()
+		
 
-		self.after(DELAY, self.debug_listening)	
+		self.after(DELAY, self.debug_listening)
+		self.after(DELAY, self.error_listening)
 
 	def create_buttom_panel(self):
 		self.bottom_panel = BottomPanel(self)
@@ -166,7 +160,6 @@ class DocumentTranslator(Frame):
 		self.Debug = StringVar()
 		self.Info = StringVar()
 		self.Progress = StringVar()
-		self.tm_convert_path_var = StringVar() # str path used in TM Converter tab
 		
 		self.Generate_DocumentTranslator_UI(self.MainTab)
 		self.Generate_TranslateSetting_UI(self.TranslateSetting)
@@ -330,13 +323,13 @@ class DocumentTranslator(Frame):
 		# self.is_cloud_tm_used_intvar is used as a wrapper in askquestion to
 		# transfer value to self.is_cloud_tm_used
 		self.is_cloud_tm_used_intvar = IntVar()
-		use_cloud_tm_cbtn = Checkbutton(
+		cbtn_use_cloud_tm = Checkbutton(
 			Tab, text=self.LanguagePack.Option['UseCloudTM'],
 			variable=self.is_cloud_tm_used_intvar,
 			command=self.toggle_use_cloud_tm)
-		use_cloud_tm_cbtn.grid(
+		cbtn_use_cloud_tm.grid(
 			row=Row, column=7, padx=0, pady=5, sticky=W)
-		use_cloud_tm_cbtn.bind(
+		cbtn_use_cloud_tm.bind(
 			"<Enter>",
 			lambda event : self.Notice.set(
 				self.LanguagePack.ToolTips['UseCloudTM']))
@@ -464,10 +457,10 @@ class DocumentTranslator(Frame):
 		### Browse TM section
 		Label(Tab, text=self.LanguagePack.Label['TMFileConversion']) \
 			.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
-		self.text_tm_convert_path = Entry(
+		self.entry_tm_convert_path = Entry(
 			Tab, width=120, state="readonly",
 			textvariable=self.tm_convert_path_var)
-		self.text_tm_convert_path.grid(
+		self.entry_tm_convert_path.grid(
 			row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
 		# Browse button
 		Button(
@@ -688,7 +681,30 @@ class DocumentTranslator(Frame):
 				break
 		self.after(DELAY, self.debug_listening)
 
-
+	def error_listening(self):
+		"""Output error messages to the screen coming from functions in
+		aiotranslator."""
+		try:
+			while True:
+				# # MyTranslator error
+				# if not self.MyTranslator.err_msg_queue.empty():
+				# 	tm_err_msg = self.MyTranslator.err_msg_queue.get(0)
+				# 	messagebox.showerror(
+				# 		title='Error',
+				# 		message=tm_err_msg)
+				
+				# TM File error
+				tm_err_msg = ''
+				# TM must be succesfully loaded or else program won't work
+				while not self.MyTranslator.tm_file.err_msg_queue.empty():
+					tm_err_msg = f'{tm_err_msg} ' \
+						f'{self.MyTranslator.tm_file.err_msg_queue.get()} \n'
+				self.Error(tm_err_msg)
+				break
+			self.after(DELAY, self.error_listening)
+		except:
+			print(f'{self.error_listening.__name__} cannot run because '
+				'appropriate TM is not selected.')
 
 	def search_tm_event(self, event):
 		self.search_tm_list()
@@ -1056,7 +1072,7 @@ class DocumentTranslator(Frame):
 			# Initilize a variable used to convert the TM file
 			self.tm_convert_path = selected_tm_path
 		else:
-			messagebox.showerror(
+			messagebox.showinfo(
 				title='File Selection Error',
 				message='No file is selected.')
 	
@@ -1162,9 +1178,9 @@ class DocumentTranslator(Frame):
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 		return
 
-#############################################################################
+########################################################################
 # CLOUD TM OPTIONS CHECKBUTTON FUNCTIONS
-#############################################################################
+########################################################################
 
 	def toggle_use_cloud_tm(self):
 		"""Decide whether or not to use the Cloud TM.
@@ -1177,30 +1193,31 @@ class DocumentTranslator(Frame):
 			selected_option_value = self.is_cloud_tm_used_intvar.get()
 			ask_result = messagebox.askquestion(
 				title='Confirmation',
-				message='Are you sure you want to change use cloud TM option?'
-			)
+				message='Are you sure you want to change use cloud TM option?')
 			if ask_result == 'yes':
 				self.AppConfig.save_config(
 					self.AppConfig.Doc_Config_Path,
-					'Document_Translator', 'use_cloud_tm', selected_option_value)
-				self.is_cloud_tm_used = selected_option_value
-				print(self.is_cloud_tm_used)
-				# self.renew_my_translator()
+					'Document_Translator', 'use_cloud_tm',
+					selected_option_value)
+				print(selected_option_value)
+				self.renew_my_translator()
 			else:
 				# Set the UI back to the previous state
 				# Must convert True/False to 1/0 for intvar
-				if self.is_cloud_tm_used == True:
-					is_cloud_tm_used_intvar = 1
+				# If after selection is True, previous selection must
+				# be False, therefore 0 and vice versa.
+				if selected_option_value == True:
+					previous_intvar = 0
+					print('Cloud TM is not used.')
 				else:
-					is_cloud_tm_used_intvar = 0
-				self.is_cloud_tm_used_intvar.set(is_cloud_tm_used_intvar)
+					previous_intvar = 1
+					print('Cloud TM is used.')
+				self.is_cloud_tm_used_intvar.set(previous_intvar)
 				self.Notice.set('Cloud TM option selection is canceled.')
-				print(self.is_cloud_tm_used)
-				# self.renew_my_translator()
 		except Exception as e:
 			messagebox.showerror(
 				title='Error',
-				message=f'Error while toggling use cloud TM: {e}'
+				message=f'Error while toggling use cloud TM option: {e}'
 			)
 
 #############################################################################
@@ -1223,7 +1240,7 @@ class DocumentTranslator(Frame):
 
 	def Btn_DB_Uploader_Execute_Script(self):
 		glossary_id = self.ProjectList.get()
-		result = self.Confirm_Popup(
+		result = self.confirm_popup(
 			glossary_id, 'Please type \''+ glossary_id + "\' to confirm.")
 		
 		if result == True:
@@ -1353,11 +1370,22 @@ class DocumentTranslator(Frame):
 
 			self.Upload_DB_Processor.terminate()
 	
-	def Confirm_Popup(self, Request, message):
-		MsgBox = simpledialog.askstring(
+	def confirm_popup(self, request, message) -> bool:
+		"""Display a popup that requires the same requested input.
+
+		Args:
+			request --
+				The requested input to proceed.
+			message --
+				Message displayed in the popup.
+
+		Returns:
+			bool True or False
+		"""
+		message_box = simpledialog.askstring(
 			title="Confirmation popup", prompt=message)
 
-		if MsgBox == Request:
+		if message_box == request:
 			return True
 		else:
 			return False
@@ -1370,6 +1398,8 @@ class DocumentTranslator(Frame):
 		self.LicensePath = StringVar()
 		self.DictionaryPath = StringVar()
 		self.TMPath = StringVar()
+		# str path used in TM Converter tab
+		self.tm_convert_path_var = StringVar()
 
 		self.CurrentDataSource = StringVar()
 		self.Notice = StringVar()
@@ -1498,38 +1528,85 @@ class DocumentTranslator(Frame):
 		self.Notice.set('Translate Process has been stop')
 		return
 
+	def engine_condition_satisfied(self) -> bool:
+		"""Check the conditions to run aiotranslator.
+		
+		Returns:
+			True or False.
+		"""
+		# Validate license path and TM path so that there won't be
+		# unnecessary errors.
+		# License check: Not run aiotranslator.py if incorrect license
+		if self.LicensePath.get() != "" and \
+				os.path.isfile(self.LicensePath.get()):
+			# TM file check: Not run aiotranslator.py if incorrect
+			# TM file.
+			if self.TMPath.get() != "" and \
+					os.path.isfile(self.TMPath.get()):
+				if self.TMPath.get().endswith('.csv'):
+					return True
+				else:
+					self.Error('Incorrect TM file extension.\n'
+						'Only supports .csv extension.\n'
+						'An old version of TM file is probably currently '
+						'selected.\n'
+						"Please convert the TM file in 'TM Converter' tab.")
+					return False
+			else:
+				self.Error('TM file is not selected due to one of the '
+					'following reasons:\n\n'
+					'1. No TM file is found. Please select the TM file in '
+					"'Translate Setting' tab.\n\n"
+					'2. Incorrect TM file extension. Only supports .csv '
+					"extension. Please convert the TM file in 'TM Converter' "
+					'tab.')
+				return False
+		else:
+			self.Error('No license selected, please select the key '
+				"in 'Translate Setting' tab.")
+			return False
+
 	def generate_translator_engine(self):
-		self.Notice.set(self.LanguagePack.ToolTips['AppInit'])
+		"""Run the aiotranslator."""
+		is_cloud_tm_used = self.is_cloud_tm_used_intvar.get()
+		if is_cloud_tm_used or self.engine_condition_satisfied():
+			print('Cloud TM is used.')
+			self.Notice.set(self.LanguagePack.ToolTips['AppInit'])
 
-		target_language = self.language_id_list[
-			self.language_list.index(self.target_language.get())]
-		source_language = self.language_id_list[
-			self.language_list.index(self.source_language.get())]
+			target_language = self.language_id_list[
+				self.language_list.index(self.target_language.get())]
+			source_language = self.language_id_list[
+				self.language_list.index(self.source_language.get())]
 
-		self.glossary_id = self.bottom_panel.project_id_select.get()
-		self.glossary_id = self.glossary_id.replace('\n', '')
-		tm_path = self.TMPath.get() # TM file path from Translate Setting UI
-		self.is_cloud_tm_used = self.is_cloud_tm_used_intvar.get()
-		print('Start new process: Generate Translator')
-		self.TranslatorProcess = Process(
-			target=generate_translator,
-			kwargs={
-				'my_translator_queue' : self.MyTranslator_Queue, 
-				'temporary_tm' : self.TMManager, # a mp Manager.list()
-				'from_language' : source_language, 
-				'to_language' : target_language, 
-				'glossary_id' : self.glossary_id, 
-				'used_tool' : tool_name,
-				'tm_path' : tm_path,
-				'is_cloud_tm_used' : self.is_cloud_tm_used,
-				'bucket_id' : self.bucket_id, 
-				'db_list_uri' : self.db_list_uri, 
-				'project_bucket_id' : self.project_bucket_id,
-			},
-		)
-		self.TranslatorProcess.start()
-		self.after(DELAY, self.GetMyTranslator)
-		return
+			self.glossary_id = \
+				self.bottom_panel.project_id_select.get()
+			self.glossary_id = self.glossary_id.replace('\n', '')
+			# TM file path from Translate Setting UI
+			tm_path = self.TMPath.get()
+			
+			print('Start new process: Generate Translator')
+			self.TranslatorProcess = Process(
+				target=generate_translator,
+				kwargs={
+					'my_translator_queue' : self.MyTranslator_Queue,
+					# a multiprocessing Manager.list()
+					'temporary_tm' : self.TMManager,
+					'from_language' : source_language, 
+					'to_language' : target_language, 
+					'glossary_id' : self.glossary_id, 
+					'used_tool' : tool_name,
+					'tm_path' : tm_path,
+					'is_cloud_tm_used' : is_cloud_tm_used,
+					'bucket_id' : self.bucket_id, 
+					'db_list_uri' : self.db_list_uri, 
+					'project_bucket_id' : self.project_bucket_id,
+				},
+			)
+			self.TranslatorProcess.start()
+			self.after(DELAY, self.GetMyTranslator)
+			return
+		else:
+			return
 
 	def GetMyTranslator(self):
 		try:

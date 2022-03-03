@@ -7,9 +7,11 @@ __version__ = '1.2'
 __author__ = 'anonymous'
 
 # System, standard libs
+from multiprocessing.context import Process
 import os
 import sys
 from datetime import datetime
+import time
 import re
 from io import StringIO
 import json
@@ -17,8 +19,21 @@ import json
 # Data modules
 import pandas as pd
 
+# Process modules
+from multiprocessing import Queue
+
 # Google Cloud modules
 from google.cloud import storage
+
+# DECORATOR
+def func_timer(func):
+    """Measure the time to run a function."""
+    def inner_func(self, *args, **kwargs):
+        start = time.time()
+        func(self, *args, **kwargs)
+        print(f'Total time to run function {func.__name__} that belongs to '
+            f'{self}: {time.time() - start} second(s)')
+    return inner_func
 
 class TranslationMemoryFile:
     """TM file object.
@@ -27,22 +42,25 @@ class TranslationMemoryFile:
     LocalTranslationMemoryFile and CloudTranslationMemoryFile.
 
     Attributes:
-        ext --
+        ext -- str
             TM file extension. Only support .csv.
             (default '.csv')
-        info_ext --
+        info_ext -- str
             TM info file extension. Support .json.
             (default '.json')
-        data --
+        data -- pd.DataFrame
             @property Data in the TM. Accept only pandas DataFrame
             class.
-        supported_languages --
+        supported_languages -- list
             Languages that the TM supports. Used to select columns
             in self.data DataFrame.
-        length --
+        length -- int
             Length len(data) of the DataFrame data in TM file.
-        last_modified --
+        last_modified -- datetime
             Time when data is modified.
+        err_msg_queue -- mp.Queue
+            Queue contains error info message which will be get by the
+            UI.
     """
     def __init__(self):
         # Set up default value
@@ -53,13 +71,15 @@ class TranslationMemoryFile:
         self.length = 0
         self.last_modified = None
 
+        self.err_msg_queue = Queue()
+
     @property
     def data(self):
         """data attribute of the class"""
         return self._data
 
     @data.setter
-    def data(self, data):
+    def data(self, data: pd.DataFrame):
         """Validate data set to self.data.
 
         Only allow pandas DataFrame type.
@@ -84,22 +104,28 @@ class TranslationMemoryFile:
             self.length = len(data)
             self.last_modified = datetime.now()
         else:
-            raise TypeError('Invalid data type. Data type is not '
-                f'an instance of DataFrame: {type(data)}' )
-    
+            err_msg = 'Invalid data type. Data type is not an ' \
+                f'instance of DataFrame: {type(data)}'
+            print(err_msg)
+            self.err_msg_queue.put(err_msg)
 
-    def append_datetime(self) -> str:
-        """Return a string of the current time format using
-        datetime.now().
+
+    def append_datetime(self, path: str) -> str:
+        """Return a path that is appended with a timestamp string of 
+        the current time using datetime.now().
+
+        Args:
+            path --
+                Path to append the timestamp string.
         
         The decimal in second is removed. Purpose is to add the current
         time to a file name.
         """
         # Convert to string and replace ":" in time format
         now = str(datetime.now()).split('.')[0].replace(':', '')
-        return ('_' + now.replace('-', ''))
+        return path + ('_' + now.replace('-', ''))
 
-    def correct_path_os(self, path) -> str:
+    def correct_path_os(self, path: str) -> str:
         """Replace backward slash with forward slash.
 
         Replace if OS is not Windows.
@@ -126,42 +152,46 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
     modify them.
 
     Attributes:
-        path -- 
+        path -- str
             @property path to the TM file. Path is validated depending
             on the OS.
-        backup_path --
+        backup_path -- str
             Path of the backup TM file. Path is validated depending on
             the OS.
-        info_path --
+        info_path -- str
             Path to the TM info file. Path is validated depending on
             the OS.
-        ext --
+        ext -- str
             TM file extension. Only support .csv.
             (default '.csv')
-        info_ext --
+        info_ext -- str
             TM info file extension. Only support .json
             (default '.json')
-        tm_version --
+        tm_version -- int
             TM version.
             (default 4)
-        supported_languages --
+        supported_languages -- list
             Languages that the TM supports. Used to select columns in
             self.data DataFrame.
-        data --
+        data -- pd.DataFrame
             @property Data in the TM. Accept only pandas DataFrame
             class.
-        length --
+        length -- int
             Length len(data) of the DataFrame data in TM file.
-        info_ext --
+        info_ext -- str
             Extension of TM info file.
-        last_modified --
+        last_modified -- datetime
             Time when data is modified. Loads value from TM info file
             on init. If there's no info file, create a new one.
+        err_msg_queue -- mp.Queue
+            Queue contains error info message which will be get by the
+            UI.
     """
     def __init__(self, path: str):
         """
         Args:
-            path -- Path to the TM file.
+            path --
+                Path to the TM file.
 
         Raises:
             Exception --
@@ -176,11 +206,11 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
         super().__init__()
         # Set up default value
         try:
+            try:
             ### INIT SELF.PATH, SELF.INFO_PATH, SELF.INFO_EXT,
             ### SELF.LAST_MODIFIED
             # Only accepts file path and csv extension
             # Init other paths along the way
-            if os.path.isfile(path) and path.endswith('.csv'):
                 self._path = path # Set up property for self.path
                 tm_file_root, self.ext = os.path.splitext(path)
                 tm_filename = os.path.basename(tm_file_root)
@@ -205,10 +235,15 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
                             }
                             tm_info_file.write(json.dumps(tm_info_data))
                 except Exception as e:
-                    print(f'Error while loading TM info file on init: {e}')
-            else:
-                raise Exception('Error while initializing path: '
-                    f'Not a file path or csv extension: {path}')
+                    err_msg = 'Error while loading TM info file on ' \
+                        f'init: {e}'
+                    print(err_msg)
+                    self.err_msg_queue.put(err_msg)
+            except Exception as e:
+                err_msg = 'Error while initializing path: Not a file ' \
+                    f'path or csv extension: {path}'
+                print(err_msg)
+                self.err_msg_queue.put(err_msg)
             
             ### INIT SELF.BACKUP_PATH
             if sys.platform.startswith('win'):
@@ -217,7 +252,6 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
                         f"{tm_filename}_backup{self.ext}")
             else:
                 self.backup_path = os.getcwd()
-            self.tm_version = 4
             ### INIT SELF.DATA, SELF.LENGTH
             data = pd.read_csv(self.path, usecols=self.supported_languages)
             # Only retrieve data from pandas DataFrame
@@ -228,12 +262,15 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
                 self._data = data
                 self.length = len(data)
             else:
-                raise TypeError('Error while initializing TM data. '
-                    f'Invalid TM data type: {type(data)}. '
-                    'Must be pandas DataFrame.')
-        
+                err_msg = 'Error while initializing TM data. ' \
+                    f'Invalid TM data type: {type(data)}. ' \
+                    'Must be pandas DataFrame.'
+                print(err_msg)
+                self.err_msg_queue.put(err_msg)
         except Exception as e:
-            print('Error while initializing TM file: ', e)
+            err_msg = f'Error while initializing TM file: {e}'
+            print(err_msg)
+            self.err_msg_queue.put(err_msg)
 
     def __repr__(self):
         return f'Local TM file: {self.path}'
@@ -252,16 +289,21 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
         Also set the basename of the TM file.
         Supported extension: .csv
         Assign value to the path to the TM info file along the way.
+        Do not create a new path if an error occurs. So exceptions
+        should be handled in the UI.
+
+        Attrs modified:
+            self.ext, self.info_path
 
         Args:
-            path --
-                str path that gets directly on initialization.
+            tm_path --
+                TM path that gets directly on initialization.
 
         Raises:
             Exception --
-                Error while setting TM path in {__class__}.
+                Error while setting TM path.
             Exception --
-                Cannot setting TM file path because path is not a file.
+                Cannot set TM file path because path is not a file.
             TypeError --
                 Incorrect file extension. Must be .csv.
         """
@@ -273,15 +315,21 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
                     self._path = self.correct_path_os(tm_path)
                     self.info_path = f'{tm_file_root}_info.{self.info_ext}'
                 else:
-                    raise TypeError(f'Incorrect file extension: '
-                        f'{tm_file_ext}. Must be .csv.')
+                    err_msg = 'Incorrect file extension: ' \
+                        f'{tm_file_ext}. Must be .csv extension.'
+                    print(err_msg)
+                    self.err_msg_queue.put(err_msg)
             else:
-                raise Exception('Cannot setting TM file path '
-                    'because path is not a file: ', tm_path)
+                err_msg = 'Cannot set TM file path because path is not a' \
+                    f'file: {tm_path}'
+                print(err_msg)
+                self.err_msg_queue.put(err_msg)
         except Exception as e:
-            print(f'Error while setting TM path in {__class__}: ', e)
+            err_msg = f'Error while setting TM path: {e}'
+            print(err_msg)
+            self.err_msg_queue.put(err_msg)
 
-
+    @func_timer
     def write_file(self):
         """Create a csv file with the data and json file with info data.
         
@@ -297,7 +345,9 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
                 }
                 tm_info_file.write(json.dumps(tm_info_data))
         except Exception as e:
-            print(f'Error while writing TM files: {e}')
+            err_msg = f'Error while writing TM files: {e}'
+            print(err_msg)
+            self.err_msg_queue.put(err_msg)
 
 
 ###############################################################################
@@ -312,45 +362,48 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
     except the following: data.
 
     Attributes:
-        bucket --
+        bucket -- gcs bucket
             Bucket in the cloud storage. Currently using Google Cloud
             Storage by default.
-        glossary_id --
+        glossary_id -- str
             Name of the project.
-        path --
+        path -- str
             The URI path of the TM in cloud storage.
-        info_path --
+        info_path -- str
             The URI path of the TM info file in cloud storage.
-        local_path --
+        local_path -- str
             Path to the local file on user computer. The local file is
             used to load data when there's no new update about the TM on
             cloud storage. Path is validated depending on the OS.
-        ext --
+        ext -- str
             TM file extension. Only support .csv. (default '.csv')
-        info_ext --
+        info_ext -- str
             TM info file extension. Support .json (default '.json')
-        blob --
+        blob -- gcs blob
             A dict/object containing the data of TM file on a specific
             cloud storage.
-        info_blob --
+        info_blob -- gcs blob
             A dict/object containing the data of TM info file on a
             specific cloud storage.
-        basename --
+        basename -- str
             File basename.
         tm_version -- TM version. (default 4)
         supported_languages -- Languages that the TM supports. Used to
             select columns in self.data DataFrame.
-        data --
+        data -- pd.DataFrame
             @property Data in the TM. Accept only pandas DataFrame
             class. Data first checks the data from local_path, if none,
             download from blob to create a file and load data from it.
-        length --
+        length -- int
             Length len(data) of the DataFrame data in TM file.
-        last_modified --
+        last_modified -- datetime
             Time when data is modified. Currently this class is not used
             this attribute.
-        upload_time --
+        upload_time -- int
             Time when TM file is uploaded to the cloud storage.
+        err_msg_queue -- mp.Queue
+            Queue contains error info message which will be get by the
+            UI.
     """
     def __init__(self,
             license_path: str, *,
@@ -386,7 +439,10 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             try:
                 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = license_path
             except Exception as e:
-                print(f'Error while setting up license in Cloud TM file: {e}')
+                err_msg = 'Error while setting up license in ' \
+                        f'Cloud TM file: {e}'
+                print(err_msg)
+                self.err_msg_queue.put(err_msg)
             self.bucket = storage.Client().get_bucket(bucket_id)
             # For more security, in the future, may need to add
             # a validation to check if glossary_id exists in a supported list
@@ -400,7 +456,10 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             try:
                 self.blob = self.bucket.get_blob(self.path)
             except Exception as e:
-                print('Error while intitializing blob in Cloud TM file: ', e)
+                err_msg = 'Error while intitializing blob in ' \
+                        f'Cloud TM file: {e}'
+                print(err_msg)
+                self.err_msg_queue.put(err_msg)
             ### INIT SELF.INFO_BLOB
             self.info_ext = '.json'
             self.info_path = f"TM/{self.glossary_id}/TM_{self.glossary_id}" \
@@ -412,6 +471,8 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             if sys.platform.startswith('win'):
                 local_dir = self.correct_path_os(
                     f"{os.environ['APPDATA']}\\AIO Translator\\TM")
+                if not os.path.exists(local_dir):
+                    os.mkdir(local_dir)
                 self.local_path = self.correct_path_os(
                     f'{local_dir}\\TM_{glossary_id}{self.ext}')
             else:
@@ -427,22 +488,25 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
                 if os.path.exists(self.local_path) and \
                         os.path.isfile(self.local_path):
                     self._data = pd.read_csv(self.local_path)
-                    print('Successfully loaded data from local TM.')
+                    print('Successfully loaded data from local TM for cloud.')
                 else:
-                    os.mkdir(local_dir)
                     self.download_from_blob(self.local_path)
                     self._data = pd.read_csv(self.local_path)
-                    print('Successfully loaded data from local TM.')
+                    print('Successfully loaded data from local TM for cloud.')
             except Exception as e:
-                print('Error while loading TM data in cloud TM class on init: '
-                    f'{e}')
+                err_msg = 'Error while loading TM data in cloud ' \
+                    f'TM class on init: {e}'
+                print(err_msg)
+                self.err_msg_queue.put(err_msg)
         except Exception as e:
-            print('Error while initializing Cloud TM file: ', e)
+            err_msg = 'Error while initializing Cloud TM file: {e}'
+            print(err_msg)
+            self.err_msg_queue.put(err_msg)
 
     def __repr__(self):
         return f'Cloud TM file: {self.path}'
 
-
+    @func_timer
     def download_from_blob(self, destination_path):
         """Download TM file on cloud storage.
         
@@ -455,9 +519,11 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             print(f'Downloaded TM file from {self.path} blob to '
                 f'{destination_path} on local device.')
         except Exception as e:
-            print(f'Error while downloading TM file on cloud storage: {e}')
+            err_msg = f'Error while downloading TM file on cloud storage: {e}'
+            print(err_msg)
+            self.err_msg_queue.put(err_msg)
 
-
+    @func_timer
     def download_data_from_blob(self):
         """Download and return TM data from the blob.
 
@@ -485,8 +551,12 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
                 tm_info_data['upload_timestamp'])
             return data
         except Exception as e:
-            print(f'Error while getting data from Cloud TM blob: {e}')
+            err_msg = 'Error while getting data from Cloud TM blob: ' \
+                f'{e}'
+            print(err_msg)
+            self.err_msg_queue.put(err_msg)
 
+    @func_timer
     def upload_to_blob(self, local_path: str):
         """Upload the TM file to the blob.
         
@@ -519,13 +589,15 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
                 info_blob.upload_from_string(json.dumps(tm_info_data))
                 print('New blobs have been created for cloud TM upload.')
         except Exception as e:
-            print('Error while uploading TM file and info file to the '
-                f'cloud storage: {e}')
+            err_msg = 'Error while uploading TM file and info ' \
+                f'file to the cloud storage: {e}'
+            print(err_msg)
+            self.err_msg_queue.put(err_msg)
 
 
 
 ### TEST RUN ################################################################
-test_path = r'C:\Users\ndtn\NWV\Translation Tool\Source Code\TM_MSM.csv'
+test_path = r''
 license_path = r''
 bucket_id = 'nxvnbucket'
 glossary_id = 'MSM'
