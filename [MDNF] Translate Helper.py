@@ -13,11 +13,11 @@ from datetime import date
 #import time
 #function difination
 # Copy to clipboard
-from pyperclip import copy
+from pyperclip import copy, paste
 #from tkinter import *
 #from tkinter.ttk import *
 from tkinter.ttk import Entry, Label, Style
-from tkinter.ttk import Checkbutton, OptionMenu, Notebook
+from tkinter.ttk import Checkbutton, OptionMenu, Notebook, Radiobutton
 from tkinter import Tk, Frame, Toplevel
 from tkinter import Button
 
@@ -32,6 +32,8 @@ from tkinter import WORD
 from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, BOTTOM
 # Config state
 from tkinter import DISABLED, NORMAL
+
+from tkhtmlview import HTMLLabel, HTMLScrolledText
 
 #from tkinter import filedialog
 #from tkinter import messagebox
@@ -53,10 +55,10 @@ from libs.aioconfigmanager import ConfigLoader
 
 from libs.cloudconfig import CloudConfigLoader
 
-#from libs.grammarcheck import LanguageTool
+from libs.grammarcheck import LanguageTool
 
 from libs.version import get_version
-from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText
+from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText, ADB_Controller
 
 #from openpyxl import load_workbook, worksheet, Workbook
 
@@ -69,7 +71,7 @@ ver_num = get_version(REV)
 version = tool_display_name  + " " +  ver_num + " * | " + "Translator lib " + TranslatorVersion
 
 DELAY = 20
-
+DELAY2 = 300000
 #**********************************************************************************
 # UI handle ***********************************************************************
 #**********************************************************************************
@@ -161,12 +163,27 @@ class MyTranslatorHelper(Frame):
 			self.parent.update_idletasks()
 			self.LoadTempReport()
 			self.parent.deiconify()
+
+		self.after(DELAY2, self.status_listening)	
+
 			
 	# Menu function
 	def on_closing(self):
 		if messagebox.askokcancel(tool_display_name, "Do you want to quit?"):
 			self.parent.destroy()
 			self.TranslatorProcess.terminate()
+
+	def status_listening(self):
+		
+		if self.MyTranslator == None:
+			self.after(DELAY2, self.status_listening)
+		else:
+			try:
+				self.MyTranslator.send_progress_list()
+			except:
+				pass
+			self.after(DELAY2, self.status_listening)
+		#print('Device status:', device_status, time.time()- Start)
 
 	def Error(self, ErrorText):
 		messagebox.showinfo('Translate error...', ErrorText)	
@@ -191,6 +208,8 @@ class MyTranslatorHelper(Frame):
 		self.Generate_SimpleTranslator_UI(self.SimpleTranslator)
 
 		self.Generate_TranslateSetting_UI(self.TranslateSetting)
+
+		ADB_Controller(self.ADB_Controller)
 		#self.Generate_Search_UI(self.Searcher)
 
 		#self.Init_Translator_Config
@@ -222,6 +241,10 @@ class MyTranslatorHelper(Frame):
 		#Tab3
 		self.TranslateSetting = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.TranslateSetting, text=  self.LanguagePack.Tab['Translator'])
+
+		#Tab4
+		self.ADB_Controller = Frame(TAB_CONTROL)
+		TAB_CONTROL.add(self.ADB_Controller, text=  'Controller')
 
 		#Tab4
 		#self.Searcher = Frame(TAB_CONTROL)
@@ -359,16 +382,19 @@ class MyTranslatorHelper(Frame):
 
 		Label(Tab, width=10, text=self.LanguagePack.Label['Expected']).grid(row=Row, column=6, columnspan=2, padx=0, pady=0, stick=W)
 		#Button(Tab, text=self.LanguagePack.Button['Load'], width=10, command= self._load_report).grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
-		#self.grammar_check = Button(Tab, text="Grammar Check", width=10, command= self.analyze_grammar)
+		
 		#self.grammar_check.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
 
 		#self.db_correction = Button(Tab, text="DB Falt Alarm", width=10	, command= self.analyze_fault_terminology, state=DISABLED)
 		#self.db_correction.grid(row=Row, column=8, padx=5, pady=5, stick=W+E)
+		#self.grammar_check = Button(Tab, text="Grammar Check", width=10, command= self.analyze_grammar)
+		#self.grammar_check.grid(row=Row, column=7, padx=5, pady=5, stick=W+E)	
 
-		self.db_highlight = Button(Tab, text="DB Highlight", width=10, command= self.analyze_terminology, state=DISABLED)
+		self.db_highlight = Button(Tab, text="Review Report", width=10, command= self.review_report, state=DISABLED)
+
 		self.db_highlight.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)	
 
-		self.GetReportBtn = Button(Tab, text=self.LanguagePack.Button['GetReport'], width=10, command= self.generate_report, state=DISABLED)
+		self.GetReportBtn = Button(Tab, text=self.LanguagePack.Button['GetReport'], width=10, command= self.analyze_grammar, state=DISABLED)
 		self.GetReportBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 		
 
@@ -637,10 +663,11 @@ class MyTranslatorHelper(Frame):
 			newPath = self.CorrectPath(Outputdir + '/'+ sourcename + '.' + ext)
 			return newPath
 
-	def _create_grammar_confirmation_window(self, dif_dict, _class):
-		self.new = Toplevel(self.master)
-
-		_class(self.new, dif_dict)
+	def _create_grammar_confirmation_window(self, dif_dict, diff_index, _class):
+		self.Child_Window = Toplevel(self.master)
+		self.Child_Window.resizable(False, False)
+		self.Child_Window.title("Confirm the fix")
+		_class(self, dif_dict, diff_index)
 	
 	#I dont know why I put it here
 	def UpdateSize(self,event):
@@ -1222,7 +1249,15 @@ class MyTranslatorHelper(Frame):
 				self.TextReproduceSteps.highlight_fault_pattern(term, 'blue')
 				self.TextShouldBe.highlight_fault_pattern(term, 'blue')
 
-	
+	def review_report(self):
+
+		child_windows = Toplevel(self.parent)
+		#child_windows.geometry("200x200")  # Size of the window 
+		child_windows.resizable(False, False)
+		child_windows.title("Report reviewer")
+		self.report_review = HTMLScrolledText(child_windows)
+		self.report_review.set_html(self.html_content)
+		self.report_review.pack(pady=15, padx=15, fill=BOTH)
 	
 	def analyze_fault_terminology(self):
 		for term in self.MyTranslator.dictionary:
@@ -1365,6 +1400,28 @@ class MyTranslatorHelper(Frame):
 		To_Translate['TextReproduceSteps'] = self.TextReproduceSteps.get("1.0", END)
 		self.report_details = To_Translate
 
+	def update_report_elements(self):
+		
+	
+		#print('TextTestClient', TextTestClient)
+		To_Translate = {}
+
+		EnvInfo = self.EnvInfo.get("1.0", END)
+		
+		Reproducibility = self.Reproducibility.get("1.0", END).replace('\n', '')
+		To_Translate['EnvInfo'] = EnvInfo
+		To_Translate['Reproducibility'] = Reproducibility + '%'
+
+		
+		
+		To_Translate['TextShouldBe'] = self.TextShouldBe.get("1.0", END)
+		To_Translate['TextReproduceSteps'] = self.TextReproduceSteps.get("1.0", END)
+
+		To_Translate['TextTestReport'] = self.TextTestReport.get("1.0", END)
+		To_Translate['TextShouldBe'] = self.TextShouldBe.get("1.0", END)
+		To_Translate['TextReproduceSteps'] = self.TextReproduceSteps.get("1.0", END)
+		self.report_details = To_Translate	
+
 	def prepare_translator_language(self):
 		return
 
@@ -1397,7 +1454,9 @@ class MyTranslatorHelper(Frame):
 			self.after(DELAY, self.GetBugDetails)
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['GeneratedBugReport'])
+
 			self.BugWriter.join()
+			self.html_content = paste()
 			self.enable_btn()
 
 	def generate_report(self):
@@ -1412,15 +1471,30 @@ class MyTranslatorHelper(Frame):
 		
 		source_language_index = self.language_list.index(self.source_language.get())
 		source_language = self.language_id_list[source_language_index]
-		#print('report_details', self.report_details)
+		print('report_details', self.report_details)
 		
-		self.grammar_check_list = []
+		#self.grammar_check_list = {}
+		self.grammar_index_list = {}
+		self.for_grammar_check = []
+		index = 0
 		for dict_key in self.report_details:
-			if dict_key != 'TextTestVersion':
-				if self.report_details[dict_key] != None:	
-					self.grammar_check_list.append(self.report_details[dict_key])
-		print('List sentence: ',self.grammar_check_list)
-		self.Grammar_Check = Process(target= correct_sentence, args=(self.grammar_check_result, self.grammar_check_list, source_language,))
+			self.grammar_index_list[dict_key] = []
+			if dict_key not in ['EnvInfo', 'Reproducibility']:
+				if self.report_details[dict_key] != None:
+					all_sentence = self.report_details[dict_key].rstrip().split('\n')
+					for sentence in all_sentence:
+						if sentence.isprintable():
+							self.for_grammar_check.append(sentence.rstrip())
+							self.grammar_index_list[dict_key].append(index)
+							index+=1
+				
+			else:
+				del self.grammar_index_list[dict_key]
+		print('List sentence: ', self.grammar_index_list)
+		print('List sentence: ', self.for_grammar_check)
+
+		self.grammar_check_result[:]= []
+		self.Grammar_Check = Process(target= correct_sentence, args=(self.grammar_check_result, self.for_grammar_check, source_language,))
 		self.Grammar_Check.start()
 		self.after(DELAY, self.get_grammar_confirmation)
 
@@ -1428,15 +1502,19 @@ class MyTranslatorHelper(Frame):
 
 	def get_grammar_confirmation(self):
 
-		self.grammar_check_result[:]
+		
 		if (self.Grammar_Check.is_alive()):
 			self.after(DELAY, self.get_grammar_confirmation)
 		else:
-
 			self.grammar_corrected_list = self.grammar_check_result
-			print('Grammar check result', self.grammar_corrected_list)
+			self.confirmed_list = []
+			self.confirmed_index_list = []
+			for i in range(len(self.grammar_corrected_list)):
+				if self.grammar_corrected_list[i] != self.for_grammar_check[i]:
+					self.confirmed_list.append({'old': self.for_grammar_check[i], 'new': self.grammar_corrected_list[i]})
+					self.confirmed_index_list.append(i)
 			if len(self.grammar_corrected_list) > 0:
-				self._create_grammar_confirmation_window(self.grammar_corrected_list, ConfirmationPopup)
+				self._create_grammar_confirmation_window(self.confirmed_list, self.confirmed_index_list, ConfirmationPopup)
 			else:
 				self.Notice.set('Grammar check is Passed.')
 	
@@ -1593,21 +1671,60 @@ class MyTranslatorHelper(Frame):
 # Class
 
 class ConfirmationPopup:
-	def __init__(self, master, dif_dict):
-		self.master = master
-		self.master.geometry("400x350+300+300")
-		self.vars = []
+	def __init__(self, master, dif_dict, index_list):
+		self.Root = master
+		self.master = master.Child_Window
+		#self.master.geometry("400x350+300+300")
+		self.index = index_list
 		row = 1
-		for string_index in range(len(dif_dict)- 1):
-			sentence = dif_dict[string_index]['old']
-			corrected_sentence = dif_dict[string_index]['new']
-			show_text = sentence + "\t-->\t" + corrected_sentence
-			self.vars.append(IntVar())
-			l = Checkbutton(self.master, text= show_text, variable=self.vars[string_index]).grid(row = row, column = 1, padx=5, pady=5, stick=W)
-			self.vars[string_index].set(1)
+		self.All_Widget = []
+		self.diff = dif_dict
+		for diff_object in dif_dict:
+			widget = {}
+			sentence = diff_object['old'].replace('\r', '')
+			corrected_sentence = diff_object['new'].replace('\r', '')
+			widget['var'] = IntVar()
+		
+			Radiobutton(self.master, width= 40, text=  sentence, value=1, variable= widget['var']).grid(row=row, column=1, padx=5, pady=5, sticky=W)
+			Radiobutton(self.master, width= 40, text=  corrected_sentence, value=2, variable= widget['var']).grid(row=row, column=2, padx=5, pady=5, sticky=W)
+		
+			widget['var'].set(2)
+			self.All_Widget.append(widget)
 			row += 1
-		Button(self.master, width = 20, text= 'Decline All').grid(row=row, column=1, columnspan=1, padx=5, pady=5, sticky=E)
-		Button(self.master, width = 20, text= 'Confirm').grid(row=row, column=2, columnspan=1, padx=5, pady=5, sticky=E)
+		Button(self.master, width = 20, text= 'Accept All', command = self.Accept_All).grid(row=row, column=1, columnspan=1, padx=5, pady=5)
+		Button(self.master, width = 20, text= 'Confirm', command = self.Confirm).grid(row=row, column=2, columnspan=1, padx=5, pady=5)
+
+		self.master.protocol("WM_DELETE_WINDOW", self.Confirm)	
+
+	def Accept_All(self):
+		for widget in self.All_Widget:
+			widget['var'].set(2)
+		return
+
+	def Confirm(self):
+		i = 0
+		for widget in self.All_Widget:
+			result = widget['var'].get()
+			if result == 2:
+				to_update = self.diff[i]['new']
+				_index_in_check_list = self.index[i]
+				self.Root.for_grammar_check[_index_in_check_list] = to_update
+			i+=1
+
+		for dict_key in self.Root.report_details:	
+			print('updating', dict_key)
+			self.Root.grammar_index_list[dict_key] = []
+			if dict_key not in ['EnvInfo', 'Reproducibility']:
+				
+				all_index = self.Root.grammar_index_list[dict_key]
+				temp_list = []
+				for index in all_index:
+					temp_list.append(self.Root.grammar_index_list[index])
+				print('temp',('\r\n').join(temp_list))	
+				self.Root.report_details[dict_key] = ('\r\n').join(temp_list)
+		self.master.destroy()
+		print(self.Root.report_details)
+		self.Root.GenerateReportCSS()
 
 class BottomPanel(Frame):
 	def __init__(self, master):
@@ -1680,23 +1797,13 @@ def dual_translate(queue, MyTranslator, second_target_language, text):
 
 def correct_sentence(result_manager, sentence_list, language):
 	language_tool = None
-	#language_tool = LanguageTool(language)
-	for paragraph in sentence_list:
-		sentences = []
-		print('paragraph', paragraph)
-		sentences = language_tool.sentence_split(paragraph)
-		for sentence in sentences:
-			sub_sentences = sentence.split('\n')
-			print('sub_sentences', sub_sentences)
-			for sub_sentence in sub_sentences:
-				if sub_sentence != "":
-					corrected_sentence = []
-					corrected_sentence = language_tool.correct(sub_sentence)
-					if sub_sentence != corrected_sentence:
-						result_obj = {'old': sub_sentence, 'new': corrected_sentence}
-						result_manager.append(result_obj)
-
-	print('result_manager', result_manager)
+	language_tool = LanguageTool(language)
+	print('sentence_list', sentence_list)
+	for sentence in sentence_list:
+		corrected_sentence = language_tool.correct(sentence)
+		print('corrected_sentence', corrected_sentence)	
+		result_manager.append(corrected_sentence)
+	
 	return
 #Bug Writer 
 def Translate_Simple(Object, simple_template, my_translator, secondary_target_language = None):
@@ -1949,7 +2056,7 @@ def MainLoop():
 	MyManager = Manager()
 	grammar_check_result = MyManager.list()
 	tm_manager = MyManager.list()
-	language_tool_enable = False
+	language_tool_enable = True
 	print('Create UI')
 	root = Tk()
 	#root.withdraw()
@@ -1968,7 +2075,6 @@ def MainLoop():
 		#root.deiconify()
 		root.mainloop()
 		print('Send usage report')
-		application.MyTranslator.send_tracking_record()
 	except Exception as e:
 		
 		root.withdraw()
@@ -2003,7 +2109,10 @@ def MainLoop():
 			
 		print("error message:", e)	
 		messagebox.showinfo(title='Critical error', message=e)
-
+	try:
+		application.MyTranslator.send_tracking_record()
+	except:
+		pass	
 	print('Initial Done')
 
 if __name__ == '__main__':

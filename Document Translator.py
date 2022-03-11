@@ -1005,6 +1005,16 @@ class DocumentTranslator(Frame):
 		self.Notice.set('Translate Process has been stop')
 		return
 
+	def Stop(self):
+		try:
+			if self.TranslatorProcess.is_alive():
+				self.TranslatorProcess.terminate()
+		except:
+			pass
+		self.progressbar["value"] = 0
+		self.progressbar.update()
+		self.Notice.set('Translate Process has been stop')	
+
 	def generate_translator_engine(self):
 		self.Notice.set(self.LanguagePack.ToolTips['AppInit'])
 
