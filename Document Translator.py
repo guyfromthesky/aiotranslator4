@@ -60,7 +60,7 @@ __all__ = ['DocumentTranslator']
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4113
+rev = 4115
 ver_num = get_version(rev) 
 version = f'{tool_display_name} {ver_num} | Translator lib {TranslatorVersion}'
 DELAY = 20
@@ -77,7 +77,8 @@ class DocumentTranslator(Frame):
 		
 		Frame.__init__(self, Root) 
 		self.pack(side=TOP, expand=Y, fill=X)
-		self.parent = Root
+		self.parent = Root 
+		self.parent.protocol("WM_DELETE_WINDOW", self.on_closing)
 
 		# Queue
 		self.ProcessQueue = process_queue
@@ -361,14 +362,24 @@ class DocumentTranslator(Frame):
 
 		self.TurboTranslate = IntVar()
 		TurboTranslateBtn = Checkbutton(
-			Tab, text=  self.LanguagePack.Option['TurboTranslate'],
+			Tab, text=self.LanguagePack.Option['TurboTranslate'],
 			variable=self.TurboTranslate)
-		TurboTranslateBtn.grid(
-			row=Row, column=5, padx=0, pady=5, sticky=W)
+		TurboTranslateBtn.grid(row=Row, column=5, padx=0, pady=5, sticky=W)
 		TurboTranslateBtn.bind(
 			"<Enter>",
 			lambda event : self.Notice.set(
 				self.LanguagePack.ToolTips['TurboTranslate']))
+
+		self.Bilingual = IntVar()
+		TurboTranslateBtn = Checkbutton(
+			Tab, text=self.LanguagePack.Option['Bilingual'],
+			variable=self.Bilingual)
+		TurboTranslateBtn.grid(
+			row=Row, column=7, columnspan=1, padx=5, pady=0, sticky=W)
+		TurboTranslateBtn.bind(
+			"<Enter>",
+			lambda event : self.Notice.set(
+				self.LanguagePack.ToolTips['Bilingual']))
 
 		### 3RD ROW OF OPTIONS SECTION
 		Row+=1
@@ -783,20 +794,22 @@ class DocumentTranslator(Frame):
 		text = self.search_text.get("1.0", END).replace("\n", "").replace(
 			" ", "")
 		self.remove_treeview()
-		print("Text to search: ", text)
+		print("Text to search:", text)
 		text = text.lower()
 		if text != None:
 			try:
 				if len(self.MyTranslator.translation_memory) > 0:
 					#translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
-					result_from = \
+					#result_from = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory[self.MyTranslator.from_language].str.match(text)]
+					#result_to = self.MyTranslator.translation_memory[self.MyTranslator.translation_memory[self.MyTranslator.to_language].str.match(text)]
+					result_from = self.MyTranslator.translation_memory[
 						self.MyTranslator.translation_memory[
-							self.MyTranslator.translation_memory[
-									self.MyTranslator.from_language] \
-										.str.match(text)]
+							self.MyTranslator.from_language] \
+							.str.contains(text)]
 					result_to = self.MyTranslator.translation_memory[
 						self.MyTranslator.translation_memory[
-							self.MyTranslator.to_language].str.match(text)]
+							self.MyTranslator.to_language] \
+							.str.contains(text)]
 					result = result_from.append(result_to)
 					#print('type', type(result), 'total', len(result))
 					if len(result) > 0:
@@ -942,33 +955,44 @@ class DocumentTranslator(Frame):
 	def save_app_config(self):
 		target_language = self.target_language.get()
 		target_language_index = self.language_list.index(target_language)
-		self.AppConfig.save_config(
+		self.AppConfig.Save_Config(
 			self.AppConfig.Doc_Config_Path, 'Document_Translator',
 			'target_lang', target_language_index)
-		self.AppConfig.save_config(
+		
+		source_language = self.source_language.get()
+		source_language_index = self.language_list.index(source_language)
+		self.AppConfig.Save_Config(
 			self.AppConfig.Doc_Config_Path, 'Document_Translator',
-			'speed_mode', self.TurboTranslate.get())
-		self.AppConfig.save_config(
+			'source_language', source_language_index)
+
+		self.AppConfig.Save_Config(
 			self.AppConfig.Doc_Config_Path, 'Document_Translator',
-			'value_only', self.DataOnly.get())
-		self.AppConfig.save_config(
+			 'speed_mode', self.TurboTranslate.get())
+		self.AppConfig.Save_Config(
 			self.AppConfig.Doc_Config_Path, 'Document_Translator',
-			'file_name_correct', self.TranslateFileName.get())
-		self.AppConfig.save_config(
+			 'bilingual_mode', self.Bilingual.get())
+
+		self.AppConfig.Save_Config(
 			self.AppConfig.Doc_Config_Path, 'Document_Translator',
-			'file_name_translate', self.TranslateFileName.get())
-		self.AppConfig.save_config(
+			 'value_only', self.DataOnly.get())
+		self.AppConfig.Save_Config(
 			self.AppConfig.Doc_Config_Path, 'Document_Translator',
-			'sheet_name_translate', self.TranslateSheetName.get())
-		self.AppConfig.save_config(
+			 'file_name_correct', self.TranslateFileName.get())
+		self.AppConfig.Save_Config(
 			self.AppConfig.Doc_Config_Path, 'Document_Translator',
-			'tm_translate', self.TMTranslate.get())
-		self.AppConfig.save_config(
+			 'file_name_translate', self.TranslateFileName.get())
+		self.AppConfig.Save_Config(
 			self.AppConfig.Doc_Config_Path, 'Document_Translator',
-			'tm_update', self.TMUpdate.get())
-		self.AppConfig.save_config(
+			 'sheet_name_translate', self.TranslateSheetName.get())
+		self.AppConfig.Save_Config(
 			self.AppConfig.Doc_Config_Path, 'Document_Translator',
-			'remove_unselected_sheet', self.SheetRemoval.get())
+			 'tm_translate', self.TMTranslate.get())
+		self.AppConfig.Save_Config(
+			self.AppConfig.Doc_Config_Path, 'Document_Translator',
+			 'tm_update', self.TMUpdate.get())
+		self.AppConfig.Save_Config(
+			self.AppConfig.Doc_Config_Path, 'Document_Translator',
+			 'remove_unselected_sheet', self.SheetRemoval.get())
 
 	def swap_language(self):
 		
@@ -1002,6 +1026,11 @@ class DocumentTranslator(Frame):
 
 	def OpenWeb(self):
 		webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/%5BTranslation%5D+AIO+Translator")
+
+	def on_closing(self):
+		if messagebox.askokcancel("Quit", "Do you want to quit?"):
+			self.parent.destroy()
+			self.TranslatorProcess.terminate()
 
 	def CorrectPath(self, path):
 		if sys.platform.startswith('win'):
@@ -1409,7 +1438,7 @@ class DocumentTranslator(Frame):
 		self._version_status  = StringVar()
 		self._update_day = StringVar()
 
-		self.AppConfig = ConfigLoader()
+		self.AppConfig = ConfigLoader(Document = True)
 		self.Configuration = self.AppConfig.Config
 		_app_language = self.Configuration['Document_Translator']['app_lang']
 		if _app_language == 1:
@@ -1444,6 +1473,8 @@ class DocumentTranslator(Frame):
 		
 		self.TurboTranslate.set(
 			self.Configuration['Document_Translator']['speed_mode'])
+		self.Bilingual.set(
+			self.Configuration['Document_Translator']['bilingual'])
 		self.DataOnly.set(
 			self.Configuration['Document_Translator']['value_only'])
 		self.FixCorruptFileName.set(
@@ -1457,8 +1488,8 @@ class DocumentTranslator(Frame):
 		self.TMUpdate.set(
 			self.Configuration['Document_Translator']['tm_update'])
 		self.SheetRemoval.set(
-			self.Configuration[
-				'Document_Translator']['remove_unselected_sheet'])
+			self.Configuration['Document_Translator'] \
+				['remove_unselected_sheet'])
 		self.is_cloud_tm_used_intvar.set(
 			self.Configuration['Document_Translator']['use_cloud_tm'])
 		
@@ -1563,6 +1594,16 @@ class DocumentTranslator(Frame):
 			self.Error('No license selected, please select the key '
 				"in 'Translate Setting' tab.")
 			return False
+	
+	def Stop(self):
+		try:
+			if self.TranslatorProcess.is_alive():
+				self.TranslatorProcess.terminate()
+		except:
+			pass
+		self.progressbar["value"] = 0
+		self.progressbar.update()
+		self.Notice.set('Translate Process has been stop')	
 
 	def generate_translator_engine(self):
 		"""Run the aiotranslator."""
@@ -1702,6 +1743,11 @@ class DocumentTranslator(Frame):
 			self.MyTranslator.source_language_predict_enable(True)
 		else:
 			self.MyTranslator.source_language_predict_enable(False)
+
+		if self.Bilingual.get() == 1:
+			self.Options['Bilingual']  = True
+		else:
+			self.Options['Bilingual'] = False
 
 		#Set Data Mode
 		if self.DataOnly.get() == 1:
@@ -2492,7 +2538,7 @@ def execute_document_translate(
 			StatusQueue.put('Translated file: ' + Preflix + ' ' + \
 				TranslatedName + '_' + timestamp + ext)
 		else:
-			Message = 'Fail to translate document, details: \n' + Result
+			Message = 'Fail to translate document, details: \n' + str(Result)
 			ResultQueue.put(str(Message))
 		try:
 			mem_tm = len(MyTranslator.temporary_tm)
@@ -2527,7 +2573,7 @@ def fixed_map(style, option):
 def send_fail_request(error_message):
 	try:
 		from google.cloud import logging
-		AppConfig = ConfigLoader()
+		AppConfig = ConfigLoader(Document=True)
 		Configuration = AppConfig.Config
 		print('JSON file: ', Configuration['license_file']['path'])
 		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = \

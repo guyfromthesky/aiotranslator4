@@ -13,11 +13,11 @@ from datetime import date
 #import time
 #function difination
 # Copy to clipboard
-from pyperclip import copy
+from pyperclip import copy, paste
 #from tkinter import *
 #from tkinter.ttk import *
 from tkinter.ttk import Entry, Label, Style
-from tkinter.ttk import Checkbutton, OptionMenu, Notebook
+from tkinter.ttk import Checkbutton, OptionMenu, Notebook, Radiobutton
 from tkinter import Tk, Frame, Toplevel
 from tkinter import Button
 
@@ -33,6 +33,7 @@ from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, BOTTOM
 # Config state
 from tkinter import DISABLED, NORMAL
 
+from tkhtmlview import HTMLLabel, HTMLScrolledText
 
 #from tkinter import filedialog
 #from tkinter import messagebox
@@ -54,23 +55,23 @@ from libs.aioconfigmanager import ConfigLoader
 
 from libs.cloudconfig import CloudConfigLoader
 
-#from libs.grammarcheck import LanguageTool
+from libs.grammarcheck import LanguageTool
 
 from libs.version import get_version
-from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText
+from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText, ADB_Controller
 
 #from openpyxl import load_workbook, worksheet, Workbook
 
 from google.cloud import logging
 
-tool_display_name = "Translate Helper"
+tool_display_name = "[MDNF] Translate Helper"
 tool_name = 'writer'
-REV = 4112
+REV = 4115
 ver_num = get_version(REV) 
-version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
+version = tool_display_name  + " " +  ver_num + " * | " + "Translator lib " + TranslatorVersion
 
 DELAY = 20
-
+DELAY2 = 300000
 #**********************************************************************************
 # UI handle ***********************************************************************
 #**********************************************************************************
@@ -88,6 +89,8 @@ class MyTranslatorHelper(Frame):
 		self.pack(side=TOP, expand=Y, fill=X)
 
 		self.parent = parent
+		self.parent.protocol("WM_DELETE_WINDOW", self.on_closing)
+
 		self.MyTranslator_Queue = MyTranslator_Queue
 		self.MyTranslator = None
 
@@ -135,15 +138,12 @@ class MyTranslatorHelper(Frame):
 		
 		self.create_buttom_panel()
 		self.init_ui()
-		
 		self.init_UI_setting()
 		
-		#self.LoadTempReport()
-
 
 		if REV < int(self.latest_version):
 			self.Error('Current version is lower than the minimal version allowed. Please update.')	
-			webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/AIO+Translator")
+			webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/Translate+Helper")
 			self.quit()
 			return
 
@@ -157,8 +157,34 @@ class MyTranslatorHelper(Frame):
 		else:
 			self.Error('No license selected, please select the key in Translate setting.')	
 		
-		
+		MsgBox = messagebox.askquestion ('Bug Writer', self.LanguagePack.ToolTips['LoadReport'],icon = 'info') 
+		if MsgBox == 'yes':
+			self.parent.withdraw()
+			self.parent.update_idletasks()
+			self.LoadTempReport()
+			self.parent.deiconify()
+
+		self.after(DELAY2, self.status_listening)	
+
+			
 	# Menu function
+	def on_closing(self):
+		if messagebox.askokcancel(tool_display_name, "Do you want to quit?"):
+			self.parent.destroy()
+			self.TranslatorProcess.terminate()
+
+	def status_listening(self):
+		
+		if self.MyTranslator == None:
+			self.after(DELAY2, self.status_listening)
+		else:
+			try:
+				self.MyTranslator.send_progress_list()
+			except:
+				pass
+			self.after(DELAY2, self.status_listening)
+		#print('Device status:', device_status, time.time()- Start)
+
 	def Error(self, ErrorText):
 		messagebox.showinfo('Translate error...', ErrorText)	
 
@@ -178,8 +204,12 @@ class MyTranslatorHelper(Frame):
 		#Shared variable
 
 		self.Generate_BugWriter_UI(self.BugWriter)
+	
 		self.Generate_SimpleTranslator_UI(self.SimpleTranslator)
+
 		self.Generate_TranslateSetting_UI(self.TranslateSetting)
+
+		ADB_Controller(self.ADB_Controller)
 		#self.Generate_Search_UI(self.Searcher)
 
 		#self.Init_Translator_Config
@@ -201,6 +231,9 @@ class MyTranslatorHelper(Frame):
 		self.BugWriter = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.BugWriter, text=self.LanguagePack.Tab['BugWriter'])
 		
+		#self.CustomWriter = Frame(TAB_CONTROL)
+		#TAB_CONTROL.add(self.CustomWriter, text=self.LanguagePack.Tab['CustomBugWriter'])
+
 		#Tab2
 		self.SimpleTranslator = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.SimpleTranslator, text=self.LanguagePack.Tab['SimpleTranslator'])
@@ -208,6 +241,10 @@ class MyTranslatorHelper(Frame):
 		#Tab3
 		self.TranslateSetting = Frame(TAB_CONTROL)
 		TAB_CONTROL.add(self.TranslateSetting, text=  self.LanguagePack.Tab['Translator'])
+
+		#Tab4
+		self.ADB_Controller = Frame(TAB_CONTROL)
+		TAB_CONTROL.add(self.ADB_Controller, text=  'Controller')
 
 		#Tab4
 		#self.Searcher = Frame(TAB_CONTROL)
@@ -292,8 +329,8 @@ class MyTranslatorHelper(Frame):
 		self.HeaderOptionA.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
 		
 		self.TextTitle = CustomText(Tab, width=90, height=3, undo=True, wrap=WORD)
-		self.TextTitle.grid(row=Row, column=4, columnspan=7, rowspan=2, padx=5, pady=5, stick=E)
-
+		self.TextTitle.grid(row=Row, column=4, columnspan=7, rowspan=2, padx=5, pady=5, stick=W+E)
+		
 		Row+=1
 
 		self.HeaderOptionB = AutocompleteCombobox(Tab)
@@ -302,53 +339,41 @@ class MyTranslatorHelper(Frame):
 		self.HeaderOptionB.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
 		
 		Row+=1
-		Label(Tab, text=self.LanguagePack.Label['Server']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
+		Label(Tab, text=self.LanguagePack.Label['Reproducibility']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
+		self.Reproducibility = Text(Tab, width=20, height=1, undo=True)
+		self.Reproducibility.grid(row=Row, column=2, columnspan=2,  padx=5, pady=5, stick=W+E)		
 
-		self.TextServer = Text(Tab, width=35, height=1, undo=True)
-		self.TextServer.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, stick=W)
-	
-		Label(Tab, text=self.LanguagePack.Label['ReproduceTime']).grid(row=Row, column=4, padx=5, pady=5, stick=W)
 
-		self.TextReprodTime = Text(Tab,width=20, height=1, undo=True)
-		self.TextReprodTime.grid(row=Row, column=5, columnspan=3, padx=5, pady=5, stick=W+E)
-
-		
-		Checkbutton(Tab, text=self.LanguagePack.Label['TestInfo'], variable = self.SkipTestInfo, command = self.SaveSetting).grid(row=Row, column=8, padx=5, pady=5, stick=W)
-		#self.SkipTestInfo.set(1)
+		Label(Tab, width=10, text=self.LanguagePack.Label['Search']).grid(row=Row, column=4, padx=0, pady=5, stick=W)
+		self.search_entry = AutocompleteEntry([], Tab, listboxLength=6, width=50, matchesFunction=matches)
+		self.search_entry.grid(row=Row, column=5, columnspan=5, padx=5, pady=5, sticky=W+E)
 
 		Button(Tab, text=self.LanguagePack.Button['Reset'], width=10, command= self.ResetTestReport).grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
-
-
-		Row+=1
-		Label(Tab, text=self.LanguagePack.Label['Client']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
-
-		self.TextClient = Text(Tab, width=35, height=1, undo=True)
-		self.TextClient.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, stick=W)
-		self.TextClient.insert("end", "ver.")
-
-		self.TextAccount = Text(Tab,width=20, height=1, undo=True)
-		Label(Tab, text=self.LanguagePack.Label['IDChar']).grid(row=Row, column=4, padx=5, pady=5, stick=W)
 		
-		self.TextAccount.grid(row=Row, column=5, columnspan=3, padx=5, pady=5, stick=W+E)
-
-		Checkbutton(Tab, text= 'Use Simple Template', variable = self.UseSimpleTemplate, command = self.SaveSetting).grid(row=Row, column=8, padx=5, pady=5, stick=W)
+		Row+=1
+		Label(Tab, text=self.LanguagePack.Label['EnvInfo']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
+		
+		#Checkbutton(Tab, text= 'Use Simple Template', variable = self.UseSimpleTemplate, command = self.SaveSetting).grid(row=Row, column=8, padx=5, pady=5, stick=W)
 		#self.UseSimpleTemplate.set(1)
+		
+		Label(Tab, width=10, text=self.LanguagePack.Label['Report']).grid(row=Row, column=4, columnspan=2, padx=0, pady=5, stick=W)
+
+		#Button(Tab, text=self.LanguagePack.Button['Load'], width=10, command= self.LoadTempReport).grid(row=Row, column=8, padx=5, pady=5, stick=W+E)
 
 		Button(Tab, text=self.LanguagePack.Button['Load'], width=10, command= self._load_report).grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
+		
 		Button(Tab, text=self.LanguagePack.Button['Save'], width=10, command= self._save_report).grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 
 		Row+=1
-		Label(Tab, width=10, text=self.LanguagePack.Label['Report']).grid(row=Row, column=1, columnspan=2, padx=5, pady=5, stick=W)
+		self.EnvInfo = Text(Tab, width=40, height=9, undo=True)
+		self.EnvInfo.grid(row=Row, column=1, columnspan=3, rowspan= 9,  padx=5, pady=5, stick=W+E)
 		
-		Label(Tab, width=10, text=self.LanguagePack.Label['Search']).grid(row=Row, column=4, padx=5, pady=5, stick=W)
+		self.ResetInfoSection()
+		
 
-		self.search_entry = AutocompleteEntry([], Tab, listboxLength=6, width=100, matchesFunction=matches)
-		self.search_entry.grid(row=Row, column=5, columnspan=6, padx=5, pady=5, sticky=E)
-
-		Row+=1
-		self.TextTestReport = CustomText(Tab, width=130, height=8, undo=True, wrap=WORD)
-		self.TextTestReport.grid(row=Row, column=1, columnspan=10, rowspan=7, padx=5, pady=5, stick=W+E)
-		Row+=7
+		self.TextTestReport = CustomText(Tab, width=100, height=9, undo=True, wrap=WORD)
+		self.TextTestReport.grid(row=Row, column=4, columnspan=7, rowspan=9, padx=5, pady=5, stick=W+E)
+		Row+=8
 		
 		
 		Row+=1
@@ -357,16 +382,19 @@ class MyTranslatorHelper(Frame):
 
 		Label(Tab, width=10, text=self.LanguagePack.Label['Expected']).grid(row=Row, column=6, columnspan=2, padx=0, pady=0, stick=W)
 		#Button(Tab, text=self.LanguagePack.Button['Load'], width=10, command= self._load_report).grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
-		#self.grammar_check = Button(Tab, text="Grammar Check", width=10, command= self.analyze_grammar)
+		
 		#self.grammar_check.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
 
 		#self.db_correction = Button(Tab, text="DB Falt Alarm", width=10	, command= self.analyze_fault_terminology, state=DISABLED)
 		#self.db_correction.grid(row=Row, column=8, padx=5, pady=5, stick=W+E)
+		#self.grammar_check = Button(Tab, text="Grammar Check", width=10, command= self.analyze_grammar)
+		#self.grammar_check.grid(row=Row, column=7, padx=5, pady=5, stick=W+E)	
 
-		self.db_highlight = Button(Tab, text="DB Highlight", width=10, command= self.analyze_terminology, state=DISABLED)
+		self.db_highlight = Button(Tab, text="Review Report", width=10, command= self.review_report, state=DISABLED)
+
 		self.db_highlight.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)	
 
-		self.GetReportBtn = Button(Tab, text=self.LanguagePack.Button['GetReport'], width=10, command= self.generate_report, state=DISABLED)
+		self.GetReportBtn = Button(Tab, text=self.LanguagePack.Button['GetReport'], width=10, command= self.analyze_grammar, state=DISABLED)
 		self.GetReportBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 		
 
@@ -376,6 +404,9 @@ class MyTranslatorHelper(Frame):
 		self.TextShouldBe = CustomText(Tab, width=50, height=7, undo=True, wrap=WORD) 
 		self.TextShouldBe.grid(row=Row, column=6, columnspan=5, padx=5, pady=5, stick=W+E)
 	
+		self.TextTitle.focus_set()
+		Tab.bind_all('<Key>', self.SaveTempReport)
+
 	### UI of SIMPLE TRANSLATOR ###
 	def Generate_SimpleTranslator_UI(self, Tab):
 
@@ -458,16 +489,16 @@ class MyTranslatorHelper(Frame):
 		Row += 1
 
 		Label(Tab, text= self.LanguagePack.Label['LicensePath']).grid(row=Row, column=1, padx=5, pady=5, sticky=E)
-		self.TextLicensePath = Entry(Tab,width = 150, state="readonly", textvariable=self.LicensePath)
+		self.TextLicensePath = Entry(Tab,width = 140, state="readonly", textvariable=self.LicensePath)
 		self.TextLicensePath.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=W+E)
 		Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path).grid(row=Row, column=10, padx=5, pady=5, sticky=E)
-
+		
 
 	def Btn_Select_License_Path(self):
 		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectDB'],filetypes = (("JSON files","*.json" ), ), )	
 		if filename != "":
 			LicensePath = self.CorrectPath(filename)
-			self.AppConfig.save_config(self.AppConfig.translator_config_path, 'Translator', 'license_file', LicensePath, True)
+			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'license_file', LicensePath, True)
 
 			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LicensePath
 			self.LicensePath.set(LicensePath)
@@ -479,7 +510,6 @@ class MyTranslatorHelper(Frame):
 	# Some option is saved for the next time use
 	def init_App_Setting(self):
 		print('init_App_Setting')
-		self.SkipTestInfo = IntVar()
 		self.UseSimpleTemplate = IntVar()
 
 		self.LicensePath = StringVar()
@@ -522,7 +552,7 @@ class MyTranslatorHelper(Frame):
 			print("Error while loading cloud configuration:", e)
 			self.banning_status = False
 			self.latest_version = 1000
-			
+
 		
 		#self.Config['bucket_db_list']
 		#self.Config['glossary_data_list']
@@ -537,9 +567,6 @@ class MyTranslatorHelper(Frame):
 			self.secondary_target_language.set('')
 		else:
 			self.secondary_target_language.set(self.language_list[secondary_language])
-		
-		self.SkipTestInfo.set(self.Configuration['Bug_Writer']['test_info_inable'])
-		self.UseSimpleTemplate.set(self.Configuration['Bug_Writer']['use_simple_template'])
 
 
 		self.simple_source_language.set(self.language_list[self.Configuration['Simple_Translator']['source_lang']])
@@ -550,6 +577,8 @@ class MyTranslatorHelper(Frame):
 			self.simple_secondary_target_language.set('')
 		else:
 			self.simple_secondary_target_language.set(self.language_list[simple_secondary_language])
+
+
 
 
 #######################################################################
@@ -569,13 +598,13 @@ class MyTranslatorHelper(Frame):
 	def SaveAppLanguage(self, language):
 
 		self.Notice.set(self.LanguagePack.ToolTips['AppLanuageUpdate'] + " "+ language) 
-		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'app_lang', language)
+		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'app_lang', language)
 	
 	def SelectDictionary(self):
 		filename = filedialog.askopenfilename(title = "Select Database file",filetypes = (("Dictionary files","*.xlsx *.xlsm"), ), )	
 		if filename != "":
 			NewDictionary = self.CorrectPath(filename)	
-			self.AppConfig.save_config(self.AppConfig.translator_config_path, 'database', 'path', NewDictionary, True)
+			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'database', 'path', NewDictionary, True)
 			self.Notice.set(self.LanguagePack.ToolTips['DocumentLoaded'])
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
@@ -599,7 +628,7 @@ class MyTranslatorHelper(Frame):
 		filename = filedialog.askopenfilename(title = "Select Translation Memory file", filetypes = (("TM files","*.pkl"), ),)
 		if filename != "":
 			NewTM = self.CorrectPath(filename)
-			self.AppConfig.save_config(self.AppConfig.translator_config_path, 'translation_memory', 'path', NewTM, True)
+			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'translation_memory', 'path', NewTM, True)
 			self.Notice.set(self.LanguagePack.ToolTips['TMUpdated'])
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
@@ -618,7 +647,7 @@ class MyTranslatorHelper(Frame):
 			with open(NewTM, 'wb') as pickle_file:
 				pickle.dump([], pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 				
-			self.AppConfig.save_config(self.AppConfig.translator_config_path, 'translation_memory', 'path', NewTM, True)
+			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'translation_memory', 'path', NewTM, True)
 
 	def CorrectPath(self, path):
 		if sys.platform.startswith('win'):
@@ -634,10 +663,11 @@ class MyTranslatorHelper(Frame):
 			newPath = self.CorrectPath(Outputdir + '/'+ sourcename + '.' + ext)
 			return newPath
 
-	def _create_grammar_confirmation_window(self, dif_dict, _class):
-		self.new = Toplevel(self.master)
-
-		_class(self.new, dif_dict)
+	def _create_grammar_confirmation_window(self, dif_dict, diff_index, _class):
+		self.Child_Window = Toplevel(self.master)
+		self.Child_Window.resizable(False, False)
+		self.Child_Window.title("Confirm the fix")
+		_class(self, dif_dict, diff_index)
 	
 	#I dont know why I put it here
 	def UpdateSize(self,event):
@@ -655,15 +685,15 @@ class MyTranslatorHelper(Frame):
 		
 		target_language_index = self.language_list.index(self.target_language.get())
 		target_language = self.language_id_list[target_language_index]
-		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'target_lang', target_language_index)
+		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'target_lang', target_language_index)
 
 		source_language_index = self.language_list.index(self.source_language.get())
 		source_language = self.language_id_list[source_language_index]
-		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'source_lang', source_language_index)
+		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'source_lang', source_language_index)
 
 		secondary_target_language_index = self.language_list.index(self.secondary_target_language.get())
 		#secondary_target_language = self.language_id_list[self.language_list.index(secondary_target_language_index)]
-		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'secondary_target_lang', secondary_target_language_index)
+		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'secondary_target_lang', secondary_target_language_index)
 
 		self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
 		self.DictionaryStatus.set(str(self.MyTranslator.glossary_size))
@@ -674,14 +704,14 @@ class MyTranslatorHelper(Frame):
 		print(event)
 		simple_target_language_index = self.language_list.index(self.simple_target_language.get())
 		simple_target_language = self.language_id_list[simple_target_language_index]
-		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'target_lang', simple_target_language_index)
+		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'target_lang', simple_target_language_index)
 
 		simple_source_language_index = self.language_list.index(self.simple_source_language.get())
 		simple_source_language = self.language_id_list[simple_source_language_index]
-		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'source_lang', simple_source_language_index)
+		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'source_lang', simple_source_language_index)
 		
 		simple_secondary_target_language_index = self.language_list.index(self.simple_secondary_target_language.get())
-		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'secondary_target_lang', simple_secondary_target_language_index)
+		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'secondary_target_lang', simple_secondary_target_language_index)
 
 		self.MyTranslator.set_language_pair(source_language = simple_source_language, target_language = simple_target_language)
 
@@ -759,6 +789,8 @@ class MyTranslatorHelper(Frame):
 			#self.Error('No Valid Project selected, please update the project ID in Translate Setting tab')	
 			#DBLength = self.MyTranslator.get_glossary_length()
 			#self.DictionaryStatus.set(str(DBLength))
+			
+			#self.TextTitle.focus_set()
 
 			self.TranslatorProcess.join()
 		else:
@@ -1156,6 +1188,7 @@ class MyTranslatorHelper(Frame):
 
 		self.db_highlight.configure(state=NORMAL)
 		#self.db_correction.configure(state=NORMAL)
+		
 
 	def RenewMyTranslator(self):
 		
@@ -1210,16 +1243,26 @@ class MyTranslatorHelper(Frame):
 	def analyze_terminology(self):
 		for term in self.MyTranslator.dictionary:
 			if term not in [' ']:
+				#term = term.lower()
 				self.TextTestReport.highlight_fault_pattern(term, 'blue')
 				self.TextTitle.highlight_fault_pattern(term, 'blue')
 				self.TextReproduceSteps.highlight_fault_pattern(term, 'blue')
 				self.TextShouldBe.highlight_fault_pattern(term, 'blue')
 
-	
+	def review_report(self):
+
+		child_windows = Toplevel(self.parent)
+		#child_windows.geometry("200x200")  # Size of the window 
+		child_windows.resizable(False, False)
+		child_windows.title("Report reviewer")
+		self.report_review = HTMLScrolledText(child_windows)
+		self.report_review.set_html(self.html_content)
+		self.report_review.pack(pady=15, padx=15, fill=BOTH)
 	
 	def analyze_fault_terminology(self):
 		for term in self.MyTranslator.dictionary:
 			if term not in [' ']:
+				term = term.lower()
 				self.TextTestReport.highlight_fault_pattern(term, 'red')
 				self.TextTitle.highlight_fault_pattern(term, 'red')
 				self.TextReproduceSteps.highlight_fault_pattern(term, 'red')
@@ -1309,39 +1352,75 @@ class MyTranslatorHelper(Frame):
 		return
 
 	def ResetTestReport(self):
+		self.HeaderOptionA.set('')
+		self.HeaderOptionB.set('')
+
 		self.TextTitle.delete("1.0", END)
 		self.TextTestReport.delete("1.0", END)
 		self.TextReproduceSteps.delete("1.0", END)
-		self.TextShouldBe.delete("1.0", END)		
+		self.TextShouldBe.delete("1.0", END)	
+		
+		self.ResetInfoSection()
+	
 		return
 	#END
 
+	def ResetInfoSection(self):
+		self.EnvInfo.delete("1.0", END)	
+		self.EnvInfo.insert("end", "Platform: ")
+		self.EnvInfo.insert("end", "\nDeviceModel: ")
+		self.EnvInfo.insert("end", "\nBuildType: ")
+		self.EnvInfo.insert("end", "\nClientVersion: ")
+		self.EnvInfo.insert("end", "\nResVersion: ")
+		self.EnvInfo.insert("end", "\nVersionCode: ")
+		self.EnvInfo.insert("end", "\nScriptVersionCode: ")
+		self.EnvInfo.insert("end", "\nClientCommitID: ")
+		self.EnvInfo.insert("end", "\nScriptCommitID: ")
+
 	#GUI function
 	def collect_report_elements(self):
-		TextTestServer = self.TextServer.get("1.0", END).replace('\n', '')
-		#print('TextTestServer', TextTestServer)
-		TextTestClient = self.TextClient.get("1.0", END).replace('\n', '')
+		
+	
 		#print('TextTestClient', TextTestClient)
 		To_Translate = {}
-		To_Translate['TextTestVersion'] = [TextTestServer, TextTestClient]
-	
-		if self.SkipTestInfo.get() == 1:
-			TextReproduceTime = self.TextReprodTime.get("1.0", END).replace('\n', '')
-			TextTestAccount = self.TextAccount.get("1.0", END).replace('\n', '')
-			To_Translate['TextTestInfo'] = [TextReproduceTime, TextTestAccount]
-		else:
-			print('Test info exclude')
-			To_Translate['TextTestInfo'] = None
+
+		EnvInfo = self.EnvInfo.get("1.0", END)
+		
+		Reproducibility = self.Reproducibility.get("1.0", END).replace('\n', '')
+		To_Translate['EnvInfo'] = EnvInfo
+		To_Translate['Reproducibility'] = Reproducibility + '%'
+
+		
 		
 		To_Translate['TextShouldBe'] = self.TextShouldBe.get("1.0", END)
 		To_Translate['TextReproduceSteps'] = self.TextReproduceSteps.get("1.0", END)
-
-		
 
 		To_Translate['TextTestReport'] = self.TextTestReport.get("1.0", END)
 		To_Translate['TextShouldBe'] = self.TextShouldBe.get("1.0", END)
 		To_Translate['TextReproduceSteps'] = self.TextReproduceSteps.get("1.0", END)
 		self.report_details = To_Translate
+
+	def update_report_elements(self):
+		
+	
+		#print('TextTestClient', TextTestClient)
+		To_Translate = {}
+
+		EnvInfo = self.EnvInfo.get("1.0", END)
+		
+		Reproducibility = self.Reproducibility.get("1.0", END).replace('\n', '')
+		To_Translate['EnvInfo'] = EnvInfo
+		To_Translate['Reproducibility'] = Reproducibility + '%'
+
+		
+		
+		To_Translate['TextShouldBe'] = self.TextShouldBe.get("1.0", END)
+		To_Translate['TextReproduceSteps'] = self.TextReproduceSteps.get("1.0", END)
+
+		To_Translate['TextTestReport'] = self.TextTestReport.get("1.0", END)
+		To_Translate['TextShouldBe'] = self.TextShouldBe.get("1.0", END)
+		To_Translate['TextReproduceSteps'] = self.TextReproduceSteps.get("1.0", END)
+		self.report_details = To_Translate	
 
 	def prepare_translator_language(self):
 		return
@@ -1375,7 +1454,9 @@ class MyTranslatorHelper(Frame):
 			self.after(DELAY, self.GetBugDetails)
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['GeneratedBugReport'])
+
 			self.BugWriter.join()
+			self.html_content = paste()
 			self.enable_btn()
 
 	def generate_report(self):
@@ -1390,15 +1471,30 @@ class MyTranslatorHelper(Frame):
 		
 		source_language_index = self.language_list.index(self.source_language.get())
 		source_language = self.language_id_list[source_language_index]
-		#print('report_details', self.report_details)
+		print('report_details', self.report_details)
 		
-		self.grammar_check_list = []
+		#self.grammar_check_list = {}
+		self.grammar_index_list = {}
+		self.for_grammar_check = []
+		index = 0
 		for dict_key in self.report_details:
-			if dict_key != 'TextTestVersion':
-				if self.report_details[dict_key] != None:	
-					self.grammar_check_list.append(self.report_details[dict_key])
-		print('List sentence: ',self.grammar_check_list)
-		self.Grammar_Check = Process(target= correct_sentence, args=(self.grammar_check_result, self.grammar_check_list, source_language,))
+			self.grammar_index_list[dict_key] = []
+			if dict_key not in ['EnvInfo', 'Reproducibility']:
+				if self.report_details[dict_key] != None:
+					all_sentence = self.report_details[dict_key].rstrip().split('\n')
+					for sentence in all_sentence:
+						if sentence.isprintable():
+							self.for_grammar_check.append(sentence.rstrip())
+							self.grammar_index_list[dict_key].append(index)
+							index+=1
+				
+			else:
+				del self.grammar_index_list[dict_key]
+		print('List sentence: ', self.grammar_index_list)
+		print('List sentence: ', self.for_grammar_check)
+
+		self.grammar_check_result[:]= []
+		self.Grammar_Check = Process(target= correct_sentence, args=(self.grammar_check_result, self.for_grammar_check, source_language,))
 		self.Grammar_Check.start()
 		self.after(DELAY, self.get_grammar_confirmation)
 
@@ -1406,15 +1502,19 @@ class MyTranslatorHelper(Frame):
 
 	def get_grammar_confirmation(self):
 
-		self.grammar_check_result[:]
+		
 		if (self.Grammar_Check.is_alive()):
 			self.after(DELAY, self.get_grammar_confirmation)
 		else:
-
 			self.grammar_corrected_list = self.grammar_check_result
-			print('Grammar check result', self.grammar_corrected_list)
+			self.confirmed_list = []
+			self.confirmed_index_list = []
+			for i in range(len(self.grammar_corrected_list)):
+				if self.grammar_corrected_list[i] != self.for_grammar_check[i]:
+					self.confirmed_list.append({'old': self.for_grammar_check[i], 'new': self.grammar_corrected_list[i]})
+					self.confirmed_index_list.append(i)
 			if len(self.grammar_corrected_list) > 0:
-				self._create_grammar_confirmation_window(self.grammar_corrected_list, ConfirmationPopup)
+				self._create_grammar_confirmation_window(self.confirmed_list, self.confirmed_index_list, ConfirmationPopup)
 			else:
 				self.Notice.set('Grammar check is Passed.')
 	
@@ -1423,81 +1523,53 @@ class MyTranslatorHelper(Frame):
 
 	def _save_report(self):
 		TextTitle = self.TextTitle.get("1.0", END)			
-		TextServer = self.TextServer.get("1.0", END)
-		TextClient = self.TextClient.get("1.0", END)
-		TextReprodTime = self.TextReprodTime.get("1.0", END)
-		TextAccount = self.TextAccount.get("1.0", END)
+		
+		EnvInfo = self.EnvInfo.get("1.0", END)
+		Reproducibility = self.Reproducibility.get("1.0", END)
+		
 		TextTestReport = self.TextTestReport.get("1.0", END)
 		TextReproduceSteps = self.TextReproduceSteps.get("1.0", END)
 		TextShouldBe = self.TextShouldBe.get("1.0", END)
 		HeaderA = self.HeaderOptionA.get()
 		HeaderB = self.HeaderOptionB.get()
 		try:
-<<<<<<< HEAD
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTitle', TextTitle)
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextServer', TextServer)
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextClient', TextClient)
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReprodTime', TextReprodTime)
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextAccount', TextAccount)
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTestReport', TextTestReport)
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReproduceSteps', TextReproduceSteps)
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextShouldBe', TextShouldBe)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTitle', TextTitle, True)
 
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)
-=======
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTitle', TextTitle)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextServer', TextServer)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextClient', TextClient)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReprodTime', TextReprodTime)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextAccount', TextAccount)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTestReport', TextTestReport)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReproduceSteps', TextReproduceSteps)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextShouldBe', TextShouldBe)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'EnvInfo', EnvInfo, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'Reproducibility', Reproducibility, True)
+			
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTestReport', TextTestReport, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextShouldBe', TextShouldBe, True)
 
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)
->>>>>>> main
 		except:
 			pass
 
-	def SaveTempReport(self):
+	def SaveTempReport(self, event):
 		TextTitle = self.TextTitle.get("1.0", END)			
-		TextServer = self.TextServer.get("1.0", END)
-		TextClient = self.TextClient.get("1.0", END)
-		TextReprodTime = self.TextReprodTime.get("1.0", END)
-		TextAccount = self.TextAccount.get("1.0", END)
+		
+		EnvInfo = self.EnvInfo.get("1.0", END)
+		Reproducibility = self.Reproducibility.get("1.0", END)
+		
 		TextTestReport = self.TextTestReport.get("1.0", END)
 		TextReproduceSteps = self.TextReproduceSteps.get("1.0", END)
 		TextShouldBe = self.TextShouldBe.get("1.0", END)
 		HeaderA = self.HeaderOptionA.get()
 		HeaderB = self.HeaderOptionB.get()
 		try:
-<<<<<<< HEAD
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTitle', TextTitle)
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextServer', TextServer)
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextClient', TextClient)
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReprodTime', TextReprodTime)
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextAccount', TextAccount)
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTestReport', TextTestReport)
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReproduceSteps', TextReproduceSteps)
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextShouldBe', TextShouldBe)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTitle', TextTitle, True)
+			
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'EnvInfo', EnvInfo, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'Reproducibility', Reproducibility, True)
 
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderA', HeaderA)
-			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)
-=======
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTitle', TextTitle)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextServer', TextServer)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextClient', TextClient)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReprodTime', TextReprodTime)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextAccount', TextAccount)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTestReport', TextTestReport)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReproduceSteps', TextReproduceSteps)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextShouldBe', TextShouldBe)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTestReport', TextTestReport, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextShouldBe', TextShouldBe, True)
 
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)
->>>>>>> main
 		except:
 			pass
 
@@ -1508,7 +1580,7 @@ class MyTranslatorHelper(Frame):
 		self.glossary_id = self.bottom_panel.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
 		print('Save current project key: ', self.glossary_id)
-		self.AppConfig.save_config(self.AppConfig.translator_config_path, 'Translator', 'glossary_id', self.glossary_id)
+		self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'glossary_id', self.glossary_id)
 		self.MyTranslator.glossary_id = self.glossary_id
 		self.RenewMyTranslator()
 
@@ -1516,26 +1588,20 @@ class MyTranslatorHelper(Frame):
 		try:
 			self.AppConfig.Refresh_Config_Data()
 			self.Configuration = self.AppConfig.Config
-			
+			print(self.Configuration)
+			if 'BugDetails' not in self.AppConfig.Config:
+				return
 			TextTitle  = self.Configuration['BugDetails']['TextTitle']
 			self.TextTitle.delete("1.0", END)
 			self.TextTitle.insert("end", TextTitle)
 			
-			TextServer  = self.Configuration['BugDetails']['TextServer']
-			self.TextServer.delete("1.0", END)
-			self.TextServer.insert("end", TextServer)
+			EnvInfo  = self.Configuration['BugDetails']['EnvInfo']
+			self.EnvInfo.delete("1.0", END)
+			self.EnvInfo.insert("end", EnvInfo)
 			
-			TextClient  = self.Configuration['BugDetails']['TextClient']
-			self.TextClient.delete("1.0", END)
-			self.TextClient.insert("end", TextClient)
-			
-			TextReprodTime  = self.Configuration['BugDetails']['TextReprodTime']
-			self.TextReprodTime.delete("1.0", END)
-			self.TextReprodTime.insert("end", TextReprodTime)
-			
-			TextAccount  = self.Configuration['BugDetails']['TextAccount']
-			self.TextAccount.delete("1.0", END)
-			self.TextAccount.insert("end", TextAccount)
+			Reproducibility  = self.Configuration['BugDetails']['Reproducibility']
+			self.Reproducibility.delete("1.0", END)
+			self.Reproducibility.insert("end", Reproducibility)
 			
 			TextTestReport  = self.Configuration['BugDetails']['TextTestReport']
 			self.TextTestReport.delete("1.0", END)
@@ -1553,8 +1619,8 @@ class MyTranslatorHelper(Frame):
 			self.HeaderOptionB.set(self.Configuration['BugDetails']['HeaderB'])
 
 
-		except:
-			print('Fail somewhere')
+		except Exception as e:
+			print('Fail somewhere:', e)
 			pass
 
 	def LoadTempReport(self):
@@ -1566,21 +1632,13 @@ class MyTranslatorHelper(Frame):
 			self.TextTitle.delete("1.0", END)
 			self.TextTitle.insert("end", TextTitle)
 			
-			TextServer  = self.Configuration['Temp_BugDetails']['TextServer']
-			self.TextServer.delete("1.0", END)
-			self.TextServer.insert("end", TextServer)
+			EnvInfo  = self.Configuration['Temp_BugDetails']['EnvInfo']
+			self.EnvInfo.delete("1.0", END)
+			self.EnvInfo.insert("end", EnvInfo)
 			
-			TextClient  = self.Configuration['Temp_BugDetails']['TextClient']
-			self.TextClient.delete("1.0", END)
-			self.TextClient.insert("end", TextClient)
-			
-			TextReprodTime  = self.Configuration['Temp_BugDetails']['TextReprodTime']
-			self.TextReprodTime.delete("1.0", END)
-			self.TextReprodTime.insert("end", TextReprodTime)
-			
-			TextAccount  = self.Configuration['Temp_BugDetails']['TextAccount']
-			self.TextAccount.delete("1.0", END)
-			self.TextAccount.insert("end", TextAccount)
+			Reproducibility  = self.Configuration['Temp_BugDetails']['Reproducibility']
+			self.Reproducibility.delete("1.0", END)
+			self.Reproducibility.insert("end", Reproducibility)
 			
 			TextTestReport  = self.Configuration['Temp_BugDetails']['TextTestReport']
 			self.TextTestReport.delete("1.0", END)
@@ -1597,7 +1655,6 @@ class MyTranslatorHelper(Frame):
 			self.HeaderOptionA.set(self.Configuration['Temp_BugDetails']['HeaderA'])
 			self.HeaderOptionB.set(self.Configuration['Temp_BugDetails']['HeaderB'])
 
-
 		except:
 			print('Fail somewhere')
 			pass		
@@ -1607,31 +1664,67 @@ class MyTranslatorHelper(Frame):
 
 		#self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'test_info_inable', 'path', self.SkipTestInfo.get())
 		#self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'use_simple_template', 'path', self.UseSimpleTemplate.get())
-		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'test_info_inable', self.SkipTestInfo.get())
-		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'use_simple_template', self.UseSimpleTemplate.get())
-
-
-
+		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'test_info_inable', self.SkipTestInfo.get())
+		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'use_simple_template', self.UseSimpleTemplate.get())
 
 
 # Class
 
 class ConfirmationPopup:
-	def __init__(self, master, dif_dict):
-		self.master = master
-		self.master.geometry("400x350+300+300")
-		self.vars = []
+	def __init__(self, master, dif_dict, index_list):
+		self.Root = master
+		self.master = master.Child_Window
+		#self.master.geometry("400x350+300+300")
+		self.index = index_list
 		row = 1
-		for string_index in range(len(dif_dict)- 1):
-			sentence = dif_dict[string_index]['old']
-			corrected_sentence = dif_dict[string_index]['new']
-			show_text = sentence + "\t-->\t" + corrected_sentence
-			self.vars.append(IntVar())
-			l = Checkbutton(self.master, text= show_text, variable=self.vars[string_index]).grid(row = row, column = 1, padx=5, pady=5, stick=W)
-			self.vars[string_index].set(1)
+		self.All_Widget = []
+		self.diff = dif_dict
+		for diff_object in dif_dict:
+			widget = {}
+			sentence = diff_object['old'].replace('\r', '')
+			corrected_sentence = diff_object['new'].replace('\r', '')
+			widget['var'] = IntVar()
+		
+			Radiobutton(self.master, width= 40, text=  sentence, value=1, variable= widget['var']).grid(row=row, column=1, padx=5, pady=5, sticky=W)
+			Radiobutton(self.master, width= 40, text=  corrected_sentence, value=2, variable= widget['var']).grid(row=row, column=2, padx=5, pady=5, sticky=W)
+		
+			widget['var'].set(2)
+			self.All_Widget.append(widget)
 			row += 1
-		Button(self.master, width = 20, text= 'Decline All').grid(row=row, column=1, columnspan=1, padx=5, pady=5, sticky=E)
-		Button(self.master, width = 20, text= 'Confirm').grid(row=row, column=2, columnspan=1, padx=5, pady=5, sticky=E)
+		Button(self.master, width = 20, text= 'Accept All', command = self.Accept_All).grid(row=row, column=1, columnspan=1, padx=5, pady=5)
+		Button(self.master, width = 20, text= 'Confirm', command = self.Confirm).grid(row=row, column=2, columnspan=1, padx=5, pady=5)
+
+		self.master.protocol("WM_DELETE_WINDOW", self.Confirm)	
+
+	def Accept_All(self):
+		for widget in self.All_Widget:
+			widget['var'].set(2)
+		return
+
+	def Confirm(self):
+		i = 0
+		for widget in self.All_Widget:
+			result = widget['var'].get()
+			if result == 2:
+				to_update = self.diff[i]['new']
+				_index_in_check_list = self.index[i]
+				self.Root.for_grammar_check[_index_in_check_list] = to_update
+			i+=1
+
+		for dict_key in self.Root.report_details:	
+			print('updating', dict_key)
+			self.Root.grammar_index_list[dict_key] = []
+			if dict_key not in ['EnvInfo', 'Reproducibility']:
+				
+				all_index = self.Root.grammar_index_list[dict_key]
+				temp_list = []
+				for index in all_index:
+					temp_list.append(self.Root.grammar_index_list[index])
+				print('temp',('\r\n').join(temp_list))	
+				self.Root.report_details[dict_key] = ('\r\n').join(temp_list)
+		self.master.destroy()
+		print(self.Root.report_details)
+		self.Root.GenerateReportCSS()
 
 class BottomPanel(Frame):
 	def __init__(self, master):
@@ -1656,23 +1749,23 @@ class BottomPanel(Frame):
 		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
 		DictionaryLabelA.grid(in_=self, row=Row, column=Col, padx=5, pady=5)
 		Col += 1
-		Label(textvariable=master.DictionaryStatus, width=20).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
+		Label(textvariable=master.DictionaryStatus, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
 		master.DictionaryStatus.set('0')
 		Col += 1
 		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5)
 		Col += 1
-		Label(textvariable=master.HeaderStatus, width=20).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
+		Label(textvariable=master.HeaderStatus, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
 		master.HeaderStatus.set('0')
 		Col += 1
 		Label(text= master.LanguagePack.Label['ProjectKey'], width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5, sticky=W)
 		Col += 1
 		self.project_id_select = AutocompleteCombobox()
-		self.project_id_select.Set_Entry_Width(30)
+		self.project_id_select.Set_Entry_Width(20)
 		self.project_id_select.set_completion_list([])
 		self.project_id_select.grid(in_=self, row=Row, column=Col, padx=5, pady=5, stick=W)
 		self.project_id_select.bind("<<ComboboxSelected>>", master._save_project_key)
 		Col += 1
-		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=20, command= master.RenewMyTranslator, state=DISABLED)
+		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=15, command= master.RenewMyTranslator, state=DISABLED)
 		self.RenewTranslatorMain.grid(in_=self, row=Row, column=Col, padx=10, pady=5, stick=E)
 		
 		
@@ -1704,23 +1797,13 @@ def dual_translate(queue, MyTranslator, second_target_language, text):
 
 def correct_sentence(result_manager, sentence_list, language):
 	language_tool = None
-	#language_tool = LanguageTool(language)
-	for paragraph in sentence_list:
-		sentences = []
-		print('paragraph', paragraph)
-		sentences = language_tool.sentence_split(paragraph)
-		for sentence in sentences:
-			sub_sentences = sentence.split('\n')
-			print('sub_sentences', sub_sentences)
-			for sub_sentence in sub_sentences:
-				if sub_sentence != "":
-					corrected_sentence = []
-					corrected_sentence = language_tool.correct(sub_sentence)
-					if sub_sentence != corrected_sentence:
-						result_obj = {'old': sub_sentence, 'new': corrected_sentence}
-						result_manager.append(result_obj)
-
-	print('result_manager', result_manager)
+	language_tool = LanguageTool(language)
+	print('sentence_list', sentence_list)
+	for sentence in sentence_list:
+		corrected_sentence = language_tool.correct(sentence)
+		print('corrected_sentence', corrected_sentence)	
+		result_manager.append(corrected_sentence)
+	
 	return
 #Bug Writer 
 def Translate_Simple(Object, simple_template, my_translator, secondary_target_language = None):
@@ -1731,50 +1814,11 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 	TextShouldBe_index = []
 	TextReproduceSteps_index = []
 
-	TextTestServer = Object['TextTestVersion'][0]
-	TextTestClient = Object['TextTestVersion'][1]
-
-	if Object['TextTestInfo'] != None:
-		skip_test_info = False
-		TextReproduceTime = Object['TextTestInfo'][0]
-		TextTestAccount = Object['TextTestInfo'][1]
-	else:
-		skip_test_info = True
-		TextReproduceTime = ""
-		TextTestAccount = ""
+	
 	
 	TextTestReport = Object['TextTestReport'].replace('\r', '').split('\n')
 	TextShouldBe = Object['TextShouldBe'].replace('\r', '').split('\n')
-	TextReproduceSteps = Object['TextReproduceSteps'].replace('\r', '').split('\n')
-	
-	if simple_template != 1:
-		Details = '<p><b>Server : </b>&nbsp;' + TextTestServer + '</p>'
-		Details += '\r\n<p><b>Client : </b>&nbsp;' + TextTestClient + '</p>'	
-
-		strTestVersion = AddCssLayout("Test Version", Details)
-
-		if TextReproduceTime == "":
-			now = datetime.datetime.now()
-			TextReproduceTime = str(date.today()) + " " + str(now.hour) + ':' + str(now.minute) 
-		Details = '\r\n<p><b>Reproduce Time : </b>&nbsp;' + TextReproduceTime + '</p>'
-		Details += '\r\n<p><b>Account ID/Character Name : </b>&nbsp;' + TextTestAccount + '</p>'
-
-		strTestInfo = '\r\n' + AddCssLayout("Test Info", Details)	
-	else:
-		Title = "Test Version"
-		Details = Add_Style(Title)
-		Details += '\r\nServer : ' + TextTestServer
-		Details += '\r\nClient : ' + TextTestClient
-		
-		strTestVersion = Details
-
-		Title = "Test Info"
-		Details = "\r\n"
-		Details += Add_Style(Title)
-		Details += '\r\nReproduce Time : ' + TextReproduceTime
-		Details += '\r\nAccount ID/Character Name : ' + TextTestAccount
-
-		strTestInfo = Details	
+	TextReproduceSteps = Object['TextReproduceSteps'].replace('\r', '').split('\n')	
 
 	Old_TextTestReport = []
 	Old_TextShouldBe = []
@@ -1842,163 +1886,149 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 
 	Lang = my_translator.to_language
 	
-	if simple_template != 1:
-		strReport = Simple_Row_CSS_Template(Lang, "Report", New_TextTestReport, Old_TextTestReport, secondary_TextTestReport)	
-		strReprodSteps = Simple_Step_CSS_Template(Lang, "Reproduce Steps", New_TextReproduceSteps, Old_TextReproduceSteps, secondary_TextReproduceSteps)	
-		strShouldBe = Simple_Row_CSS_Template(Lang, "Should Be", New_TextShouldBe, Old_TextShouldBe, secondary_TextShouldBe)	
-	else:	
-		strReport = Simple_Row_Template(Lang,  "Report", New_TextTestReport, Old_TextTestReport, second_language_translation)	
-		strReprodSteps = Simple_Step_Template(Lang, "Reproduce Steps", New_TextReproduceSteps, Old_TextReproduceSteps, second_language_translation)	
-		strShouldBe = Simple_Row_Template(Lang, "Should Be", New_TextShouldBe, Old_TextShouldBe, second_language_translation)	
+
+	strReport_to_language = Create_Row_CSS_Section("상세설명", New_TextTestReport)	
+	strReprodSteps_to_language = Create_Step_CSS_Section("재현스텝", New_TextReproduceSteps)	
+	strShouldBe_to_language = Create_Row_CSS_Section("기대결과", New_TextShouldBe)	
+
+	strReport_from_language = Create_Row_CSS_Section("Detail Description", Old_TextTestReport)	
+	strReprodSteps_from_language = Create_Step_CSS_Section("Reproduce Steps", Old_TextReproduceSteps)	
+	strShouldBe_from_language = Create_Row_CSS_Section("기Expected Result", Old_TextShouldBe)	
 	
-	CssText = strTestVersion
-	#print("Skip info:", self.SkipTestInfo.get())
-	if skip_test_info == False:
-		CssText += strTestInfo
-	CssText += strReport
-	CssText += strReprodSteps
-	CssText += strShouldBe
+	CssText = ''
+	CssText += strReport_to_language
+	CssText += '\r\n'
+	CssText += strReprodSteps_to_language
+	CssText += '\r\n'
+	CssText += '<p><b>[재현빈도]</b><br/></p>' 
+	CssText += '\r\n'
+			
+	Reproducibility = Object['Reproducibility']
+
+	CssText += '<p>'+ Reproducibility + '&nbsp;</p>'
+	CssText += '\r\n'
+	CssText += strShouldBe_to_language
+	CssText += '\r\n'
+	CssText += '<p><b>[환경정보]</b><br/></p>' 
+
+
+	EnvInfo = Object['EnvInfo'].split('\n')
+
+	for item in EnvInfo:
+		if str(item) != "":
+			CssText += '\r\n'
+			CssText += '<p>'+ item + '</p>'
+
+	CssText += '\r\n'
+	CssText += '<p><span style="font-size:14pt"><span style="color:#3498db"><b>제2언어 - Secondary language</b></span></span></p>'
+	CssText += strReport_from_language
+	CssText += '\r\n'
+	CssText += strReprodSteps_from_language
+	CssText += '\r\n'
+	CssText += '<p><b>[Reproducibility]</b><br/></p>' 
+	CssText += '\r\n'
+			
+	Reproducibility = Object['Reproducibility']
+
+	CssText += '<p>'+ Reproducibility + '&nbsp;</p>'
+	CssText += '\r\n'
+	CssText += strShouldBe_from_language
+	CssText += '\r\n'
+	
 	print('Copy to clipboard')
 	copy(CssText)
 
+def Create_Step_CSS_Section(Title, Text_List):
+	
+	Details = ''
+	x = 1
+	
+	for row in Text_List:
+		Details += '<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
+		x += 1
+	x = 1
+
+	to_return = '<p><b>[' + Title + ']</b><br/></p>\r\n' 
+	to_return += Details
+	return to_return
+
+def Create_Row_CSS_Section(Title, Text_List):
+	Details = ''
+	
+	for row in Text_List:
+		Details += '<p>'+ row + '&nbsp;</p>\r\n'
+	
+	to_return = '<p><b>[' + Title + ']</b><br /></p>\r\n' 
+	to_return += Details
+	return to_return
+
+# Obsoleted
 def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
 	#print('Text_List_Secondary', Text_List_Secondary)
 	Details = ''
 	x = 1
 	if Lang == 'ko':		
 		for row in Text_List:
-			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
+			Details += '<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
 			x += 1
-		Details += '\r\n================================================='
+		Details += '=================================================\r\n'
 		x = 1
 		for row in Text_List_Old:
-			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
+			Details += '<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
 			x += 1
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '=================================================\r\n'
 			x = 1
 			for row in Text_List_Secondary:
-				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
+				Details += '<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
 				x += 1	
 	else:
 		for row in Text_List_Old:
-			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
+			Details += '<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
 			x += 1
-		Details += '\r\n================================================='
+		Details += '=================================================\r\n'
 		x = 1
 		for row in Text_List:
-			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
+			Details += '<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
 			x += 1
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '=================================================\r\n'
 			x = 1
 			for row in Text_List_Secondary:
-				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
+				Details += '<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
 				x += 1		
-	Details = AddCssLayout(Title, Details)
-	return Details
+	to_return = '<p><b>[' + Title + ']</b><br/></p>\r\n' 
+	to_return += Details
+	return to_return
 
-def Simple_Step_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
-	print('Text_List_Secondary', Text_List_Secondary)
-	Details = "\r\n"
-	Details += Add_Style(Title)
-	x = 1
-	if Lang == 'ko':		
-		for row in Text_List:
-			Details += '\r\n' + str(x) + ') ' + row
-			x += 1
-		Details += '\r\n================================================='
-		x = 1
-		for row in Text_List_Old:
-			Details += '\r\n' + str(x) + ') ' + row
-			x += 1
-		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
-			for row in Text_List_Secondary:
-				Details += '\r\n' + str(x) + ') ' + row
-				x += 1
-	else:
-		for row in Text_List_Old:
-			Details += '\r\n' + str(x) + ') ' + row
-			x += 1
-		Details += '\r\n================================================='
-		x = 1
-		for row in Text_List:
-			Details += '\r\n' + str(x) + ') ' + row
-			x += 1
-		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
-			for row in Text_List_Secondary:
-				Details += '\r\n' + str(x) + ') ' + row
-				x += 1
-	return Details
-
+# Obsoleted
 def Simple_Row_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
 	print('Text_List_Secondary', Text_List_Secondary)
 	Details = ''
 	if Lang == 'ko':		
 		for row in Text_List:
-			Details += '\r\n<p>'+ row + '&nbsp;</p>'
-		Details += '\r\n================================================='
+			Details += '<p>'+ row + '&nbsp;</p>\r\n'
+		Details += '=================================================\r\n'
 		for row in Text_List_Old:
-			Details += '\r\n<p>' + row + '&nbsp;</p>'
+			Details += '<p>' + row + '&nbsp;</p>\r\n'
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '=================================================\r\n'
 			for row in Text_List_Secondary:
 				Details += '\r\n<p>' + row + '&nbsp;</p>'
 	else:
 		for row in Text_List_Old:
-			Details += '\r\n<p>'+ row + '&nbsp;</p>'
-		Details += '\r\n================================================='
+			Details += '<p>'+ row + '&nbsp;</p>\r\n'
+		Details += '=================================================\r\n'
 		for row in Text_List:
-			Details += '\r\n<p>' + row + '&nbsp;</p>'
+			Details += '<p>' + row + '&nbsp;</p>'
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '=================================================\r\n'
 			for row in Text_List_Secondary:
-				Details += '\r\n<p>' + row + '&nbsp;</p>'
+				Details += '<p>' + row + '&nbsp;</p>\r\n'
 	
-	Details = AddCssLayout(Title, Details)
-	return Details
-
-def Simple_Row_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
-	#print('Text_List_Secondary', Text_List_Secondary)
-	Details = "\r\n"
-	Details += Add_Style(Title)
-	if Lang == 'ko':		
-		for row in Text_List:
-			Details += '\r\n'+ row
-		Details += '\r\n================================================='
-		for row in Text_List_Old:
-			Details += '\r\n'+ row
-		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
-			for row in Text_List_Secondary:
-				Details += '\r\n'+ row
-
-	else:
-		for row in Text_List_Old:
-			Details += '\r\n'+ row
-		Details += '\r\n================================================='
-		for row in Text_List:
-			Details += '\r\n'+ row
-		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
-			for row in Text_List_Secondary:
-				Details += '\r\n'+ row
-	return Details
-
-
-def AddCssLayout(Title, content):
-	CssCode = '<div class="jePanel_blue" style="background-color:#f4ffff; border:1px solid #cccccc; margin-bottom:1em; margin-left:1em; margin-right:1em; margin-top:1em">'
-	CssCode += '\r\n<div class="jePanelHeader" style="background-color:#9bc3ff; border-bottom-color:#cccccc; border-bottom-style:solid; border-bottom-width:1px; font-weight:bold; padding:.3em; text-align:center">[' + Title + ']</div>'
-	CssCode += '\r\n<div class="jePanelContent" style="padding:.5em 2em .5em 2em">'
-	CssCode += '\r\n<p>&nbsp;</p>'
-	CssCode += content
-	CssCode += '\r\n<p>&nbsp;</p>'
-	CssCode += '\r\n</div>'
-	CssCode += '\r\n</div>'
-	return CssCode
-
+	to_return = '<p><b>[' + Title + ']</b><br /></p>\r\n' 
+	to_return += Details
+	return to_return
 
 
 def Add_Style(Text):
@@ -2020,25 +2050,31 @@ def fixed_map(style, option):
 	  elm[:2] != ('!disabled', '!selected')]
 
 def MainLoop():
-
+	print('Create shareable Memory variable')
 	MyTranslator = Queue()
 	return_text = Queue()
 	MyManager = Manager()
 	grammar_check_result = MyManager.list()
 	tm_manager = MyManager.list()
-	language_tool_enable = False
-
+	language_tool_enable = True
+	print('Create UI')
 	root = Tk()
-
+	#root.withdraw()
+	#root.update_idletasks()
 	style = Style(root)
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
 	#root.geometry("400x350+300+300")
 	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
-		
+	
+	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
+	#root.mainloop()
+	
 	try:
+		print('Update UI')
 		application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
+		#root.deiconify()
 		root.mainloop()
-		application.MyTranslator.send_tracking_record()
+		print('Send usage report')
 	except Exception as e:
 		
 		root.withdraw()
@@ -2073,8 +2109,11 @@ def MainLoop():
 			
 		print("error message:", e)	
 		messagebox.showinfo(title='Critical error', message=e)
-
-
+	try:
+		application.MyTranslator.send_tracking_record()
+	except:
+		pass	
+	print('Initial Done')
 
 if __name__ == '__main__':
 	if sys.platform.startswith('win'):

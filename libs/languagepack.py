@@ -92,9 +92,14 @@ class LanguagePackEN:
 
 	Option['UseCloudTM'] = 'Use Cloud TM'
 
+<<<<<<< HEAD
 	###########################################################################
 	# DOCUMENT TRANSLATOR ONLY END
 	###########################################################################
+=======
+	Option['Bilingual'] = "Bilingual"
+
+>>>>>>> main
 	
 
 	Label = {}
@@ -174,6 +179,7 @@ class LanguagePackEN:
 	Label['MainLanguage'] = "Primary language:"
 	Label['SecondaryLanguage'] = "Secondary language:"
 
+<<<<<<< HEAD
 	###########################################################################
 	# DOCUMENT TRANSLATOR ONLY START
 	###########################################################################
@@ -185,6 +191,12 @@ class LanguagePackEN:
 	###########################################################################
 	# DOCUMENT TRANSLATOR ONLY END
 	###########################################################################
+=======
+	Label['Reproducibility'] = "Reproducibility:"
+	Label['EnvInfo'] = "Enviromental Information:"
+
+	Label['PreConition'] = "Pre-condition:"
+>>>>>>> main
 
 	Tab = {}
 	Tab['Main'] = "Main Menu"
@@ -292,6 +304,7 @@ class LanguagePackEN:
 	ToolTips['GeneratedBugReport'] = "Bug report is generated."
 	ToolTips['GenerateBugReportFail'] = "Fail to generate bug report."	
 	ToolTips['LoadReport'] = "Do you want to load the report from last session?"
+<<<<<<< HEAD
 	###########################################################################
 	# DOCUMENT TRANSLATOR ONLY START
 	###########################################################################
@@ -301,6 +314,10 @@ class LanguagePackEN:
 	###########################################################################
 	# DOCUMENT TRANSLATOR ONLY END
 	###########################################################################
+=======
+
+	ToolTips['Bilingual'] = "Original text is kept in the comment."
+>>>>>>> main
 
 	Notice = {}
 
@@ -376,6 +393,8 @@ class LanguagePackKR:
 
 	Option['Bold'] = "굵게"
 	Option['UnderLine'] = "밑줄"
+
+	Option['Bilingual'] = "이중 언어"
 
 	Button['GetTitle'] = "타이틀 받기"	
 	Button['Reset'] = "초기화"	
@@ -466,6 +485,7 @@ class LanguagePackKR:
 	Label['Reproducibility'] = "재현빈도:"
 	Label['EnvInfo'] = "환경정보:"
 
+	Label['PreConition'] = "전제 조건"
 
 	Tab = {}
 	Tab['Main'] = "메인 메뉴"
@@ -563,5 +583,7 @@ class LanguagePackKR:
 	ToolTips['GeneratedBugReport'] = "버그 리포트가 생성됩니다."
 	ToolTips['GenerateBugReportFail'] = "버그 보고서를 생성하지 못했습니다."
 	ToolTips['LoadReport'] = "마지막 세션의 보고서를 로드하시겠습니까?"
+	
+	ToolTips['Bilingual'] = "원본 텍스트는 주석에 보관됩니다."
 
 	Notice = {}

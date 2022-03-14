@@ -1,47 +1,38 @@
-import os, sys
-from typing import Pattern
-from openpyxl import load_workbook, worksheet, Workbook
-from openpyxl.styles import Color, PatternFill, Font, Border
-from openpyxl.styles import colors
-from openpyxl.cell import Cell
-from openpyxl.worksheet.worksheet import Worksheet
+import subprocess
 
-basePath = os.path.abspath(os.path.dirname(sys.argv[0]))
-FileName= input("Please enter your new file name: ")  #ask user to input the .xlsx file name
-SheetName = input("Please enter your new sheet name: ") #ask user to inputh the .xlsx sheet name
-NumSheet = input("Please enter how many sheets you want to create: ") #ask user to input the number of sheet they want to create.
-
-BgFill = PatternFill(start_color='82F76F', end_color='82F76F', fill_type='solid')
-
-wb = Workbook() #create excel file with 1 sheet.
-wb.active.title = SheetName + "1"
-
-#wb.remove(wb.active) #delete the default sheet 
-
-j=int(NumSheet)+1 #var j to control number of created sheet in loop 
-
-#start for loop to create the sheets 
-for x in range(2,j):
-	wb.create_sheet(SheetName+str(x)) #create new sheet
-
-print(x)
-ws =  wb.active
-
-#start for loop to 
-for y in range(0,int(NumSheet)):
-	wb.active=y #Set new active sheet. 
-	ws= wb.active
-	print(wb.active)
-	ws.cell(row=y+1,column=y+1).value = "This is sheet" + SheetName + str(y+1)
+import time
+import win32api
 	
-	ws.cell(row=y+1,column=y+1).fill = BgFill
+from win32gui import GetWindowText, GetForegroundWindow
 
 
-try:
-	wb.save(basePath + '//'+ FileName + '.xlsx') #try to save the new .xlsx file as FileName input.
+cmd = 'powershell "gps | where {$_.MainWindowTitle } | select Description,Id,Path'
+proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+index = -1
+for line in proc.stdout:
+	if not line.decode()[0].isspace():
+		index+=1
+		if index <2:
+			continue
+		process = line.decode().rstrip().rsplit()
+		PID = ''
+		for i in range(len(process)):
+			if process[i].isnumeric():
+				sub_string = process[i].rsplit()
+				for j in range(len(sub_string)):
+					if sub_string[j].isnumeric():
+						PID =sub_string[j]
+						break
+		if not PID.isspace():
+			app_name = line.decode().rstrip().split(PID)[0].rstrip()
+		else:
+			app_name = line	
+		print(app_name)
 
-except Exception as e:
-	print('Failed to save the result: ' + str(e))
+print('Active', GetWindowText(GetForegroundWindow()))
 
-if (os.path.isfile(basePath + '//'+ FileName + '.xlsx')):
-	print('File created successfully')
+def getIdleTime():
+    return (win32api.GetTickCount() - win32api.GetLastInputInfo()) / 1000.0
+
+time.sleep(10)
+print(getIdleTime())

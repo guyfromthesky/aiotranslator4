@@ -9,7 +9,7 @@ import os
 import sys
 
 class ConfigLoader:
-	def __init__(self):
+	def __init__(self, Writer = False, Document = False):
 		self.basePath = os.path.abspath(os.path.dirname(sys.argv[0]))
 		if sys.platform.startswith('win'):
 			self.appdata = os.environ['APPDATA'] + '\\AIO Translator'
@@ -17,25 +17,34 @@ class ConfigLoader:
 			self.appdata = os.getcwd() + '\\AIO Translator'
 	
 		# Config file
-		self.Doc_Config_Path = self.appdata + '\\doc.ini'
-		self.Writer_Config_Path = self.appdata + '\\writer.ini'
-		self.translator_config_path = self.appdata + '\\translator.ini'
-		self.Custom_Writer_Config_Path = self.appdata + '\\custom_writer.ini'
+		if Document == True:
+			self.Translator_Config_Path = self.appdata + '\\translator.ini'
+			self.Doc_Config_Path = self.appdata + '\\doc.ini'
+		if Writer == True:
+			self.Translator_Config_Path = self.appdata + '\\translator.ini'
+			self.Writer_Config_Path = self.appdata + '\\writer.ini'
+			self.Custom_Writer_Config_Path = self.appdata + '\\custom_writer.ini'
 		# Folder
 		self.TM_Backup_Folder_Path = self.appdata + '\\TM'
 
 		self.LocalTM = self.appdata + '\\Local.pkl'
 
 		self.Config = {}
-
+		self.Document = Document
+		self.Writer = Writer
 		# Generate app folder (os.environ['APPDATA'] + '\\AIO Translator)
 		self.initFolder()
 
-		# Set default value:
-		self.Writer_Init_Setting()
-		#self.Custom_Writer_Init_Setting()
-		self.Doc_Init_Setting()
-		self.Translator_Init_Setting()
+		if self.Writer == True:
+			# Set default value:
+			self.Translator_Init_Setting()
+			self.Writer_Init_Setting()
+		if self.Document == True:
+			#self.Custom_Writer_Init_Setting()
+			self.Translator_Init_Setting()
+			self.Doc_Init_Setting()
+	
+		
 		#self.Initconfig()
 		#self.Init_DB_Config()
 		
@@ -134,6 +143,7 @@ class ConfigLoader:
 		self.Init_Config_Option(config, Section, 'TextAccount', "", True)
 
 		self.Init_Config_Option(config, Section, 'EnvInfo', "", True)
+		self.Init_Config_Option(config, Section, 'Precondition', "", True)
 		self.Init_Config_Option(config, Section, 'Reproducibility', "", True)
 
 		self.Init_Config_Option(config, Section, 'TextTestReport', "", True)
@@ -151,6 +161,7 @@ class ConfigLoader:
 		self.Init_Config_Option(config, Section, 'TextAccount', "", True)
 
 		self.Init_Config_Option(config, Section, 'EnvInfo', "", True)
+		self.Init_Config_Option(config, Section, 'Precondition', "", True)
 		self.Init_Config_Option(config, Section, 'Reproducibility', "", True)
 
 		self.Init_Config_Option(config, Section, 'TextTestReport', "", True)
@@ -200,6 +211,7 @@ class ConfigLoader:
 		
 
 		self.Init_Config_Option_Numberic(config, Section, 'speed_mode', 0)
+		self.Init_Config_Option_Numberic(config, Section, 'bilingual', 0)
 		self.Init_Config_Option_Numberic(config, Section, 'value_only', 0)
 		self.Init_Config_Option_Numberic(config, Section, 'file_name_correct', 1)
 		self.Init_Config_Option_Numberic(config, Section, 'file_name_translate', 1)
@@ -400,6 +412,9 @@ class ConfigLoader:
 			Config_Obj.write(configfile)
 		
 	def Refresh_Config_Data(self):
-		self.Writer_Init_Setting()
-		self.Doc_Init_Setting()
-		self.Translator_Init_Setting()
+		if self.Writer == True:
+			self.Translator_Init_Setting()
+			self.Writer_Init_Setting()
+		if self.Document == True:
+			self.Translator_Init_Setting()
+			self.Doc_Init_Setting()

@@ -62,7 +62,7 @@ from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, Cust
 
 from google.cloud import logging
 
-tool_display_name = "Translate Helper"
+tool_display_name = "[XH] Translate Helper"
 tool_name = 'writer'
 REV = 4115
 ver_num = get_version(REV) 
@@ -100,7 +100,7 @@ class MyTranslatorHelper(Frame):
 		self.grammar_check_list = []
 		self.grammar_corrected_list = []
 
-		self.SOURCE_WIDTH = 70
+		self.SOURCE_WIDTH = 75
 		self.BUTTON_SIZE = 20
 		self.HALF_BUTTON_SIZE = 15
 		self.ROW_SIZE = 24
@@ -155,7 +155,7 @@ class MyTranslatorHelper(Frame):
 		else:
 			self.Error('No license selected, please select the key in Translate setting.')	
 		
-		MsgBox = messagebox.askquestion ('Bug Writer', self.LanguagePack.ToolTips['LoadReport'],icon = 'info') 
+		MsgBox = messagebox.askquestion (tool_display_name, self.LanguagePack.ToolTips['LoadReport'],icon = 'info') 
 		if MsgBox == 'yes':
 			self.parent.withdraw()
 			self.parent.update_idletasks()
@@ -316,9 +316,9 @@ class MyTranslatorHelper(Frame):
 		self.HeaderOptionB.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
 		
 		Row+=1
-		Label(Tab, text=self.LanguagePack.Label['Reproducibility']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
-		self.Reproducibility = Text(Tab, width=20, height=1, undo=True)
-		self.Reproducibility.grid(row=Row, column=2, columnspan=2,  padx=5, pady=5, stick=W+E)		
+		#Label(Tab, text=self.LanguagePack.Label['Reproducibility']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
+		#self.Reproducibility = Text(Tab, width=20, height=1, undo=True)
+		#self.Reproducibility.grid(row=Row, column=2, columnspan=2,  padx=5, pady=5, stick=W+E)		
 
 
 		Label(Tab, width=10, text=self.LanguagePack.Label['Search']).grid(row=Row, column=4, padx=0, pady=5, stick=W)
@@ -328,7 +328,7 @@ class MyTranslatorHelper(Frame):
 		Button(Tab, text=self.LanguagePack.Button['Reset'], width=10, command= self.ResetTestReport).grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 		
 		Row+=1
-		Label(Tab, text=self.LanguagePack.Label['EnvInfo']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
+		Label(Tab, text=self.LanguagePack.Label['PreConition']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
 		
 		#Checkbutton(Tab, text= 'Use Simple Template', variable = self.UseSimpleTemplate, command = self.SaveSetting).grid(row=Row, column=8, padx=5, pady=5, stick=W)
 		#self.UseSimpleTemplate.set(1)
@@ -342,14 +342,14 @@ class MyTranslatorHelper(Frame):
 		Button(Tab, text=self.LanguagePack.Button['Save'], width=10, command= self._save_report).grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 
 		Row+=1
-		self.EnvInfo = Text(Tab, width=40, height=9, undo=True)
-		self.EnvInfo.grid(row=Row, column=1, columnspan=3, rowspan= 9,  padx=5, pady=5, stick=W+E)
+		self.Precondition = Text(Tab, width=75, height=9, undo=True)
+		self.Precondition.grid(row=Row, column=1, columnspan=5, rowspan= 9,  padx=5, pady=5, stick=W+E)
 		
-		self.ResetInfoSection()
+		#self.ResetInfoSection()
 		
 
-		self.TextTestReport = CustomText(Tab, width=100, height=9, undo=True, wrap=WORD)
-		self.TextTestReport.grid(row=Row, column=4, columnspan=7, rowspan=9, padx=5, pady=5, stick=W+E)
+		self.TextTestReport = CustomText(Tab, width=75, height=9, undo=True, wrap=WORD)
+		self.TextTestReport.grid(row=Row, column=6, columnspan=5, rowspan=9, padx=5, pady=5, stick=W+E)
 		Row+=8
 		
 		
@@ -400,7 +400,7 @@ class MyTranslatorHelper(Frame):
 		self.SourceText.bind("<Double-Tab>", self.BindSwap)
 
 		self.TargetText = Text(Tab, width = self.SOURCE_WIDTH, height=self.ROW_SIZE, undo=True) #
-		self.TargetText.grid(row = Row, column=6, columnspan=5, rowspan=self.ROW_SIZE, padx=5, pady=5, sticky=E)
+		self.TargetText.grid(row = Row, column=6, columnspan=5, rowspan=self.ROW_SIZE, padx=5, pady=5, sticky=E+W)
 		
 		Row +=self.ROW_SIZE
 
@@ -463,9 +463,9 @@ class MyTranslatorHelper(Frame):
 		Row += 1
 
 		Label(Tab, text= self.LanguagePack.Label['LicensePath']).grid(row=Row, column=1, padx=5, pady=5, sticky=E)
-		self.TextLicensePath = Entry(Tab,width = 150, state="readonly", textvariable=self.LicensePath)
+		self.TextLicensePath = Entry(Tab,width = 140, state="readonly", textvariable=self.LicensePath)
 		self.TextLicensePath.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=W+E)
-		Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path).grid(row=Row, column=10, padx=5, pady=5, sticky=E)
+		Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path).grid(row=Row, column=10, padx=5, pady=5, sticky=E+W)
 		
 
 	def Btn_Select_License_Path(self):
@@ -499,7 +499,7 @@ class MyTranslatorHelper(Frame):
 		self.VersionStatus  = StringVar()
 		self._update_day = StringVar()
 
-		self.AppConfig = ConfigLoader()
+		self.AppConfig = ConfigLoader(Writer = True)
 
 		self.Configuration = self.AppConfig.Config
 		#print('self.Configuration', self.Configuration)
@@ -1325,22 +1325,22 @@ class MyTranslatorHelper(Frame):
 		self.TextReproduceSteps.delete("1.0", END)
 		self.TextShouldBe.delete("1.0", END)	
 		
-		self.ResetInfoSection()
+		#self.ResetInfoSection()
 	
 		return
 	#END
 
 	def ResetInfoSection(self):
-		self.EnvInfo.delete("1.0", END)	
-		self.EnvInfo.insert("end", "Platform: ")
-		self.EnvInfo.insert("end", "\nDeviceModel: ")
-		self.EnvInfo.insert("end", "\nBuildType: ")
-		self.EnvInfo.insert("end", "\nClientVersion: ")
-		self.EnvInfo.insert("end", "\nResVersion: ")
-		self.EnvInfo.insert("end", "\nVersionCode: ")
-		self.EnvInfo.insert("end", "\nScriptVersionCode: ")
-		self.EnvInfo.insert("end", "\nClientCommitID: ")
-		self.EnvInfo.insert("end", "\nScriptCommitID: ")
+		self.Precondition.delete("1.0", END)	
+		self.Precondition.insert("end", "Platform: ")
+		self.Precondition.insert("end", "\nDeviceModel: ")
+		self.Precondition.insert("end", "\nBuildType: ")
+		self.Precondition.insert("end", "\nClientVersion: ")
+		self.Precondition.insert("end", "\nResVersion: ")
+		self.Precondition.insert("end", "\nVersionCode: ")
+		self.Precondition.insert("end", "\nScriptVersionCode: ")
+		self.Precondition.insert("end", "\nClientCommitID: ")
+		self.Precondition.insert("end", "\nScriptCommitID: ")
 
 	#GUI function
 	def collect_report_elements(self):
@@ -1349,11 +1349,10 @@ class MyTranslatorHelper(Frame):
 		#print('TextTestClient', TextTestClient)
 		To_Translate = {}
 
-		EnvInfo = self.EnvInfo.get("1.0", END)
-		
-		Reproducibility = self.Reproducibility.get("1.0", END).replace('\n', '')
-		To_Translate['EnvInfo'] = EnvInfo
-		To_Translate['Reproducibility'] = Reproducibility + '%'
+		Precondition = self.Precondition.get("1.0", END)
+		To_Translate['Precondition'] = Precondition
+		#Reproducibility = self.Reproducibility.get("1.0", END).replace('\n', '')
+		#To_Translate['Reproducibility'] = Reproducibility + '%'
 
 		
 		
@@ -1446,8 +1445,8 @@ class MyTranslatorHelper(Frame):
 	def _save_report(self):
 		TextTitle = self.TextTitle.get("1.0", END)			
 		
-		EnvInfo = self.EnvInfo.get("1.0", END)
-		Reproducibility = self.Reproducibility.get("1.0", END)
+		Precondition = self.Precondition.get("1.0", END)
+		#Reproducibility = self.Reproducibility.get("1.0", END)
 		
 		TextTestReport = self.TextTestReport.get("1.0", END)
 		TextReproduceSteps = self.TextReproduceSteps.get("1.0", END)
@@ -1457,8 +1456,8 @@ class MyTranslatorHelper(Frame):
 		try:
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTitle', TextTitle, True)
 
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'EnvInfo', EnvInfo, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'Reproducibility', Reproducibility, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'Precondition', Precondition, True)
+			#self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'Reproducibility', Reproducibility, True)
 			
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTestReport', TextTestReport, True)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
@@ -1472,8 +1471,8 @@ class MyTranslatorHelper(Frame):
 	def SaveTempReport(self, event):
 		TextTitle = self.TextTitle.get("1.0", END)			
 		
-		EnvInfo = self.EnvInfo.get("1.0", END)
-		Reproducibility = self.Reproducibility.get("1.0", END)
+		Precondition = self.Precondition.get("1.0", END)
+		#Reproducibility = self.Reproducibility.get("1.0", END)
 		
 		TextTestReport = self.TextTestReport.get("1.0", END)
 		TextReproduceSteps = self.TextReproduceSteps.get("1.0", END)
@@ -1483,8 +1482,8 @@ class MyTranslatorHelper(Frame):
 		try:
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTitle', TextTitle, True)
 			
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'EnvInfo', EnvInfo, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'Reproducibility', Reproducibility, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'Precondition', Precondition, True)
+			#self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'Reproducibility', Reproducibility, True)
 
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTestReport', TextTestReport, True)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
@@ -1517,13 +1516,13 @@ class MyTranslatorHelper(Frame):
 			self.TextTitle.delete("1.0", END)
 			self.TextTitle.insert("end", TextTitle)
 			
-			EnvInfo  = self.Configuration['BugDetails']['EnvInfo']
-			self.EnvInfo.delete("1.0", END)
-			self.EnvInfo.insert("end", EnvInfo)
+			Precondition  = self.Configuration['BugDetails']['Precondition']
+			self.Precondition.delete("1.0", END)
+			self.Precondition.insert("end", Precondition)
 			
-			Reproducibility  = self.Configuration['BugDetails']['Reproducibility']
-			self.Reproducibility.delete("1.0", END)
-			self.Reproducibility.insert("end", Reproducibility)
+			#Reproducibility  = self.Configuration['BugDetails']['Reproducibility']
+			#self.Reproducibility.delete("1.0", END)
+			#self.Reproducibility.insert("end", Reproducibility)
 			
 			TextTestReport  = self.Configuration['BugDetails']['TextTestReport']
 			self.TextTestReport.delete("1.0", END)
@@ -1554,13 +1553,13 @@ class MyTranslatorHelper(Frame):
 			self.TextTitle.delete("1.0", END)
 			self.TextTitle.insert("end", TextTitle)
 			
-			EnvInfo  = self.Configuration['Temp_BugDetails']['EnvInfo']
-			self.EnvInfo.delete("1.0", END)
-			self.EnvInfo.insert("end", EnvInfo)
+			Precondition  = self.Configuration['Temp_BugDetails']['Precondition']
+			self.Precondition.delete("1.0", END)
+			self.Precondition.insert("end", Precondition)
 			
-			Reproducibility  = self.Configuration['Temp_BugDetails']['Reproducibility']
-			self.Reproducibility.delete("1.0", END)
-			self.Reproducibility.insert("end", Reproducibility)
+			#Reproducibility  = self.Configuration['Temp_BugDetails']['Reproducibility']
+			#self.Reproducibility.delete("1.0", END)
+			#self.Reproducibility.insert("end", Reproducibility)
 			
 			TextTestReport  = self.Configuration['Temp_BugDetails']['TextTestReport']
 			self.TextTestReport.delete("1.0", END)
@@ -1626,29 +1625,29 @@ class BottomPanel(Frame):
 		Row = 1
 		Label(text='Update', width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5)
 		Col += 1
-		Label(textvariable=master._update_day, width=20).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
+		Label(textvariable=master._update_day, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
 		master._update_day.set('-')
 		Col += 1
 		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
 		DictionaryLabelA.grid(in_=self, row=Row, column=Col, padx=5, pady=5)
 		Col += 1
-		Label(textvariable=master.DictionaryStatus, width=20).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
+		Label(textvariable=master.DictionaryStatus, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
 		master.DictionaryStatus.set('0')
 		Col += 1
 		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5)
 		Col += 1
-		Label(textvariable=master.HeaderStatus, width=20).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
+		Label(textvariable=master.HeaderStatus, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
 		master.HeaderStatus.set('0')
 		Col += 1
 		Label(text= master.LanguagePack.Label['ProjectKey'], width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5, sticky=W)
 		Col += 1
 		self.project_id_select = AutocompleteCombobox()
-		self.project_id_select.Set_Entry_Width(30)
+		self.project_id_select.Set_Entry_Width(20)
 		self.project_id_select.set_completion_list([])
 		self.project_id_select.grid(in_=self, row=Row, column=Col, padx=5, pady=5, stick=W)
 		self.project_id_select.bind("<<ComboboxSelected>>", master._save_project_key)
 		Col += 1
-		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=20, command= master.RenewMyTranslator, state=DISABLED)
+		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=15, command= master.RenewMyTranslator, state=DISABLED)
 		self.RenewTranslatorMain.grid(in_=self, row=Row, column=Col, padx=10, pady=5, stick=E)
 		
 		
@@ -1706,24 +1705,29 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 	TextTestReport_index = []
 	TextShouldBe_index = []
 	TextReproduceSteps_index = []
+	TextPrecondition_index = []
 
 	
 	
 	TextTestReport = Object['TextTestReport'].replace('\r', '').split('\n')
 	TextShouldBe = Object['TextShouldBe'].replace('\r', '').split('\n')
 	TextReproduceSteps = Object['TextReproduceSteps'].replace('\r', '').split('\n')	
+	TextPrecondition = Object['Precondition'].replace('\r', '').split('\n')	
 
 	Old_TextTestReport = []
 	Old_TextShouldBe = []
 	Old_TextReproduceSteps = []
+	Old_TextPrecondition = []
 
 	New_TextTestReport = []
 	New_TextShouldBe = []
 	New_TextReproduceSteps = []
+	New_TextPrecondition = []
 
 	secondary_TextTestReport = []
 	secondary_TextShouldBe = []
 	secondary_TextReproduceSteps = []
+	secondary_TextPrecondition = []
 
 	counter = 0
 
@@ -1752,7 +1756,15 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 			Old_TextReproduceSteps.append(item)
 			TextReproduceSteps_index.append(counter)
 			counter+=1
-			
+
+	for index in range(len(TextPrecondition)):
+		item = TextPrecondition[index]
+		if str(item) != "":
+			to_translate.append(item)
+			Old_TextPrecondition.append(item)
+			TextPrecondition_index.append(counter)
+			counter+=1
+
 	first_language_translation = my_translator.translate(to_translate)
 	if secondary_target_language not in [None, '']:
 		temp_language = my_translator.to_language
@@ -1777,57 +1789,30 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 		if secondary_target_language not in [None, '']:
 			secondary_TextReproduceSteps.append(second_language_translation[index])	
 
+	for index in TextPrecondition_index:
+		New_TextPrecondition.append(first_language_translation[index])
+		if secondary_target_language not in [None, '']:
+			secondary_TextPrecondition.append(second_language_translation[index])			
+
 	Lang = my_translator.to_language
 	
-
-	strReport_to_language = Create_Row_CSS_Section("상세설명", New_TextTestReport)	
-	strReprodSteps_to_language = Create_Step_CSS_Section("재현스텝", New_TextReproduceSteps)	
-	strShouldBe_to_language = Create_Row_CSS_Section("기대결과", New_TextShouldBe)	
-
-	strReport_from_language = Create_Row_CSS_Section("Detail Description", Old_TextTestReport)	
-	strReprodSteps_from_language = Create_Step_CSS_Section("Reproduce Steps", Old_TextReproduceSteps)	
-	strShouldBe_from_language = Create_Row_CSS_Section("기Expected Result", Old_TextShouldBe)	
+	if simple_template != 1:
+		strReport = Simple_Row_CSS_Template(Lang, "Reproduced Result", New_TextTestReport, Old_TextTestReport, secondary_TextTestReport)	
+		strReprodSteps = Simple_Step_CSS_Template(Lang, "How to reproduce", New_TextReproduceSteps, Old_TextReproduceSteps, secondary_TextReproduceSteps)	
+		strShouldBe = Simple_Row_CSS_Template(Lang, "Expected Result", New_TextShouldBe, Old_TextShouldBe, secondary_TextShouldBe)
+		strPrecondition = Simple_Row_CSS_Template(Lang, "Pre-conditions", New_TextPrecondition, Old_TextPrecondition, secondary_TextPrecondition)
+	else:	
+		strReport = Simple_Row_Template(Lang,  "Reproduced Result", New_TextTestReport, Old_TextTestReport, secondary_TextTestReport)	
+		strReprodSteps = Simple_Step_Template(Lang, "How to reproduce", New_TextReproduceSteps, Old_TextReproduceSteps, secondary_TextReproduceSteps)	
+		strShouldBe = Simple_Row_Template(Lang, "Expected Result", New_TextShouldBe, Old_TextShouldBe, secondary_TextShouldBe)
+		strPrecondition = Simple_Row_Template(Lang, "Pre-conditions", New_TextPrecondition, Old_TextPrecondition, secondary_TextPrecondition)	
 	
 	CssText = ''
-	CssText += strReport_to_language
-	CssText += '\r\n'
-	CssText += strReprodSteps_to_language
-	CssText += '\r\n'
-	CssText += '<p><b>[재현빈도]</b><br/></p>' 
-	CssText += '\r\n'
-			
-	Reproducibility = Object['Reproducibility']
-
-	CssText += '<p>'+ Reproducibility + '&nbsp;</p>'
-	CssText += '\r\n'
-	CssText += strShouldBe_to_language
-	CssText += '\r\n'
-	CssText += '<p><b>[환경정보]</b><br/></p>' 
-
-
-	EnvInfo = Object['EnvInfo'].split('\n')
-
-	for item in EnvInfo:
-		if str(item) != "":
-			CssText += '\r\n'
-			CssText += '<p>'+ item + '</p>'
-
-	CssText += '\r\n'
-	CssText += '<p><span style="font-size:14pt"><span style="color:#3498db"><b>제2언어 - Secondary language</b></span></span></p>'
-	CssText += strReport_from_language
-	CssText += '\r\n'
-	CssText += strReprodSteps_from_language
-	CssText += '\r\n'
-	CssText += '<p><b>[Reproducibility]</b><br/></p>' 
-	CssText += '\r\n'
-			
-	Reproducibility = Object['Reproducibility']
-
-	CssText += '<p>'+ Reproducibility + '&nbsp;</p>'
-	CssText += '\r\n'
-	CssText += strShouldBe_from_language
-	CssText += '\r\n'
+	CssText += strPrecondition
 	
+	CssText += strReprodSteps
+	CssText += strReport
+	CssText += strShouldBe
 	print('Copy to clipboard')
 	copy(CssText)
 
@@ -1862,37 +1847,36 @@ def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Se
 	x = 1
 	if Lang == 'ko':		
 		for row in Text_List:
-			Details += '<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
+			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 			x += 1
-		Details += '=================================================\r\n'
+		Details += '\r\n================================================='
 		x = 1
 		for row in Text_List_Old:
-			Details += '<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
+			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 			x += 1
 		if len(Text_List_Secondary) > 0:
-			Details += '=================================================\r\n'
+			Details += '\r\n================================================='
 			x = 1
 			for row in Text_List_Secondary:
-				Details += '<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
+				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 				x += 1	
 	else:
 		for row in Text_List_Old:
-			Details += '<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
+			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 			x += 1
-		Details += '=================================================\r\n'
+		Details += '\r\n================================================='
 		x = 1
 		for row in Text_List:
-			Details += '<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
+			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 			x += 1
 		if len(Text_List_Secondary) > 0:
-			Details += '=================================================\r\n'
+			Details += '\r\n================================================='
 			x = 1
 			for row in Text_List_Secondary:
-				Details += '<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>\r\n'
+				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 				x += 1		
-	to_return = '<p><b>[' + Title + ']</b><br/></p>\r\n' 
-	to_return += Details
-	return to_return
+	Details = AddCssLayout(Title, Details)
+	return Details
 
 # Obsoleted
 def Simple_Row_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
@@ -1900,28 +1884,100 @@ def Simple_Row_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Sec
 	Details = ''
 	if Lang == 'ko':		
 		for row in Text_List:
-			Details += '<p>'+ row + '&nbsp;</p>\r\n'
-		Details += '=================================================\r\n'
+			Details += '\r\n<p>'+ row + '&nbsp;</p>'
+		Details += '\r\n================================================='
 		for row in Text_List_Old:
-			Details += '<p>' + row + '&nbsp;</p>\r\n'
+			Details += '\r\n<p>' + row + '&nbsp;</p>'
 		if len(Text_List_Secondary) > 0:
-			Details += '=================================================\r\n'
+			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
 				Details += '\r\n<p>' + row + '&nbsp;</p>'
 	else:
 		for row in Text_List_Old:
-			Details += '<p>'+ row + '&nbsp;</p>\r\n'
-		Details += '=================================================\r\n'
+			Details += '\r\n<p>'+ row + '&nbsp;</p>'
+		Details += '\r\n================================================='
 		for row in Text_List:
-			Details += '<p>' + row + '&nbsp;</p>'
+			Details += '\r\n<p>' + row + '&nbsp;</p>'
 		if len(Text_List_Secondary) > 0:
-			Details += '=================================================\r\n'
+			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
-				Details += '<p>' + row + '&nbsp;</p>\r\n'
+				Details += '\r\n<p>' + row + '&nbsp;</p>'
 	
-	to_return = '<p><b>[' + Title + ']</b><br /></p>\r\n' 
-	to_return += Details
-	return to_return
+	Details = AddCssLayout(Title, Details)
+	return Details
+
+def Simple_Step_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
+	print('Text_List_Secondary', Text_List_Secondary)
+	Details = "\r\n"
+	Details += Add_Style(Title)
+	x = 1
+	if Lang == 'ko':		
+		for row in Text_List:
+			Details += '\r\n' + str(x) + ') ' + row
+			x += 1
+		Details += '\r\n================================================='
+		x = 1
+		for row in Text_List_Old:
+			Details += '\r\n' + str(x) + ') ' + row
+			x += 1
+		if len(Text_List_Secondary) > 0:
+			Details += '\r\n================================================='
+			for row in Text_List_Secondary:
+				Details += '\r\n' + str(x) + ') ' + row
+				x += 1
+	else:
+		for row in Text_List_Old:
+			Details += '\r\n' + str(x) + ') ' + row
+			x += 1
+		Details += '\r\n================================================='
+		x = 1
+		for row in Text_List:
+			Details += '\r\n' + str(x) + ') ' + row
+			x += 1
+		if len(Text_List_Secondary) > 0:
+			Details += '\r\n================================================='
+			for row in Text_List_Secondary:
+				Details += '\r\n' + str(x) + ') ' + row
+				x += 1
+	return Details
+
+def Simple_Row_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
+	#print('Text_List_Secondary', Text_List_Secondary)
+	Details = "\r\n"
+	Details += Add_Style(Title)
+	if Lang == 'ko':		
+		for row in Text_List:
+			Details += '\r\n'+ row
+		Details += '\r\n================================================='
+		for row in Text_List_Old:
+			Details += '\r\n'+ row
+		if len(Text_List_Secondary) > 0:
+			Details += '\r\n================================================='
+			for row in Text_List_Secondary:
+				Details += '\r\n'+ row
+
+	else:
+		for row in Text_List_Old:
+			Details += '\r\n'+ row
+		Details += '\r\n================================================='
+		for row in Text_List:
+			Details += '\r\n'+ row
+		if len(Text_List_Secondary) > 0:
+			Details += '\r\n================================================='
+			for row in Text_List_Secondary:
+				Details += '\r\n'+ row
+	return Details
+
+def AddCssLayout(Title, content):
+	CssCode = '<div class="jePanel_blue" style="background-color:#f4ffff; border:1px solid #cccccc; margin-bottom:1em; margin-left:1em; margin-right:1em; margin-top:1em">'
+	CssCode += '\r\n<div class="jePanelHeader" style="background-color:#9bc3ff; border-bottom-color:#cccccc; border-bottom-style:solid; border-bottom-width:1px; font-weight:bold; padding:.3em; text-align:center">[' + Title + ']</div>'
+	CssCode += '\r\n<div class="jePanelContent" style="padding:.5em 2em .5em 2em">'
+	CssCode += '\r\n<p>&nbsp;</p>'
+	CssCode += content
+	CssCode += '\r\n<p>&nbsp;</p>'
+	CssCode += '\r\n</div>'
+	CssCode += '\r\n</div>'
+	return CssCode
 
 
 def Add_Style(Text):
@@ -1975,7 +2031,7 @@ def MainLoop():
 
 		try:
 			#from google.cloud import logging
-			AppConfig = ConfigLoader()
+			AppConfig = ConfigLoader(Writer = True)
 			Configuration = AppConfig.Config
 			license_file_path = Configuration['Translator']['license_file']
 			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = license_file_path

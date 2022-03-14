@@ -6,6 +6,7 @@ from tkinter import INSERT, ACTIVE, NORMAL, DISABLED
 from tkinter import Text, IntVar, StringVar
 
 import re
+import os
 
 class AutocompleteCombobox(Combobox):
 
@@ -217,7 +218,7 @@ class BottomPanel(Frame):
 		Label(textvariable=master.HeaderStatus, width=15).grid(in_=self, row=Row, column=8, padx=0, pady=5)
 		master.HeaderStatus.set('0')
 
-		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=20, command= master.RenewMyTranslator, state=DISABLED)
+		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=15, command= master.RenewMyTranslator, state=DISABLED)
 		self.RenewTranslatorMain.grid(in_=self, row=Row, column=10, columnspan=9, padx=10, pady=5, stick=E)
 		
 		
@@ -338,6 +339,8 @@ class AutocompleteEntry(Entry):
 
 
 class CreateToolTip(object):
+
+
 	'''
 	create a tooltip for a given widget
 	'''
@@ -365,3 +368,24 @@ class CreateToolTip(object):
 	def close(self, event=None):
 		if self.tw:
 			self.tw.destroy()
+
+
+def ADB_Controller(Tab):
+	# resize with parent
+	Button_Width_Half=15
+	# separator widget
+	#Separator(orient=HORIZONTAL).grid(in_=self, row=0, column=1, sticky=E+W, pady=5)
+	Row = 1
+	Button(Tab, width = Button_Width_Half, text=  "TAB", command= lambda : os.popen('adb shell input keyevent \'61\'')).grid(row=Row, column=1,padx=5, pady=5, sticky=W)
+	Button(Tab, width = Button_Width_Half, text=  "Enter", command= lambda : os.popen('adb shell input keyevent \'66\'')).grid(row=Row, column=2,padx=5, pady=5, sticky=W)
+	Button(Tab, width = Button_Width_Half, text=  "Home", command= lambda : os.popen('adb shell input keyevent \'3\'')).grid(row=Row, column=3,padx=5, pady=5, sticky=W)
+	Button(Tab, width = Button_Width_Half, text=  "Backkey", command= lambda : os.popen('adb shell input keyevent \'4\'')).grid(row=Row, column=4,padx=5, pady=5, sticky=W)
+	Row += 1
+	Label(Tab, text= 'Send text').grid(row=Row, column=1, padx=5, pady=5, sticky= W)
+	_Edit = Text(Tab, width = 80, height=1, undo=True)
+	_Edit.grid(row=Row, column=2, columnspan=7, padx=5, pady=5, sticky=W+E)
+	Button(Tab, width = Button_Width_Half, text= 'Send', command= lambda : os.popen("adb shell input text \'" + _Edit.get("1.0", END).replace('\n', '') + "\'")).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=W)
+
+	for i in range (0,10):
+		Tab.columnconfigure(i,weight=1, uniform='third')
+	

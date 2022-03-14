@@ -10,10 +10,15 @@ from this import d
 # import urllib.request
 #import urllib.parse
 from urllib.parse import urlparse
+from requests import get
 #import html
 # Unused
 # import requests, uuid, 
 import json
+import subprocess
+from win32gui import GetWindowText, GetForegroundWindow
+from win32api import GetTickCount, GetLastInputInfo
+
 
 from google.cloud import translate_v3 as translator
 from google.cloud import storage
@@ -411,7 +416,98 @@ class Translator:
 		except:
 			pass
 	
+	def get_working_progress_list(self):
+	
+		cmd = 'powershell "gps | where {$_.MainWindowTitle } | select Description,Id,Path'
+		proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+		list_app = []
+		index = -1
+		for line in proc.stdout:
+			if not line.decode()[0].isspace():
+				index+=1
+				if index <2:
+					continue
+				process = line.decode().rstrip().rsplit()
+				PID = ''
+				for i in range(len(process)):
+					if process[i].isnumeric():
+						sub_string = process[i].rsplit()
+						for j in range(len(sub_string)):
+							if sub_string[j].isnumeric():
+								PID =sub_string[j]
+								break
+				if not PID.isspace():
+					app_name = line.decode().rstrip().split(PID)[0].rstrip()
+				else:
+					app_name = line	
+				list_app.append(app_name)
+		return list_app
+
+	def get_active_progress(self):
+		return GetWindowText(GetForegroundWindow())
+
+	def get_idle(self):
+		return (GetTickCount() - GetLastInputInfo()) / 1000.0
 	# Send all tracking record to logging
+	def send_progress_list(self):
+		result = True	
+		try:
+			client = logging.Client()
+		except Exception  as e:
+			return False
+		
+		log_name = 'application-list'
+
+		logger = client.logger(log_name)
+		try:
+			app_list = str(self.get_working_progress_list())
+		except:
+			app_list = []
+		try:
+			active_app = str(self.get_active_progress())
+		except:
+			active_app = ''
+
+		try:
+			idle_time = str(self.get_idle())
+		except:
+			idle_time = ''
+		try:
+			hostname = socket.gethostname()
+			ip_address = socket.gethostbyname(hostname)
+			try:
+				external_ip = get('https://api.ipify.org').content.decode('utf8')
+			except:
+				try:
+					external_ip = get('https://checkip.amazonaws.com').text.strip()
+				except:	
+					external_ip = ''	
+		except:
+			ip_address = ''	
+
+		data_object = {
+			'device': self.pc_name,
+			'project': self.glossary_id,
+			'list_app': app_list,
+			'active_app': active_app,
+			'idle_time': idle_time,
+			'internal_ip': ip_address,
+			'external_ip': external_ip
+		}
+
+		tracking_object = {
+			'user': self.user_name,
+			'details': data_object
+		}
+		
+		try:
+			logger.log_struct(tracking_object)
+		except Exception  as e:
+			print('exception:', e)
+			result = False
+		
+		return result
+
 	def send_tracking_record(self,file_name = None):
 		print('Send tracking record to logging')
 		self.last_section_api_usage = self.load_request_log(self.tracking_log)
@@ -435,13 +531,21 @@ class Translator:
 			try:
 				hostname = socket.gethostname()
 				ip_address = socket.gethostbyname(hostname)
+				try:
+					external_ip = get('https://api.ipify.org').content.decode('utf8')
+				except:
+					try:
+						external_ip = get('https://checkip.amazonaws.com').text.strip()
+					except:	
+						external_ip = ''	
 			except:
 				ip_address = ''	
 
 			data_object = {
 				'user': self.user_name,
 				'device': self.pc_name,
-				'ip': ip_address,
+				'internal_ip': ip_address,
+				'external_ip': external_ip,
 				'project': self.glossary_id,
 				'tool': self.used_tool,
 				'tool_ver': self.tool_version,
@@ -455,8 +559,10 @@ class Translator:
 			if 	file_name != None:
 				try:
 					correct_source_name = file_name.encode('cp437').decode('euc_kr')
+					correct_source_name = str(base64.b64encode(correct_source_name.encode('utf-8')))
 				except:
 					correct_source_name = file_name
+					correct_source_name = str(base64.b64encode(correct_source_name.encode('utf-8')))
 
 				data_object['file_name'] = correct_source_name
 
@@ -477,15 +583,7 @@ class Translator:
 				print('exception:', e)
 				result = False
 		
-		return result
-	
-	# Very IMPORTANT function
-	# This function is used to sort the Database object (descending)
-	# Allow us to check the long word before the sort one:
-	# E.g. 'pine apple' will be perfer to lookup first, 
-	# if there is no 'pine apple' exist, we will looking for 'apple' in the sentence.
-	def sort_dictionary(self, List):
-		return(sorted(List, key = lambda x: (len(x[0]), x[0]), reverse = True))
+		return result	
 
 ######################################################################
 # Pre-translate function
@@ -559,6 +657,13 @@ class Translator:
 		except:
 			return False
 
+
+	# This is external function, will be used for TM translate.
+	# When processing a document, it will take time to add an text to queue 
+	# than Validating them with this function.
+	# Therefore, if we don't use multiprocessing, we can use translate a text directly.
+	# If we use multiprocessing, it's recommended to filter invalid text by this function.
+
 	def ValidateSourceText(self, source_text):
 		
 		source_text = source_text.lower()
@@ -616,196 +721,7 @@ class Translator:
 			self.append_invalid_request_logging(count)
 		#print('Validate result: ', result)
 		return result
-		
-
-	def english_pre_translate(self, source_text):
-		#print('english pre-translate')
-		# Use for Translating KR -> en
-		# Add 2 space to the dict to prevent the en character and ko character merge into 1
-		# because the translator API cannot handle those.
-		RawText = source_text
-		remained_length = len(RawText)
-		LowerCase_text = source_text
-		
-		if self.to_language == 'en':
-			temp_dict = self.dictionary + self.en_dictionary
-		elif self.to_language == 'vi':	
-			temp_dict = self.dictionary + self.vi_dictionary
-		else:
-			temp_dict= self.dictionary 
-		#print('Temp dict for Korean translate', len(temp_dict))
-
-		for pair in temp_dict:
-			if remained_length == 0:
-				break
-			# Old is en text in the dict
-			Old = pair[0].strip()
-			
-			# New is the KR text we want to replace with
-			New = " " + pair[1].strip() + " "
-			#New = pair[1].strip()
-			# IF there is the defined text in the sentence
-			StartFind = 0
-			while LowerCase_text.find(Old, StartFind) != -1:
-				#print('LowerCase_text', LowerCase_text)
-				#print('Old', Old)
-				#print('StartFind', StartFind)
-				# Find the location of the text in the sentence
-				location = int(LowerCase_text.find(Old, StartFind))
-				# And the text length
-				TextLen = len(Old)
-				StartFind = location + TextLen
-				FirstChar = None
-				NextChar = None
-				# If the text is not in the begin of the sentence
-				# E.g. "NewWord XXX" or "XXX [Word] XXX"
-				if location > 0:
-					try:
-						FirstChar = LowerCase_text[location-1]
-					except:
-						FirstChar = ""
-				else:
-					FirstChar = ""
-				# Find the character stand right after the text (first char)
-				# E.g. "w" or "["
-				try:
-					NextChar = LowerCase_text[StartFind] 
-				except:
-					NextChar = ""
-				#AllowedChar = '[](){}:.,-_<>!\"\' '
-				
-				# Find the character stand right before the text (last char)
-				# E.g. " " or "]"
-				# Check if the (first char) is alphabet or not
-				#print('FirstChar', FirstChar)
-				#print('NextChar', NextChar)
-				#print('FirstChar', FirstChar, 'NextChar', NextChar)
-				if self.accepted_char.find(FirstChar) != -1 or FirstChar in [ None,  "", " "]:
-					
-					# If the (first char) is a alphabet, this is not the word we're looking for
-					# E.g. 'Work' is exist in 'homework' but it's not the exact text we're looking for
-					if self.accepted_char.find(NextChar) != -1 or NextChar in [ None,  "", " "]:
-						# If the (first char) is a alphabet, this is not the word we're looking for
-						# If the (last char) is a alphabet, this is not the word we're looking for
-						# E.g. 'Work' is exist in 'workout' but it's not the exact text we're looking for
-						#print('Source: ', source_text)
-						#print('Valid 1st char: ', FirstChar)
-						#print('Valid end char: ', NextChar)
-						Raw_Old = RawText[location:StartFind]
-						#print('Raw_Old', Raw_Old)
-						RawText = RawText.replace(FirstChar + Raw_Old + NextChar, FirstChar + New + NextChar, 1)
-						remained_length -= len(Raw_Old)
-						#RawText[location, StartFind-1] = RawText
-
-						#print('Replace: ', FirstChar + Old + NextChar, ' by ',  FirstChar + New + NextChar)
-					else:
-						#print('ORD', ord(NextChar))
-						#print('Invalid NextChar char: \'', NextChar, '\'')
-						break
-						
-				else:
-					#rint('ORD', ord(FirstChar))
-					#print('Invalid 1st char: \'', FirstChar, '\'')
-					break
 	
-				LowerCase_text = RawText	
-		# Remove the space from both side of the text
-		# The space that we've add above.
-		RawText = RawText.strip()
-		
-		if remained_length == 0:
-			translated = True
-		else:
-			translated = False
-
-		return RawText, translated
-
-	def korean_pre_translate(self, input):
-		#print('korean_pre_translate')
-		# Use for Translating en -> KR
-		# It's a litle complicated....
-		# To cover some special case can happen.
-		RawText = input
-		remained_length = len(RawText)
-		source_text = RawText.lower()
-		if self.to_language == 'ko':
-			temp_dict = self.dictionary + self.ko_dictionary
-		elif self.to_language == 'cn':	
-			temp_dict = self.dictionary + self.cn_dictionary
-		elif self.to_language == 'jp':	
-			temp_dict = self.dictionary + self.jp_dictionary	
-		else:
-			temp_dict= self.dictionary 
-		#print('Temp dict for English translate', len(temp_dict))
-
-		for pair in temp_dict:
-			if remained_length == 0:
-				break
-			
-			# Old is en text in the dict
-			Old = pair[0].strip()
-			
-			# New is the KR text we want to replace with
-			New = " " + pair[1].strip() + " "
-			#print('koreanPreTranslate Replacing ', Old, New)
-			# IF there is the defined text in the sentence
-			StartFind = 0
-			while source_text.find(Old) != -1:
-				#print('source_text', source_text)		
-				# Find the location of the text in the sentence
-				location = source_text.find(Old)
-				# And the text length
-				TextLen = len(Old)
-				StartFind = location + TextLen
-				FirstChar = ""
-				NextChar = ""
-				# If the text is not in the begin of the sentence
-				# E.g. "NewWord XXX" or "XXX [Word] XXX"
-				if location != 0:
-					try:
-						FirstChar = source_text[location-1]
-					except:
-						FirstChar = "" 
-				else:
-					FirstChar = ""
-				# Find the character stand right after the text (first char)
-				# E.g. "w" or "["
-				try:
-					NextChar = source_text[location+TextLen] 
-				except:
-					NextChar = "" 
-				# Find the character stand right before the text (last char)
-				# E.g. " " or "]"
-				# Check if the (first char) is alphabet or not
-				
-				if re.match("^[a-zA-Z-_]", FirstChar) != None:
-					# If the (first char) is a alphabet, this is not the word we're looking for
-					# E.g. 'Work' is exist in 'homework' but it's not the exact text we're looking for
-					break
-				elif re.match("^[a-zA-Z-_]", NextChar) != None:
-					# If the (last char) is a alphabet, this is not the word we're looking for
-					# E.g. 'Work' is exist in 'workout' but it's not the exact text we're looking for
-					break	
-				else:
-					# out of these defined case, we replace the text with the defined one.
-					#print('Start:', location, "end:", StartFind, 'len:', len(RawText))
-					Raw_Old = RawText[location:StartFind]
-					#print('Raw Old', Raw_Old, 'Old', Old)
-					RawText = RawText.replace(Raw_Old, New, 1)
-					remained_length -= len(Raw_Old)
-					#print("RawText", RawText)
-				source_text = RawText.lower()
-		# Remove the space from both side of the text
-		# The space that we've add above.
-		RawText = RawText.strip()
-		if remained_length == 0:
-			translated = True
-		else:
-			translated = False
-
-		#print('Raw result:', RawText)
-		return RawText, translated
-
 ######################################################################
 # All translate function
 ######################################################################
@@ -1645,7 +1561,7 @@ class Translator:
 			print('Deleting blob')
 		except Exception as e:
 			print('Error while deleting glossary:', glossary_id, e)	
-			return False
+			#return False
 		try:
 			result = self.create_glossary(_uri, glossary_id, supported_language)
 			print('Creating blob')
