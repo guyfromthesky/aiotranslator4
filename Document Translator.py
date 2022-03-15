@@ -1058,7 +1058,7 @@ class DocumentTranslator(Frame):
 		if filename != "":
 			LicensePath = self.CorrectPath(filename)
 			self.AppConfig.save_config(
-				self.AppConfig.translator_config_path,
+				self.AppConfig.Translator_Config_Path,
 				'Translator', 'license_file',
 				LicensePath, True)
 			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LicensePath

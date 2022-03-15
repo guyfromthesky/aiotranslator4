@@ -228,7 +228,7 @@ class ConfigLoader:
 	def Translator_Init_Setting(self):
 		Section = 'Translator'
 
-		config_path = self.translator_config_path
+		config_path = self.Translator_Config_Path
 
 		if not os.path.isfile(config_path):
 			config = configparser.ConfigParser()

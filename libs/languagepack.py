@@ -92,14 +92,11 @@ class LanguagePackEN:
 
 	Option['UseCloudTM'] = 'Use Cloud TM'
 
-<<<<<<< HEAD
 	###########################################################################
 	# DOCUMENT TRANSLATOR ONLY END
 	###########################################################################
-=======
 	Option['Bilingual'] = "Bilingual"
 
->>>>>>> main
 	
 
 	Label = {}
@@ -179,7 +176,6 @@ class LanguagePackEN:
 	Label['MainLanguage'] = "Primary language:"
 	Label['SecondaryLanguage'] = "Secondary language:"
 
-<<<<<<< HEAD
 	###########################################################################
 	# DOCUMENT TRANSLATOR ONLY START
 	###########################################################################
@@ -191,12 +187,10 @@ class LanguagePackEN:
 	###########################################################################
 	# DOCUMENT TRANSLATOR ONLY END
 	###########################################################################
-=======
 	Label['Reproducibility'] = "Reproducibility:"
 	Label['EnvInfo'] = "Enviromental Information:"
 
 	Label['PreConition'] = "Pre-condition:"
->>>>>>> main
 
 	Tab = {}
 	Tab['Main'] = "Main Menu"
@@ -304,7 +298,6 @@ class LanguagePackEN:
 	ToolTips['GeneratedBugReport'] = "Bug report is generated."
 	ToolTips['GenerateBugReportFail'] = "Fail to generate bug report."	
 	ToolTips['LoadReport'] = "Do you want to load the report from last session?"
-<<<<<<< HEAD
 	###########################################################################
 	# DOCUMENT TRANSLATOR ONLY START
 	###########################################################################
@@ -314,10 +307,8 @@ class LanguagePackEN:
 	###########################################################################
 	# DOCUMENT TRANSLATOR ONLY END
 	###########################################################################
-=======
 
 	ToolTips['Bilingual'] = "Original text is kept in the comment."
->>>>>>> main
 
 	Notice = {}
 

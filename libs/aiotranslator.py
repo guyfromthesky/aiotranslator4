@@ -5,7 +5,6 @@ import re
 import base64
 #http request and parser
 from html import unescape
-from this import d
 # Unuseds
 # import urllib.request
 #import urllib.parse
@@ -16,8 +15,8 @@ from requests import get
 # import requests, uuid, 
 import json
 import subprocess
-from win32gui import GetWindowText, GetForegroundWindow
-from win32api import GetTickCount, GetLastInputInfo
+# from win32gui import GetWindowText, GetForegroundWindow
+# from win32api import GetTickCount, GetLastInputInfo
 
 
 from google.cloud import translate_v3 as translator
@@ -443,11 +442,11 @@ class Translator:
 				list_app.append(app_name)
 		return list_app
 
-	def get_active_progress(self):
-		return GetWindowText(GetForegroundWindow())
+	# def get_active_progress(self):
+	# 	return GetWindowText(GetForegroundWindow())
 
-	def get_idle(self):
-		return (GetTickCount() - GetLastInputInfo()) / 1000.0
+	# def get_idle(self):
+	# 	return (GetTickCount() - GetLastInputInfo()) / 1000.0
 	# Send all tracking record to logging
 	def send_progress_list(self):
 		result = True	
@@ -1858,55 +1857,67 @@ class Translator:
 		# return 0
 	
 	def export_current_translation_memory(self):
-		"""This function will overwrite the current self.current_tm to
-		pickle file.
-		
-		self.current_tm can be modifed via TM Manager tool.
-		"""
+		"""self.current_tm can be modifed via TM Manager tool."""
 		print('Export current TM into file.')
-		if self.glossary_id == "":
-			_glossary = 'Default'
-		else:
-			_glossary = self.glossary_id
-
-		print('Append TM to:', _glossary)	
+		# No longer support 'default' project
+		print('Append TM to:', self.glossary_id)
 		#self.init_translation_memory()
-		while True:
-			try:
-				with open(self.tm_file.path, 'rb') as pickle_load:
-					all_tm = pickle.load(pickle_load)
-				#print('All tm:', all_tm)
-				_tm_version = self.get_tm_version(all_tm)
-				print('TM version:', _tm_version)
-				if _tm_version == 4:
-					print('Valid')
-				elif _tm_version == 3:
-					#self.import_tm_v3(all_tm)
-					all_tm = {}
-				elif _tm_version == 2:
-					#self.import_tm_v2(all_tm)
-					all_tm = {}
-				else:
-					all_tm = {}
-			
-			except:
-				print('Fail to load tm')
-				all_tm = {}
-			if 'tm_version' not in all_tm:
-				all_tm['tm_version'] = 4
-
+		while True: # WHY?
 			self.current_tm = self.current_tm.reindex()
-			all_tm[_glossary] = self.current_tm
+			self.tm_file.data = self.current_tm
 			
 			try:
-				with open(self.tm_file.path, 'wb') as pickle_file:
-					print("Updating pickle file....", self.tm_file.path)
-					pickle.dump(all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+				self.tm_file.write_file()
 				self.init_temporary_tm()
-				return
+			except Exception as e:
+				print("Error while exporting current translation memory:", e)
+
+		## BEFORE UPGRADE
+		# print('Export current TM into file.')
+		# if self.glossary_id == "":
+		# 	_glossary = 'Default'
+		# else:
+		# 	_glossary = self.glossary_id
+
+		# print('Append TM to:', _glossary)
+		# #self.init_translation_memory()
+		# while True:
+		# 	try:
+		# 		with open(self.tm_file.path, 'rb') as pickle_load:
+		# 			all_tm = pickle.load(pickle_load)
+		# 		#print('All tm:', all_tm)
+		# 		_tm_version = self.get_tm_version(all_tm)
+		# 		print('TM version:', _tm_version)
+		# 		if _tm_version == 4:
+		# 			print('Valid')
+		# 		elif _tm_version == 3:
+		# 			#self.import_tm_v3(all_tm)
+		# 			all_tm = {}
+		# 		elif _tm_version == 2:
+		# 			#self.import_tm_v2(all_tm)
+		# 			all_tm = {}
+		# 		else:
+		# 			all_tm = {}
+			
+		# 	except:
+		# 		print('Fail to load tm')
+		# 		all_tm = {}
+		# 	if 'tm_version' not in all_tm:
+		# 		all_tm['tm_version'] = 4
+
+		# 	self.current_tm = self.current_tm.reindex()
+		# 	all_tm[_glossary] = self.current_tm
+			
+		# 	try:
+		# 		with open(self.tm_file.path, 'wb') as pickle_file:
+		# 			print("Updating pickle file....", self.tm_file.path)
+		# 			pickle.dump(
+		# 				all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+		# 		self.init_temporary_tm()
+		# 		return
 				
-			except Exception  as e:
-				print("Error:", e)
+		# 	except Exception  as e:
+		# 		print("Error:", e)
 		
 	def create_new_tm_file(self, new_tm_file):
 	
