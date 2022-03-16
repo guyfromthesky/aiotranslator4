@@ -140,7 +140,7 @@ class DocumentTranslator(Frame):
 		
 
 		self.after(DELAY, self.debug_listening)
-		# self.after(DELAY, self.error_listening)
+		self.after(DELAY, self.error_listening)
 
 	def create_buttom_panel(self):
 		self.bottom_panel = BottomPanel(self)
@@ -691,7 +691,6 @@ class DocumentTranslator(Frame):
 				break
 		self.after(DELAY, self.debug_listening)
 
-	# Currently not used because function doesn't work
 	def error_listening(self):
 		"""Output error messages to the screen coming from functions in
 		aiotranslator."""
@@ -704,18 +703,20 @@ class DocumentTranslator(Frame):
 				# 		title='Error',
 				# 		message=tm_err_msg)
 				
-				# TM File error
-				tm_err_msg = ''
-				# TM must be succesfully loaded or else program won't work
-				while not self.MyTranslator.tm_file.err_msg_queue.empty():
-					tm_err_msg = f'{tm_err_msg} ' \
-						f'{self.MyTranslator.tm_file.err_msg_queue.get()} \n'
-				self.Error(tm_err_msg)
-				break
+				if self.MyTranslator.tm_file is not None:
+					# TM File error
+					tm_err_msg = ''
+					# TM must be succesfully loaded or else program won't work
+					while not self.MyTranslator.tm_file.err_msg_queue.empty():
+						tm_err_msg = f'{tm_err_msg} ' \
+							f'{self.MyTranslator.tm_file.err_msg_queue.get()} \n'
+					self.Error(tm_err_msg)
+					break
 			self.after(DELAY, self.error_listening)
 		except:
 			print(f'{self.error_listening.__name__} cannot run because a '
 				'valid TM is not selected.')
+
 
 	def search_tm_event(self, event):
 		self.search_tm_list()
@@ -1684,7 +1685,7 @@ class DocumentTranslator(Frame):
 				self.ProjectList.set(self.glossary_id)
 			else:
 				self.ProjectList.set(self.glossary_id)
-				#self.Error('No Valid Project selected, please update the project key and try again.')	
+				self.Error('No Valid Project selected, please update the project key and try again.')	
 			
 			if isinstance(self.MyTranslator.version, str):
 				version = self.MyTranslator.version[0:10]

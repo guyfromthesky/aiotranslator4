@@ -115,7 +115,6 @@ class Translator:
 		# Get the temp folder location for Windows/Mac
 		self.init_config_path()
 
-	
 		# Select correct log file.
 		self.init_logging_file()
 
@@ -129,27 +128,6 @@ class Translator:
 		# Obsoleted
 		#self.init_db_data()
 		
-		### INIT APP CONFIG: SELF.APPCONFIG
-		self.app_config = ConfigLoader(Document=True)
-		saved_tm_path = self.app_config.Config['Translator'][
-			'translation_memory']
-		_, tm_path_ext = os.path.splitext(tm_path)
-		### INIT TM FILE OBJECTS: SELF.TM_FILE, SELF.GCS_TM_FILE
-		if is_cloud_tm_used == True and used_tool != 'writer':
-			print('Cloud TM is used.')
-			# Use a default path when using Cloud TM to get data from
-			# cloud storage more conveniently.
-			# Default dir: %appdata%/AIO Translator/TM
-			self.gcs_tm_file = CloudTranslationMemoryFile(
-				self.app_config.Config['Translator']['license_file'],
-				bucket_id=bucket_id,
-				glossary_id=glossary_id)
-			self.tm_file = LocalTranslationMemoryFile(
-				self.gcs_tm_file.local_path)
-		elif is_cloud_tm_used == False and used_tool != 'writer':
-			print('Cloud TM is not used.')
-			self.tm_file = LocalTranslationMemoryFile(tm_path)
-
 		self.temporary_tm = temporary_tm
 
 		self.translation_memory = None
@@ -194,8 +172,26 @@ class Translator:
 
 			print('Total time to load db + glossary:',
 				str(datetime.now() - current_time))
-		except Exception  as e:
+		except Exception as e:
 			print("Error when loading bucket:", e)
+
+		### INIT APP CONFIG: SELF.APPCONFIG
+		self.app_config = ConfigLoader(Document=True)
+		### INIT TM FILE OBJECTS: SELF.TM_FILE, SELF.GCS_TM_FILE
+		if is_cloud_tm_used == True and used_tool != 'writer':
+			print('Cloud TM is used.')
+			# Use a default path when using Cloud TM to get data from
+			# cloud storage more conveniently.
+			# Default dir: %appdata%/AIO Translator/TM
+			self.gcs_tm_file = CloudTranslationMemoryFile(
+				self.app_config.Config['Translator']['license_file'],
+				bucket_id=bucket_id,
+				glossary_id=glossary_id)
+			self.tm_file = LocalTranslationMemoryFile(
+				self.gcs_tm_file.local_path)
+		elif is_cloud_tm_used == False and used_tool != 'writer':
+			print('Cloud TM is not used.')
+			self.tm_file = LocalTranslationMemoryFile(tm_path)
 
 
 		# Send tracking record from previous run to logging server.

@@ -431,6 +431,8 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
                 Error while intitializing blob in Cloud TM file.
             Exception --
                 Error while initializing Cloud TM file.
+            err_msg --
+                Project ID is not found while init TM.
         """
         super().__init__()
         try:
@@ -443,63 +445,74 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
                         f'Cloud TM file: {e}'
                 print(err_msg)
                 self.err_msg_queue.put(err_msg)
-            self.bucket = storage.Client().get_bucket(bucket_id)
-            # For more security, in the future, may need to add
-            # a validation to check if glossary_id exists in a supported list
-            # in another blob.
-            self.glossary_id = glossary_id
-            self.path = f"TM/{self.glossary_id}/TM_{self.glossary_id}" \
-                f"{self.ext}"
-            self.basename = os.path.basename(self.path)
-            ### INIT SELF.BLOB
-            # The exceptions already include empty blob handling
-            try:
-                self.blob = self.bucket.get_blob(self.path)
-            except Exception as e:
-                err_msg = 'Error while intitializing blob in ' \
-                        f'Cloud TM file: {e}'
-                print(err_msg)
-                self.err_msg_queue.put(err_msg)
-            ### INIT SELF.INFO_BLOB
-            self.info_ext = '.json'
-            self.info_path = f"TM/{self.glossary_id}/TM_{self.glossary_id}" \
-                f"_info{self.info_ext}"
-            self.info_blob = self.bucket.get_blob(self.info_path)
-            
-            self.upload_time = None
-            ### INIT LOCAL PATH: SELF.LOCAL_PATH
-            if sys.platform.startswith('win'):
-                local_dir = self.correct_path_os(
-                    f"{os.environ['APPDATA']}\\AIO Translator\\TM")
-                if not os.path.exists(local_dir):
-                    os.mkdir(local_dir)
-                self.local_path = self.correct_path_os(
-                    f'{local_dir}\\TM_{glossary_id}{self.ext}')
             else:
-                self.local_path = os.getcwd()
-            ### INIT SELF.DATA, SELF.LENGTH
-            # Use self._data instead of self.data so that last_modified
-            # attribute won't be changed when loading the TM
-            # on program start because of the parent class.
-            # Check if local path is a TM file, it means that there's
-            # already a local TM file to load the data from. If there's
-            # no TM file, download file from the blob and load data from it.
-            try:
-                if os.path.exists(self.local_path) and \
-                        os.path.isfile(self.local_path):
-                    self._data = pd.read_csv(self.local_path)
-                    print('Successfully loaded data from local TM for cloud.')
+                if glossary_id != '':
+                    self.bucket = storage.Client().get_bucket(bucket_id)
+                    # For more security, in the future, may need to add
+                    # a validation to check if glossary_id exists in a
+                    # supported list in another blob.
+                    self.glossary_id = glossary_id
+                    self.path = f"TM/{self.glossary_id}/TM_{self.glossary_id}" \
+                        f"{self.ext}"
+                    self.basename = os.path.basename(self.path)
+                    ### INIT SELF.BLOB
+                    # The exceptions already include empty blob handling
+                    try:
+                        self.blob = self.bucket.get_blob(self.path)
+                    except Exception as e:
+                        err_msg = 'Error while intitializing blob in ' \
+                                f'Cloud TM file: {e}'
+                        print(err_msg)
+                        self.err_msg_queue.put(err_msg)
+                    ### INIT SELF.INFO_BLOB
+                    self.info_ext = '.json'
+                    self.info_path = f"TM/{self.glossary_id}/" \
+                        f"TM_{self.glossary_id}_info{self.info_ext}"
+                    self.info_blob = self.bucket.get_blob(self.info_path)
+                    
+                    self.upload_time = None
+                    ### INIT LOCAL PATH: SELF.LOCAL_PATH
+                    if sys.platform.startswith('win'):
+                        local_dir = self.correct_path_os(
+                            f"{os.environ['APPDATA']}\\AIO Translator\\TM")
+                        if not os.path.exists(local_dir):
+                            os.mkdir(local_dir)
+                        self.local_path = self.correct_path_os(
+                            f'{local_dir}\\TM_{glossary_id}{self.ext}')
+                    else:
+                        self.local_path = os.getcwd()
+                    ### INIT SELF.DATA, SELF.LENGTH
+                    # Use self._data instead of self.data so that
+                    # last_modified attribute won't be changed when
+                    # loading the TM on program start because of the
+                    # parent class.
+                    # Check if local path is a TM file, it means that
+                    # there's # already a local TM file to load the data
+                    # from.
+                    # If there's no TM file, download file from the blob
+                    # and load data from it.
+                    try:
+                        if os.path.exists(self.local_path) and \
+                                os.path.isfile(self.local_path):
+                            self._data = pd.read_csv(self.local_path)
+                            print('Successfully loaded data from local TM for '
+                                'cloud.')
+                        else:
+                            self.download_from_blob(self.local_path)
+                            self._data = pd.read_csv(self.local_path)
+                            print('Successfully loaded data from local TM for '
+                                'cloud.')
+                    except Exception as e:
+                        err_msg = 'Error while loading TM data in cloud ' \
+                            f'TM class on init: {e}'
+                        print(err_msg)
+                        self.err_msg_queue.put(err_msg)
                 else:
-                    self.download_from_blob(self.local_path)
-                    self._data = pd.read_csv(self.local_path)
-                    print('Successfully loaded data from local TM for cloud.')
-            except Exception as e:
-                err_msg = 'Error while loading TM data in cloud ' \
-                    f'TM class on init: {e}'
-                print(err_msg)
-                self.err_msg_queue.put(err_msg)
+                    err_msg = 'Project ID is not found while init TM.'
+                    print(err_msg)
+                    self.err_msg_queue.put(err_msg)
         except Exception as e:
-            err_msg = 'Error while initializing Cloud TM file: {e}'
+            err_msg = f'Error while initializing Cloud TM file: {e}'
             print(err_msg)
             self.err_msg_queue.put(err_msg)
 
