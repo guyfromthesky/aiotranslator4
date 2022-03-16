@@ -1079,7 +1079,7 @@ class DocumentTranslator(Frame):
 			NewTM = self.CorrectPath(filename)
 			self.TMPath.set(NewTM)
 			self.AppConfig.save_config(
-				self.AppConfig.translator_config_path,
+				self.AppConfig.Translator_Config_Path,
 				'Translator', 'translation_memory', NewTM, True)
 			self.renew_my_translator()
 			self.Notice.set(self.LanguagePack.ToolTips['TMUpdated'])
@@ -1148,7 +1148,7 @@ class DocumentTranslator(Frame):
 					protocol=pickle.HIGHEST_PROTOCOL)
 			self.TMPath.set(NewTM)
 			self.AppConfig.save_config(
-				self.AppConfig.translator_config_path,
+				self.AppConfig.Translator_Config_Path,
 				'Translator', 'translation_memory',
 				NewTM, True)
 			self.renew_my_translator()
@@ -1158,7 +1158,7 @@ class DocumentTranslator(Frame):
 		glossary_id = glossary_id.replace('\n', '')
 
 		self.AppConfig.save_config(
-				self.AppConfig.translator_config_path,
+				self.AppConfig.Translator_Config_Path,
 				'Translator', 'glossary_id',
 				glossary_id)
 		self.MyTranslator.glossary_id = glossary_id
@@ -1659,11 +1659,11 @@ class DocumentTranslator(Frame):
 			#print('Get Translator',time.time()- st)
 		except queue.Empty:
 			self.after(DELAY, self.GetMyTranslator)
-
+		
 		#print("self.MyTranslator: ", self.MyTranslator)	
 		if self.MyTranslator != None:	
 			#print("My translator is created")
-	
+			print('getmytranslator')
 			self.enable_button()
 
 			self._dictionary_status.set(str(self.MyTranslator.glossary_size))

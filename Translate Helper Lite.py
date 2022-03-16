@@ -468,7 +468,7 @@ class MyTranslatorHelper(Frame):
 		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectDB'],filetypes = (("JSON files","*.json" ), ), )	
 		if filename != "":
 			LicensePath = self.CorrectPath(filename)
-			self.AppConfig.save_config(self.AppConfig.translator_config_path, 'Translator', 'license_file', LicensePath, True)
+			self.AppConfig.save_config(self.AppConfig.Translator_Config_Path, 'Translator', 'license_file', LicensePath, True)
 
 			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LicensePath
 			self.LicensePath.set(LicensePath)
@@ -576,7 +576,7 @@ class MyTranslatorHelper(Frame):
 		filename = filedialog.askopenfilename(title = "Select Database file",filetypes = (("Dictionary files","*.xlsx *.xlsm"), ), )	
 		if filename != "":
 			NewDictionary = self.CorrectPath(filename)	
-			self.AppConfig.save_config(self.AppConfig.translator_config_path, 'database', 'path', NewDictionary, True)
+			self.AppConfig.save_config(self.AppConfig.Translator_Config_Path, 'database', 'path', NewDictionary, True)
 			self.Notice.set(self.LanguagePack.ToolTips['DocumentLoaded'])
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
@@ -600,7 +600,7 @@ class MyTranslatorHelper(Frame):
 		filename = filedialog.askopenfilename(title = "Select Translation Memory file", filetypes = (("TM files","*.pkl"), ),)
 		if filename != "":
 			NewTM = self.CorrectPath(filename)
-			self.AppConfig.save_config(self.AppConfig.translator_config_path, 'translation_memory', 'path', NewTM, True)
+			self.AppConfig.save_config(self.AppConfig.Translator_Config_Path, 'translation_memory', 'path', NewTM, True)
 			self.Notice.set(self.LanguagePack.ToolTips['TMUpdated'])
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
@@ -619,7 +619,7 @@ class MyTranslatorHelper(Frame):
 			with open(NewTM, 'wb') as pickle_file:
 				pickle.dump([], pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 				
-			self.AppConfig.save_config(self.AppConfig.translator_config_path, 'translation_memory', 'path', NewTM, True)
+			self.AppConfig.save_config(self.AppConfig.Translator_Config_Path, 'translation_memory', 'path', NewTM, True)
 
 	def CorrectPath(self, path):
 		if sys.platform.startswith('win'):
@@ -1478,7 +1478,7 @@ class MyTranslatorHelper(Frame):
 		self.glossary_id = self.bottom_panel.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
 		print('Save current project key: ', self.glossary_id)
-		self.AppConfig.save_config(self.AppConfig.translator_config_path, 'Translator', 'glossary_id', self.glossary_id)
+		self.AppConfig.save_config(self.AppConfig.Translator_Config_Path, 'Translator', 'glossary_id', self.glossary_id)
 		self.MyTranslator.glossary_id = self.glossary_id
 		self.RenewMyTranslator()
 

@@ -215,7 +215,7 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
                 tm_file_root, self.ext = os.path.splitext(path)
                 tm_filename = os.path.basename(tm_file_root)
                 self.info_path = self.correct_path_os(
-                    f'{tm_file_root}_info.{self.info_ext}')
+                    f'{tm_file_root}_info{self.info_ext}')
                 # Load the TM info file to get last_modified value in a
                 # json format.
                 try:
@@ -313,7 +313,7 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
                 if tm_file_ext == '.csv':
                     self.ext = '.csv'
                     self._path = self.correct_path_os(tm_path)
-                    self.info_path = f'{tm_file_root}_info.{self.info_ext}'
+                    self.info_path = f'{tm_file_root}_info{self.info_ext}'
                 else:
                     err_msg = 'Incorrect file extension: ' \
                         f'{tm_file_ext}. Must be .csv extension.'

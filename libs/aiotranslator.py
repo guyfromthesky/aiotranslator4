@@ -130,7 +130,7 @@ class Translator:
 		#self.init_db_data()
 		
 		### INIT APP CONFIG: SELF.APPCONFIG
-		self.app_config = ConfigLoader()
+		self.app_config = ConfigLoader(Document=True)
 		saved_tm_path = self.app_config.Config['Translator'][
 			'translation_memory']
 		_, tm_path_ext = os.path.splitext(tm_path)
@@ -1862,15 +1862,14 @@ class Translator:
 		# No longer support 'default' project
 		print('Append TM to:', self.glossary_id)
 		#self.init_translation_memory()
-		while True: # WHY?
-			self.current_tm = self.current_tm.reindex()
-			self.tm_file.data = self.current_tm
-			
-			try:
-				self.tm_file.write_file()
-				self.init_temporary_tm()
-			except Exception as e:
-				print("Error while exporting current translation memory:", e)
+		self.current_tm = self.current_tm.reindex()
+		self.tm_file.data = self.current_tm
+		
+		try:
+			self.tm_file.write_file()
+			self.init_temporary_tm()
+		except Exception as e:
+			print("Error while exporting current translation memory:", e)
 
 		## BEFORE UPGRADE
 		# print('Export current TM into file.')
