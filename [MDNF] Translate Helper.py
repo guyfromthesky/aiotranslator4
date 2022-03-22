@@ -34,7 +34,7 @@ from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, BOTTOM
 from tkinter import DISABLED, NORMAL
 
 from tkhtmlview import HTMLLabel, HTMLScrolledText
-
+import textwrap
 #from tkinter import filedialog
 #from tkinter import messagebox
 #from tkinter import ttk
@@ -66,7 +66,7 @@ from google.cloud import logging
 
 tool_display_name = "[MDNF] Translate Helper"
 tool_name = 'writer'
-REV = 4115
+REV = 4116
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num + " * | " + "Translator lib " + TranslatorVersion
 
@@ -389,12 +389,14 @@ class MyTranslatorHelper(Frame):
 		#self.db_correction.grid(row=Row, column=8, padx=5, pady=5, stick=W+E)
 		#self.grammar_check = Button(Tab, text="Grammar Check", width=10, command= self.analyze_grammar)
 		#self.grammar_check.grid(row=Row, column=7, padx=5, pady=5, stick=W+E)	
+		self.ReviewReportBtn = Button(Tab, text="Review Report", width=10, command= self.review_report, state=DISABLED)
+		self.ReviewReportBtn.grid(row=Row, column=8, padx=5, pady=5, stick=W+E)	
 
-		self.db_highlight = Button(Tab, text="Review Report", width=10, command= self.review_report, state=DISABLED)
+		if self.language_tool_enable == True:
+			self.CorrectGrammarBtn = Button(Tab, text="Correct Grammar", width=10, command= self.analyze_grammar, state=DISABLED)
+			self.CorrectGrammarBtn.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)	
 
-		self.db_highlight.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)	
-
-		self.GetReportBtn = Button(Tab, text=self.LanguagePack.Button['GetReport'], width=10, command= self.analyze_grammar, state=DISABLED)
+		self.GetReportBtn = Button(Tab, text=self.LanguagePack.Button['GetReport'], width=10, command= self.generate_report, state=DISABLED)
 		self.GetReportBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 		
 
@@ -666,7 +668,7 @@ class MyTranslatorHelper(Frame):
 	def _create_grammar_confirmation_window(self, dif_dict, diff_index, _class):
 		self.Child_Window = Toplevel(self.master)
 		self.Child_Window.resizable(False, False)
-		self.Child_Window.title("Confirm the fix")
+		self.Child_Window.title("Confirm the correction")
 		_class(self, dif_dict, diff_index)
 	
 	#I dont know why I put it here
@@ -1141,6 +1143,7 @@ class MyTranslatorHelper(Frame):
 	def disable_btn(self):
 		self.GetTitleBtn.configure(state=DISABLED)
 		self.GetReportBtn.configure(state=DISABLED)
+		self.CorrectGrammarBtn.configure(state=DISABLED)
 		self.TranslateBtn.configure(state=DISABLED)
 		self.dual_translate_btn.configure(state=DISABLED)
 		#self.RenewTranslator.configure(state=DISABLED)
@@ -1160,13 +1163,14 @@ class MyTranslatorHelper(Frame):
 		#self.Translate_bilingual_Btn.configure(state=DISABLED)
 		self.TranslateBtn.configure(state=DISABLED)
 
-		self.db_highlight.configure(state=DISABLED)
+		self.ReviewReportBtn.configure(state=DISABLED)
 
 		#self.db_correction.configure(state=DISABLED)
 
 	def enable_btn(self):
 		self.GetTitleBtn.configure(state=NORMAL)
 		self.GetReportBtn.configure(state=NORMAL)
+		self.CorrectGrammarBtn.configure(state=NORMAL)
 		self.TranslateBtn.configure(state=NORMAL)
 		self.dual_translate_btn.configure(state=NORMAL)
 		#self.RenewTranslator.configure(state=NORMAL)
@@ -1186,7 +1190,6 @@ class MyTranslatorHelper(Frame):
 		#self.Translate_bilingual_Btn.configure(state=NORMAL)
 		self.TranslateBtn.configure(state=NORMAL)
 
-		self.db_highlight.configure(state=NORMAL)
 		#self.db_correction.configure(state=NORMAL)
 		
 
@@ -1257,7 +1260,7 @@ class MyTranslatorHelper(Frame):
 		child_windows.title("Report reviewer")
 		self.report_review = HTMLScrolledText(child_windows)
 		self.report_review.set_html(self.html_content)
-		self.report_review.pack(pady=15, padx=15, fill=BOTH)
+		self.report_review.pack(pady=5, padx=5, fill=BOTH)
 	
 	def analyze_fault_terminology(self):
 		for term in self.MyTranslator.dictionary:
@@ -1270,6 +1273,7 @@ class MyTranslatorHelper(Frame):
 				
 
 	def analyze_grammar(self):
+		self.disable_btn()
 		self.confirm_report_grammar()
 		
 
@@ -1390,37 +1394,35 @@ class MyTranslatorHelper(Frame):
 		To_Translate['EnvInfo'] = EnvInfo
 		To_Translate['Reproducibility'] = Reproducibility + '%'
 
-		
-		
 		To_Translate['TextShouldBe'] = self.TextShouldBe.get("1.0", END)
 		To_Translate['TextReproduceSteps'] = self.TextReproduceSteps.get("1.0", END)
 
 		To_Translate['TextTestReport'] = self.TextTestReport.get("1.0", END)
 		To_Translate['TextShouldBe'] = self.TextShouldBe.get("1.0", END)
 		To_Translate['TextReproduceSteps'] = self.TextReproduceSteps.get("1.0", END)
+
+		To_Translate['Title'] = self.TextTitle.get("1.0", END)
+		
+		
 		self.report_details = To_Translate
 
 	def update_report_elements(self):
-		
-	
-		#print('TextTestClient', TextTestClient)
-		To_Translate = {}
-
-		EnvInfo = self.EnvInfo.get("1.0", END)
-		
-		Reproducibility = self.Reproducibility.get("1.0", END).replace('\n', '')
-		To_Translate['EnvInfo'] = EnvInfo
-		To_Translate['Reproducibility'] = Reproducibility + '%'
-
-		
-		
-		To_Translate['TextShouldBe'] = self.TextShouldBe.get("1.0", END)
-		To_Translate['TextReproduceSteps'] = self.TextReproduceSteps.get("1.0", END)
-
-		To_Translate['TextTestReport'] = self.TextTestReport.get("1.0", END)
-		To_Translate['TextShouldBe'] = self.TextShouldBe.get("1.0", END)
-		To_Translate['TextReproduceSteps'] = self.TextReproduceSteps.get("1.0", END)
-		self.report_details = To_Translate	
+		for key in self.report_details:
+			report = self.report_details[key]
+			if key == 'TextShouldBe':
+				self.TextShouldBe.delete("1.0", END)
+				self.TextShouldBe.insert("end", report)
+			elif key == 'TextReproduceSteps':
+				self.TextReproduceSteps.delete("1.0", END)
+				self.TextReproduceSteps.insert("end", report)	
+			elif key == 'TextTestReport':
+				self.TextTestReport.delete("1.0", END)
+				self.TextTestReport.insert("end", report)
+			elif key == 'Title':
+				self.TextTitle.delete("1.0", END)
+				self.TextTitle.insert("end", report)
+			else:
+				pass
 
 	def prepare_translator_language(self):
 		return
@@ -1457,7 +1459,9 @@ class MyTranslatorHelper(Frame):
 
 			self.BugWriter.join()
 			self.html_content = paste()
+			self.html_content = '#my{zoom: 75%;}\n' + self.html_content
 			self.enable_btn()
+			self.ReviewReportBtn.configure(state=NORMAL)
 
 	def generate_report(self):
 		self.collect_report_elements()
@@ -1471,7 +1475,7 @@ class MyTranslatorHelper(Frame):
 		
 		source_language_index = self.language_list.index(self.source_language.get())
 		source_language = self.language_id_list[source_language_index]
-		print('report_details', self.report_details)
+		
 		
 		#self.grammar_check_list = {}
 		self.grammar_index_list = {}
@@ -1487,22 +1491,15 @@ class MyTranslatorHelper(Frame):
 							self.for_grammar_check.append(sentence.rstrip())
 							self.grammar_index_list[dict_key].append(index)
 							index+=1
-				
 			else:
 				del self.grammar_index_list[dict_key]
-		print('List sentence: ', self.grammar_index_list)
-		print('List sentence: ', self.for_grammar_check)
 
 		self.grammar_check_result[:]= []
 		self.Grammar_Check = Process(target= correct_sentence, args=(self.grammar_check_result, self.for_grammar_check, source_language,))
 		self.Grammar_Check.start()
 		self.after(DELAY, self.get_grammar_confirmation)
 
-		
-
-	def get_grammar_confirmation(self):
-
-		
+	def get_grammar_confirmation(self):	
 		if (self.Grammar_Check.is_alive()):
 			self.after(DELAY, self.get_grammar_confirmation)
 		else:
@@ -1513,10 +1510,12 @@ class MyTranslatorHelper(Frame):
 				if self.grammar_corrected_list[i] != self.for_grammar_check[i]:
 					self.confirmed_list.append({'old': self.for_grammar_check[i], 'new': self.grammar_corrected_list[i]})
 					self.confirmed_index_list.append(i)
-			if len(self.grammar_corrected_list) > 0:
+
+			if len(self.confirmed_list) > 0:
 				self._create_grammar_confirmation_window(self.confirmed_list, self.confirmed_index_list, ConfirmationPopup)
 			else:
-				self.Notice.set('Grammar check is Passed.')
+				messagebox.showinfo('Grammar check is done', 'The report is OK')
+				self.enable_btn()
 	
 			self.Grammar_Check.join()
 
@@ -1684,24 +1683,37 @@ class ConfirmationPopup:
 			sentence = diff_object['old'].replace('\r', '')
 			corrected_sentence = diff_object['new'].replace('\r', '')
 			widget['var'] = IntVar()
-		
-			Radiobutton(self.master, width= 40, text=  sentence, value=1, variable= widget['var']).grid(row=row, column=1, padx=5, pady=5, sticky=W)
-			Radiobutton(self.master, width= 40, text=  corrected_sentence, value=2, variable= widget['var']).grid(row=row, column=2, padx=5, pady=5, sticky=W)
+			_wraped_sentence = textwrap.fill(sentence, 40)
+			_wraped_corrected_sentence = textwrap.fill(corrected_sentence, 40)
+			row_count = len(_wraped_corrected_sentence) + 1
+			a = Radiobutton(self.master, width= 40, text=  _wraped_sentence, value=1, variable= widget['var'])
+			a.grid(row=row, column=1, columnspan=3, rowspan= row_count, padx=5, pady=5, sticky=W)
+			#a.configure(wraplength=30 + 10)  
+			
+			b = Radiobutton(self.master, width= 40, text=  _wraped_corrected_sentence, value=2, variable= widget['var'])
+			b.grid(row=row, column=4, columnspan=3, rowspan= row_count, padx=5, pady=5, sticky=W)
+			#b.configure(wraplength=30 + 10)  
 		
 			widget['var'].set(2)
 			self.All_Widget.append(widget)
-			row += 1
-		Button(self.master, width = 20, text= 'Accept All', command = self.Accept_All).grid(row=row, column=1, columnspan=1, padx=5, pady=5)
-		Button(self.master, width = 20, text= 'Confirm', command = self.Confirm).grid(row=row, column=2, columnspan=1, padx=5, pady=5)
+			row += row_count
+		Button(self.master, width = 20, text= 'Accept All', command = self.Accept_All).grid(row=row, column=1, columnspan=2, padx=5, pady=5)
+		Button(self.master, width = 20, text= 'Decline All', command = self.Decline_All).grid(row=row, column=3, columnspan=2, padx=5, pady=5)
+		Button(self.master, width = 20, text= 'Confirm', command = self.Confirm_Correction).grid(row=row, column=5, columnspan=2, padx=5, pady=5)
 
-		self.master.protocol("WM_DELETE_WINDOW", self.Confirm)	
+		self.master.protocol("WM_DELETE_WINDOW", self.Confirm_Correction)	
 
 	def Accept_All(self):
 		for widget in self.All_Widget:
 			widget['var'].set(2)
-		return
+		self.Confirm_Correction()
 
-	def Confirm(self):
+	def Decline_All(self):
+		for widget in self.All_Widget:
+			widget['var'].set(1)
+		self.Confirm_Correction()	
+
+	def Confirm_Correction(self):
 		i = 0
 		for widget in self.All_Widget:
 			result = widget['var'].get()
@@ -1711,20 +1723,16 @@ class ConfirmationPopup:
 				self.Root.for_grammar_check[_index_in_check_list] = to_update
 			i+=1
 
-		for dict_key in self.Root.report_details:	
-			print('updating', dict_key)
-			self.Root.grammar_index_list[dict_key] = []
-			if dict_key not in ['EnvInfo', 'Reproducibility']:
-				
-				all_index = self.Root.grammar_index_list[dict_key]
-				temp_list = []
-				for index in all_index:
-					temp_list.append(self.Root.grammar_index_list[index])
-				print('temp',('\r\n').join(temp_list))	
-				self.Root.report_details[dict_key] = ('\r\n').join(temp_list)
+		for dict_key in self.Root.grammar_index_list:	
+			all_index = self.Root.grammar_index_list[dict_key]
+			temp_list = []
+			for index in all_index:
+				temp_list.append(self.Root.for_grammar_check[index])
+			self.Root.report_details[dict_key] = ('\n').join(temp_list)
 		self.master.destroy()
-		print(self.Root.report_details)
-		self.Root.GenerateReportCSS()
+		self.Root.update_report_elements()
+		self.Root.enable_btn()
+		#self.Root.GenerateReportCSS()
 
 class BottomPanel(Frame):
 	def __init__(self, master):
@@ -1798,12 +1806,12 @@ def dual_translate(queue, MyTranslator, second_target_language, text):
 def correct_sentence(result_manager, sentence_list, language):
 	language_tool = None
 	language_tool = LanguageTool(language)
-	print('sentence_list', sentence_list)
+	#print('sentence_list', sentence_list)
 	for sentence in sentence_list:
 		corrected_sentence = language_tool.correct(sentence)
-		print('corrected_sentence', corrected_sentence)	
+		#print('corrected_sentence', corrected_sentence)	
 		result_manager.append(corrected_sentence)
-	
+	language_tool.close()
 	return
 #Bug Writer 
 def Translate_Simple(Object, simple_template, my_translator, secondary_target_language = None):
@@ -1893,7 +1901,7 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 
 	strReport_from_language = Create_Row_CSS_Section("Detail Description", Old_TextTestReport)	
 	strReprodSteps_from_language = Create_Step_CSS_Section("Reproduce Steps", Old_TextReproduceSteps)	
-	strShouldBe_from_language = Create_Row_CSS_Section("기Expected Result", Old_TextShouldBe)	
+	strShouldBe_from_language = Create_Row_CSS_Section("Expected Result", Old_TextShouldBe)	
 	
 	CssText = ''
 	CssText += strReport_to_language
@@ -2057,6 +2065,19 @@ def MainLoop():
 	grammar_check_result = MyManager.list()
 	tm_manager = MyManager.list()
 	language_tool_enable = True
+	try:
+		download_path = os.environ.get('LTP_PATH',os.path.join(os.path.expanduser("~"), ".cache", "language_tool_python"))
+		print('Language tool path:', download_path)
+		if os.path.isdir(download_path):
+			LangTool = LanguageTool('en')
+			LangTool.close()
+		else:
+			language_tool_enable = False
+	except Exception as e:
+		print("Error", e)
+		language_tool_enable = False
+
+
 	print('Create UI')
 	root = Tk()
 	#root.withdraw()
