@@ -127,6 +127,8 @@ class Translator:
 		self.glossary_language = ['ko', 'en']
 		# Obsoleted
 		#self.init_db_data()
+		self.app_config = ConfigLoader(Document=True)
+		self.init_tm_file(tm_path, is_cloud_tm_used)
 		
 		self.temporary_tm = temporary_tm
 
@@ -149,7 +151,7 @@ class Translator:
 		self.version = '-'
 		# Update day of the DB
 		self.update_day = '-'
-
+		
 		#self.load_config_from_bucket()
 		#self.prepare_glossary_info()
 		try:
@@ -174,24 +176,6 @@ class Translator:
 				str(datetime.now() - current_time))
 		except Exception as e:
 			print("Error when loading bucket:", e)
-
-		### INIT APP CONFIG: SELF.APPCONFIG
-		self.app_config = ConfigLoader(Document=True)
-		### INIT TM FILE OBJECTS: SELF.TM_FILE, SELF.GCS_TM_FILE
-		if is_cloud_tm_used == True and used_tool != 'writer':
-			print('Cloud TM is used.')
-			# Use a default path when using Cloud TM to get data from
-			# cloud storage more conveniently.
-			# Default dir: %appdata%/AIO Translator/TM
-			self.gcs_tm_file = CloudTranslationMemoryFile(
-				self.app_config.Config['Translator']['license_file'],
-				bucket_id=bucket_id,
-				glossary_id=glossary_id)
-			self.tm_file = LocalTranslationMemoryFile(
-				self.gcs_tm_file.local_path)
-		elif is_cloud_tm_used == False and used_tool != 'writer':
-			print('Cloud TM is not used.')
-			self.tm_file = LocalTranslationMemoryFile(tm_path)
 
 
 		# Send tracking record from previous run to logging server.
@@ -256,6 +240,24 @@ class Translator:
 		self.tracking_log = self.correct_path_os(self.tracking_log)
 		self.invalid_request_log = self.correct_path_os(self.invalid_request_log)
 		self.tm_request_log = self.correct_path_os(self.tm_request_log)
+
+	def init_tm_file(self, tm_path, is_cloud_tm_used):
+		"""Initialize TM file object."""
+		### INIT TM FILE OBJECTS: SELF.TM_FILE, SELF.GCS_TM_FILE
+		if is_cloud_tm_used == True and self.used_tool != 'writer':
+			print('Cloud TM is used.')
+			# Use a default path when using Cloud TM to get data from
+			# cloud storage more conveniently.
+			# Default dir: %appdata%/AIO Translator/TM
+			self.gcs_tm_file = CloudTranslationMemoryFile(
+				self.app_config.Config['Translator']['license_file'],
+				bucket_id=self.bucket_id,
+				glossary_id=self.glossary_id)
+			self.tm_file = LocalTranslationMemoryFile(
+				self.gcs_tm_file.local_path)
+		elif is_cloud_tm_used == False and self.used_tool != 'writer':
+			print('Cloud TM is not used.')
+			self.tm_file = LocalTranslationMemoryFile(tm_path)
 
 	def correct_path_os(self, path):
 		"""Replace backward slash with forward slash if OS is not Windows."""

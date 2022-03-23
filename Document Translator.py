@@ -140,7 +140,7 @@ class DocumentTranslator(Frame):
 		
 
 		self.after(DELAY, self.debug_listening)
-		self.after(DELAY, self.error_listening)
+		# self.after(DELAY, self.error_listening)
 
 	def create_buttom_panel(self):
 		self.bottom_panel = BottomPanel(self)
@@ -691,6 +691,7 @@ class DocumentTranslator(Frame):
 				break
 		self.after(DELAY, self.debug_listening)
 
+	## CURRENTLY NOT USED AS THE FUNCTION DOESN'T WORK
 	def error_listening(self):
 		"""Output error messages to the screen coming from functions in
 		aiotranslator."""
@@ -1560,6 +1561,8 @@ class DocumentTranslator(Frame):
 
 	def engine_condition_satisfied(self) -> bool:
 		"""Check the conditions to run aiotranslator.
+
+		Validate the license path and TM path.
 		
 		Returns:
 			True or False.
@@ -1569,8 +1572,8 @@ class DocumentTranslator(Frame):
 		# License check: Not run aiotranslator.py if incorrect license
 		if self.LicensePath.get() != "" and \
 				os.path.isfile(self.LicensePath.get()):
-			# TM file check: Not run aiotranslator.py if incorrect
-			# TM file.
+			# TM file check: Not run aiotranslator.py if TM file is
+			# invalid.
 			if self.TMPath.get() != "" and \
 					os.path.isfile(self.TMPath.get()):
 				if self.TMPath.get().endswith('.csv'):
@@ -1617,7 +1620,7 @@ class DocumentTranslator(Frame):
 		
 		if is_cloud_tm_used or self.engine_condition_satisfied():
 			self.Notice.set(self.LanguagePack.ToolTips['AppInit'])
-
+			
 			target_language = self.language_id_list[
 				self.language_list.index(self.target_language.get())]
 			source_language = self.language_id_list[
@@ -1666,7 +1669,7 @@ class DocumentTranslator(Frame):
 			#print("My translator is created")
 			print('getmytranslator')
 			self.enable_button()
-
+			
 			self._dictionary_status.set(str(self.MyTranslator.glossary_size))
 			self.TMStatus.set(str(self.MyTranslator.translation_memory_size))
 

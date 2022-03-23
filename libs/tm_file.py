@@ -376,9 +376,11 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             used to load data when there's no new update about the TM on
             cloud storage. Path is validated depending on the OS.
         ext -- str
-            TM file extension. Only support .csv. (default '.csv')
+            TM file extension. Only support .csv.
+            (default '.csv')
         info_ext -- str
-            TM info file extension. Support .json (default '.json')
+            TM info file extension. Support .json
+            (default '.json')
         blob -- gcs blob
             A dict/object containing the data of TM file on a specific
             cloud storage.
@@ -408,7 +410,7 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
     def __init__(self,
             license_path: str, *,
             bucket_id: str,
-            glossary_id: str):
+            glossary_id: str = 'Default'):
         """
         A local path to local TM file will be created if it doesn't
         exist.
@@ -421,7 +423,8 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
                 Name of the bucket in the cloud storage.
             glossary_id --
                 Name of the project.
-        
+                (default 'Default')
+
         Raises:
             Exception --
                 Error while setting up license in Cloud TM file.
@@ -495,13 +498,9 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
                         if os.path.exists(self.local_path) and \
                                 os.path.isfile(self.local_path):
                             self._data = pd.read_csv(self.local_path)
-                            print('Successfully loaded data from local TM for '
-                                'cloud.')
                         else:
                             self.download_from_blob(self.local_path)
                             self._data = pd.read_csv(self.local_path)
-                            print('Successfully loaded data from local TM for '
-                                'cloud.')
                     except Exception as e:
                         err_msg = 'Error while loading TM data in cloud ' \
                             f'TM class on init: {e}'
