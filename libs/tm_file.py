@@ -71,7 +71,7 @@ class TranslationMemoryFile:
         self.length = 0
         self.last_modified = None
 
-        self.err_msg_queue = Queue()
+        # self.err_msg_queue = Queue()
 
     @property
     def data(self):
@@ -107,7 +107,7 @@ class TranslationMemoryFile:
             err_msg = 'Invalid data type. Data type is not an ' \
                 f'instance of DataFrame: {type(data)}'
             print(err_msg)
-            self.err_msg_queue.put(err_msg)
+            # self.err_msg_queue.put(err_msg)
 
 
     def append_datetime(self, path: str) -> str:
@@ -238,12 +238,12 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
                     err_msg = 'Error while loading TM info file on ' \
                         f'init: {e}'
                     print(err_msg)
-                    self.err_msg_queue.put(err_msg)
+                    # self.err_msg_queue.put(err_msg)
             except Exception as e:
                 err_msg = 'Error while initializing path: Not a file ' \
                     f'path or csv extension: {path}'
                 print(err_msg)
-                self.err_msg_queue.put(err_msg)
+                # self.err_msg_queue.put(err_msg)
             
             ### INIT SELF.BACKUP_PATH
             if sys.platform.startswith('win'):
@@ -266,11 +266,11 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
                     f'Invalid TM data type: {type(data)}. ' \
                     'Must be pandas DataFrame.'
                 print(err_msg)
-                self.err_msg_queue.put(err_msg)
+                # self.err_msg_queue.put(err_msg)
         except Exception as e:
             err_msg = f'Error while initializing TM file: {e}'
             print(err_msg)
-            self.err_msg_queue.put(err_msg)
+            # self.err_msg_queue.put(err_msg)
 
     def __repr__(self):
         return f'Local TM file: {self.path}'
@@ -318,16 +318,16 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
                     err_msg = 'Incorrect file extension: ' \
                         f'{tm_file_ext}. Must be .csv extension.'
                     print(err_msg)
-                    self.err_msg_queue.put(err_msg)
+                    # self.err_msg_queue.put(err_msg)
             else:
                 err_msg = 'Cannot set TM file path because path is not a' \
                     f'file: {tm_path}'
                 print(err_msg)
-                self.err_msg_queue.put(err_msg)
+                # self.err_msg_queue.put(err_msg)
         except Exception as e:
             err_msg = f'Error while setting TM path: {e}'
             print(err_msg)
-            self.err_msg_queue.put(err_msg)
+            # self.err_msg_queue.put(err_msg)
 
     @func_timer
     def write_file(self):
@@ -347,7 +347,7 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
         except Exception as e:
             err_msg = f'Error while writing TM files: {e}'
             print(err_msg)
-            self.err_msg_queue.put(err_msg)
+            # self.err_msg_queue.put(err_msg)
 
 
 ###############################################################################
@@ -410,7 +410,7 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
     def __init__(self,
             license_path: str, *,
             bucket_id: str,
-            glossary_id: str = 'Default'):
+            glossary_id: str='Default'):
         """
         A local path to local TM file will be created if it doesn't
         exist.
@@ -447,7 +447,7 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
                 err_msg = 'Error while setting up license in ' \
                         f'Cloud TM file: {e}'
                 print(err_msg)
-                self.err_msg_queue.put(err_msg)
+                # self.err_msg_queue.put(err_msg)
             else:
                 if glossary_id != '':
                     self.bucket = storage.Client().get_bucket(bucket_id)
@@ -466,7 +466,7 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
                         err_msg = 'Error while intitializing blob in ' \
                                 f'Cloud TM file: {e}'
                         print(err_msg)
-                        self.err_msg_queue.put(err_msg)
+                        # self.err_msg_queue.put(err_msg)
                     ### INIT SELF.INFO_BLOB
                     self.info_ext = '.json'
                     self.info_path = f"TM/{self.glossary_id}/" \
@@ -513,7 +513,7 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
         except Exception as e:
             err_msg = f'Error while initializing Cloud TM file: {e}'
             print(err_msg)
-            self.err_msg_queue.put(err_msg)
+            # self.err_msg_queue.put(err_msg)
 
     def __repr__(self):
         return f'Cloud TM file: {self.path}'
@@ -533,7 +533,7 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
         except Exception as e:
             err_msg = f'Error while downloading TM file on cloud storage: {e}'
             print(err_msg)
-            self.err_msg_queue.put(err_msg)
+            # self.err_msg_queue.put(err_msg)
 
     @func_timer
     def download_data_from_blob(self):
@@ -566,7 +566,7 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             err_msg = 'Error while getting data from Cloud TM blob: ' \
                 f'{e}'
             print(err_msg)
-            self.err_msg_queue.put(err_msg)
+            # self.err_msg_queue.put(err_msg)
 
     @func_timer
     def upload_to_blob(self, local_path: str):
@@ -604,7 +604,7 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             err_msg = 'Error while uploading TM file and info ' \
                 f'file to the cloud storage: {e}'
             print(err_msg)
-            self.err_msg_queue.put(err_msg)
+            # self.err_msg_queue.put(err_msg)
 
 
 
