@@ -51,6 +51,7 @@ class LanguagePackEN:
 	Button['Save'] = "Save"
 	Button['Update'] = "Update"
 	Button['RelativeSearch'] = "Relative Search"
+	Button['ReviewReport'] = "Review Report"	
 
 	Option = {}
 	Option['TranslateFileName'] = "Translate file name"
@@ -310,7 +311,8 @@ class LanguagePackKR:
 	Button['Delete'] = "지우다"
 	Button['Save'] = "저장"
 	Button['Update'] = "최신 정보"
-	Button['RelativeSearch'] = "상대 검색"	
+	Button['RelativeSearch'] = "상대 검색"
+	Button['ReviewReport'] = "보고서 검토"	
 
 	Option = {}
 	Option['TranslateFileName'] = "파일 이름 변환"

@@ -1,10 +1,10 @@
-from tkinter.ttk import Combobox, Style, Entry, Button
+from tkinter.ttk import Combobox, Style, Entry, Button, Radiobutton
 from tkinter import Frame, Listbox, Label, Toplevel
 from tkinter import HORIZONTAL, X
 from tkinter import W, E, S, N, END, BOTTOM
 from tkinter import INSERT, ACTIVE, NORMAL, DISABLED
 from tkinter import Text, IntVar, StringVar
-
+import textwrap
 import re
 import os
 
@@ -191,38 +191,51 @@ class CustomText(Text):
 # sub_frame.pack(side=TOP, expand=Y, fill=BOTH)
 
 class BottomPanel(Frame):
-	
 	def __init__(self, master):
 		Frame.__init__(self, master) 
 		self.pack(side=BOTTOM, fill=X)          # resize with parent
 		
 		# separator widget
 		#Separator(orient=HORIZONTAL).grid(in_=self, row=0, column=1, sticky=E+W, pady=5)
-		Row = 1
-		Label(text='Version', width=15).grid(in_=self, row=Row, column=1, padx=5, pady=5, sticky=W)
-		Label(textvariable=master.VersionStatus, width=15).grid(in_=self, row=Row, column=2, padx=0, pady=5, sticky=W)
-		master.VersionStatus.set('-')
-
-		Label(text='Update', width=15).grid(in_=self, row=Row, column=3, padx=5, pady=5)
-		Label(textvariable=master._update_day, width=15).grid(in_=self, row=Row, column=4, padx=0, pady=5)
-		master._update_day.set('-')
-	
-		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
-		DictionaryLabelA.grid(in_=self, row=Row, column=5, padx=5, pady=5)
+		#Row = 1
 		
-		Label(textvariable=master.DictionaryStatus, width=15).grid(in_=self, row=Row, column=6, padx=0, pady=5)
+		#Label(text='Version', width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5, sticky=W)
+		#Col += 1
+		#Label(textvariable=master.VersionStatus, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5, sticky=W)
+		#master.VersionStatus.set('-')
+		Col = 1
+		Row = 1
+		Label(text='Update', width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5)
+		Col += 1
+		Label(textvariable=master._update_day, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
+		master._update_day.set('-')
+		Col += 1
+		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
+		DictionaryLabelA.grid(in_=self, row=Row, column=Col, padx=5, pady=5)
+		Col += 1
+		Label(textvariable=master.DictionaryStatus, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
 		master.DictionaryStatus.set('0')
-
-		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self, row=Row, column=7, padx=5, pady=5)
-		Label(textvariable=master.HeaderStatus, width=15).grid(in_=self, row=Row, column=8, padx=0, pady=5)
+		Col += 1
+		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5)
+		Col += 1
+		Label(textvariable=master.HeaderStatus, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
 		master.HeaderStatus.set('0')
-
+		Col += 1
+		Label(text= master.LanguagePack.Label['ProjectKey'], width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5, sticky=W)
+		Col += 1
+		self.project_id_select = AutocompleteCombobox()
+		self.project_id_select.Set_Entry_Width(20)
+		self.project_id_select.set_completion_list([])
+		self.project_id_select.grid(in_=self, row=Row, column=Col, padx=5, pady=5, stick=W)
+		self.project_id_select.bind("<<ComboboxSelected>>", master._save_project_key)
+		Col += 1
 		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=15, command= master.RenewMyTranslator, state=DISABLED)
-		self.RenewTranslatorMain.grid(in_=self, row=Row, column=10, columnspan=9, padx=10, pady=5, stick=E)
+		self.RenewTranslatorMain.grid(in_=self, row=Row, column=Col, padx=10, pady=5, stick=E)
 		
 		
 		self.rowconfigure(0, weight=1)
 		self.columnconfigure(0, weight=1)
+
 
 class AutocompleteEntry(Entry):
 	def __init__(self, autocompleteList, *args, **kwargs):
@@ -387,4 +400,68 @@ def ADB_Controller(Tab):
 
 	for i in range (0,10):
 		Tab.columnconfigure(i,weight=1, uniform='third')
-	
+
+class ConfirmationPopup:
+	def __init__(self, master, dif_dict, index_list):
+		self.Root = master
+		self.master = master.Child_Window
+		#self.master.geometry("400x350+300+300")
+		self.index = index_list
+		row = 1
+		self.All_Widget = []
+		self.diff = dif_dict
+		for diff_object in dif_dict:
+			widget = {}
+			sentence = diff_object['old'].replace('\r', '')
+			corrected_sentence = diff_object['new'].replace('\r', '')
+			widget['var'] = IntVar()
+			_wraped_sentence = textwrap.fill(sentence, 40)
+			_wraped_corrected_sentence = textwrap.fill(corrected_sentence, 40)
+			row_count = len(_wraped_corrected_sentence) + 1
+			a = Radiobutton(self.master, width= 40, text=  _wraped_sentence, value=1, variable= widget['var'])
+			a.grid(row=row, column=1, columnspan=3, rowspan= row_count, padx=5, pady=5, sticky=W)
+			#a.configure(wraplength=30 + 10)  
+			
+			b = Radiobutton(self.master, width= 40, text=  _wraped_corrected_sentence, value=2, variable= widget['var'])
+			b.grid(row=row, column=4, columnspan=3, rowspan= row_count, padx=5, pady=5, sticky=W)
+			#b.configure(wraplength=30 + 10)  
+		
+			widget['var'].set(2)
+			self.All_Widget.append(widget)
+			row += row_count
+		Button(self.master, width = 20, text= 'Accept All', command = self.Accept_All).grid(row=row, column=1, columnspan=2, padx=5, pady=5)
+		Button(self.master, width = 20, text= 'Decline All', command = self.Decline_All).grid(row=row, column=3, columnspan=2, padx=5, pady=5)
+		Button(self.master, width = 20, text= 'Confirm', command = self.Confirm_Correction).grid(row=row, column=5, columnspan=2, padx=5, pady=5)
+
+		self.master.protocol("WM_DELETE_WINDOW", self.Confirm_Correction)	
+
+	def Accept_All(self):
+		for widget in self.All_Widget:
+			widget['var'].set(2)
+		self.Confirm_Correction()
+
+	def Decline_All(self):
+		for widget in self.All_Widget:
+			widget['var'].set(1)
+		self.Confirm_Correction()	
+
+	def Confirm_Correction(self):
+		i = 0
+		for widget in self.All_Widget:
+			result = widget['var'].get()
+			if result == 2:
+				to_update = self.diff[i]['new']
+				_index_in_check_list = self.index[i]
+				self.Root.for_grammar_check[_index_in_check_list] = to_update
+			i+=1
+
+		for dict_key in self.Root.grammar_index_list:	
+			all_index = self.Root.grammar_index_list[dict_key]
+			temp_list = []
+			for index in all_index:
+				temp_list.append(self.Root.for_grammar_check[index])
+			self.Root.report_details[dict_key] = ('\n').join(temp_list)
+		self.master.destroy()
+		self.Root.update_report_elements()
+		self.Root.enable_btn()
+		#self.Root.GenerateReportCSS()
