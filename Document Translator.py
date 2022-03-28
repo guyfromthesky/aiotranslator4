@@ -319,18 +319,16 @@ class DocumentTranslator(Frame):
 			lambda event : self.Notice.set(
 				self.LanguagePack.ToolTips['DataOnly']))
 
-		# Checkbutton to check if Cloud TM is used instead of local TM.
-		# Default is not using the Cloud TM (aioconfigmanager)
-		self.is_cloud_tm_used_intvar = IntVar()
-		self.cbtn_use_cloud_tm = Checkbutton(
-			Tab, text=self.LanguagePack.Option['UseCloudTM'],
-			variable=self.is_cloud_tm_used_intvar,
-			command=self.toggle_use_cloud_tm)
-		self.cbtn_use_cloud_tm.grid(row=Row, column=7, padx=0, pady=5, sticky=W)
-		self.cbtn_use_cloud_tm.bind(
+		self.Bilingual = IntVar()
+		TurboTranslateBtn = Checkbutton(
+			Tab, text=self.LanguagePack.Option['Bilingual'],
+			variable=self.Bilingual)
+		TurboTranslateBtn.grid(
+			row=Row, column=7, columnspan=1, padx=5, pady=0, sticky=W)
+		TurboTranslateBtn.bind(
 			"<Enter>",
 			lambda event : self.Notice.set(
-				self.LanguagePack.ToolTips['UseCloudTM']))
+				self.LanguagePack.ToolTips['Bilingual']))
 
 		### 2ND ROW OF OPTIONS SECTION
 		Row+=1
@@ -370,17 +368,6 @@ class DocumentTranslator(Frame):
 			lambda event : self.Notice.set(
 				self.LanguagePack.ToolTips['TurboTranslate']))
 
-		self.Bilingual = IntVar()
-		TurboTranslateBtn = Checkbutton(
-			Tab, text=self.LanguagePack.Option['Bilingual'],
-			variable=self.Bilingual)
-		TurboTranslateBtn.grid(
-			row=Row, column=7, columnspan=1, padx=5, pady=0, sticky=W)
-		TurboTranslateBtn.bind(
-			"<Enter>",
-			lambda event : self.Notice.set(
-				self.LanguagePack.ToolTips['Bilingual']))
-
 		### 3RD ROW OF OPTIONS SECTION
 		Row+=1
 
@@ -406,6 +393,20 @@ class DocumentTranslator(Frame):
 			"<Enter>",
 			lambda event : self.Notice.set(
 				self.LanguagePack.ToolTips['SheetRemoval']))
+
+		# Checkbutton to check if Cloud TM is used instead of local TM.
+		# Default is not using the Cloud TM (aioconfigmanager)
+		self.is_cloud_tm_used_intvar = IntVar()
+		self.cbtn_use_cloud_tm = Checkbutton(
+			Tab, text=self.LanguagePack.Option['UseCloudTM'],
+			variable=self.is_cloud_tm_used_intvar,
+			command=self.toggle_use_cloud_tm)
+		self.cbtn_use_cloud_tm.grid(
+			row=Row, column=3, columnspan=2, padx=0, pady=5, sticky=W)
+		self.cbtn_use_cloud_tm.bind(
+			"<Enter>",
+			lambda event : self.Notice.set(
+				self.LanguagePack.ToolTips['UseCloudTM']))
 		
 		### SHEET SELECTION SECTION
 		Row+=1

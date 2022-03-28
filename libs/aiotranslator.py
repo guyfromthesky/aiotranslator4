@@ -218,7 +218,6 @@ class Translator:
 		else:
 			self.config_path = os.getcwd()
 			self.OS = 'mac'
-
 	
 	def init_logging_file(self):
 		if self.used_tool == 'document':
@@ -2162,27 +2161,24 @@ class Translator:
 					# Create the csv file in the same folder as
 					# the original file
 					tm_data.to_csv(self.correct_path_os(file_root + file_ext))
-				
-				# # Move the pickle file to backup folder.
-				# # Must move at the end to prevent [WinError 32].
-				# # [WinError 32] The file is being used by another process
-				# backup_file_name = backup_dir + os.path.basename(file_root)
-				# try:
-				# 	# Append datetime to distinguish other backups
-				# 	os.rename(
-				# 		file_root + '.pkl',
-				# 		backup_file_name
-				# 			+ self.append_datetime()
-				# 			+ '.pkl')
-				# except Exception as e:
-				# 	print('Error while moving the backup pkl TM file '
-				# 		+ 'during file conversion: ', e)
-				# 	error_queue.put(e)
 		else:
 			print('TM file conversion error: File not found.')
 			err_queue.put(Exception(
 				'TM file conversion error: File not found.'))
 
+	def check_for_tm_update(self):
+		"""Check and update if the local TM file is the latest version."""
+		if self.tm_file.info_data['last_modified'] < \
+				self.gcs_tm_file.info_data['last_modified']:
+			self.gcs_tm_file.download_from_blob()
+			self.tm_file.last_modified = self.gcs_tm_file.info_data[
+				'last_modified']
+			
+		elif self.tm_file.last_modified > self.gcs_tm_file.info_data[
+				'last_modified']:
+			self.gcs_tm_file.upload_to_blob(
+				local_tm_path=self.tm_file.path,
+				local_info_path=self.tm_file.info_path)
 
 #########################################################################
 # Toggle function
