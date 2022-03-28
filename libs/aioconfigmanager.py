@@ -125,7 +125,7 @@ class ConfigLoader:
 			config.add_section(Section)
 			self.Config[Section] = {}
 
-		self.Init_Config_Option_Numberic(config, Section, 'app_lang', 2)
+		
 
 		self.Init_Config_Option_Numberic(config, Section, 'target_lang', 1)
 		self.Init_Config_Option_Numberic(config, Section, 'source_lang', 2)
@@ -134,8 +134,10 @@ class ConfigLoader:
 		self.Init_Config_Option_Numberic(config, Section, 'test_info_inable', 1)
 		self.Init_Config_Option_Numberic(config, Section, 'use_simple_template', 0)
 		self.Init_Config_Option_Numberic(config, Section, 'usage', 0)
-
+		
+		self.Init_Config_Option(config, Section, 'app_lang', 'en')
 		Section = 'BugDetails'
+		
 		self.Init_Config_Option(config, Section, 'TextTitle', "", True)
 		self.Init_Config_Option(config, Section, 'TextServer', "", True)
 		self.Init_Config_Option(config, Section, 'TextClient', "", True)
