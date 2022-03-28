@@ -15,6 +15,7 @@ import time
 import re
 from io import StringIO
 import json
+# from configparser import ConfigParser
 
 # Data modules
 import pandas as pd
@@ -321,18 +322,15 @@ class LocalTranslationMemoryFile(TranslationMemoryFile):
             print(err_msg)
             # self.err_msg_queue.put(err_msg)
 
-    def update_last_modified(self, timestamp):
-        """Update the last_modified timestamp to match the cloud TM."""
-        with open(self.info_path, 'r') as tm_info_file:
-            tm_info_data = json.load(tm_info_file)
-
-        tm_info_data['last_modified'] = timestamp
-
-        with open(self.info_path, 'w') as tm_info_file:
-            json.dump(tm_info_data, tm_info_file)
+    def update_info(self, info_data: dict):
+        """Update the last_modified timestamp to match the cloud TM.
         
-        self.last_modified = datetime.fromtimestamp(
-            tm_info_data['last_modified'])
+        Args:
+            info_data -- dict
+                Info data from cloud TM file.
+        """
+        with open(self.info_path, 'w') as tm_info_file:
+            json.dump(info_data, tm_info_file)
 
 ###############################################################################
 ### CloudTranslationMemoryFile CLASS
@@ -380,7 +378,7 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             specific cloud storage.
         info_data -- dict
             A dict converted from JSON including info of each TM file in
-            GCS. 
+            GCS.
         info_path -- str
             The URI path of the TM info file in cloud storage.
         info_ext -- str
@@ -439,7 +437,7 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
                     # a validation to check if glossary_id exists in a
                     # supported list in another blob.
                     self.glossary_id = glossary_id
-                    self.path = f"/TM/{self.glossary_id}/TM_{self.glossary_id}" \
+                    self.path = f"TM/{self.glossary_id}/TM_{self.glossary_id}" \
                         f"{self.ext}"
                     self.basename = os.path.basename(self.path)
                     ### INIT SELF.BLOB
@@ -454,12 +452,16 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
                     ### INIT SELF.INFO_BLOB, SELF.INFO_EXT,
                     ### SELF.INFO_PATH
                     self.info_ext = '.json'
-                    self.info_path = f"/TM/{self.glossary_id}/" \
+                    self.info_path = f"TM/{self.glossary_id}/" \
                         f"TM_{self.glossary_id}_info{self.info_ext}"
                     self.info_blob = self.bucket.get_blob(self.info_path)
                     if self.info_blob != None:
                         self.info_data = json.loads(
                             self.info_blob.download_as_text())
+                        # Must reload after download or upload or there
+                        # will be error:
+                        # "Provided CRC32C \"3ch6WA==\" doesn't match"
+                        self.info_blob.reload()
                     ### INIT SELF.LOCAL_PATH
                     if sys.platform.startswith('win'):
                         local_dir = self.correct_path_os(
@@ -571,8 +573,11 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
         try:
             if self.blob is not None and self.info_blob is not None:
                 self.blob.upload_from_filename(local_tm_path)
+                self.blob.reload()
                 # Record the upload time and length in another blob
                 self.info_blob.upload_from_filename(local_info_path)
+                
+                self.info_blob.reload()
                 print('Uploaded TM to cloud.')
             elif self.blob is not None and self.info_blob is None:
                 self.info_blob = self.bucket.blob(self.info_path)
@@ -587,7 +592,9 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
                 tm_info_data = {
                     'upload_timestamp': datetime.now().timestamp(),
                 }
-
+                
+                blob.reload()
+                self.info_blob.reload()
                 blob.upload_from_filename(local_tm_path)
                 # Record the upload time and length in another blob
                 self.info_blob.upload_from_string(json.dumps(tm_info_data))
@@ -599,12 +606,12 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             # self.err_msg_queue.put(err_msg)
 
 ### TEST RUN ################################################################
-# test_path = r'D:\Translation Tool\TM_MSM.csv'
-# license_path = r'D:\Translation Tool\License_User\db editor.json'
-# bucket_id = 'nxvnbucket'
-# glossary_id = 'MSM'
+test_path = r'D:\Translation Tool\TM_MSM.csv'
+license_path = r'D:\Translation Tool\License_User\db editor.json'
+bucket_id = 'nxvnbucket'
+glossary_id = 'MSM'
 
-# tm_file = LocalTranslationMemoryFile(test_path)
+tm_file = LocalTranslationMemoryFile(test_path)
 # # print(tm_file)
 # # print(tm_file.path)
 # # print(tm_file.ext)
@@ -616,11 +623,15 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
 # print(tm_file.last_modified)
 
 
-# gcs_tm_file = CloudTranslationMemoryFile(
-#     license_path,
-#     bucket_id=bucket_id,
-#     glossary_id=glossary_id)
-# # print(gcs_tm_file.data)
-# gcs_tm_file.upload_to_blob(
-#     local_info_path=tm_file.info_path,
-#     local_tm_path=test_path)
+gcs_tm_file = CloudTranslationMemoryFile(
+    license_path,
+    bucket_id=bucket_id,
+    glossary_id=glossary_id)
+print(gcs_tm_file.blob)
+
+
+gcs_tm_file.upload_to_blob(
+    local_info_path=tm_file.info_path,
+    local_tm_path=test_path)
+
+print(gcs_tm_file.info_data)

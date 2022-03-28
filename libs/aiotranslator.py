@@ -254,6 +254,7 @@ class Translator:
 				glossary_id=self.glossary_id)
 			self.tm_file = LocalTranslationMemoryFile(
 				self.gcs_tm_file.local_path)
+			self.check_for_tm_update()
 		elif is_cloud_tm_used == False and self.used_tool != 'writer':
 			print('Cloud TM is not used.')
 			self.tm_file = LocalTranslationMemoryFile(tm_path)
@@ -2168,17 +2169,16 @@ class Translator:
 
 	def check_for_tm_update(self):
 		"""Check and update if the local TM file is the latest version."""
-		if self.tm_file.info_data['last_modified'] < \
-				self.gcs_tm_file.info_data['last_modified']:
-			self.gcs_tm_file.download_from_blob()
-			self.tm_file.last_modified = self.gcs_tm_file.info_data[
-				'last_modified']
-			
-		elif self.tm_file.last_modified > self.gcs_tm_file.info_data[
-				'last_modified']:
-			self.gcs_tm_file.upload_to_blob(
-				local_tm_path=self.tm_file.path,
-				local_info_path=self.tm_file.info_path)
+		tm_file_last_modified = self.tm_file.info_data['last_modified']
+		gcs_tm_file_last_modified = self.gcs_tm_file.info_data['last_modified']
+		
+		if tm_file_last_modified < gcs_tm_file_last_modified:
+			self.gcs_tm_file.download_from_blob(self.tm_file.path)
+			self.tm_file.update_info(self.gcs_tm_file.info_data)
+		# elif tm_file_last_modified > gcs_tm_file_last_modified:
+		# 	self.gcs_tm_file.upload_to_blob(
+		# 		local_tm_path=self.tm_file.path,
+		# 		local_info_path=self.tm_file.info_path)
 
 #########################################################################
 # Toggle function
