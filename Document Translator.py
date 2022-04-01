@@ -1947,9 +1947,10 @@ def main():
 	except Exception as e:
 		print('Fail to launch the application:', e)
 		root.withdraw()
-
-		send_fail_request(e)
-		
+		try:
+			send_fail_request(e)
+		except Exception as e2:
+			print(e2)
 		print("Fail to launch the application:", e)	
 		messagebox.showinfo(title='Fail to launch the application', message=e)
 

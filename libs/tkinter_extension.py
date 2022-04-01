@@ -191,8 +191,8 @@ class CustomText(Text):
 # sub_frame.pack(side=TOP, expand=Y, fill=BOTH)
 
 class BottomPanel(Frame):
-	def __init__(self, master):
-		Frame.__init__(self, master) 
+	def __init__(self, master, bg_cl= None):
+		Frame.__init__(self, master, bg = bg_cl) 
 		self.pack(side=BOTTOM, fill=X)          # resize with parent
 		
 		# separator widget

@@ -33,6 +33,7 @@ from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, BOTTOM
 # Config state
 from tkinter import DISABLED, NORMAL
 from tkhtmlview import HTMLScrolledText
+
 #from tkinter import filedialog
 #from tkinter import messagebox
 #from tkinter import ttk
@@ -69,6 +70,7 @@ ver_num = get_version(REV)
 version = tool_display_name  + " " +  ver_num + "  | Language Tool v5.6" 
 
 DELAY = 20
+BG_CL = '#191c1d'
 
 #**********************************************************************************
 # UI handle ***********************************************************************
@@ -195,10 +197,11 @@ class MyTranslatorHelper(Frame):
 
 		#self.Init_Translator_Config
 	def create_buttom_panel(self):
-		self.bottom_panel = BottomPanel(self)
+		self.bottom_panel = BottomPanel(self, BG_CL)
 		
 	def Generate_Tab_UI(self):
-		MainPanel = Frame(self, name='mainpanel')
+		dark_mode_cl = BG_CL
+		MainPanel = Frame(self, name='mainpanel', bg=dark_mode_cl)
 		MainPanel.pack(side=TOP, fill=BOTH, expand=Y)
 		TAB_CONTROL = Notebook(MainPanel, name='notebook')
 		# extend bindings to top level window allowing
@@ -209,18 +212,18 @@ class MyTranslatorHelper(Frame):
 		#TAB_CONTROL = Notebook(self.parent)
 		
 		#Tab1
-		self.BugWriter = Frame(TAB_CONTROL)
+		self.BugWriter = Frame(TAB_CONTROL, bg=dark_mode_cl)
 		TAB_CONTROL.add(self.BugWriter, text=self.LanguagePack.Tab['BugWriter'])
 		
 		#self.CustomWriter = Frame(TAB_CONTROL)
 		#TAB_CONTROL.add(self.CustomWriter, text=self.LanguagePack.Tab['CustomBugWriter'])
 
 		#Tab2
-		self.SimpleTranslator = Frame(TAB_CONTROL)
+		self.SimpleTranslator = Frame(TAB_CONTROL, bg=dark_mode_cl)
 		TAB_CONTROL.add(self.SimpleTranslator, text=self.LanguagePack.Tab['SimpleTranslator'])
 
 		#Tab3
-		self.TranslateSetting = Frame(TAB_CONTROL)
+		self.TranslateSetting = Frame(TAB_CONTROL, bg=dark_mode_cl)
 		TAB_CONTROL.add(self.TranslateSetting, text=  self.LanguagePack.Tab['Translator'])
 
 		#Tab4
@@ -2051,10 +2054,17 @@ def MainLoop():
 
 	print('Create UI')
 	root = Tk()
-	#root.withdraw()
-	#root.update_idletasks()
+	#customtkinter.set_appearance_mode("System")  # Modes: system (default), light, dark
+	#customtkinter.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
+
+	#root = customtkinter.CTk()  # create CTk window like you do with the Tk window
+
 	style = Style(root)
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
+	root.tk.call("source", "awdark.tcl")
+	root.configure(bg=style.lookup('TFrame', 'background'))
+	style.theme_use('awdark')
+
 	#root.geometry("400x350+300+300")
 	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 	

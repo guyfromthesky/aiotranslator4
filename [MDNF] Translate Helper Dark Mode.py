@@ -18,7 +18,7 @@ from pyperclip import copy, paste
 #from tkinter.ttk import *
 from tkinter.ttk import Entry, Label, Style
 from tkinter.ttk import Checkbutton, OptionMenu, Notebook, Radiobutton, LabelFrame, Button
-from tkinter import Tk, Frame, Toplevel
+from tkinter import Tk, Frame, Toplevel, Canvas
 
 # Widget type
 from tkinter import Menu, filedialog, messagebox
@@ -28,7 +28,7 @@ from tkinter import IntVar, StringVar
 # Wrap type
 from tkinter import WORD
 # sticky state
-from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, BOTTOM
+from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, BOTTOM, RIGHT
 # Config state
 from tkinter import DISABLED, NORMAL
 
@@ -71,6 +71,8 @@ version = tool_display_name  + " " +  ver_num + " | Language Tool v5.6"
 
 DELAY = 20
 DELAY2 = 300000
+BG_CL = '#191c1d'
+FG_CL = 'white'
 #**********************************************************************************
 # UI handle ***********************************************************************
 #**********************************************************************************
@@ -84,14 +86,13 @@ class MyTranslatorHelper(Frame):
 				grammar_check_result = None,
 				language_tool_enable = False,):
 
-		Frame.__init__(self, parent)
 		
-		self.pack(side=TOP, expand=Y, fill=X)
 
 		self.parent = parent
 		self.parent.protocol("WM_DELETE_WINDOW", self.on_closing)
 		
-		
+		Frame.__init__(self, parent, bg= BG_CL)
+		self.pack(side=TOP, expand=Y, fill=X)
 
 		self.MyTranslator_Queue = MyTranslator_Queue
 		self.MyTranslator = None
@@ -183,6 +184,9 @@ class MyTranslatorHelper(Frame):
 			self.parent.destroy()
 			self.TranslatorProcess.terminate()
 
+	def move_window(self, event):
+		self.parent.geometry('+{0}+{1}'.format(event.x_root, event.y_root))
+
 	def ConfirmationBox(self, title, message):
 		toplevel = Toplevel(self.parent)
 	
@@ -241,10 +245,10 @@ class MyTranslatorHelper(Frame):
 
 		#self.Init_Translator_Config
 	def create_buttom_panel(self):
-		self.bottom_panel = BottomPanel(self)
+		self.bottom_panel = BottomPanel(self, BG_CL)
 		
 	def Generate_Tab_UI(self):
-		MainPanel = Frame(self, name='mainpanel')
+		MainPanel = Frame(self, name='mainpanel', bg=BG_CL)
 		MainPanel.pack(side=TOP, fill=BOTH, expand=Y)
 		TAB_CONTROL = Notebook(MainPanel, name='notebook')
 		# extend bindings to top level window allowing
@@ -255,22 +259,20 @@ class MyTranslatorHelper(Frame):
 		#TAB_CONTROL = Notebook(self.parent)
 		
 		#Tab1
-		self.BugWriter = Frame(TAB_CONTROL)
+		self.BugWriter = Frame(TAB_CONTROL, bg=BG_CL)
 		TAB_CONTROL.add(self.BugWriter, text=self.LanguagePack.Tab['BugWriter'])
 		
 		#self.CustomWriter = Frame(TAB_CONTROL)
 		#TAB_CONTROL.add(self.CustomWriter, text=self.LanguagePack.Tab['CustomBugWriter'])
 
 		#Tab2
-		self.SimpleTranslator = Frame(TAB_CONTROL)
+		self.SimpleTranslator = Frame(TAB_CONTROL, bg=BG_CL)
 		TAB_CONTROL.add(self.SimpleTranslator, text=self.LanguagePack.Tab['SimpleTranslator'])
 
 		#Tab3
-		self.TranslateSetting = Frame(TAB_CONTROL)
+		self.TranslateSetting = Frame(TAB_CONTROL, bg=BG_CL)
 		TAB_CONTROL.add(self.TranslateSetting, text=  self.LanguagePack.Tab['Translator'])
 
-		#Tab4
-		
 		#Tab4
 		#self.Searcher = Frame(TAB_CONTROL)
 		#TAB_CONTROL.add(self.Searcher, text=  self.LanguagePack.Tab['DBSeacher'])
@@ -285,9 +287,12 @@ class MyTranslatorHelper(Frame):
 		TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
 
 	def Generate_Menu_UI(self):
-		menubar = Menu(self.parent) 
+		menubar = Menu(self.parent, background=BG_CL, fg='white')
+
+		menubar.configure(background=BG_CL, cursor='hand2')
+
 		# Adding File Menu and commands 
-		file = Menu(menubar, tearoff = 0)
+		file = Menu(menubar, tearoff = 0, background=BG_CL, fg='white')
 		# Adding Load Menu  
 		menubar.add_cascade(label =  self.LanguagePack.Menu['File'], menu = file) 
 		file.add_command(label =  self.LanguagePack.Menu['LoadLicensePath'], command = self.Btn_Select_License_Path) 
@@ -299,7 +304,7 @@ class MyTranslatorHelper(Frame):
 		#file.add_separator() 
 		file.add_command(label =  self.LanguagePack.Menu['Exit'], command = self.on_closing) 
 		# Adding Help Menu
-		hotkey = Menu(menubar, tearoff = 0)
+		hotkey = Menu(menubar, tearoff = 0, background=BG_CL, fg='white')
 		menubar.add_cascade(label =  'Hotkey', menu = hotkey) 
 		hotkey.add_command(label = 'Save Report - Ctrl + S', command = self._save_report)
 		hotkey.add_command(label = 'Load Report - Ctrl + L', command = self._load_report)
@@ -310,7 +315,7 @@ class MyTranslatorHelper(Frame):
 		hotkey.add_separator()  
 		hotkey.add_command(label = 'Grammar check - Ctrl + Q') 
 
-		help_ = Menu(menubar, tearoff = 0) 
+		help_ = Menu(menubar, tearoff = 0, background=BG_CL, fg='white')
 		menubar.add_cascade(label =  self.LanguagePack.Menu['Help'], menu = help_) 
 		help_.add_command(label =  self.LanguagePack.Menu['GuideLine'], command = self.OpenWeb) 
 		help_.add_separator()
@@ -318,7 +323,7 @@ class MyTranslatorHelper(Frame):
 		self.parent.config(menu = menubar)
 		
 		# Adding Help Menu
-		language = Menu(menubar, tearoff = 0) 
+		language = Menu(menubar, tearoff = 0, background=BG_CL, fg='white')
 		menubar.add_cascade(label =  self.LanguagePack.Menu['Language'], menu = language) 
 		language.add_command(label =  self.LanguagePack.Menu['Hangul'], command = self.SetLanguageKorean) 
 		language.add_command(label =  self.LanguagePack.Menu['English'], command = self.SetLanguageEnglish) 
@@ -341,17 +346,20 @@ class MyTranslatorHelper(Frame):
 		self.source_language = StringVar()
 		self.source_language_select = OptionMenu(self.title_frame, self.source_language, *self.language_list, command = self.set_writer_language)
 		self.source_language_select.config(width=self.HALF_BUTTON_SIZE)
+		self.source_language_select["menu"].config(bg='#474D4E', fg= FG_CL)
 		self.source_language_select.grid(row=Row, column=1, padx=0, pady=5, sticky=W)
 
 		self.target_language = StringVar()
 		self.target_language_select = OptionMenu(self.title_frame, self.target_language, *self.language_list, command = self.set_writer_language)
 		self.target_language_select.config(width=self.HALF_BUTTON_SIZE)
+		self.target_language_select["menu"].config(bg='#474D4E', fg= FG_CL)
 		self.target_language_select.grid(row=Row, column=2, padx=5, pady=5, sticky=W)
 		
 		self.secondary_target_language = StringVar()
 		secondary_language_list = self.language_list + ['']
 		self.secondary_target_language_select = OptionMenu(self.title_frame, self.secondary_target_language, *secondary_language_list, command = self.set_writer_language)
 		self.secondary_target_language_select.config(width=self.HALF_BUTTON_SIZE)
+		self.secondary_target_language_select["menu"].config(bg='#474D4E', fg= FG_CL)
 		self.secondary_target_language_select.grid(row=Row, column=3, padx=5, pady=5, sticky=W)
 
 		Label(self.title_frame, width=10, text=self.LanguagePack.Label['Search']).grid(row=Row, column=4, padx=0, pady=5, stick=W)
@@ -457,11 +465,12 @@ class MyTranslatorHelper(Frame):
 		
 		self.TextTitle.focus_set()
 		Tab.bind_all('<Key>', self.SaveTempReport)
-
 		Tab.bind_all('<Control-r>', self.generate_report)
 		Tab.bind_all('<Control-t>', self.GetTitle)
 		Tab.bind_all('<Control-s>', self._save_report)
 		Tab.bind_all('<Control-l>', self._load_report)
+		Tab.bind_all('<Control-e>', self.ResetReport)
+		Tab.bind_all('<Control-q>', self.analyze_report_grammar)
 
 
 	### UI of SIMPLE TRANSLATOR ###
@@ -1840,9 +1849,9 @@ class ConfirmationPopup:
 		#self.Root.GenerateReportCSS()
 
 class BottomPanel(Frame):
-	def __init__(self, master):
-		Frame.__init__(self, master) 
-		self.pack(side=BOTTOM, fill=X)          # resize with parent
+	def __init__(self, master, bg_cl):
+		Frame.__init__(self, master, bg=bg_cl) 
+		#self.pack(side=BOTTOM, fill=X)          # resize with parent
 		
 		# separator widget
 		#Separator(orient=HORIZONTAL).grid(in_=self, row=0, column=1, sticky=E+W, pady=5)
@@ -1854,32 +1863,35 @@ class BottomPanel(Frame):
 		#master.VersionStatus.set('-')
 		Col = 1
 		Row = 1
-		Label(text='Update', width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5)
+		self.Bottom_Frame = LabelFrame(master, text="TITLE", padding=0)
+		self.Bottom_Frame.pack(side=BOTTOM, fill=X)
+		
+		Label(text='Update', width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5)
 		Col += 1
-		Label(textvariable=master._update_day, width=20).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
+		Label(textvariable=master._update_day, width=20).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5)
 		master._update_day.set('-')
 		Col += 1
 		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
-		DictionaryLabelA.grid(in_=self, row=Row, column=Col, padx=5, pady=5)
+		DictionaryLabelA.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5)
 		Col += 1
-		Label(textvariable=master.DictionaryStatus, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
+		Label(textvariable=master.DictionaryStatus, width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5)
 		master.DictionaryStatus.set('0')
 		Col += 1
-		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5)
+		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5)
 		Col += 1
-		Label(textvariable=master.HeaderStatus, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
+		Label(textvariable=master.HeaderStatus, width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5)
 		master.HeaderStatus.set('0')
 		Col += 1
-		Label(text= master.LanguagePack.Label['ProjectKey'], width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5, sticky=W)
+		Label(text= master.LanguagePack.Label['ProjectKey'], width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=W)
 		Col += 1
 		self.project_id_select = AutocompleteCombobox()
 		self.project_id_select.Set_Entry_Width(20)
 		self.project_id_select.set_completion_list([])
-		self.project_id_select.grid(in_=self, row=Row, column=Col, padx=5, pady=5, stick=W)
+		self.project_id_select.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, stick=W)
 		self.project_id_select.bind("<<ComboboxSelected>>", master._save_project_key)
 		Col += 1
 		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=15, command= master.RenewMyTranslator, state=DISABLED, style= master.Btn_Style)
-		self.RenewTranslatorMain.grid(in_=self, row=Row, column=Col, padx=10, pady=5, stick=E)
+		self.RenewTranslatorMain.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=10, pady=5, stick=E)
 		
 		
 		self.rowconfigure(0, weight=1)
@@ -1918,6 +1930,7 @@ def correct_sentence(result_manager, sentence_list, language):
 		result_manager.append(corrected_sentence)
 	language_tool.language_tool.close()
 	return
+
 #Bug Writer 
 def Translate_Simple(Object, simple_template, my_translator, secondary_target_language = None):
 	
@@ -2193,9 +2206,10 @@ def MainLoop():
 	
 	#root.withdraw()
 	#root.update_idletasks()
-	#style = Style(root)
-
-	#style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
+	style = Style(root)
+	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
+	root.tk.call("source", "awdark.tcl")
+	style.theme_use('awdark')
 	#tk_style = ThemedStyle(root)
 	#tk_style.theme_use('equilux')
 	#theme = style.theme_names()

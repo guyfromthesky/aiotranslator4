@@ -205,7 +205,7 @@ class ConfigLoader:
 			config.add_section(Section)
 			self.Config[Section] = {}
 
-		self.Init_Config_Option_Numberic(config, Section, 'app_lang', 2)
+		self.Init_Config_Option(config, Section, 'app_lang', 'en')
 		
 		self.Init_Config_Option_Numberic(config, Section, 'target_lang', 1)
 		self.Init_Config_Option_Numberic(config, Section, 'source_lang', 2)
