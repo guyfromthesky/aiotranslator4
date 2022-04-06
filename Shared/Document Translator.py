@@ -38,7 +38,6 @@ from tkinter import DISABLED
 from tkinter import scrolledtext 
 from tkinter import simpledialog
 
-from tkinter.dnd import *
 # Web redirect
 import webbrowser
 

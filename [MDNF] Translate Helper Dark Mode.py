@@ -73,6 +73,9 @@ DELAY = 20
 DELAY2 = 300000
 BG_CL = '#191c1d'
 FG_CL = 'white'
+FRAME_BG = '#33393b'
+MENU_BG = '#474D4E'
+
 #**********************************************************************************
 # UI handle ***********************************************************************
 #**********************************************************************************
@@ -248,7 +251,7 @@ class MyTranslatorHelper(Frame):
 		self.bottom_panel = BottomPanel(self, BG_CL)
 		
 	def Generate_Tab_UI(self):
-		MainPanel = Frame(self, name='mainpanel', bg=BG_CL)
+		MainPanel = Frame(self, name='mainpanel', bg=FRAME_BG)
 		MainPanel.pack(side=TOP, fill=BOTH, expand=Y)
 		TAB_CONTROL = Notebook(MainPanel, name='notebook')
 		# extend bindings to top level window allowing
@@ -259,18 +262,21 @@ class MyTranslatorHelper(Frame):
 		#TAB_CONTROL = Notebook(self.parent)
 		
 		#Tab1
-		self.BugWriter = Frame(TAB_CONTROL, bg=BG_CL)
+		self.BugWriter = Frame(TAB_CONTROL, bg=FRAME_BG)
+		self.BugWriter.configure(background=FRAME_BG)
 		TAB_CONTROL.add(self.BugWriter, text=self.LanguagePack.Tab['BugWriter'])
 		
 		#self.CustomWriter = Frame(TAB_CONTROL)
 		#TAB_CONTROL.add(self.CustomWriter, text=self.LanguagePack.Tab['CustomBugWriter'])
 
 		#Tab2
-		self.SimpleTranslator = Frame(TAB_CONTROL, bg=BG_CL)
+		self.SimpleTranslator = Frame(TAB_CONTROL, bg=FRAME_BG)
+		self.SimpleTranslator.configure(background=FRAME_BG)
 		TAB_CONTROL.add(self.SimpleTranslator, text=self.LanguagePack.Tab['SimpleTranslator'])
 
 		#Tab3
-		self.TranslateSetting = Frame(TAB_CONTROL, bg=BG_CL)
+		self.TranslateSetting = Frame(TAB_CONTROL, bg=FRAME_BG)
+		self.TranslateSetting.configure(background=FRAME_BG)
 		TAB_CONTROL.add(self.TranslateSetting, text=  self.LanguagePack.Tab['Translator'])
 
 		#Tab4
@@ -346,20 +352,20 @@ class MyTranslatorHelper(Frame):
 		self.source_language = StringVar()
 		self.source_language_select = OptionMenu(self.title_frame, self.source_language, *self.language_list, command = self.set_writer_language)
 		self.source_language_select.config(width=self.HALF_BUTTON_SIZE)
-		self.source_language_select["menu"].config(bg='#474D4E', fg= FG_CL)
+		self.source_language_select["menu"].config(bg=MENU_BG, fg= FG_CL)
 		self.source_language_select.grid(row=Row, column=1, padx=0, pady=5, sticky=W)
 
 		self.target_language = StringVar()
 		self.target_language_select = OptionMenu(self.title_frame, self.target_language, *self.language_list, command = self.set_writer_language)
 		self.target_language_select.config(width=self.HALF_BUTTON_SIZE)
-		self.target_language_select["menu"].config(bg='#474D4E', fg= FG_CL)
+		self.target_language_select["menu"].config(bg=MENU_BG, fg= FG_CL)
 		self.target_language_select.grid(row=Row, column=2, padx=5, pady=5, sticky=W)
 		
 		self.secondary_target_language = StringVar()
 		secondary_language_list = self.language_list + ['']
 		self.secondary_target_language_select = OptionMenu(self.title_frame, self.secondary_target_language, *secondary_language_list, command = self.set_writer_language)
 		self.secondary_target_language_select.config(width=self.HALF_BUTTON_SIZE)
-		self.secondary_target_language_select["menu"].config(bg='#474D4E', fg= FG_CL)
+		self.secondary_target_language_select["menu"].config(bg=MENU_BG, fg= FG_CL)
 		self.secondary_target_language_select.grid(row=Row, column=3, padx=5, pady=5, sticky=W)
 
 		Label(self.title_frame, width=10, text=self.LanguagePack.Label['Search']).grid(row=Row, column=4, padx=0, pady=5, stick=W)
@@ -400,9 +406,9 @@ class MyTranslatorHelper(Frame):
 		self.Reproducibility.grid(row=Row, column=2, columnspan=2,  padx=5, pady=5, stick=W+E)		
 
 
-		Label(self.report_frame, width=10, text=self.LanguagePack.Label['Search']).grid(row=Row, column=4, padx=0, pady=5, stick=W)
-		self.search_entry = AutocompleteEntry([], self.report_frame, listboxLength=6, width=50, matchesFunction=matches)
-		self.search_entry.grid(row=Row, column=5, columnspan=5, padx=5, pady=5, sticky=W+E)
+		#Label(self.report_frame, width=10, text=self.LanguagePack.Label['Search']).grid(row=Row, column=4, padx=0, pady=5, stick=W)
+		#self.search_entry = AutocompleteEntry([], self.report_frame, listboxLength=6, width=50, matchesFunction=matches)
+		#self.search_entry.grid(row=Row, column=5, columnspan=5, padx=5, pady=5, sticky=W+E)
 
 		Button(self.report_frame, text=self.LanguagePack.Button['Reset'], width=10, command= self.ResetTestReport, style=self.Btn_Style).grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 		
@@ -541,14 +547,6 @@ class MyTranslatorHelper(Frame):
 		#self.Translate_bilingual_Btn = Button(Tab, text=self.LanguagePack.Button['TranslateAndBilingual'], width = self.BUTTON_SIZE, command= self.BtnTranslateAndBilingual)
 		#self.Translate_bilingual_Btn.grid(row = Row, column=10, padx=5, pady=5, sticky=E)
 		Tab.bind_all('<Control-e>', self.analyze_simple_grammar)
-
-
-	def Generate_Search_UI(self, Tab):
-		Row = 1
-
-		self.search_entry = AutocompleteEntry([], Tab, listboxLength=6, width=32, matchesFunction=matches)
-		self.search_entry.grid(row=0, column=0, columnspan = 10, padx=5, pady=5, sticky= W)
-
 	
 
 	def Generate_TranslateSetting_UI(self, Tab):
@@ -1863,7 +1861,7 @@ class BottomPanel(Frame):
 		#master.VersionStatus.set('-')
 		Col = 1
 		Row = 1
-		self.Bottom_Frame = LabelFrame(master, text="TITLE", padding=0)
+		self.Bottom_Frame = LabelFrame(master, text="DB INFO", padding=0)
 		self.Bottom_Frame.pack(side=BOTTOM, fill=X)
 		
 		Label(text='Update', width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5)
@@ -2161,8 +2159,8 @@ def Add_Style(Text):
 	return '___________' + Text + '___________' 
 
 def matches(fieldValue, acListEntry):
-		pattern = re.compile(re.escape(fieldValue) + '.*', re.IGNORECASE)
-		return re.match(pattern, acListEntry)
+	pattern = re.compile(re.escape(fieldValue) + '.*', re.IGNORECASE)
+	return re.match(pattern, acListEntry)
 
 def fixed_map(style, option):
 	# Fix for setting text colour for Tkinter 8.6.9
@@ -2182,6 +2180,7 @@ def MainLoop():
 	MyManager = Manager()
 	grammar_check_result = MyManager.list()
 	tm_manager = MyManager.list()
+
 	language_tool_enable = True
 	try:
 		download_path = os.environ.get('LTP_PATH',os.path.join(os.path.expanduser("~"), ".cache", "language_tool_python"))
@@ -2196,30 +2195,29 @@ def MainLoop():
 		print("Error", e)
 		language_tool_enable = False
 
-
 	print('Create UI')
 	root = Tk()
-	#root = ThemedTk(theme="plastik")
+	root.attributes("-alpha", 0.96)
 
-	#root.tk.call("source", "azure.tcl")
-	#root.tk.call("set_theme", "dark")
-	
-	#root.withdraw()
-	#root.update_idletasks()
 	style = Style(root)
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
-	root.tk.call("source", "awdark.tcl")
-	style.theme_use('awdark')
-	#tk_style = ThemedStyle(root)
-	#tk_style.theme_use('equilux')
-	#theme = style.theme_names()
-	#print('Theme name:', theme)
-	#style.theme_use('winnative')
-	#root.geometry("400x350+300+300")
-	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
-	
-	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
-	#root.mainloop()
+	style.map('TFrame', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
+	CWD = os.getcwd()
+
+	THEME_DIR = os.path.join(CWD, "theme\\awdark.tcl") 
+	if os.path.isfile(THEME_DIR) == True:
+		try:
+			root.tk.call("source", THEME_DIR)
+			style.theme_use('awdark')
+		except Exception as e:
+			print('Error while loading theme: ', e)	
+	else:
+		print('White Mode')
+		global BG_CL, FG_CL, FRAME_BG, MENU_BG
+		BG_CL = None
+		FG_CL = None
+		FRAME_BG = None
+		MENU_BG = None
 	
 	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 		

@@ -1977,8 +1977,8 @@ def Add_Style(Text):
 	return '___________' + Text + '___________' 
 
 def matches(fieldValue, acListEntry):
-		pattern = re.compile(re.escape(fieldValue) + '.*', re.IGNORECASE)
-		return re.match(pattern, acListEntry)
+	pattern = re.compile(re.escape(fieldValue) + '.*', re.IGNORECASE)
+	return re.match(pattern, acListEntry)
 
 def fixed_map(style, option):
 	# Fix for setting text colour for Tkinter 8.6.9

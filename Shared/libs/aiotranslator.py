@@ -14,16 +14,12 @@ from requests import get
 # import requests, uuid, 
 import json
 import subprocess
-from win32gui import GetWindowText, GetForegroundWindow
-from win32api import GetTickCount, GetLastInputInfo
-
 
 from google.cloud import translate_v3 as translator
 from google.cloud import storage
 from google.cloud import logging
 from google.cloud.translate_v3.types.translation_service import Glossary
 from google.api_core.exceptions import Forbidden
-
 from numpy import NaN
 
 import pandas as pd
