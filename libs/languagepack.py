@@ -338,7 +338,7 @@ class LanguagePackKR:
 	Button = {}
 	Button['Stop'] = "중지하다"
 	Button['Translate'] = "번역하다"
-	Button['RenewDatabase'] = "데이터베이스 갱신"
+	Button['RenewDatabase'] = "새로 고치다"
 	Button['OpenOutput'] = "출력 폴더 열기"
 	Button['Browse'] = "찾아보기"
 	Button['SaveConfig'] = "구성 저장"

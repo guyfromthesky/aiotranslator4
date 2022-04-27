@@ -1,45 +1,19 @@
-from libs.import_languages import print_workbook
-from pkgutil import get_data
-from openpyxl import load_workbook
-#from io import BytesIO
+import pandas as pd
 
-try:
-    print_workbook()
-except Exception as _error_message:
-    print(_error_message)
+mydict = {
+    'EN': ['abc', 'xyz', 'ppp' , 'aaa', 'qqq', 'www', 'eee'],
+    'KO': ['뮻', '툨', 'ㅔㅔㅔ', 'ㅁㅁㅁ', 'ㅂㅂㅂ', 'ㅈㅈㅈ', 'ㄷㄷㄷ',]
+}
 
+df = pd.DataFrame(mydict)
 
-try:
-    f = open("version.txt", "r")
-    print(f.read())
-except Exception as _error_message:
-    print(_error_message)
+ROW_LIMIT = 2
 
+df_list = []
 
-try:
-    version = get_data('src', 'version.txt' )
-    text_version = version.decode('UTF-8', 'ignore')
-except Exception as _error_message:
-    print(_error_message)
-
-
-try:
-    version = get_data('src', './version.txt' )
-    text_version = version.decode('UTF-8', 'ignore')
-except Exception as _error_message:
-    print(_error_message)
-
-
-try:
-    version = get_data('src', './version.txt' )
-    text_version = version.decode('UTF-8', 'ignore')
-except Exception as _error_message:
-    print(_error_message)
-
-
-try:
-    f = open("/version.txt", "r")
-    print(f.read())
-except Exception as _error_message:
-    print(_error_message)
-
+for x in range(int(len(df)/ROW_LIMIT)+1):
+    #start_row = ROW_LIMIT * x
+    #end_row = ROW_LIMIT * (x + 1) - 1
+    new_df = df.iloc[ROW_LIMIT * x:ROW_LIMIT * (x + 1) - 1]
+    print(new_df)
+    df_list.append(new_df)
