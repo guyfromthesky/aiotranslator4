@@ -1536,7 +1536,7 @@ class MyTranslatorHelper(Frame):
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)
 		except Exception as e:
-			print('Cannot sve the report:', e)
+			print('Cannot save the report:', e)
 			pass
 
 
@@ -1545,10 +1545,13 @@ class MyTranslatorHelper(Frame):
 		
 		self.glossary_id = self.bottom_panel.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
-		print('Save current project key: ', self.glossary_id)
-		self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'glossary_id', self.glossary_id)
-		self.MyTranslator.glossary_id = self.glossary_id
-		self.RenewMyTranslator()
+		if self.glossary_id in self.MyTranslator.glossary_list:
+			print('Save current project key: ', self.glossary_id)
+			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'glossary_id', self.glossary_id)
+			self.MyTranslator.glossary_id = self.glossary_id
+			self.RenewMyTranslator()
+		else:
+			messagebox.showinfo('Error', "The selected project doesn't exist.")
 
 	def _load_report(self,event=None):
 		print('Load report')
@@ -1713,6 +1716,7 @@ class BottomPanel(Frame):
 		self.project_id_select.set_completion_list([])
 		self.project_id_select.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, stick=E)
 		self.project_id_select.bind("<<ComboboxSelected>>", master._save_project_key)
+		self.project_id_select.bind("<Return>", master._save_project_key)
 		Col += 1
 		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=15, command= master.RenewMyTranslator, state=DISABLED, style= master.Btn_Style)
 		self.RenewTranslatorMain.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, stick=E)
