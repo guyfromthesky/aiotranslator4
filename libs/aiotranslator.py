@@ -503,9 +503,10 @@ class Translator:
 
 	def ValidateURL(self, string):
 
-		Result = urlparse(string)
+		
 		
 		try:
+			Result = urlparse(string)
 			if Result.scheme == "" or Result.netloc == "":
 				return False
 			else:

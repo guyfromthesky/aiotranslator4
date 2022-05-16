@@ -279,7 +279,10 @@ class ConfigLoader:
 					else:	
 						self.Config[Section][Option] = Config_Obj[Section][Option]
 				else:
-					self.Config[Section][Option] = base64.b64decode(Config_Obj[Section][Option]	).decode('utf-8') 	
+					try:
+						self.Config[Section][Option] = base64.b64decode(Config_Obj[Section][Option]	).decode('utf-8') 	
+					except:
+						self.Config[Section][Option] = Default_Value
 
 	def Init_Config_Option_Numberic(self, Config_Obj, Section, Option, Default_Value, Encoded = False):
 		# Config does not exist

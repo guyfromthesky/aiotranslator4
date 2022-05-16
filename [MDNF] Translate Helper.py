@@ -400,6 +400,7 @@ class MyTranslatorHelper(Frame):
 		self.TextReproduceSteps.grid(row=Row, column=1, columnspan=5, rowspan=7, padx=5, pady=5, stick=W+E)
 		self.TextShouldBe = CustomText(Tab, width=50, height=7, undo=True, wrap=WORD) 
 		self.TextShouldBe.grid(row=Row, column=6, columnspan=5, padx=5, pady=5, stick=W+E)
+		
 		if self.language_tool_enable == True:
 			Tab.bind_all('<Control-q>', self.analyze_report_grammar)
 		

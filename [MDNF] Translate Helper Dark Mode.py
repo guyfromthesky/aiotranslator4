@@ -67,7 +67,7 @@ tool_display_name = "[MDNF] Translate Helper"
 tool_name = 'writer'
 REV = 4117
 ver_num = get_version(REV) 
-version = tool_display_name  + " " +  ver_num + " | Language Tool v5.6"
+#VERSION = tool_display_name  + " " +  ver_num + " | Language Tool v5.6"
 
 DELAY = 20
 DELAY2 = 300000
@@ -89,7 +89,6 @@ class MyTranslatorHelper(Frame):
 				grammar_check_result = None,
 				language_tool_enable = False,):
 
-		
 
 		self.parent = parent
 		self.parent.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -212,10 +211,6 @@ class MyTranslatorHelper(Frame):
 		if self.MyTranslator == None:
 			self.after(DELAY2, self.status_listening)
 		else:
-			try:
-				self.MyTranslator.send_progress_list()
-			except:
-				pass
 			self.after(DELAY2, self.status_listening)
 		#print('Device status:', device_status, time.time()- Start)
 
@@ -230,7 +225,7 @@ class MyTranslatorHelper(Frame):
 
 	def init_ui(self):
 		self.parent.resizable(False, False)
-		self.parent.title(version)
+		self.parent.title(VERSION)
 
 		self.Generate_Menu_UI()
 		self.Generate_Tab_UI()
@@ -454,8 +449,8 @@ class MyTranslatorHelper(Frame):
 		self.ReviewReportBtn = Button(self.report_frame, text="Review Report", width=10, command= self.review_report, state=DISABLED, style=self.Btn_Style)
 		self.ReviewReportBtn.grid(row=Row, column=8, padx=5, pady=5, stick=W+E)	
 	
-		self.ReviewReportBtn = Button(self.report_frame, text="Review Report", width=10, command= self.review_report, state=DISABLED, style=self.Btn_Style)
-		self.ReviewReportBtn.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)	
+		#self.ReviewReportBtn = Button(self.report_frame, text="Review Report", width=10, command= self.review_report, state=DISABLED, style=self.Btn_Style)
+		#self.ReviewReportBtn.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)	
 
 		self.GetReportBtn = Button(self.report_frame, text=self.LanguagePack.Button['GetReport'], width=10, command= self.generate_report, state=DISABLED, style=self.Btn_Style)
 		self.GetReportBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
@@ -476,7 +471,7 @@ class MyTranslatorHelper(Frame):
 		Tab.bind_all('<Control-s>', self._save_report)
 		Tab.bind_all('<Control-l>', self._load_report)
 		Tab.bind_all('<Control-e>', self.ResetReport)
-		Tab.bind_all('<Control-q>', self.analyze_report_grammar)
+		#Tab.bind_all('<Control-q>', self.analyze_report_grammar)
 
 
 	### UI of SIMPLE TRANSLATOR ###
@@ -1861,40 +1856,41 @@ class BottomPanel(Frame):
 		#master.VersionStatus.set('-')
 		Col = 1
 		Row = 1
-		self.Bottom_Frame = LabelFrame(master, text="DB INFO", padding=0)
+		self.Bottom_Frame = LabelFrame(master, text="DB INFO", padding=0,)
 		self.Bottom_Frame.pack(side=BOTTOM, fill=X)
+		#self.Bottom_Frame = master
 		
-		Label(text='Update', width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5)
+		Label(text='Update', width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=E)
 		Col += 1
-		Label(textvariable=master._update_day, width=20).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5)
+		Label(textvariable=master._update_day, width=20).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5, sticky=E)
 		master._update_day.set('-')
 		Col += 1
 		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
-		DictionaryLabelA.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5)
+		DictionaryLabelA.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=E)
 		Col += 1
-		Label(textvariable=master.DictionaryStatus, width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5)
+		Label(textvariable=master.DictionaryStatus, width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5, sticky=E)
 		master.DictionaryStatus.set('0')
 		Col += 1
-		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5)
+		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=E)
 		Col += 1
-		Label(textvariable=master.HeaderStatus, width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5)
+		Label(textvariable=master.HeaderStatus, width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5, sticky=E)
 		master.HeaderStatus.set('0')
 		Col += 1
-		Label(text= master.LanguagePack.Label['ProjectKey'], width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=W)
-		Col += 1
+		Label(text= master.LanguagePack.Label['ProjectKey'], width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=E)
+		Col += 2
 		self.project_id_select = AutocompleteCombobox()
-		self.project_id_select.Set_Entry_Width(20)
+		self.project_id_select.Set_Entry_Width(30)
 		self.project_id_select.set_completion_list([])
-		self.project_id_select.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, stick=W)
+		self.project_id_select.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, stick=E)
 		self.project_id_select.bind("<<ComboboxSelected>>", master._save_project_key)
 		Col += 1
 		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=15, command= master.RenewMyTranslator, state=DISABLED, style= master.Btn_Style)
-		self.RenewTranslatorMain.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=10, pady=5, stick=E)
-		
-		
-		self.rowconfigure(0, weight=1)
-		self.columnconfigure(0, weight=1)
+		self.RenewTranslatorMain.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, stick=E)
 
+		self.rowconfigure(0, weight=1)
+		#self.columnconfigure(0, weight=1)
+		self.Bottom_Frame.grid_columnconfigure(7, minsize=200)
+		
 #Simple Translator
 def SimpleTranslate(queue, MyTranslator, Text):
 	#Translated = MyTranslator.translate(Text)
@@ -2194,10 +2190,14 @@ def MainLoop():
 	except Exception as e:
 		print("Error", e)
 		language_tool_enable = False
-
+	global VERSION
+	if language_tool_enable:
+		VERSION = tool_display_name  + " " +  ver_num + " | Language Tool v5.6"
+	else:
+		VERSION = tool_display_name  + " " +  ver_num	
 	print('Create UI')
 	root = Tk()
-	root.attributes("-alpha", 0.96)
+	root.attributes("-alpha", 0.97)
 
 	style = Style(root)
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
@@ -2258,7 +2258,7 @@ def MainLoop():
 			print('Fail to get computer name')
 			name = 'Anonymous'
 
-		text_log = name + ', ' + str(e) + ', ' + version
+		text_log = name + ', ' + str(e) + ', ' + VERSION
 
 		try:
 			logger.log_text(text_log)

@@ -13,13 +13,12 @@ from datetime import date
 #import time
 #function difination
 # Copy to clipboard
-from pyperclip import copy
+from pyperclip import copy, paste
 #from tkinter import *
 #from tkinter.ttk import *
 from tkinter.ttk import Entry, Label, Style
-from tkinter.ttk import Checkbutton, OptionMenu, Notebook
+from tkinter.ttk import Checkbutton, OptionMenu, Notebook, Radiobutton, LabelFrame, Button
 from tkinter import Tk, Frame, Toplevel
-from tkinter import Button
 
 # Widget type
 from tkinter import Menu, filedialog, messagebox
@@ -32,7 +31,7 @@ from tkinter import WORD
 from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, BOTTOM
 # Config state
 from tkinter import DISABLED, NORMAL
-
+from tkhtmlview import HTMLScrolledText
 
 #from tkinter import filedialog
 #from tkinter import messagebox
@@ -65,7 +64,7 @@ from google.cloud import logging
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4112
+REV = 4116
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -88,6 +87,8 @@ class MyTranslatorHelper(Frame):
 		self.pack(side=TOP, expand=Y, fill=X)
 
 		self.parent = parent
+		self.parent.protocol("WM_DELETE_WINDOW", self.on_closing)
+
 		self.MyTranslator_Queue = MyTranslator_Queue
 		self.MyTranslator = None
 
@@ -103,6 +104,8 @@ class MyTranslatorHelper(Frame):
 		self.BUTTON_SIZE = 20
 		self.HALF_BUTTON_SIZE = 15
 		self.ROW_SIZE = 24
+		
+		self.Btn_Style = "Accent.TButton"
 
 		self.str_test_version = ""
 		self.str_test_info = ""
@@ -157,6 +160,19 @@ class MyTranslatorHelper(Frame):
 		else:
 			self.Error('No license selected, please select the key in Translate setting.')	
 		
+		MsgBox = messagebox.askquestion ('Bug Writer', self.LanguagePack.ToolTips['LoadReport'],icon = 'info') 
+		if MsgBox == 'yes':
+			self.parent.withdraw()
+			self.parent.update_idletasks()
+			self.LoadTempReport()
+			self.parent.deiconify()
+
+		self.parent.minsize(self.parent.winfo_width(), self.parent.winfo_height())
+		x_cordinate = int((self.parent.winfo_screenwidth() / 2) - (self.parent.winfo_width() / 2))
+		y_cordinate = int((self.parent.winfo_screenheight() / 2) - (self.parent.winfo_height() / 2))
+		self.parent.geometry("+{}+{}".format(x_cordinate, y_cordinate-20))
+
+		#self.after(DELAY2, self.status_listening)	
 		
 	# Menu function
 	def Error(self, ErrorText):
@@ -167,6 +183,11 @@ class MyTranslatorHelper(Frame):
 
 	def About(self):
 		messagebox.showinfo("About....", "Creator: Evan@nexonnetworks.com")
+
+	def on_closing(self):
+		if messagebox.askokcancel(tool_display_name, "Do you want to quit?"):
+			self.parent.destroy()
+			self.TranslatorProcess.terminate()
 
 	def init_ui(self):
 		self.parent.resizable(False, False)
@@ -184,10 +205,10 @@ class MyTranslatorHelper(Frame):
 
 		#self.Init_Translator_Config
 	def create_buttom_panel(self):
-		self.bottom_panel = BottomPanel(self)
+		self.bottom_panel = BottomPanel(self, BG_CL)
 		
 	def Generate_Tab_UI(self):
-		MainPanel = Frame(self, name='mainpanel')
+		MainPanel = Frame(self, name='mainpanel', bg=FRAME_BG)
 		MainPanel.pack(side=TOP, fill=BOTH, expand=Y)
 		TAB_CONTROL = Notebook(MainPanel, name='notebook')
 		# extend bindings to top level window allowing
@@ -198,15 +219,21 @@ class MyTranslatorHelper(Frame):
 		#TAB_CONTROL = Notebook(self.parent)
 		
 		#Tab1
-		self.BugWriter = Frame(TAB_CONTROL)
+		self.BugWriter = Frame(TAB_CONTROL, bg=FRAME_BG)
+		self.BugWriter.configure(background=FRAME_BG)
 		TAB_CONTROL.add(self.BugWriter, text=self.LanguagePack.Tab['BugWriter'])
 		
+		#self.CustomWriter = Frame(TAB_CONTROL)
+		#TAB_CONTROL.add(self.CustomWriter, text=self.LanguagePack.Tab['CustomBugWriter'])
+
 		#Tab2
-		self.SimpleTranslator = Frame(TAB_CONTROL)
+		self.SimpleTranslator = Frame(TAB_CONTROL, bg=FRAME_BG)
+		self.SimpleTranslator.configure(background=FRAME_BG)
 		TAB_CONTROL.add(self.SimpleTranslator, text=self.LanguagePack.Tab['SimpleTranslator'])
 
 		#Tab3
-		self.TranslateSetting = Frame(TAB_CONTROL)
+		self.TranslateSetting = Frame(TAB_CONTROL, bg=FRAME_BG)
+		self.TranslateSetting.configure(background=FRAME_BG)
 		TAB_CONTROL.add(self.TranslateSetting, text=  self.LanguagePack.Tab['Translator'])
 
 		#Tab4
@@ -223,9 +250,12 @@ class MyTranslatorHelper(Frame):
 		TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
 
 	def Generate_Menu_UI(self):
-		menubar = Menu(self.parent) 
+		menubar = Menu(self.parent, background=BG_CL, fg='white')
+
+		menubar.configure(background=BG_CL, cursor='hand2')
+
 		# Adding File Menu and commands 
-		file = Menu(menubar, tearoff = 0)
+		file = Menu(menubar, tearoff = 0, background=BG_CL, fg='white')
 		# Adding Load Menu  
 		menubar.add_cascade(label =  self.LanguagePack.Menu['File'], menu = file) 
 		file.add_command(label =  self.LanguagePack.Menu['LoadLicensePath'], command = self.Btn_Select_License_Path) 
@@ -235,9 +265,20 @@ class MyTranslatorHelper(Frame):
 		file.add_separator() 
 		#file.add_command(label =  self.LanguagePack.Menu['CreateTM'], command = self.SaveNewTM)
 		#file.add_separator() 
-		file.add_command(label =  self.LanguagePack.Menu['Exit'], command = self.parent.destroy) 
+		file.add_command(label =  self.LanguagePack.Menu['Exit'], command = self.on_closing) 
 		# Adding Help Menu
-		help_ = Menu(menubar, tearoff = 0) 
+		hotkey = Menu(menubar, tearoff = 0, background=BG_CL, fg='white')
+		menubar.add_cascade(label =  'Hotkey', menu = hotkey) 
+		hotkey.add_command(label = 'Save Report - Ctrl + S', command = self._save_report)
+		hotkey.add_command(label = 'Load Report - Ctrl + L', command = self._load_report)
+		hotkey.add_command(label = 'Reset Report - Ctrl + Q', command = self.ResetReport)
+		hotkey.add_separator()
+		hotkey.add_command(label = 'Get Title - Ctrl + T', command = self.GetTitle)
+		hotkey.add_command(label = 'Get Report - Ctrl + R', command = self.generate_report)
+		#hotkey.add_separator()  
+		#hotkey.add_command(label = 'Grammar check - Ctrl + Q') 
+
+		help_ = Menu(menubar, tearoff = 0, background=BG_CL, fg='white')
 		menubar.add_cascade(label =  self.LanguagePack.Menu['Help'], menu = help_) 
 		help_.add_command(label =  self.LanguagePack.Menu['GuideLine'], command = self.OpenWeb) 
 		help_.add_separator()
@@ -245,7 +286,7 @@ class MyTranslatorHelper(Frame):
 		self.parent.config(menu = menubar)
 		
 		# Adding Help Menu
-		language = Menu(menubar, tearoff = 0) 
+		language = Menu(menubar, tearoff = 0, background=BG_CL, fg='white')
 		menubar.add_cascade(label =  self.LanguagePack.Menu['Language'], menu = language) 
 		language.add_command(label =  self.LanguagePack.Menu['Hangul'], command = self.SetLanguageKorean) 
 		language.add_command(label =  self.LanguagePack.Menu['English'], command = self.SetLanguageEnglish) 
@@ -264,17 +305,20 @@ class MyTranslatorHelper(Frame):
 		self.source_language = StringVar()
 		self.source_language_select = OptionMenu(Tab, self.source_language, *self.language_list, command = self.set_writer_language)
 		self.source_language_select.config(width=self.HALF_BUTTON_SIZE)
+		self.source_language_select["menu"].config(bg=MENU_BG, fg= FG_CL)
 		self.source_language_select.grid(row=Row, column=1, padx=0, pady=5, sticky=W)
 
 		self.target_language = StringVar()
 		self.target_language_select = OptionMenu(Tab, self.target_language, *self.language_list, command = self.set_writer_language)
 		self.target_language_select.config(width=self.HALF_BUTTON_SIZE)
+		self.target_language_select["menu"].config(bg=MENU_BG, fg= FG_CL)
 		self.target_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
 		
 		self.secondary_target_language = StringVar()
 		secondary_language_list = self.language_list + ['']
 		self.secondary_target_language_select = OptionMenu(Tab, self.secondary_target_language, *secondary_language_list, command = self.set_writer_language)
 		self.secondary_target_language_select.config(width=self.HALF_BUTTON_SIZE)
+		self.secondary_target_language_select["menu"].config(bg=MENU_BG, fg= FG_CL)
 		self.secondary_target_language_select.grid(row=Row, column=3, padx=0, pady=5, sticky=W)
 
 		
@@ -363,8 +407,8 @@ class MyTranslatorHelper(Frame):
 		#self.db_correction = Button(Tab, text="DB Falt Alarm", width=10	, command= self.analyze_fault_terminology, state=DISABLED)
 		#self.db_correction.grid(row=Row, column=8, padx=5, pady=5, stick=W+E)
 
-		self.db_highlight = Button(Tab, text="DB Highlight", width=10, command= self.analyze_terminology, state=DISABLED)
-		self.db_highlight.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)	
+		self.ReviewReportBtn = Button(Tab, text="Review Report", width=10, command= self.review_report, state=DISABLED, style=self.Btn_Style)
+		self.ReviewReportBtn.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)	
 
 		self.GetReportBtn = Button(Tab, text=self.LanguagePack.Button['GetReport'], width=10, command= self.generate_report, state=DISABLED)
 		self.GetReportBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
@@ -375,6 +419,14 @@ class MyTranslatorHelper(Frame):
 		self.TextReproduceSteps.grid(row=Row, column=1, columnspan=5, rowspan=7, padx=5, pady=5, stick=W+E)
 		self.TextShouldBe = CustomText(Tab, width=50, height=7, undo=True, wrap=WORD) 
 		self.TextShouldBe.grid(row=Row, column=6, columnspan=5, padx=5, pady=5, stick=W+E)
+
+		Tab.bind_all('<Key>', self.SaveTempReport)
+		Tab.bind_all('<Control-r>', self.generate_report)
+		Tab.bind_all('<Control-t>', self.GetTitle)
+		Tab.bind_all('<Control-s>', self._save_report)
+		Tab.bind_all('<Control-l>', self._load_report)
+		Tab.bind_all('<Control-q>', self.ResetReport)
+
 	
 	### UI of SIMPLE TRANSLATOR ###
 	def Generate_SimpleTranslator_UI(self, Tab):
@@ -1109,6 +1161,7 @@ class MyTranslatorHelper(Frame):
 	def disable_btn(self):
 		self.GetTitleBtn.configure(state=DISABLED)
 		self.GetReportBtn.configure(state=DISABLED)
+		#self.CorrectGrammarBtn.configure(state=DISABLED)
 		self.TranslateBtn.configure(state=DISABLED)
 		self.dual_translate_btn.configure(state=DISABLED)
 		#self.RenewTranslator.configure(state=DISABLED)
@@ -1128,13 +1181,14 @@ class MyTranslatorHelper(Frame):
 		#self.Translate_bilingual_Btn.configure(state=DISABLED)
 		self.TranslateBtn.configure(state=DISABLED)
 
-		self.db_highlight.configure(state=DISABLED)
+		self.ReviewReportBtn.configure(state=DISABLED)
 
 		#self.db_correction.configure(state=DISABLED)
 
 	def enable_btn(self):
 		self.GetTitleBtn.configure(state=NORMAL)
 		self.GetReportBtn.configure(state=NORMAL)
+		#self.CorrectGrammarBtn.configure(state=NORMAL)
 		self.TranslateBtn.configure(state=NORMAL)
 		self.dual_translate_btn.configure(state=NORMAL)
 		#self.RenewTranslator.configure(state=NORMAL)
@@ -1154,7 +1208,6 @@ class MyTranslatorHelper(Frame):
 		#self.Translate_bilingual_Btn.configure(state=NORMAL)
 		self.TranslateBtn.configure(state=NORMAL)
 
-		self.db_highlight.configure(state=NORMAL)
 		#self.db_correction.configure(state=NORMAL)
 
 	def RenewMyTranslator(self):
@@ -1204,7 +1257,7 @@ class MyTranslatorHelper(Frame):
 		self.HeaderOptionB.set_completion_list(self.header_list)
 
 
-	def ResetReport(self, event):
+	def ResetReport(self,event=None):
 		self.ResetTestReport()
 
 	def analyze_terminology(self):
@@ -1215,7 +1268,15 @@ class MyTranslatorHelper(Frame):
 				self.TextReproduceSteps.highlight_fault_pattern(term, 'blue')
 				self.TextShouldBe.highlight_fault_pattern(term, 'blue')
 
-	
+	def review_report(self):
+
+		child_windows = Toplevel(self.parent)
+		#child_windows.geometry("200x200")  # Size of the window 
+		child_windows.resizable(False, False)
+		child_windows.title("Report reviewer")
+		self.report_review = HTMLScrolledText(child_windows)
+		self.report_review.set_html(self.html_content)
+		self.report_review.pack(pady=5, padx=5, fill=BOTH)
 	
 	def analyze_fault_terminology(self):
 		for term in self.MyTranslator.dictionary:
@@ -1230,10 +1291,9 @@ class MyTranslatorHelper(Frame):
 		self.confirm_report_grammar()
 		
 
-	def GetTitle(self):
+	def GetTitle(self, event=None):
 		self.disable_btn()
 		copy("")
-
 		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
 		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
@@ -1376,9 +1436,12 @@ class MyTranslatorHelper(Frame):
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['GeneratedBugReport'])
 			self.BugWriter.join()
+			self.html_content = paste()
+			self.html_content = '#my{zoom: 75%;}\n' + self.html_content
 			self.enable_btn()
+			self.ReviewReportBtn.configure(state=NORMAL)
 
-	def generate_report(self):
+	def generate_report(self,event=None):
 		self.collect_report_elements()
 		self.GenerateReportCSS()
 
@@ -1421,7 +1484,8 @@ class MyTranslatorHelper(Frame):
 			self.Grammar_Check.join()
 
 
-	def _save_report(self):
+	def _save_report(self,event=None):
+		print('Save report')
 		TextTitle = self.TextTitle.get("1.0", END)			
 		TextServer = self.TextServer.get("1.0", END)
 		TextClient = self.TextClient.get("1.0", END)
@@ -1433,21 +1497,22 @@ class MyTranslatorHelper(Frame):
 		HeaderA = self.HeaderOptionA.get()
 		HeaderB = self.HeaderOptionB.get()
 		try:
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTitle', TextTitle)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextServer', TextServer)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextClient', TextClient)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReprodTime', TextReprodTime)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextAccount', TextAccount)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTestReport', TextTestReport)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReproduceSteps', TextReproduceSteps)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextShouldBe', TextShouldBe)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTitle', TextTitle, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextServer', TextServer, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextClient', TextClient, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReprodTime', TextReprodTime, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextAccount', TextAccount, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTestReport', TextTestReport, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextShouldBe', TextShouldBe, True)
 
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)
-		except:
+		except Exception as e:
+			print('Cannot sve the report:', e)
 			pass
-
-	def SaveTempReport(self):
+	def SaveTempReport(self, event=None):
+		print('Save temp report')
 		TextTitle = self.TextTitle.get("1.0", END)			
 		TextServer = self.TextServer.get("1.0", END)
 		TextClient = self.TextClient.get("1.0", END)
@@ -1459,18 +1524,19 @@ class MyTranslatorHelper(Frame):
 		HeaderA = self.HeaderOptionA.get()
 		HeaderB = self.HeaderOptionB.get()
 		try:
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTitle', TextTitle)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextServer', TextServer)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextClient', TextClient)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReprodTime', TextReprodTime)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextAccount', TextAccount)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTestReport', TextTestReport)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReproduceSteps', TextReproduceSteps)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextShouldBe', TextShouldBe)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTitle', TextTitle, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextServer', TextServer, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextClient', TextClient, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReprodTime', TextReprodTime, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextAccount', TextAccount, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTestReport', TextTestReport, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextShouldBe', TextShouldBe, True)
 
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)
-		except:
+		except Exception as e:
+			print('Cannot sve the report:', e)
 			pass
 
 
@@ -1484,7 +1550,8 @@ class MyTranslatorHelper(Frame):
 		self.MyTranslator.glossary_id = self.glossary_id
 		self.RenewMyTranslator()
 
-	def _load_report(self):
+	def _load_report(self,event=None):
+		print('Load report')
 		try:
 			self.AppConfig.Refresh_Config_Data()
 			self.Configuration = self.AppConfig.Config
@@ -1525,8 +1592,8 @@ class MyTranslatorHelper(Frame):
 			self.HeaderOptionB.set(self.Configuration['BugDetails']['HeaderB'])
 
 
-		except:
-			print('Fail somewhere')
+		except Exception as e:
+			print('Fail somewhere:', e)
 			pass
 
 	def LoadTempReport(self):
@@ -1570,9 +1637,8 @@ class MyTranslatorHelper(Frame):
 			self.HeaderOptionB.set(self.Configuration['Temp_BugDetails']['HeaderB'])
 
 
-		except:
-			print('Fail somewhere')
-			pass		
+		except Exception as e:
+			print('Fail somewhere:', e)
 
 
 	def SaveSetting(self):
@@ -1606,9 +1672,9 @@ class ConfirmationPopup:
 		Button(self.master, width = 20, text= 'Confirm').grid(row=row, column=2, columnspan=1, padx=5, pady=5, sticky=E)
 
 class BottomPanel(Frame):
-	def __init__(self, master):
-		Frame.__init__(self, master) 
-		self.pack(side=BOTTOM, fill=X)          # resize with parent
+	def __init__(self, master, bg_cl):
+		Frame.__init__(self, master, bg=bg_cl) 
+		#self.pack(side=BOTTOM, fill=X)          # resize with parent
 		
 		# separator widget
 		#Separator(orient=HORIZONTAL).grid(in_=self, row=0, column=1, sticky=E+W, pady=5)
@@ -1620,36 +1686,40 @@ class BottomPanel(Frame):
 		#master.VersionStatus.set('-')
 		Col = 1
 		Row = 1
-		Label(text='Update', width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5)
+		self.Bottom_Frame = LabelFrame(master, text="DB INFO", padding=0,)
+		self.Bottom_Frame.pack(side=BOTTOM, fill=X)
+		#self.Bottom_Frame = master
+		
+		Label(text='Update', width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=E)
 		Col += 1
-		Label(textvariable=master._update_day, width=20).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
+		Label(textvariable=master._update_day, width=20).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5, sticky=E)
 		master._update_day.set('-')
 		Col += 1
 		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
-		DictionaryLabelA.grid(in_=self, row=Row, column=Col, padx=5, pady=5)
+		DictionaryLabelA.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=E)
 		Col += 1
-		Label(textvariable=master.DictionaryStatus, width=20).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
+		Label(textvariable=master.DictionaryStatus, width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5, sticky=E)
 		master.DictionaryStatus.set('0')
 		Col += 1
-		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5)
+		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=E)
 		Col += 1
-		Label(textvariable=master.HeaderStatus, width=20).grid(in_=self, row=Row, column=Col, padx=0, pady=5)
+		Label(textvariable=master.HeaderStatus, width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5, sticky=E)
 		master.HeaderStatus.set('0')
 		Col += 1
-		Label(text= master.LanguagePack.Label['ProjectKey'], width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5, sticky=W)
-		Col += 1
+		Label(text= master.LanguagePack.Label['ProjectKey'], width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=E)
+		Col += 2
 		self.project_id_select = AutocompleteCombobox()
 		self.project_id_select.Set_Entry_Width(30)
 		self.project_id_select.set_completion_list([])
-		self.project_id_select.grid(in_=self, row=Row, column=Col, padx=5, pady=5, stick=W)
+		self.project_id_select.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, stick=E)
 		self.project_id_select.bind("<<ComboboxSelected>>", master._save_project_key)
 		Col += 1
-		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=20, command= master.RenewMyTranslator, state=DISABLED)
-		self.RenewTranslatorMain.grid(in_=self, row=Row, column=Col, padx=10, pady=5, stick=E)
-		
-		
+		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=15, command= master.RenewMyTranslator, state=DISABLED, style= master.Btn_Style)
+		self.RenewTranslatorMain.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, stick=E)
+
 		self.rowconfigure(0, weight=1)
-		self.columnconfigure(0, weight=1)
+		#self.columnconfigure(0, weight=1)
+		self.Bottom_Frame.grid_columnconfigure(7, minsize=200)
 
 #Simple Translator
 def SimpleTranslate(queue, MyTranslator, Text):
@@ -2001,14 +2071,47 @@ def MainLoop():
 	language_tool_enable = False
 
 	root = Tk()
+	root.attributes("-alpha", 0.97)
 
 	style = Style(root)
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
+	style.map('TFrame', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
+	CWD = os.getcwd()
+
+	THEME_DIR = os.path.join(CWD, "theme\\awdark.tcl") 
+	color_mode = 'dark'
+	if os.path.isfile(THEME_DIR) == True:
+		try:
+			root.tk.call("source", THEME_DIR)
+			style.theme_use('awdark')
+			
+		except Exception as e:
+			print('Error while loading theme: ', e)	
+			color_mode = 'light'
+
+	else:
+		color_mode = 'light'
+
+	global BG_CL, FG_CL, FRAME_BG, MENU_BG
+	
+	if color_mode == 'light':	
+		BG_CL = None
+		FG_CL = None
+		FRAME_BG = None
+		MENU_BG = None
+	else:
+		BG_CL = '#191c1d'
+		FG_CL = 'white'
+		FRAME_BG = '#33393b'
+		MENU_BG = '#474D4E'	
+
 	#root.geometry("400x350+300+300")
 	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 		
 	try:
+		root.attributes('-topmost', True)
 		application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
+		root.attributes('-topmost', False)
 		root.mainloop()
 		application.MyTranslator.send_tracking_record()
 	except Exception as e:

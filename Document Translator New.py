@@ -1,5 +1,6 @@
 #System variable and io handling
 from genericpath import isfile
+from msilib.schema import Extension
 import sys
 import os
 
@@ -24,15 +25,15 @@ import pickle
 
 #GUI
 from tkinter.ttk import Entry, Label, Treeview, Scrollbar, OptionMenu
-from tkinter.ttk import Checkbutton, Button, Notebook, Menubutton
+from tkinter.ttk import Checkbutton, Button, Notebook
 from tkinter.ttk import Progressbar, Style
 
-from tkinter import Tk, Frame
+from tkinter import Tk, Frame, Menubutton
 from tkinter import Menu, filedialog, messagebox
 from tkinter import Text
 from tkinter import IntVar, StringVar
 from tkinter import W, E, S, N, END, RIGHT, HORIZONTAL, NO, CENTER
-from tkinter import WORD, NORMAL, BOTTOM, X, TOP, BOTH, Y
+from tkinter import WORD, NORMAL, BOTTOM, X, TOP, BOTH, Y, RAISED
 from tkinter import DISABLED
 
 from tkinter import scrolledtext 
@@ -167,7 +168,7 @@ class DocumentTranslator(Frame):
 		self.Generate_TranslateSetting_UI(self.TranslateSetting)
 		self.Generate_TM_Manager_UI(self.TM_Manager)
 		self.Generate_DB_Uploader_UI(self.DB_Uploader)
-		self.Generate_Debugger_UI(self.Process)
+		#self.Generate_Debugger_UI(self.Process)
 
 		
 	def Generate_DocumentTranslator_UI(self, Tab):
@@ -212,70 +213,75 @@ class DocumentTranslator(Frame):
 		Button(Tab, width = self.BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.BtnLoadDocument).grid(row=Row, column=8, columnspan=1, padx=5, pady=5, sticky=E)
 		
 		Row += 1
-		Label(Tab, text=  self.LanguagePack.Label['ToolOptions']).grid(row=Row, column=1, padx=5, pady=5, sticky= W)
-		Label(Tab, text= self.LanguagePack.Label['TMOptions']).grid(row=Row, column=3, columnspan=2, padx=5, pady=5, sticky=W)
-		Label(Tab, text= self.LanguagePack.Label['TranslateOptions']).grid(row=Row, column=5, columnspan=2, padx=5, pady=5, sticky=W)
-		#Label(Tab, text= self.LanguagePack.Label['OtherOptions']).grid(row=Row, column=7, columnspan=2, padx=5, pady=5, sticky=W)
+
+		# Menubutton Tool Option
+		Extension_Option = Menubutton(Tab, text = self.LanguagePack.Label['ToolOptions'], width= 20, relief = RAISED)
+		Extension_Option.grid(row=Row, column=1, columnspan=2, padx=5, pady=5)
+		Extension_Option_Menu = Menu(Extension_Option, tearoff = 0)
+
+		self.TranslateFileName = IntVar()
+		self.TranslateFileName.set(1)
+		Extension_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['TranslateFileName'], variable = self.TranslateFileName)
+		self.TranslateSheetName = IntVar()
+		self.TranslateSheetName.set(1)
+		Extension_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['TranslateSheetName'], variable = self.TranslateSheetName)
+
+		self.SheetRemoval = IntVar() 
+		self.SheetRemoval.set(0)
+		Extension_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['SheetRemoval'], variable = self.SheetRemoval)
+
+		self.DataOnly = IntVar()
+		self.SheetRemoval.set(0)
+		Extension_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['DataOnly'], variable = self.DataOnly)
+
+		self.Bilingual = IntVar()
+		self.SheetRemoval.set(0)
+		Extension_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['Bilingual'], variable = self.Bilingual)
+
+		Extension_Option["menu"] = Extension_Option_Menu
+
+		# Menubutton TM Option
+		TM_Option = Menubutton(Tab, text = self.LanguagePack.Label['TMOptions'], width= 20, relief = RAISED)
+		TM_Option.grid(row=Row, column=3, columnspan=2, padx=5, pady=5)
+		TM_Option_Menu = Menu(TM_Option, tearoff = 0)
+
+		self.TMUpdate = IntVar()
+		self.TMUpdate.set(1)
+		TM_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['UpdateTMFile'], variable = self.TMUpdate)
+
+		self.TMUpdate = IntVar()
+		self.TMUpdate.set(1)
+		TM_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['UpdateTMFile'], variable = self.TMUpdate)
+
+		self.TMTranslate = IntVar()
+		self.TMTranslate.set(1)
+		TM_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['TMTranslate'], variable = self.TMTranslateModeToggle)
+
+		TM_Option["menu"] = TM_Option_Menu
+
+
+		# Menubutton ETC
+		Result_File_Option = Menubutton(Tab, text = "Result Option:", width= 20, relief = RAISED)
+		Result_File_Option.grid(row=Row, column=5, columnspan=2, padx=5, pady=5)
+		Result_File_Option_Menu = Menu(Result_File_Option, tearoff = 0)
+
+
+		self.FixCorruptFileName = IntVar()
+		self.FixCorruptFileName.set(1)	
+		Result_File_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['CorruptFileName'], variable = self.FixCorruptFileName)
+
+		self.TurboTranslate = IntVar()
+		self.TurboTranslate.set(0)
+		Result_File_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['TurboTranslate'], variable = self.TurboTranslate)
+
+		Result_File_Option["menu"] = Result_File_Option_Menu
 
 		Button(Tab, width = 20, text=  self.LanguagePack.Button['Stop'], command= self.Stop).grid(row=Row, column=7, columnspan=1,padx=5, pady=0, sticky=E)	
 		self.btn_translate = Button(Tab, width = 20, text=  self.LanguagePack.Button['Translate'], command= self.Translate, state=DISABLED)
 		self.btn_translate.grid(row=Row, column=8, columnspan=1, padx=5, pady=0, sticky=E)
 
-		Row += 1
-		self.TranslateFileName = IntVar()
-		TranslateFileNameBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['TranslateFileName'], variable = self.TranslateFileName)
-		TranslateFileNameBtn.grid(row=Row, column=1, columnspan=2,padx=5, pady=5, sticky=W)
-		TranslateFileNameBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['TranslateFileName']))
-		self.TranslateFileName.set(1)
-
-		self.TMUpdate = IntVar()
-		TMUpdateBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['UpdateTMFile'], variable = self.TMUpdate)
-		TMUpdateBtn.grid(row=Row, column=3, columnspan=2,padx=0, pady=5, sticky=W)
-		TMUpdateBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['UpdateTMFile'])) 
-		self.TMUpdate.set(1)
-
-		self.DataOnly = IntVar()
-		DataOnlyBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['DataOnly'], variable = self.DataOnly)
-		DataOnlyBtn.grid(row=Row, column=5,padx=0, pady=5, sticky=W)
-		DataOnlyBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['DataOnly'])) 
 
 
-		Row+=1
-
-		self.TranslateSheetName = IntVar()
-		TranslateSheetNameBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['TranslateSheetName'], variable = self.TranslateSheetName)
-		TranslateSheetNameBtn.grid(row=Row, column=1, columnspan=2,padx=5, pady=5, sticky=W)	
-		TranslateSheetNameBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['TranslateSheetName']))
-		self.TranslateSheetName.set(1)
-
-		self.TMTranslate = IntVar()
-		TMTranslateBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['TMTranslate'], variable = self.TMTranslate, command=self.TMTranslateModeToggle)
-		TMTranslateBtn.grid(row=Row, column=3, columnspan=2, padx=0, pady=5, sticky=W)
-		TMTranslateBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['TMTranslate']))
-		self.TMTranslate.set(1)
-
-		self.TurboTranslate = IntVar()
-		TurboTranslateBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['TurboTranslate'], variable = self.TurboTranslate)
-		TurboTranslateBtn.grid(row=Row, column=5,padx=0, pady=5, sticky=W)
-		TurboTranslateBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['TurboTranslate']))
-
-		self.Bilingual = IntVar()
-		TurboTranslateBtn = Checkbutton(Tab, text= self.LanguagePack.Option['Bilingual'], variable = self.Bilingual)
-		TurboTranslateBtn.grid(row=Row, column=7, columnspan=1,padx=5, pady=0, sticky=W)
-		TurboTranslateBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['Bilingual']))
-
-		Row+=1
-
-		self.FixCorruptFileName = IntVar()
-		FixCorruptFileNameBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['CorruptFileName'], variable = self.FixCorruptFileName)
-		FixCorruptFileNameBtn.grid(row=Row, column=1, columnspan=2,padx=5, pady=5, sticky=W)	
-		FixCorruptFileNameBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['FixCorruptedName']))
-		self.FixCorruptFileName.set(1)	
-
-		self.SheetRemoval = IntVar() 
-		SheetRemoveBtn = Checkbutton(Tab, text=  self.LanguagePack.Option['SheetRemoval'], variable = self.SheetRemoval)
-		SheetRemoveBtn.grid(row=Row, column=5, columnspan=2,padx=0, pady=5, sticky=W)
-		SheetRemoveBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['SheetRemoval']))
 		Row+=1
 
 		Label(Tab, text="Sheet: ").grid(row=Row, column=1, padx=5, pady=5, sticky=W)
@@ -287,6 +293,8 @@ class DocumentTranslator(Frame):
 		self.progressbar["maximum"] = 1000
 		self.progressbar.grid(row=Row, column=1, columnspan=8, padx=5, pady=5, sticky=W)
 
+		self.Debugger = scrolledtext.ScrolledText(Tab, width=122, height=7, undo=True, wrap=WORD, )
+		self.Debugger.grid(row=Row, column=1, padx=5, columnspan=10, pady=5, sticky = E+W)
 
 	def Generate_TranslateSetting_UI(self, Tab):
 		Row = 1
@@ -394,7 +402,7 @@ class DocumentTranslator(Frame):
 		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Execute'], command= self.Btn_DB_Uploader_Execute_Script).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
 
 		Row += 1
-		self.Uploader_Debugger = scrolledtext.ScrolledText(Tab, width=122, height=13, undo=True, wrap=WORD, )
+		self.Uploader_Debugger = scrolledtext.ScrolledText(Tab, width=122, height=4, undo=True, wrap=WORD, )
 		self.Uploader_Debugger.grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E+N+S)
 
 	def debug_listening(self):
