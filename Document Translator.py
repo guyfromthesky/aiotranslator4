@@ -465,7 +465,7 @@ class DocumentTranslator(Frame):
 		"""Create the TM Converter tab and its UI."""
 		Row = 0
 		
-		### Browse TM section
+		## Browse TM section
 		Label(Tab, text=self.LanguagePack.Label['TMFileConversion']) \
 			.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 		self.entry_tm_convert_path = Entry(

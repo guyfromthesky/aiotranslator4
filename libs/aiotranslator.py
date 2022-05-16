@@ -48,7 +48,7 @@ import csv
 from pandas.core.frame import DataFrame
 
 from libs.version import get_version
-from libs.tm_file import LocalTranslationMemoryFile, CloudTranslationMemoryFile
+from libs.tm_file import TranslationMemoryFile
 from libs.aioconfigmanager import ConfigLoader
 
 Tool = "translator"
@@ -242,22 +242,7 @@ class Translator:
 
 	def init_tm_file(self, tm_path, is_cloud_tm_used):
 		"""Initialize TM file object."""
-		### INIT TM FILE OBJECTS: SELF.TM_FILE, SELF.GCS_TM_FILE
-		if is_cloud_tm_used == True and self.used_tool != 'writer':
-			print('Cloud TM is used.')
-			# Use a default path when using Cloud TM to get data from
-			# cloud storage more conveniently.
-			# Default dir: %appdata%/AIO Translator/TM
-			self.gcs_tm_file = CloudTranslationMemoryFile(
-				self.app_config.Config['Translator']['license_file'],
-				bucket_id=self.bucket_id,
-				glossary_id=self.glossary_id)
-			self.tm_file = LocalTranslationMemoryFile(
-				self.gcs_tm_file.local_path)
-			self.check_for_tm_update()
-		elif is_cloud_tm_used == False and self.used_tool != 'writer':
-			print('Cloud TM is not used.')
-			self.tm_file = LocalTranslationMemoryFile(tm_path)
+		
 
 	def correct_path_os(self, path):
 		"""Replace backward slash with forward slash if OS is not Windows."""

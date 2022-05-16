@@ -61,23 +61,30 @@ class TranslationMemoryFile:
             Queue contains error info message which will be get by the
             UI.
     """
-    def __init__(self):
-        # Set up default value
+    config_path = os.environ['APPDATA']
+    supported_languages = ['ko', 'en', 'cn', 'jp', 'vi']
+
+    def __init__(self, name):
+        ## TM FILE ATTRIBUTES
+        self.name = name
         self.ext = '.csv'
-        self.info_ext = '.json'
+        self.path = f'{self.config_path}\\{self.name}{self.ext}'
         self._data = pd.DataFrame()
-        self.supported_languages = ['ko', 'en', 'cn', 'jp', 'vi']
-        self.length = 0
+
+
+        ## OTHERS
 
         # self.err_msg_queue = Queue()
 
+    def __repro__(self):
+        return f'TM file: {self.path}'
+
     @property
     def data(self):
-        """data attribute of the class"""
         return self._data
 
     @data.setter
-    def data(self, data: pd.DataFrame):
+    def data(self, data):
         """Validate data set to self.data.
 
         Only allow pandas DataFrame type.
@@ -606,32 +613,25 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             # self.err_msg_queue.put(err_msg)
 
 ### TEST RUN ################################################################
-test_path = r'D:\Translation Tool\TM_MSM.csv'
-license_path = r'D:\Translation Tool\License_User\db editor.json'
-bucket_id = 'nxvnbucket'
-glossary_id = 'MSM'
+from configparser import ConfigParser
+config = ConfigParser()
 
-tm_file = LocalTranslationMemoryFile(test_path)
-# # print(tm_file)
-# # print(tm_file.path)
-# # print(tm_file.ext)
-# # print(tm_file.length)
-# # print(tm_file.last_modified)
+# config['settings'] = {
+#     'debug': 'true',
+#     'secret_key': 'abc123',
+#     'log_path': '/my_path'
+# }
 
-# now = datetime.now().timestamp()
-# tm_file.update_last_modified(now)
-# print(tm_file.last_modified)
+# config['db'] = {
+#     'db_name': 'myapp_dev',
+# }
 
+# with open('../test/configtest.ini', 'w') as f:
+#     config.write(f)
 
-gcs_tm_file = CloudTranslationMemoryFile(
-    license_path,
-    bucket_id=bucket_id,
-    glossary_id=glossary_id)
-print(gcs_tm_file.blob)
-
-
-gcs_tm_file.upload_to_blob(
-    local_info_path=tm_file.info_path,
-    local_tm_path=test_path)
-
-print(gcs_tm_file.info_data)
+parser = ConfigParser()
+parser.read('../test/configtest.ini')
+print(parser.set('settings', 'debug', 'false'))
+print(parser.get('settings', 'debug'))
+with open('../test/configtest.ini', 'w') as configfile:
+    parser.write(configfile)
