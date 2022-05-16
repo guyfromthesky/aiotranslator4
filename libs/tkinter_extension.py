@@ -11,7 +11,8 @@ import os
 class AutocompleteCombobox(Combobox):
 
 	def set_completion_list(self, completion_list):
-		"""Use our completion list as our drop down selection menu, arrows move through menu."""
+		"""Use our completion list as our drop down selection menu, arrows move
+		through menu."""
 		self._completion_list = sorted(completion_list, key=str.lower) # Work with a sorted list
 		self._hits = []
 		self._hit_index = 0

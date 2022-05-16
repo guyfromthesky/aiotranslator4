@@ -53,6 +53,16 @@ class LanguagePackEN:
 	Button['RelativeSearch'] = "Relative Search"
 	Button['ReviewReport'] = "Review Report"	
 
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY START
+	###########################################################################
+
+	Button['Convert'] = "Convert"
+
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY END
+	###########################################################################
+
 	Option = {}
 	Option['TranslateFileName'] = "Translate file name"
 	Option['UpdateTMFile'] = "Update TM file"
@@ -77,7 +87,15 @@ class LanguagePackEN:
 
 	Option['Bold'] = "Bold"
 	Option['UnderLine'] = "UnderLine"
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY START
+	###########################################################################
 
+	Option['UseCloudTM'] = 'Use Cloud TM'
+
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY END
+	###########################################################################
 	Option['Bilingual'] = "Bilingual"
 
 	
@@ -159,6 +177,17 @@ class LanguagePackEN:
 	Label['MainLanguage'] = "Primary language:"
 	Label['SecondaryLanguage'] = "Secondary language:"
 
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY START
+	###########################################################################
+	
+	Label['TMFileConversion'] = "TM File Conversion"
+	Label['TMFileUpload'] = "TM File Upload"
+	Label['CloudTMOptions'] = "Cloud TM Options:"
+	
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY END
+	###########################################################################
 	Label['Reproducibility'] = "Reproducibility:"
 	Label['EnvInfo'] = "Enviromental Information:"
 
@@ -200,6 +229,16 @@ class LanguagePackEN:
 	Tab['DBSeacher'] = "Search"
 
 	Tab['CustomBugWriter'] = "Custom Writer"
+
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY START
+	###########################################################################
+
+	Tab['TMConverter'] = "TM Converter"
+
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY END
+	###########################################################################
 
 	ToolTips = {}
 
@@ -260,6 +299,15 @@ class LanguagePackEN:
 	ToolTips['GeneratedBugReport'] = "Bug report is generated."
 	ToolTips['GenerateBugReportFail'] = "Fail to generate bug report."	
 	ToolTips['LoadReport'] = "Do you want to load the report from last session?"
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY START
+	###########################################################################
+
+	ToolTips['UseCloudTM'] = 'Use the Cloud TM instead of local TM.'
+	
+	###########################################################################
+	# DOCUMENT TRANSLATOR ONLY END
+	###########################################################################
 
 	ToolTips['Bilingual'] = "Original text is kept in the comment."
 

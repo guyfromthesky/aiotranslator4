@@ -468,7 +468,7 @@ class MyTranslatorHelper(Frame):
 		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectDB'],filetypes = (("JSON files","*.json" ), ), )	
 		if filename != "":
 			LicensePath = self.CorrectPath(filename)
-			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'license_file', LicensePath, True)
+			self.AppConfig.save_config(self.AppConfig.Translator_Config_Path, 'Translator', 'license_file', LicensePath, True)
 
 			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LicensePath
 			self.LicensePath.set(LicensePath)
@@ -570,13 +570,13 @@ class MyTranslatorHelper(Frame):
 	def SaveAppLanguage(self, language):
 
 		self.Notice.set(self.LanguagePack.ToolTips['AppLanuageUpdate'] + " "+ language) 
-		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'app_lang', language)
+		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'app_lang', language)
 	
 	def SelectDictionary(self):
 		filename = filedialog.askopenfilename(title = "Select Database file",filetypes = (("Dictionary files","*.xlsx *.xlsm"), ), )	
 		if filename != "":
 			NewDictionary = self.CorrectPath(filename)	
-			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'database', 'path', NewDictionary, True)
+			self.AppConfig.save_config(self.AppConfig.Translator_Config_Path, 'database', 'path', NewDictionary, True)
 			self.Notice.set(self.LanguagePack.ToolTips['DocumentLoaded'])
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
@@ -600,7 +600,7 @@ class MyTranslatorHelper(Frame):
 		filename = filedialog.askopenfilename(title = "Select Translation Memory file", filetypes = (("TM files","*.pkl"), ),)
 		if filename != "":
 			NewTM = self.CorrectPath(filename)
-			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'translation_memory', 'path', NewTM, True)
+			self.AppConfig.save_config(self.AppConfig.Translator_Config_Path, 'translation_memory', 'path', NewTM, True)
 			self.Notice.set(self.LanguagePack.ToolTips['TMUpdated'])
 		else:
 			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
@@ -619,7 +619,7 @@ class MyTranslatorHelper(Frame):
 			with open(NewTM, 'wb') as pickle_file:
 				pickle.dump([], pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 				
-			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'translation_memory', 'path', NewTM, True)
+			self.AppConfig.save_config(self.AppConfig.Translator_Config_Path, 'translation_memory', 'path', NewTM, True)
 
 	def CorrectPath(self, path):
 		if sys.platform.startswith('win'):
@@ -656,15 +656,15 @@ class MyTranslatorHelper(Frame):
 		
 		target_language_index = self.language_list.index(self.target_language.get())
 		target_language = self.language_id_list[target_language_index]
-		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'target_lang', target_language_index)
+		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'target_lang', target_language_index)
 
 		source_language_index = self.language_list.index(self.source_language.get())
 		source_language = self.language_id_list[source_language_index]
-		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'source_lang', source_language_index)
+		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'source_lang', source_language_index)
 
 		secondary_target_language_index = self.language_list.index(self.secondary_target_language.get())
 		#secondary_target_language = self.language_id_list[self.language_list.index(secondary_target_language_index)]
-		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'secondary_target_lang', secondary_target_language_index)
+		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'secondary_target_lang', secondary_target_language_index)
 
 		self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
 		self.DictionaryStatus.set(str(self.MyTranslator.glossary_size))
@@ -675,14 +675,14 @@ class MyTranslatorHelper(Frame):
 		print(event)
 		simple_target_language_index = self.language_list.index(self.simple_target_language.get())
 		simple_target_language = self.language_id_list[simple_target_language_index]
-		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'target_lang', simple_target_language_index)
+		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'target_lang', simple_target_language_index)
 
 		simple_source_language_index = self.language_list.index(self.simple_source_language.get())
 		simple_source_language = self.language_id_list[simple_source_language_index]
-		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'source_lang', simple_source_language_index)
+		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'source_lang', simple_source_language_index)
 		
 		simple_secondary_target_language_index = self.language_list.index(self.simple_secondary_target_language.get())
-		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'secondary_target_lang', simple_secondary_target_language_index)
+		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'secondary_target_lang', simple_secondary_target_language_index)
 
 		self.MyTranslator.set_language_pair(source_language = simple_source_language, target_language = simple_target_language)
 
@@ -1431,17 +1431,17 @@ class MyTranslatorHelper(Frame):
 		HeaderA = self.HeaderOptionA.get()
 		HeaderB = self.HeaderOptionB.get()
 		try:
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTitle', TextTitle)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextServer', TextServer)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextClient', TextClient)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReprodTime', TextReprodTime)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextAccount', TextAccount)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTestReport', TextTestReport)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReproduceSteps', TextReproduceSteps)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextShouldBe', TextShouldBe)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTitle', TextTitle)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextServer', TextServer)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextClient', TextClient)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReprodTime', TextReprodTime)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextAccount', TextAccount)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTestReport', TextTestReport)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReproduceSteps', TextReproduceSteps)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextShouldBe', TextShouldBe)
 
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)
 		except:
 			pass
 
@@ -1457,17 +1457,17 @@ class MyTranslatorHelper(Frame):
 		HeaderA = self.HeaderOptionA.get()
 		HeaderB = self.HeaderOptionB.get()
 		try:
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTitle', TextTitle)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextServer', TextServer)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextClient', TextClient)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReprodTime', TextReprodTime)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextAccount', TextAccount)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTestReport', TextTestReport)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReproduceSteps', TextReproduceSteps)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextShouldBe', TextShouldBe)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTitle', TextTitle)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextServer', TextServer)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextClient', TextClient)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReprodTime', TextReprodTime)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextAccount', TextAccount)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTestReport', TextTestReport)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReproduceSteps', TextReproduceSteps)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextShouldBe', TextShouldBe)
 
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderA', HeaderA)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderA', HeaderA)
+			self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)
 		except:
 			pass
 
@@ -1478,7 +1478,7 @@ class MyTranslatorHelper(Frame):
 		self.glossary_id = self.bottom_panel.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
 		print('Save current project key: ', self.glossary_id)
-		self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'glossary_id', self.glossary_id)
+		self.AppConfig.save_config(self.AppConfig.Translator_Config_Path, 'Translator', 'glossary_id', self.glossary_id)
 		self.MyTranslator.glossary_id = self.glossary_id
 		self.RenewMyTranslator()
 
@@ -1577,8 +1577,8 @@ class MyTranslatorHelper(Frame):
 
 		#self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'test_info_inable', 'path', self.SkipTestInfo.get())
 		#self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'use_simple_template', 'path', self.UseSimpleTemplate.get())
-		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'test_info_inable', self.SkipTestInfo.get())
-		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'use_simple_template', self.UseSimpleTemplate.get())
+		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'test_info_inable', self.SkipTestInfo.get())
+		self.AppConfig.save_config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'use_simple_template', self.UseSimpleTemplate.get())
 
 
 
