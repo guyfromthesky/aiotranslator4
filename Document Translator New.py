@@ -694,6 +694,7 @@ class DocumentTranslator(Frame):
 			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'license_file', LicensePath, True)
 			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LicensePath
 			self.LicensePath.set(LicensePath)
+			self.rebuild_UI()
 		else:
 			self.write_debug("No file is selected")
 
