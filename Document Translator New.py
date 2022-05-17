@@ -534,7 +534,9 @@ class DocumentTranslator(Frame):
 		file.add_command(label =  self.LanguagePack.Menu['LoadTM'], command = self.SelectTM) 
 		file.add_command(label =  self.LanguagePack.Menu['CreateTM'], command = self.SaveNewTM)
 		file.add_separator() 
-		file.add_command(label =  self.LanguagePack.Menu['Exit'], command = self.on_closing) 
+		file.add_command(label =  'Restart', command = self.rebuild_UI) 
+		file.add_command(label =  self.LanguagePack.Menu['Exit'], command = self.on_closing)
+		
 		
 
 		# Adding Help Menu
@@ -581,8 +583,8 @@ class DocumentTranslator(Frame):
 		TAB_CONTROL.add(self.DB_Uploader, text= self.LanguagePack.Tab['DBUploader'])
 
 		# Process Details tab
-		self.Process = Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.Process, text = self.LanguagePack.Tab['Debug'])
+		#self.Process = Frame(TAB_CONTROL)
+		#TAB_CONTROL.add(self.Process, text = self.LanguagePack.Tab['Debug'])
 
 		#TAB_CONTROL.pack(expand=1, fill="both")
 		TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
