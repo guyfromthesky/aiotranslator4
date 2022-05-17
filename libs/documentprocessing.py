@@ -248,7 +248,7 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 	if 'Bilingual' not in Options:
 		BilingualMode = False
 	else:
-		BilingualMode = True
+		BilingualMode = Options['Bilingual']
 		from openpyxl.comments import Comment
 
 	try:

@@ -482,7 +482,6 @@ class DocumentTranslator(Frame):
 					pass	
 					
 
-	# Nam will check
 	def search_tm_list(self):
 		"""
 		Search text box in TM Manager tab
@@ -740,6 +739,8 @@ class DocumentTranslator(Frame):
 			Outputdir = os.path.dirname(Source)
 			BasePath = str(os.path.abspath(Outputdir))
 			subprocess.Popen('explorer ' + BasePath)
+			print(BasePath)
+			print(len(BasePath))
 		else:
 			self.Error('No file selected')	
 		
