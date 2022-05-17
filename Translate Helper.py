@@ -1447,7 +1447,7 @@ class MyTranslatorHelper(Frame):
 			self.Notice.set(self.LanguagePack.ToolTips['GeneratedBugReport'])
 			self.BugWriter.join()
 			self.html_content = paste()
-			self.html_content = '#my{zoom: 75%;}\n' + self.html_content
+			#self.html_content = '#my{zoom: 75%;}\n' + self.html_content
 			self.enable_btn()
 			self.ReviewReportBtn.configure(state=NORMAL)
 
