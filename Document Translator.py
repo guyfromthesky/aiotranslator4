@@ -260,9 +260,10 @@ class DocumentTranslator(Frame):
 		TurboTranslateBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['TurboTranslate']))
 
 		self.Bilingual = IntVar()
-		TurboTranslateBtn = Checkbutton(Tab, text= self.LanguagePack.Option['Bilingual'], variable = self.Bilingual)
-		TurboTranslateBtn.grid(row=Row, column=7, columnspan=1,padx=5, pady=0, sticky=W)
-		TurboTranslateBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['Bilingual']))
+		BilingualBtn = Checkbutton(Tab, text= self.LanguagePack.Option['Bilingual'], variable = self.Bilingual)
+		BilingualBtn.grid(row=Row, column=7, columnspan=1,padx=5, pady=0, sticky=W)
+		BilingualBtn.bind("<Enter>", lambda event : self.Notice.set(self.LanguagePack.ToolTips['Bilingual']))
+		self.Bilingual.set(0)
 
 		Row+=1
 

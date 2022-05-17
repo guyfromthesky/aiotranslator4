@@ -58,7 +58,7 @@ import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4115
+rev = 4116
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -231,11 +231,11 @@ class DocumentTranslator(Frame):
 		Extension_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['SheetRemoval'], variable = self.SheetRemoval)
 
 		self.DataOnly = IntVar()
-		self.SheetRemoval.set(0)
+		self.DataOnly.set(0)
 		Extension_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['DataOnly'], variable = self.DataOnly)
 
 		self.Bilingual = IntVar()
-		self.SheetRemoval.set(0)
+		self.Bilingual.set(0)
 		Extension_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['Bilingual'], variable = self.Bilingual)
 
 		Extension_Option["menu"] = Extension_Option_Menu
