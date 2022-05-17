@@ -21,7 +21,7 @@ import json
 import pandas as pd
 
 # Process modules
-from multiprocessing import Queue
+from multiprocessing import Queue, Manager
 
 # Google Cloud modules
 from google.cloud import storage
@@ -61,7 +61,7 @@ class TranslationMemoryFile:
             Queue contains error info message which will be get by the
             UI.
     """
-    config_path = os.environ['APPDATA']
+    config_path = f"{os.environ['APPDATA']}\\AIO Translator\\TM"
     supported_languages = ['ko', 'en', 'cn', 'jp', 'vi']
 
     def __init__(self, name):
@@ -69,7 +69,7 @@ class TranslationMemoryFile:
         self.name = name
         self.ext = '.csv'
         self.path = f'{self.config_path}\\{self.name}{self.ext}'
-        self._data = pd.DataFrame()
+        self._data = pd.read_csv(self.path)
 
 
         ## OTHERS
@@ -78,6 +78,9 @@ class TranslationMemoryFile:
 
     def __repro__(self):
         return f'TM file: {self.path}'
+
+    def __add__(self):
+        pass
 
     @property
     def data(self):
@@ -103,7 +106,6 @@ class TranslationMemoryFile:
                 Invalid data type. Data type is not an instance of
                 DataFrame.
         """
-        # Only accept DataFrame type data
         if isinstance(data, pd.DataFrame):
             self._data = data
             self.length = len(data)
@@ -612,26 +614,59 @@ class CloudTranslationMemoryFile(TranslationMemoryFile):
             print(err_msg)
             # self.err_msg_queue.put(err_msg)
 
-### TEST RUN ################################################################
-from configparser import ConfigParser
-config = ConfigParser()
+# ### TEST RUN ################################################################
+# from configparser import ConfigParser
 
-# config['settings'] = {
-#     'debug': 'true',
-#     'secret_key': 'abc123',
-#     'log_path': '/my_path'
-# }
+# parser = ConfigParser()
+# parser.read('../test/configtest.ini')
 
-# config['db'] = {
-#     'db_name': 'myapp_dev',
-# }
+# os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = parser.get('tm_settings', 'license_path')
 
-# with open('../test/configtest.ini', 'w') as f:
-#     config.write(f)
+# bucket_id = parser.get('tm_settings', 'bucket_id')
 
-parser = ConfigParser()
-parser.read('../test/configtest.ini')
-print(parser.set('settings', 'debug', 'false'))
-print(parser.get('settings', 'debug'))
-with open('../test/configtest.ini', 'w') as configfile:
-    parser.write(configfile)
+# tm_path_uri = parser.get('tm_settings', 'tm_path_uri')
+# print(tm_path_uri)
+
+# download_destination_path = parser.get('tm_settings', 'download_destination_path')
+# print(download_destination_path)
+
+# storage_client = storage.Client()
+# bucket = storage_client.get_bucket(bucket_id)
+# print(bucket)
+
+# blob = bucket.get_blob(tm_path_uri)
+# print(blob)
+
+# blob.download_to_filename(download_destination_path)
+
+# blob_data = pd.read_csv(download_destination_path)
+# print(type(blob_data))
+# print(blob_data)
+
+# tm_data = blob_data[['en', 'ko']]
+# print(tm_data)
+
+df1 = pd.DataFrame({
+        'ko': ['하나', '둘', '다셧', '이이'],
+        'vi': ['mot', 'hai', 'nam', 'yy']})
+
+df2 = pd.DataFrame({
+        'ko': ['셋', '넷', '여셧'],
+        'vi': ['ba', 'bon', 'sau']})
+
+dflist = [df1, df2]
+
+df3 = pd.concat(dflist, ignore_index=True)
+
+ROW_LIMIT = 2
+dflistnew = []
+# num = int(len(df3) / ROW_LIMIT)
+num = len(df3) / ROW_LIMIT
+print(num)
+# for x in range(num + 1):
+#     start_row = ROW_LIMIT * x
+#     end_row = ROW_LIMIT * (x + 1) - 1
+#     new_df = df3.iloc[start_row:end_row]
+#     print(new_df)
+#     dflistnew.append(new_df)
+
