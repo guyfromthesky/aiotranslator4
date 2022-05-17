@@ -64,7 +64,7 @@ from google.cloud import logging
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4116
+REV = 4117
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -188,6 +188,13 @@ class MyTranslatorHelper(Frame):
 		if messagebox.askokcancel(tool_display_name, "Do you want to quit?"):
 			self.parent.destroy()
 			self.TranslatorProcess.terminate()
+
+	def rebuild_UI(self):
+		if messagebox.askokcancel("Quit", "Do you want to restart?"):
+			self.parent.destroy()
+			main()
+		else:
+			messagebox.showinfo('Language update','The application\'s language will be changed in next session.')	
 
 	def init_ui(self):
 		self.parent.resizable(False, False)
@@ -520,9 +527,10 @@ class MyTranslatorHelper(Frame):
 		if filename != "":
 			LicensePath = self.CorrectPath(filename)
 			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'license_file', LicensePath, True)
-
 			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LicensePath
 			self.LicensePath.set(LicensePath)
+			self.rebuild_UI()
+			
 		else:
 			self.Notice.set("No file is selected")
 
@@ -611,11 +619,13 @@ class MyTranslatorHelper(Frame):
 	def SetLanguageKorean(self):
 		self.AppLanguage = 'kr'
 		self.SaveAppLanguage(self.AppLanguage)
+		self.rebuild_UI()
 		#self.initUI()
 	
 	def SetLanguageEnglish(self):
 		self.AppLanguage = 'en'
 		self.SaveAppLanguage(self.AppLanguage)
+		self.rebuild_UI()
 		#self.initUI()
 
 	def SaveAppLanguage(self, language):
@@ -2065,7 +2075,7 @@ def fixed_map(style, option):
 	return [elm for elm in style.map('Treeview', query_opt=option) if
 	  elm[:2] != ('!disabled', '!selected')]
 
-def MainLoop():
+def main():
 
 	MyTranslator = Queue()
 	return_text = Queue()
@@ -2162,4 +2172,4 @@ if __name__ == '__main__':
 	#AIOTracker.GenerateToolUsageEvent(version)
 	#AIOTracker.UpdateTrackingData()
 
-	MainLoop()
+	main()

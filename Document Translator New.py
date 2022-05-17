@@ -171,6 +171,8 @@ class DocumentTranslator(Frame):
 		#self.Generate_Debugger_UI(self.Process)
 
 		
+
+		
 	def Generate_DocumentTranslator_UI(self, Tab):
 		Row=1
 		Label(Tab, textvariable=self.Progress, width= 40).grid(row=Row, column=1, columnspan=3, padx=5, pady=5, sticky=W)
@@ -249,14 +251,10 @@ class DocumentTranslator(Frame):
 		self.TMUpdate.set(1)
 		TM_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['UpdateTMFile'], variable = self.TMUpdate)
 
-		self.TMUpdate = IntVar()
-		self.TMUpdate.set(1)
-		TM_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['UpdateTMFile'], variable = self.TMUpdate)
-
 		self.TMTranslate = IntVar()
 		self.TMTranslate.set(1)
 		TM_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['TMTranslate'], variable = self.TMTranslateModeToggle)
-
+		
 		TM_Option["menu"] = TM_Option_Menu
 
 
@@ -292,8 +290,8 @@ class DocumentTranslator(Frame):
 		self.progressbar = Progressbar(Tab, orient=HORIZONTAL, length=1000,  mode='determinate')
 		self.progressbar["maximum"] = 1000
 		self.progressbar.grid(row=Row, column=1, columnspan=8, padx=5, pady=5, sticky=W)
-
-		self.Debugger = scrolledtext.ScrolledText(Tab, width=122, height=7, undo=True, wrap=WORD, )
+		Row+=1
+		self.Debugger = scrolledtext.ScrolledText(Tab, width=122, height=6, undo=True, wrap=WORD, )
 		self.Debugger.grid(row=Row, column=1, padx=5, columnspan=10, pady=5, sticky = E+W)
 
 	def Generate_TranslateSetting_UI(self, Tab):
@@ -410,7 +408,7 @@ class DocumentTranslator(Frame):
 			try:
 				Status = self.StatusQueue.get(0)
 				if Status != None:
-					self.Debugger.insert("end", "\n\r")
+					self.Debugger.insert("end", "\r\n")
 					ct = datetime.now()
 					self.Debugger.insert("end", str(ct) + ": " + Status)
 					self.Debugger.yview(END)
@@ -418,7 +416,11 @@ class DocumentTranslator(Frame):
 				break
 		self.after(DELAY, self.debug_listening)
 
-
+	def write_debug(self, text):
+		self.Debugger.insert("end", "\n\r")
+		ct = datetime.now()
+		self.Debugger.insert("end", str(ct) + ": " + text)
+		self.Debugger.yview(END)
 
 	def search_tm_event(self, event):
 		self.search_tm_list()
@@ -445,9 +447,10 @@ class DocumentTranslator(Frame):
 	def double_right_click_treeview(self, event):
 		focused = self.Treeview.focus()
 		child = self.Treeview.item(focused)
-		self.Debugger.insert("end", "\n")
+		self.w
+		self.Debugger.insert("end", "\r\n")
 		self.Debugger.insert("end", 'Korean: ' + str(child["text"]))
-		self.Debugger.insert("end", "\n")
+		self.Debugger.insert("end", "\r\n")
 		self.Debugger.insert("end", 'English: ' + str(child["values"][0]))
 		self.Debugger.yview(END)
 		#self.pair_list.delete("1.0", END)
@@ -531,7 +534,9 @@ class DocumentTranslator(Frame):
 		file.add_command(label =  self.LanguagePack.Menu['LoadTM'], command = self.SelectTM) 
 		file.add_command(label =  self.LanguagePack.Menu['CreateTM'], command = self.SaveNewTM)
 		file.add_separator() 
-		file.add_command(label =  self.LanguagePack.Menu['Exit'], command = self.parent.destroy) 
+		file.add_command(label =  self.LanguagePack.Menu['Exit'], command = self.on_closing) 
+		
+
 		# Adding Help Menu
 		help_ = Menu(menubar, tearoff = 0) 
 		menubar.add_cascade(label =  self.LanguagePack.Menu['Help'], menu = help_) 
@@ -602,7 +607,7 @@ class DocumentTranslator(Frame):
 
 	def SaveAppLanguage(self, language):
 		print('Save language:', language)
-		self.Notice.set(self.LanguagePack.ToolTips['AppLanuageUpdate'] + " "+ language) 
+		self.write_debug(self.LanguagePack.ToolTips['AppLanuageUpdate'] + " "+ language) 
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'app_lang', language)
 
 	def save_app_config(self):
@@ -643,11 +648,12 @@ class DocumentTranslator(Frame):
 	def SetLanguageKorean(self):
 		self.AppLanguage = '1'
 		self.SaveAppLanguage(self.AppLanguage)
-
+		self.rebuild_UI()
 	
 	def SetLanguageEnglish(self):
 		self.AppLanguage = '2'
 		self.SaveAppLanguage(self.AppLanguage)
+		self.rebuild_UI()
 
 	def OpenWeb(self):
 		webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/%5BTranslation%5D+AIO+Translator")
@@ -656,6 +662,13 @@ class DocumentTranslator(Frame):
 		if messagebox.askokcancel("Quit", "Do you want to quit?"):
 			self.parent.destroy()
 			self.TranslatorProcess.terminate()
+
+	def rebuild_UI(self):
+		if messagebox.askokcancel("Quit", "Do you want to restart?"):
+			self.parent.destroy()
+			main()
+		else:
+			messagebox.showinfo('Language update','The application\'s language will be changed in next session.')	
 
 	def CorrectPath(self, path):
 		if sys.platform.startswith('win'):
@@ -680,7 +693,7 @@ class DocumentTranslator(Frame):
 			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LicensePath
 			self.LicensePath.set(LicensePath)
 		else:
-			self.Notice.set("No file is selected")
+			self.write_debug("No file is selected")
 
 
 	def SelectTM(self):
@@ -690,9 +703,9 @@ class DocumentTranslator(Frame):
 			self.TMPath.set(NewTM)
 			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'translation_memory', NewTM, True)
 			self.renew_my_translator()
-			self.Notice.set(self.LanguagePack.ToolTips['TMUpdated'])
+			self.write_debug(self.LanguagePack.ToolTips['TMUpdated'])
 		else:
-			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
+			self.write_debug(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 			
 
 	def SaveNewTM(self):	
@@ -732,9 +745,9 @@ class DocumentTranslator(Frame):
 		if filename != "":
 			self.ListFile = list(filename)
 			self.CurrentSourceFile.set(str(self.ListFile[0]))
-			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
+			self.write_debug(self.LanguagePack.ToolTips['SourceSelected'])
 		else:
-			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
+			self.write_debug(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 		return
 
 	def BtnLoadRawSource(self):
@@ -744,9 +757,9 @@ class DocumentTranslator(Frame):
 			self.RawFile = FolderName
 			self.RawSource.set(str(FolderName))
 			
-			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
+			self.write_debug(self.LanguagePack.ToolTips['SourceSelected'])
 		else:
-			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
+			self.write_debug(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 		return
 
 
@@ -760,9 +773,9 @@ class DocumentTranslator(Frame):
 		if filename != "":
 			self.DB_Path = self.CorrectPath(filename)
 			self.Str_DB_Path.set(self.DB_Path)
-			self.Notice.set(self.LanguagePack.ToolTips['SourceSelected'])
+			self.write_debug(self.LanguagePack.ToolTips['SourceSelected'])
 		else:
-			self.Notice.set(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
+			self.write_debug(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 		return
 
 	def Btn_DB_Uploader_Execute_Script(self):
@@ -1011,7 +1024,7 @@ class DocumentTranslator(Frame):
 			pass
 		self.progressbar["value"] = 0
 		self.progressbar.update()
-		self.Notice.set('Translate Process has been stop')
+		self.write_debug('Translate Process has been stop')
 		return
 
 	def Stop(self):
@@ -1022,10 +1035,10 @@ class DocumentTranslator(Frame):
 			pass
 		self.progressbar["value"] = 0
 		self.progressbar.update()
-		self.Notice.set('Translate Process has been stop')	
+		self.write_debug('Translate Process has been stop')	
 
 	def generate_translator_engine(self):
-		self.Notice.set(self.LanguagePack.ToolTips['AppInit'])
+		self.write_debug(self.LanguagePack.ToolTips['AppInit'])
 
 		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
@@ -1099,10 +1112,8 @@ class DocumentTranslator(Frame):
 			self._version_status.set(version)
 			self._update_day.set(Date)
 			
-			self.Notice.set(self.LanguagePack.ToolTips['AppInitDone'])
+			self.write_debug(self.LanguagePack.ToolTips['AppInitDone'])
 			self.TranslatorProcess.join()
-		else:
-			self.Notice.set(self.LanguagePack.ToolTips['AppInit']) 
 
 	
 
@@ -1202,10 +1213,10 @@ class DocumentTranslator(Frame):
 		# Get Documents list
 		self.Options['SourceDocument'] = self.ListFile
 		if self.Options['SourceDocument'] == "":
-			self.Notice.set(self.LanguagePack.ToolTips['SourceNotSelected']) 
+			self.write_debug(self.LanguagePack.ToolTips['SourceNotSelected']) 
 			return
 		else:
-			self.Notice.set(self.LanguagePack.ToolTips['DocumentLoad']) 
+			self.write_debug(self.LanguagePack.ToolTips['DocumentLoad']) 
 
 
 	def Translate(self):
@@ -1262,21 +1273,21 @@ class DocumentTranslator(Frame):
 					self.Progress.set("Progress: " + str(100) + '%')
 					
 				elif '[Errno 13] Permission denied' in Result:
-					self.Notice.set(self.LanguagePack.ToolTips['TranslateFail'])
+					self.write_debug(self.LanguagePack.ToolTips['TranslateFail'])
 					Result = Result.replace('[Errno 13] Permission denied','File is being in used')
 					self.Error(str(Result))
 					self.progressbar["value"] = 0
 					self.progressbar.update()
 					self.Progress.set("Progress: " + str(0) + '%')
 				elif 'Package not found at' in Result:
-					self.Notice.set(self.LanguagePack.ToolTips['TranslateFail'])
+					self.write_debug(self.LanguagePack.ToolTips['TranslateFail'])
 					Result = Result.replace(' Package not found at ','File is being in used: ')
 					self.Error(str(Result))
 					self.progressbar["value"] = 0
 					self.progressbar.update()
 					self.Progress.set("Progress: " + str(0) + '%')
 				else:	
-					self.Notice.set(self.LanguagePack.ToolTips['TranslateFail'])
+					self.write_debug(self.LanguagePack.ToolTips['TranslateFail'])
 					self.Error(str(Result))
 					self.progressbar["value"] = 0
 					self.progressbar.update()
@@ -1323,7 +1334,7 @@ class BottomPanel(Frame):
 		Col += 1
 		TMLabel=Label(text=  master.LanguagePack.Label['TM'], width=15)
 		TMLabel.grid(in_=self, row=Row, column=Col, padx=5, pady=5, sticky=E)
-		TMLabel.bind("<Enter>", lambda event : master.Notice.set(master.LanguagePack.ToolTips['FilePath'] + master.TMPath.get()))
+		TMLabel.bind("<Enter>", lambda event : master.write_debug(master.LanguagePack.ToolTips['FilePath'] + master.TMPath.get()))
 		Col += 1
 		Label( width= 15, textvariable=master.TMStatus).grid(in_=self, row=Row, column=Col, padx=0, pady=5, sticky=E)
 		master.TMStatus.set('-')
