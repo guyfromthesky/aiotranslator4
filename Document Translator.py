@@ -253,7 +253,7 @@ class DocumentTranslator(Frame):
 
 		self.TMTranslate = IntVar()
 		self.TMTranslate.set(1)
-		TM_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['TMTranslate'], variable = self.TMTranslateModeToggle)
+		TM_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['TMTranslate'], variable = self.TMTranslate)
 		
 		TM_Option["menu"] = TM_Option_Menu
 
