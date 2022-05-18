@@ -749,10 +749,8 @@ class DocumentTranslator(Frame):
 		if len(self.ListFile) > 0:
 			Source = self.ListFile[0]
 			Outputdir = os.path.dirname(Source)
-			BasePath = str(os.path.abspath(Outputdir))
-			subprocess.Popen(f"ii {BasePath}")
-			print(BasePath)
-			print(len(BasePath))
+			# BasePath = str(os.path.abspath(Outputdir))
+			subprocess.Popen(f'start {Outputdir}', shell=True)
 		else:
 			self.Error('No file selected')	
 		
