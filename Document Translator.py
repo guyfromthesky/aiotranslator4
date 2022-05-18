@@ -674,7 +674,7 @@ class DocumentTranslator(Frame):
 				
 				self.TranslatorProcess.terminate()
 			except Exception as e:
-				print(e))	
+				print(e)
 
 	def rebuild_UI(self):
 		if messagebox.askokcancel("Quit", "Do you want to restart?"):
