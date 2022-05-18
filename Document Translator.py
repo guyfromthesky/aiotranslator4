@@ -750,7 +750,7 @@ class DocumentTranslator(Frame):
 			Source = self.ListFile[0]
 			Outputdir = os.path.dirname(Source)
 			BasePath = str(os.path.abspath(Outputdir))
-			subprocess.Popen('explorer ' + BasePath)
+			subprocess.Popen(f"ii {BasePath}")
 			print(BasePath)
 			print(len(BasePath))
 		else:
