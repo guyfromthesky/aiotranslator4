@@ -1586,6 +1586,9 @@ class Translator:
 		self.temporaty_tm >>> self.current_tm >>> glossary entry >>> pickle file
 		If a sentence is existed in an entry, that entry will be modified instead of create new one.
 		'''
+		if not os.path.isfile(self.tm_path):
+			print('Pickle file not found')
+			return 0
 		print('Append translation memory')
 		new_tm_size = len(self.temporary_tm)
 		print('Size of temporary TM: ', new_tm_size)

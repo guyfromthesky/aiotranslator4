@@ -138,9 +138,17 @@ class DocumentTranslator(Frame):
 			if os.path.isfile(self.LicensePath.get()):
 				self.generate_translator_engine()
 			else:
-				self.Error('No license selected, please select the key in Translate setting.')	
+				
+				closed_box = messagebox.askokcancel('Bug Writer', 'No license selected, please select the key in Translate setting.',icon = 'info')
+
+				if closed_box == True:
+					self.TAB_CONTROL.select(self.TranslateSetting)
 		else:
-			self.Error('No license selected, please select the key in Translate setting.')	
+		
+			closed_box = messagebox.askokcancel('Bug Writer', 'No license selected, please select the key in Translate setting.',icon = 'info')
+
+			if closed_box == True:
+				self.TAB_CONTROL.select(self.TranslateSetting)
 
 		self.after(DELAY, self.debug_listening)	
 
@@ -253,7 +261,7 @@ class DocumentTranslator(Frame):
 
 		self.TMTranslate = IntVar()
 		self.TMTranslate.set(1)
-		TM_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['TMTranslate'], variable = self.TMTranslate)
+		TM_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['TMTranslate'], variable = self.TMTranslate, command=self.TMTranslateModeToggle)
 		
 		TM_Option["menu"] = TM_Option_Menu
 
@@ -557,36 +565,36 @@ class DocumentTranslator(Frame):
 
 		MainPanel = Frame(self, name='mainpanel')
 		MainPanel.pack(side=TOP, fill=BOTH, expand=Y)
-		TAB_CONTROL = Notebook(MainPanel, name='notebook')
+		self.TAB_CONTROL = Notebook(MainPanel, name='notebook')
 		# extend bindings to top level window allowing
 		#   CTRL+TAB - cycles thru tabs
 		#   SHIFT+CTRL+TAB - previous tab
 		#   ALT+K - select tab using mnemonic (K = underlined letter)
-		TAB_CONTROL.enable_traversal()
+		self.TAB_CONTROL.enable_traversal()
 
-		#TAB_CONTROL = Notebook(self.parent)
+		#self.TAB_CONTROL = Notebook(self.parent)
 		#Tab1
-		self.MainTab = Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.MainTab, text= self.LanguagePack.Tab['Main'])
+		self.MainTab = Frame(self.TAB_CONTROL)
+		self.TAB_CONTROL.add(self.MainTab, text= self.LanguagePack.Tab['Main'])
 		#Tab2
-		self.TranslateSetting = Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.TranslateSetting, text= self.LanguagePack.Tab['Translator'])
+		self.TranslateSetting = Frame(self.TAB_CONTROL)
+		self.TAB_CONTROL.add(self.TranslateSetting, text= self.LanguagePack.Tab['Translator'])
 		#Tab5
-		#self.Comparison = ttk.Frame(TAB_CONTROL)
-		#TAB_CONTROL.add(self.Comparison, text=  self.LanguagePack.Tab['Comparison'])
+		#self.Comparison = ttk.Frame(self.TAB_CONTROL)
+		#self.TAB_CONTROL.add(self.Comparison, text=  self.LanguagePack.Tab['Comparison'])
 		#Tab6
-		self.TM_Manager = Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.TM_Manager, text= self.LanguagePack.Tab['TMManager'])
+		self.TM_Manager = Frame(self.TAB_CONTROL)
+		self.TAB_CONTROL.add(self.TM_Manager, text= self.LanguagePack.Tab['TMManager'])
 
-		self.DB_Uploader = Frame(TAB_CONTROL)
-		TAB_CONTROL.add(self.DB_Uploader, text= self.LanguagePack.Tab['DBUploader'])
+		self.DB_Uploader = Frame(self.TAB_CONTROL)
+		self.TAB_CONTROL.add(self.DB_Uploader, text= self.LanguagePack.Tab['DBUploader'])
 
 		# Process Details tab
-		#self.Process = Frame(TAB_CONTROL)
-		#TAB_CONTROL.add(self.Process, text = self.LanguagePack.Tab['Debug'])
+		#self.Process = Frame(self.TAB_CONTROL)
+		#self.TAB_CONTROL.add(self.Process, text = self.LanguagePack.Tab['Debug'])
 
-		#TAB_CONTROL.pack(expand=1, fill="both")
-		TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
+		#self.TAB_CONTROL.pack(expand=1, fill="both")
+		self.TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
 
 	def disable_button(self):
 		_state = DISABLED
@@ -621,7 +629,7 @@ class DocumentTranslator(Frame):
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_language', source_language_index)
 
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'speed_mode', self.TurboTranslate.get())
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'bilingual_mode', self.Bilingual.get())
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'bilingual', self.Bilingual.get())
 
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'value_only', self.DataOnly.get())
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'file_name_correct', self.TranslateFileName.get())
@@ -662,7 +670,11 @@ class DocumentTranslator(Frame):
 	def on_closing(self):
 		if messagebox.askokcancel("Quit", "Do you want to quit?"):
 			self.parent.destroy()
-			self.TranslatorProcess.terminate()
+			try:
+				
+				self.TranslatorProcess.terminate()
+			except Exception as e:
+				print(e))	
 
 	def rebuild_UI(self):
 		if messagebox.askokcancel("Quit", "Do you want to restart?"):
@@ -948,7 +960,14 @@ class DocumentTranslator(Frame):
 		self.LicensePath.set(license_file_path)
 		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = license_file_path
 
-		self.TMPath.set(self.Configuration['Translator']['translation_memory'])
+		_tm_path = self.Configuration['Translator']['translation_memory']
+		
+		# Check if tm path is valid
+		if not os.path.exists(_tm_path):
+			with open(_tm_path, 'wb') as pickle_file:
+				pickle.dump({'tm_version': 4}, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+				pickle_file.close()
+		self.TMPath.set(_tm_path)		
 
 		self.bucket_id = self.Configuration['Translator']['bucket_id']
 		self.db_list_uri = self.Configuration['Translator']['db_list_uri']
@@ -1962,9 +1981,10 @@ def main():
 	style = Style(root)
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
 
+	#application = DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue, status_queue = StatusQueue, my_translator_queue = MyTranslatorQueue, my_db_queue = MyDB, tm_manager = TMManager)
+
 	try:
-		application = DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue, status_queue = StatusQueue
-		, my_translator_queue = MyTranslatorQueue, my_db_queue = MyDB, tm_manager = TMManager)
+		application = DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue, status_queue = StatusQueue, my_translator_queue = MyTranslatorQueue, my_db_queue = MyDB, tm_manager = TMManager)
 		root.mainloop()
 		#print('Root is terminated sending logging from current session')
 		#app.MyTranslator.send_tracking_record()

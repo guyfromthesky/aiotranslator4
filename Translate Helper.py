@@ -157,16 +157,22 @@ class MyTranslatorHelper(Frame):
 
 		if self.LicensePath.get() != "":
 			self.generate_translator_engine()
-		else:
-			self.Error('No license selected, please select the key in Translate setting.')	
-		
-		MsgBox = messagebox.askquestion ('Bug Writer', self.LanguagePack.ToolTips['LoadReport'],icon = 'info') 
-		if MsgBox == 'yes':
-			self.parent.withdraw()
-			self.parent.update_idletasks()
-			self.LoadTempReport()
-			self.parent.deiconify()
 
+			MsgBox = messagebox.askquestion ('Bug Writer', self.LanguagePack.ToolTips['LoadReport'],icon = 'info') 
+			if MsgBox == 'yes':
+				self.parent.withdraw()
+				self.parent.update_idletasks()
+				self.LoadTempReport()
+				self.parent.deiconify()
+				
+		else:
+			closed_box = messagebox.askokcancel('Bug Writer', 'No license selected, please select the key in Translate setting.',icon = 'info')
+
+			if closed_box == True:
+				#self.Error('No license selected, please select the key in Translate setting.')
+				self.TAB_CONTROL.select(self.TranslateSetting)
+				#self.flash_btn(self.Browse_License_Btn)
+		
 		self.parent.minsize(self.parent.winfo_width(), self.parent.winfo_height())
 		x_cordinate = int((self.parent.winfo_screenwidth() / 2) - (self.parent.winfo_width() / 2))
 		y_cordinate = int((self.parent.winfo_screenheight() / 2) - (self.parent.winfo_height() / 2))
@@ -183,6 +189,13 @@ class MyTranslatorHelper(Frame):
 
 	def About(self):
 		messagebox.showinfo("About....", "Creator: Evan@nexonnetworks.com")
+
+	def flash_btn(self, btn_widget):
+		
+		# Change the color of the button
+		btn_widget.focus_set()
+		#btn_widget.configure(activebackground = "#6f6Fff")
+		self.after(100, lambda: btn_widget.focus_set())
 
 	def on_closing(self):
 		if messagebox.askokcancel(tool_display_name, "Do you want to quit?"):
@@ -217,31 +230,31 @@ class MyTranslatorHelper(Frame):
 	def Generate_Tab_UI(self):
 		MainPanel = Frame(self, name='mainpanel', bg=FRAME_BG)
 		MainPanel.pack(side=TOP, fill=BOTH, expand=Y)
-		TAB_CONTROL = Notebook(MainPanel, name='notebook')
+		self.TAB_CONTROL = Notebook(MainPanel, name='notebook')
 		# extend bindings to top level window allowing
 		#   CTRL+TAB - cycles thru tabs
 		#   SHIFT+CTRL+TAB - previous tab
 		#   ALT+K - select tab using mnemonic (K = underlined letter)
-		TAB_CONTROL.enable_traversal()
+		self.TAB_CONTROL.enable_traversal()
 		#TAB_CONTROL = Notebook(self.parent)
 		
 		#Tab1
-		self.BugWriter = Frame(TAB_CONTROL, bg=FRAME_BG)
+		self.BugWriter = Frame(self.TAB_CONTROL, bg=FRAME_BG)
 		self.BugWriter.configure(background=FRAME_BG)
-		TAB_CONTROL.add(self.BugWriter, text=self.LanguagePack.Tab['BugWriter'])
+		self.TAB_CONTROL.add(self.BugWriter, text=self.LanguagePack.Tab['BugWriter'])
 		
 		#self.CustomWriter = Frame(TAB_CONTROL)
 		#TAB_CONTROL.add(self.CustomWriter, text=self.LanguagePack.Tab['CustomBugWriter'])
 
 		#Tab2
-		self.SimpleTranslator = Frame(TAB_CONTROL, bg=FRAME_BG)
+		self.SimpleTranslator = Frame(self.TAB_CONTROL, bg=FRAME_BG)
 		self.SimpleTranslator.configure(background=FRAME_BG)
-		TAB_CONTROL.add(self.SimpleTranslator, text=self.LanguagePack.Tab['SimpleTranslator'])
+		self.TAB_CONTROL.add(self.SimpleTranslator, text=self.LanguagePack.Tab['SimpleTranslator'])
 
 		#Tab3
-		self.TranslateSetting = Frame(TAB_CONTROL, bg=FRAME_BG)
+		self.TranslateSetting = Frame(self.TAB_CONTROL, bg=FRAME_BG)
 		self.TranslateSetting.configure(background=FRAME_BG)
-		TAB_CONTROL.add(self.TranslateSetting, text=  self.LanguagePack.Tab['Translator'])
+		self.TAB_CONTROL.add(self.TranslateSetting, text=  self.LanguagePack.Tab['Translator'])
 
 		#Tab4
 		#self.Searcher = Frame(TAB_CONTROL)
@@ -254,7 +267,7 @@ class MyTranslatorHelper(Frame):
 		#Tab5
 		#self.TMEditor = ttk.Frame(TAB_CONTROL)
 		#TAB_CONTROL.add(self.TMEditor, text=self.LanguagePack.Tab['TMEditor'])
-		TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
+		self.TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
 
 	def Generate_Menu_UI(self):
 		menubar = Menu(self.parent, background=BG_CL, fg='white')
@@ -519,7 +532,8 @@ class MyTranslatorHelper(Frame):
 		Label(Tab, text= self.LanguagePack.Label['LicensePath']).grid(row=Row, column=1, padx=5, pady=5, sticky=E)
 		self.TextLicensePath = Entry(Tab,width = 150, state="readonly", textvariable=self.LicensePath)
 		self.TextLicensePath.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=W+E)
-		Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path).grid(row=Row, column=10, padx=5, pady=5, sticky=E)
+		self.Browse_License_Btn = Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path)
+		self.Browse_License_Btn.grid(row=Row, column=10, padx=5, pady=5, sticky=E)
 
 
 	def Btn_Select_License_Path(self):
@@ -2090,6 +2104,8 @@ def main():
 	style = Style(root)
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
 	style.map('TFrame', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
+	style.map('TButton', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
+	
 	CWD = os.getcwd()
 
 	THEME_DIR = os.path.join(CWD, "theme\\awdark.tcl") 

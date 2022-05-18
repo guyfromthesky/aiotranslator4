@@ -206,7 +206,10 @@ class ConfigLoader:
 			self.Config[Section] = {}
 
 		self.Init_Config_Option(config, Section, 'app_lang', 'en')
+		#self.Init_Config_Option(config, Section, 'translation_memory', self.LocalTM, True)
 		
+		
+
 		self.Init_Config_Option_Numberic(config, Section, 'target_lang', 1)
 		self.Init_Config_Option_Numberic(config, Section, 'source_lang', 2)
 
@@ -223,6 +226,8 @@ class ConfigLoader:
 		self.Init_Config_Option_Numberic(config, Section, 'remove_unselected_sheet', 0)
 		self.Init_Config_Option_Numberic(config, Section, 'usage', 0)
 		
+		
+
 		with open(config_path, 'w') as configfile:
 			config.write(configfile)
 
@@ -248,7 +253,7 @@ class ConfigLoader:
 		#self.Init_Config_Option(config, Section, 'license_key', '')
 		self.Init_Config_Option(config, Section, 'glossary_id', '')
 		self.Init_Config_Option(config, Section, 'license_file', '', True)
-		self.Init_Config_Option(config, Section, 'translation_memory', '', True)
+		self.Init_Config_Option(config, Section, 'translation_memory', self.LocalTM, True)
 		
 		with open(config_path, 'w') as configfile:
 			config.write(configfile)
