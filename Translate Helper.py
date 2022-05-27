@@ -164,6 +164,10 @@ class MyTranslatorHelper(Frame):
 				self.parent.update_idletasks()
 				self.LoadTempReport()
 				self.parent.deiconify()
+			else:
+				self.parent.withdraw()
+				self.parent.update_idletasks()
+				self.parent.deiconify()
 				
 		else:
 			closed_box = messagebox.askokcancel('Bug Writer', 'No license selected, please select the key in Translate setting.',icon = 'info')
