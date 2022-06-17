@@ -47,7 +47,7 @@ from pandas.core.frame import DataFrame
 from libs.version import get_version
 
 Tool = "translator"
-rev = 4117
+rev = 4118
 ver_num = get_version(rev)
 Translatorversion = Tool + " " + ver_num
 
@@ -639,7 +639,9 @@ class Translator:
 
 		if len(to_translate) > 0:
 			try:
+				#print('to_translate:', to_translate)
 				translated = self.activated_translator(to_translate)
+				#print('Translated:', translated)
 			except Exception  as e:
 				print('error:', e)
 				translated = []
@@ -647,7 +649,10 @@ class Translator:
 		else:
 			translated = []	
 
-		#print('translated', translated)
+		# Update the translation
+		if translated == False:
+			print('Translate error!')
+			return source_text
 
 		for i in range(len(translated)):
 			for index_number in to_translate_index[i]:
@@ -685,12 +690,14 @@ class Translator:
 				translation = self.google_translate_v3(source_text)
 			else:	
 				if self.from_language in self.glossary_language and self.to_language in self.glossary_language:
+					#print('Translate with glossary')
 					translation = self.google_glossary_translate(source_text)
 				else:
+					#print('Translate without glossary')
 					translation = self.google_translate_v3(source_text)
-		except Exception  as _error_message:
+		except Exception as _error_message:
 			print('Activated translation error:', _error_message)
-
+		#print('Translation:', translation)
 		if translation == None:	
 	
 			try:
@@ -800,7 +807,7 @@ class Translator:
 		#Glossary = Client.glossary_path(self.project_bucket_id, "us-central1", 'General-DB')
 		#print('Glossary', Glossary)
 		Glossary_Config = translator.TranslateTextGlossaryConfig(glossary=Glossary, ignore_case=True)
-		
+		print('Glossary_Config', Glossary)
 		response = Client.translate_text(
 			request={
 				"contents": ToTranslate,
@@ -812,9 +819,13 @@ class Translator:
 			}
 		)
 		ListReturn = []
-		for translation in response.glossary_translations:
-			ListReturn.append(unescape(translation.translated_text))
-
+		# Handle Translation Response is in translations instead of glossary_translations
+		if 'translated_text' in response.glossary_translations[0]:	
+			#print('Translated with glossary')
+			for translation in response.glossary_translations:
+				ListReturn.append(unescape(translation.translated_text))
+		else:
+			return False
 		#print('ListReturn', ListReturn)
 		return ListReturn
 
@@ -920,7 +931,7 @@ class Translator:
 
 		return 	glossary
 	
-	def load_config_from_bucket(self, file_uri= None, timeout=180,):
+	def load_config_from_bucket(self, timeout=180,):
 
 		cloud_client = storage.Client()
 		bucket = cloud_client.get_bucket(self.bucket_id)
@@ -949,7 +960,40 @@ class Translator:
 				self.glossary_data_list.append([id, URI])
 		#print('Bucket glossary list: ', self.bucket_db_list)		
 
+	def add_project_to_config(self, project_id = '', timeout=180,):
+		if project_id == '':
+			return
+		cloud_client = storage.Client()
+		bucket = cloud_client.get_bucket(self.bucket_id)
+		blob = bucket.get_blob(self.db_list_uri)
+		
+		_download_path = self.config_path + '\\AIO Translator\\config.csv'
+		print('Download path:', _download_path)
+		blob.download_to_filename(_download_path)	
+		# Write new line to the config file
+
+		db_path = 'DB/' + project_id + '/' + project_id+ '.csv'
+
+		# Check if the project_id is in the config file
+		with open(_download_path, 'r') as f:
+			for line in f:
+				if project_id in line:
+					print('Project already in the config file')
+					return db_path 
+
+
+		# Open csv config file with csv module
+		with open(_download_path, 'a', newline='', encoding='utf_8_sig') as csvfile:
+			writer = csv.writer(csvfile)
+			writer.writerow([project_id, db_path])
+			csvfile.close()
+		# Upload new config file to the bucket
+		blob = bucket.blob(self.db_list_uri)
+		blob.upload_from_filename(filename = _download_path)
+		return db_path
+
 	def download_db_to_file(self, glossary_id, download_path):
+		print('Downloading db to:', download_path)
 		for gloss_data in self.glossary_data_list:
 			gloss_id = gloss_data[0]
 			if glossary_id == gloss_id:
@@ -961,6 +1005,41 @@ class Translator:
 			with open(download_path, 'w', newline='', encoding='utf_8_sig') as csv_db:
 				db_writer = csv.writer(csv_db, delimiter=',')
 				db_writer.writerow(['','ko', 'en', 'zh-TW', 'ja', 'vi', 'description'])
+			return False
+				
+		sourcename, ext = os.path.splitext(_uri)
+		_uri = sourcename + '_db' + ext	
+		print('Download db from:', _uri)
+		cloud_client = storage.Client()
+		bucket = cloud_client.get_bucket(self.bucket_id)
+		blob = bucket.get_blob(_uri)
+		
+
+		if blob != None:
+			try:
+				blob.download_to_filename(download_path)	
+			except Exception as e:
+				print('Fail to load blob:', e)	
+				return
+		'''
+		with open(download_path,'wb') as f:
+			cloud_client.download_to_file(blob, f)
+		'''
+
+	def download_db_to_file(self, glossary_id, download_path):
+		print('Downloading db to:', download_path)
+		for gloss_data in self.glossary_data_list:
+			gloss_id = gloss_data[0]
+			if glossary_id == gloss_id:
+				_uri =  gloss_data[1]
+
+			
+		if _uri == None:
+			print('No old DB, skip dowwnload')
+			with open(download_path, 'w', newline='', encoding='utf_8_sig') as csv_db:
+				db_writer = csv.writer(csv_db, delimiter=',')
+				db_writer.writerow(['','ko', 'en', 'zh-TW', 'ja', 'vi', 'description'])
+			return False
 				
 		sourcename, ext = os.path.splitext(_uri)
 		_uri = sourcename + '_db' + ext	
@@ -1351,13 +1430,21 @@ class Translator:
 		#info_path = address['info']
 		
 		#gloss = self.get_glossary(glossary_id)
-
+		print('Get bucket:', self.bucket_id)
 		bucket = sclient.get_bucket(self.bucket_id)
+		print('Get blob:', glossary_id)
 		try:
 			blob_id = self.get_glossary_path(glossary_id)
 		except:
 			return False	
-		
+	
+		if blob_id == None:
+			print('This project is not exist, create a new one!')
+			blob_id = self.add_project_to_config(glossary_id)
+			#blob_id = self.get_glossary_path(glossary_id)
+		if blob_id == None:
+			return
+
 		_blob_name, _ext = os.path.splitext(blob_id)
 
 		for file_name in ['db', 'header', 'info']:
@@ -1411,7 +1498,7 @@ class Translator:
 			self.delete_glossary(glossary_id)
 			print('Deleting blob')
 		except Exception as e:
-			print('Error while deleting glossary:', glossary_id, e)	
+			print('Skipped, error while deleting glossary:', glossary_id, e)	
 			#return False
 		try:
 			result = self.create_glossary(_uri, glossary_id, supported_language)
@@ -1818,7 +1905,12 @@ class Translator:
 			if len(self.temporary_tm) > 0:
 				for pair in self.temporary_tm:
 					if pair[self.from_language] == source_text:
-						return pair[self.to_language]
+						if len(pair[self.to_language]) > 0:
+							print('TM translate', len(pair[self.to_language]))
+							return pair[self.to_language]
+						else:
+							return False	
+
 		except Exception  as e:
 			print('Error message(temporary TM):', e)
 			return False

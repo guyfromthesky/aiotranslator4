@@ -58,7 +58,7 @@ import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4116
+rev = 4119
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -408,7 +408,7 @@ class DocumentTranslator(Frame):
 		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Execute'], command= self.Btn_DB_Uploader_Execute_Script).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
 
 		Row += 1
-		self.Uploader_Debugger = scrolledtext.ScrolledText(Tab, width=122, height=4, undo=True, wrap=WORD, )
+		self.Uploader_Debugger = scrolledtext.ScrolledText(Tab, width=122, height=14, undo=True, wrap=WORD, )
 		self.Uploader_Debugger.grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E+N+S)
 
 	def debug_listening(self):
@@ -863,22 +863,38 @@ class DocumentTranslator(Frame):
 			except queue.Empty:
 				pass
 			self.Compare_DB_Processor.terminate()
+		_new_added = True
 		if compare_result != None:
-			message = 'Are you sure you want to upload the DB?'
+			if compare_result == False:
+
+				if self.Supper != True:	
+					message = 'You are not permisted to upload new project. If you feel this is a mistake, please contact your leader.'
+					self.Uploader_Debugger.insert("end", "\n\r")
+					self.Uploader_Debugger.insert("end", message)
+					messagebox.showerror('Error', message)
+					return 
+				else:
+					message = 'Are you sure you want to upload this new project?'
+
+			else:
+				message = 'Are you sure you want to upload the DB?'
+				_new_added = False
+				
 			message += '\n'
 			change_flag = False
-			if compare_result['dropped']>0:
-				message += 'Dropped: ' + str(compare_result['dropped']) + '\n'
-				change_flag = True
-			if compare_result['added']>0:
-				message += 'Added: ' + str(compare_result['added']) + '\n'
-				change_flag = True
-			if compare_result['changed']>0:
-				message += 'Changes: ' + str(compare_result['changed']) + '\n'
-				change_flag = True
-			if change_flag == False:
-				message += 'OLD and NEW DB are identical.'
-			
+			if _new_added != True:
+				if compare_result['dropped']>0:
+					message += 'Dropped: ' + str(compare_result['dropped']) + '\n'
+					change_flag = True
+				if compare_result['added']>0:
+					message += 'Added: ' + str(compare_result['added']) + '\n'
+					change_flag = True
+				if compare_result['changed']>0:
+					message += 'Changes: ' + str(compare_result['changed']) + '\n'
+					change_flag = True
+				if change_flag == False:
+					message += 'OLD and NEW DB are identical.'
+				
 			self.Uploader_Debugger.insert("end", "\n\r")
 			self.Uploader_Debugger.insert("end", message)
 			
@@ -891,7 +907,7 @@ class DocumentTranslator(Frame):
 			else:
 				self.Uploader_Debugger.insert("end", "\n\r")
 				self.Uploader_Debugger.insert("end", 'Canceled, no change is made.')
-	
+		
 	def Wait_For_Uploader_Processor(self):
 		"""
 		After wait_for_db_compare_processor() process
@@ -918,7 +934,11 @@ class DocumentTranslator(Frame):
 	
 	def Confirm_Popup(self, Request, message):
 		MsgBox = simpledialog.askstring(title="Confirmation popup", prompt=message)
-
+		self.Supper = False
+		secret = Request + '_' + "SU"
+		if MsgBox == secret:
+			self.Supper = True
+			return True
 		if MsgBox == Request:
 			return True
 		else:
@@ -1433,18 +1453,30 @@ def function_create_csv_db(status_queue, result_queue, db_path):
 		status_queue.put('Error while creating csv db: ' + str(e))
 	
 def function_compare_db(status_queue, result_queue, MyTranslator, glossary_id, address):
-	print('Compare DB')
-	print(locals())
+
+	# The project may exist, but was not registered. Return false result
+	if glossary_id not in MyTranslator.glossary_list:
+		result_queue.put(False)
+		return
+
+	# Download the DB of the projects from the server
 	try:
 		new_csv_path = address['db']
 		sourcename, ext = os.path.splitext(new_csv_path)
-		old_csv_db = sourcename + '_old' + ext
+		old_csv_db = sourcename + '_old' +  ext
 		try:
-			MyTranslator.download_db_to_file(glossary_id, old_csv_db)
-			#status_queue.put('Loading OLD DB file.')
+			result = MyTranslator.download_db_to_file(glossary_id, old_csv_db)
+			if result == False:
+				status_queue.put('Fail to load OLD DB file')
+				status_queue.put(str(_error_message))
+				result_queue.put(False)
+				return
+				
 		except Exception as _error_message:
-			status_queue.put('Fail to load OLD DB file.')	
+			status_queue.put('Fail to load OLD DB file')
 			status_queue.put(str(_error_message))
+			result_queue.put(False)
+			return
 		
 		if not isfile(old_csv_db):
 			result = {
@@ -1454,19 +1486,21 @@ def function_compare_db(status_queue, result_queue, MyTranslator, glossary_id, a
 				'path': address
 			}
 			status_queue.put('OLD DB file is not existed.')
-			result_queue.put(result)
+			result_queue.put(False)
 			return
+
+
+		# Read and compare the old and new DB.
 		old_db = pd.read_csv(old_csv_db, usecols = ['en', 'ko', 'vi', 'ja', 'zh-TW'])
 		new_db = pd.read_csv(new_csv_path, usecols = ['en', 'ko', 'vi', 'ja', 'zh-TW'])
 		old_db['version'] = "old"
-		new_db['version'] = "new"	
-		
+		new_db['version'] = "new"
+
 		old_cols = old_db.columns.tolist()
 		Old_Index_ID = old_cols[1]
 		#new_cols = new_db.columns.tolist()
 
 		old_accts_all = set(old_db[Old_Index_ID])
-		
 		new_accts_all = set(new_db[Old_Index_ID])
 
 		dropped_accts = old_accts_all - new_accts_all
@@ -1489,15 +1523,13 @@ def function_compare_db(status_queue, result_queue, MyTranslator, glossary_id, a
 		change_old = change_old.fillna("#NA")
 		
 		# Combine all the changes together
-		try:
-				
+		try:			
 			df_all_changes = pd.concat([change_old, change_new],
 										axis='columns',
 										keys=['old', 'new'],
 										join='outer')
 			df_all_changes = df_all_changes.swaplevel(axis='columns')[change_new.columns[0:]]
 			#df_all_changes.fillna("#NA")
-			
 			df_changed = df_all_changes.groupby(level=0, axis=1).apply(lambda frame: frame.apply(report_diff, axis=1))
 			#create a list of text columns (int columns do not have '{} ---> {}')
 			df_changed = df_changed.reset_index()
@@ -1505,19 +1537,16 @@ def function_compare_db(status_queue, result_queue, MyTranslator, glossary_id, a
 			df_changed['has_change'] = df_changed.apply(has_change, axis=1)
 			#df_changed.tail()
 			diff = df_changed[(df_changed.has_change == 'Y')]
-			
-			
 			diff = diff.reindex(columns=Old_Index_ID)
 		except:
 			diff = []
-
-
 		result = {
 			'dropped': len(dropped_accts),
 			'added': len(added_accts),
 			'changed': len(diff),
 			'path': address
 		}
+
 	except Exception as e:
 		result = {
 				'dropped': 0,
@@ -1728,9 +1757,9 @@ def function_create_db_data(DB_Path):
 										db_entry[language] = ''
 								if valid:
 									if sheetname != 'header':
-										db_writer.writerow(['', db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP'], db_entry['VI'], sheetname])
+										db_writer.writerow(['', db_entry['KO'], db_entry['EN'].lower(), db_entry['CN'], db_entry['JP'], db_entry['VI'].lower(), sheetname])
 									elif sheetname != 'info':
-										header_writer.writerow([db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP'], db_entry['VI'], sheetname])
+										header_writer.writerow([db_entry['KO'], db_entry['EN'].lower(), db_entry['CN'], db_entry['JP'], db_entry['VI'].lower(), sheetname])
 								#db_object['db'][sheetname].append(db_entry)
 
 				

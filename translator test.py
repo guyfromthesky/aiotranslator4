@@ -13,12 +13,11 @@ import pickle
 
 AppConfig = ConfigLoader()
 Configuration = AppConfig.Config
-AppLanguage  = Configuration['Document_Translator']['app_lang']
+#AppLanguage  = Configuration['Document_Translator']['app_lang']
 #tm = Configuration['Translator']['tm_path']
-print(Configuration['Translator']['license_file'])
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = Configuration['Translator']['license_file']
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r'C:\Users\evan\Desktop\Account\nwv-user.json'
 
-GlossaryID = Configuration['Translator']['glossary_id']
+GlossaryID = 'TW2RJP'
 #print(tm)
 
 test_text = 'Use the 액티브 스킬'
@@ -46,4 +45,4 @@ def translate_text(text):
     print(u"Translation: {}".format(result["translatedText"]))
     #print(u"Detected source language: {}".format(result["detectedSourceLanguage"]))
 
-translate_text(test_text)
+translate_text('빌드(앱) 정상 설치 확인')
