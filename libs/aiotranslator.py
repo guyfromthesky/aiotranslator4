@@ -1479,6 +1479,35 @@ class Translator:
 		print('Create glossary from blob: ', _gloosary_id)
 		return self.update_glossary(glossary_id, _gloosary_id, supported_language)
 	
+	def reset_glossary(self, glossary_id= "", timeout=180,):
+		
+		try:
+			print('self.bucket_db_list', self.bucket_db_list)
+			print('gloss id', glossary_id)
+			if glossary_id in self.bucket_db_list:
+				uri = self.get_glossary_path(glossary_id)
+				if uri != None:
+					_uri_name, _ext = os.path.splitext(uri)
+					_db_uri = 'gs://' + self.bucket_id + '/' + _uri_name + "_" + 'db' + _ext
+				else:
+					print('Cannot find the URI of the DB')
+					return
+			else:
+				print('This project ID is not available in the DB list')
+				return
+			
+			#print('Loading done!')
+		except Exception as e:
+			print('[Error] prepare_db_data:', e)
+	
+		try:
+			self.delete_glossary(glossary_id)
+		except:
+			print('DB deleted')
+		create_result = self.create_glossary(_db_uri, glossary_id)
+		if create_result != False:
+			return True
+		return False
 
 	def delete_glossary(self, glossary_id= "", timeout=180,):
 		"""Delete a specific glossary based on the glossary ID."""

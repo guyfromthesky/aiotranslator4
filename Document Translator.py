@@ -58,7 +58,7 @@ import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4119
+rev = 4120
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -390,8 +390,8 @@ class DocumentTranslator(Frame):
 		self.Str_DB_Path = StringVar()
 		#self.Str_DB_Path.set('C:\\Users\\evan\\OneDrive - NEXON COMPANY\\[Demostration] V4 Gacha test\\DB\\db.xlsx')
 		Label(Tab, text=  self.LanguagePack.Label['MainDB']).grid(row=Row, column=1, columnspan=2, padx=5, pady=5, sticky= W)
-		self.Entry_Old_File_Path = Entry(Tab,width = 110, state="readonly", textvariable=self.Str_DB_Path)
-		self.Entry_Old_File_Path.grid(row=Row, column=3, columnspan=6, padx=4, pady=5, sticky=E)
+		self.Entry_Old_File_Path = Entry(Tab,width = 130, state="readonly", textvariable=self.Str_DB_Path)
+		self.Entry_Old_File_Path.grid(row=Row, column=2, columnspan=6, padx=5, pady=5, sticky=W+E)
 		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.Btn_DB_Uploader_Browse_DB_File).grid(row=Row, column=9, columnspan=2, padx=5, pady=5, sticky=E)
 		
 		Row += 1
@@ -403,9 +403,10 @@ class DocumentTranslator(Frame):
 		if self.glossary_id != None:
 			self.ProjectList.set(self.glossary_id)
 
-		self.ProjectList.grid(row=Row, column=3, columnspan=2, padx=5, pady=5, stick=W)
+		self.ProjectList.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, stick=W)
+		Button(Tab, width = self.HALF_BUTTON_WIDTH, text= self.LanguagePack.Button['Reset'], command= self.Btn_DB_Uploader_Reset).grid(row=Row, column=7, columnspan=2,padx=5, pady=5, sticky=E)
 
-		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Execute'], command= self.Btn_DB_Uploader_Execute_Script).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
+		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Update'], command= self.Btn_DB_Uploader_Execute_Script).grid(row=Row, column=9, columnspan=2,padx=5, pady=5, sticky=E)
 
 		Row += 1
 		self.Uploader_Debugger = scrolledtext.ScrolledText(Tab, width=122, height=14, undo=True, wrap=WORD, )
@@ -792,6 +793,32 @@ class DocumentTranslator(Frame):
 			self.write_debug(self.LanguagePack.ToolTips['SourceDocumentEmpty'])
 		return
 
+	def Btn_DB_Uploader_Reset(self):
+		glossary_id = self.ProjectList.get()
+		result = self.Confirm_Popup(glossary_id, 'Please type \''+ glossary_id + "\' to confirm.")
+		
+		if result == True:
+			self.Generate_DB_Reset_Processor = Process(target=function_reset_db, args=(self.StatusQueue, self.ResultQueue, self.MyTranslator, glossary_id))
+			self.Generate_DB_Reset_Processor.start()
+			self.after(DELAY, self.Wait_For_Reset_Processor)	
+
+		
+	def Wait_For_Reset_Processor(self):
+		"""
+		After [Execute] button processing
+		Display process information in the text box.
+		"""
+		if (self.Generate_DB_Reset_Processor.is_alive()):
+			self.after(DELAY, self.Wait_For_Reset_Processor)
+		else:
+			try:
+				self.Uploader_Debugger.insert("end", "\n\r")
+				self.Uploader_Debugger.insert("end", "CSV DB is reset")
+			except queue.Empty:
+				pass
+			self.Generate_DB_Reset_Processor.terminate()
+
+
 	def Btn_DB_Uploader_Execute_Script(self):
 		glossary_id = self.ProjectList.get()
 		result = self.Confirm_Popup(glossary_id, 'Please type \''+ glossary_id + "\' to confirm.")
@@ -801,7 +828,7 @@ class DocumentTranslator(Frame):
 			self.Generate_DB_Processor = Process(target=function_create_csv_db, args=(self.StatusQueue, self.ResultQueue, DB))
 			self.Generate_DB_Processor.start()
 			self.after(DELAY, self.Wait_For_Creator_Processor)	
-
+	
 	def Wait_For_Creator_Processor(self):
 		"""
 		After [Execute] button processing
@@ -1445,6 +1472,15 @@ def Optimize(SourceDocument, StatusQueue):
 ###########################################################################################
 
 ###########################################################################################
+def function_reset_db(status_queue, result_queue, MyTranslator, glossary_id):
+	print('Reset DB')
+	result = MyTranslator.reset_glossary(glossary_id)
+	print('function_reset_db', result)
+	if result == False:
+		status_queue.put('Fail to reset DB')
+	else:
+		status_queue.put("DB reset.")
+
 def function_create_csv_db(status_queue, result_queue, db_path):
 	try:
 		result_path = function_create_db_data(db_path)

@@ -10,7 +10,7 @@ import subprocess
 import time
 from datetime import datetime
 
-
+API_LENGTH_LIMIT = 5000
 
 # Functions used for processor
 def check_list(item, list):
@@ -344,12 +344,14 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 		status_queue.put('Remained task: ' + str(remaining_task_count))
 		
 		Task_todo = []
-		
+		print('Current task list:', len(task_list))
+		print('Current task len:', len(TaskLength))
 		while len(task_list) > 0:
 			Translated = []
 			TaskLength = 0
-			
-			while TaskLength < 2000:
+			print('Current task list:', len(task_list))
+			while TaskLength < API_LENGTH_LIMIT:
+				print('Current task len:', len(TaskLength))
 				if len(task_list) > 0:
 					Input = task_list[0].Text
 					if isinstance(Input, list):
@@ -360,7 +362,7 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 					elif isinstance(Input, str):
 						TempLen = TaskLength + len(task_list[0].Text)
 						
-					if TempLen < 2000:
+					if TempLen < API_LENGTH_LIMIT:
 						TaskLength = TempLen
 						Task_todo.append(task_list[0])
 						del task_list[0]
@@ -368,7 +370,8 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 						break	
 				else:
 					break
-		
+			
+				
 			Translated = cell_translate(MyTranslator, Task_todo)
 			
 			for task in Translated:

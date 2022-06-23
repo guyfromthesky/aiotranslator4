@@ -15,7 +15,7 @@ AppConfig = ConfigLoader()
 Configuration = AppConfig.Config
 #AppLanguage  = Configuration['Document_Translator']['app_lang']
 #tm = Configuration['Translator']['tm_path']
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r'C:\Users\evan\Desktop\Account\nwv-user.json'
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r'C:\Users\evan\Desktop\Account\product_owner.json'
 
 GlossaryID = 'TW2RJP'
 #print(tm)
