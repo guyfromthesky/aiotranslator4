@@ -14,9 +14,6 @@ from requests import get
 # import requests, uuid, 
 import json
 import subprocess
-from win32gui import GetWindowText, GetForegroundWindow
-from win32api import GetTickCount, GetLastInputInfo
-
 
 from google.cloud import translate_v3 as translator
 from google.cloud import storage
@@ -1935,7 +1932,7 @@ class Translator:
 				for pair in self.temporary_tm:
 					if pair[self.from_language] == source_text:
 						if len(pair[self.to_language]) > 0:
-							print('TM translate', len(pair[self.to_language]))
+							#print('TM translate', len(pair[self.to_language]))
 							return pair[self.to_language]
 						else:
 							return False	

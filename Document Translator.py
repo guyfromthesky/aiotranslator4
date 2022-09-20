@@ -58,7 +58,7 @@ import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4120
+rev = 4121
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -276,9 +276,9 @@ class DocumentTranslator(Frame):
 		self.FixCorruptFileName.set(1)	
 		Result_File_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['CorruptFileName'], variable = self.FixCorruptFileName)
 
-		self.TurboTranslate = IntVar()
-		self.TurboTranslate.set(0)
-		Result_File_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['TurboTranslate'], variable = self.TurboTranslate)
+		#self.TurboTranslate = IntVar()
+		#self.TurboTranslate.set(0)
+		#Result_File_Option_Menu.add_checkbutton(label = self.LanguagePack.Option['TurboTranslate'], variable = self.TurboTranslate)
 
 		Result_File_Option["menu"] = Result_File_Option_Menu
 
@@ -372,9 +372,9 @@ class DocumentTranslator(Frame):
 		self.Treeview.heading('Target', text='Target', anchor=CENTER)
 
 		verscrlbar.grid(row=Row, column=11,  sticky = N+S+E)
-		Tab.grid_columnconfigure(11, weight=0, pad=0)
+		Tab.grid_columnconfigure(12, weight=0, pad=0)
 		styles = Style()
-		styles.configure('Treeview',rowheight=22)
+		styles.configure('Treeview',rowheight=24)
 
 		self.Treeview.bind("<Delete>", self.delete_treeview_line)	
 		self.Treeview.bind("<Double-1>", self.double_right_click_treeview)	
@@ -383,7 +383,7 @@ class DocumentTranslator(Frame):
 		#Row +=1
 		#self.Debugger = scrolledtext.ScrolledText(Tab, width=125, height=6, undo=True, wrap=WORD, )
 		#self.Debugger.grid(row=Row, column=1, columnspan=Max_Size, padx=5, pady=5, sticky = (N,S,W,E))
-
+ 
 	def Generate_DB_Uploader_UI(self, Tab):
 		
 		Row =1
@@ -629,7 +629,7 @@ class DocumentTranslator(Frame):
 		source_language_index = self.language_list.index(source_language)
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_language', source_language_index)
 
-		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'speed_mode', self.TurboTranslate.get())
+		#self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'speed_mode', self.TurboTranslate.get())
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'bilingual', self.Bilingual.get())
 
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'value_only', self.DataOnly.get())
@@ -1027,7 +1027,7 @@ class DocumentTranslator(Frame):
 		self.target_language.set(self.language_list[self.Configuration['Document_Translator']['target_lang']])
 		self.source_language.set(self.language_list[self.Configuration['Document_Translator']['source_lang']])
 		
-		self.TurboTranslate.set(self.Configuration['Document_Translator']['speed_mode'])
+		#self.TurboTranslate.set(self.Configuration['Document_Translator']['speed_mode'])
 		self.Bilingual.set(self.Configuration['Document_Translator']['bilingual'])
 		self.DataOnly.set(self.Configuration['Document_Translator']['value_only'])
 		self.FixCorruptFileName.set(self.Configuration['Document_Translator']['file_name_correct'])
@@ -1051,13 +1051,7 @@ class DocumentTranslator(Frame):
 	def set_target_language(self, target_language):
 		index = self.language_list.index(target_language)
 		to_language = self.language_id_list[index]
-		if to_language == self.MyTranslator.from_language:
-			messagebox.showinfo('Error', 'Source and Target language is the same.')
-			index = self.language_id_list.index(self.MyTranslator.to_language)
-			to_language_id = self.language_list[index]
-			self.target_language.set(to_language_id)
-			return
-		
+	
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'target_lang', index)
 
 		self.MyTranslator.set_target_language(to_language)
@@ -1068,12 +1062,6 @@ class DocumentTranslator(Frame):
 	def set_source_language(self, source_language):
 		index = self.language_list.index(source_language)
 		from_language = self.language_id_list[index]
-		if from_language == self.MyTranslator.to_language:
-			messagebox.showinfo('Error', 'Source and Target language is the same.')	
-			index = self.language_id_list.index(self.MyTranslator.from_language)
-			from_language_id = self.language_list[index]
-			self.source_language.set(from_language_id)
-			return
 
 		self.MyTranslator.from_language
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'source_lang', index)
@@ -1195,7 +1183,10 @@ class DocumentTranslator(Frame):
 		#Get and set language
 		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
-
+		
+		if source_language == target_language:
+			messagebox.showinfo('Error', 'Source and Target language is the same.')	
+			return False
 		self.MyTranslator.set_language_pair(target_language = target_language, source_language = source_language)
 		
 		#Add Subscription key
@@ -1208,10 +1199,10 @@ class DocumentTranslator(Frame):
 			self.MyTranslator.tm_update_anable(False)
 
 		#Set Predict mode 
-		if self.TurboTranslate.get() == 1:
-			self.MyTranslator.source_language_predict_enable(True)
-		else:
-			self.MyTranslator.source_language_predict_enable(False)
+		#if self.TurboTranslate.get() == 1:
+		#	self.MyTranslator.source_language_predict_enable(True)
+		#else:
+		#	self.MyTranslator.source_language_predict_enable(False)
 
 		if self.Bilingual.get() == 1:
 			self.Options['Bilingual']  = True
@@ -1289,9 +1280,9 @@ class DocumentTranslator(Frame):
 
 	def Translate(self):
 
-		self.GetOptions()
-
-
+		result = self.GetOptions()
+		if result == False:
+			return
 		self.progressbar["value"] = 0
 		self.progressbar.update()
 		#SourceDocument = self.TextFilePath.get()
@@ -1492,7 +1483,13 @@ def function_compare_db(status_queue, result_queue, MyTranslator, glossary_id, a
 
 	# The project may exist, but was not registered. Return false result
 	if glossary_id not in MyTranslator.glossary_list:
-		result_queue.put(False)
+		result = {
+			'dropped': False,
+			'added': False,
+			'changed': False,
+			'path': address
+		}
+		result_queue.put(result)
 		return
 
 	# Download the DB of the projects from the server
@@ -1618,7 +1615,8 @@ def report_diff(x):
 
 def function_upload_db(status_queue, result_queue, MyTranslator, glossary_id, result):
 	print('Upload DB')
-	print(locals())
+	print(result)
+
 	address = result['path']
 	add = result['added']
 	drop = result['dropped']

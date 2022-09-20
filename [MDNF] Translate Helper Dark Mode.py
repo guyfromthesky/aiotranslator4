@@ -2197,7 +2197,7 @@ def MainLoop():
 		VERSION = tool_display_name  + " " +  ver_num	
 	print('Create UI')
 	root = Tk()
-	root.attributes("-alpha", 0.97)
+	root.attributes("-alpha", 0.99)
 
 	style = Style(root)
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))

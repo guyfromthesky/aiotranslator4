@@ -1,7 +1,7 @@
 from google.cloud import translate_v3 as translator
 import os
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r'C:\Users\evan\Desktop\Account\product_owner.json'
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r'D:\Desktop\Account\product_owner.json'
 
 def create_glossary(
     project_id="credible-bay-281107",

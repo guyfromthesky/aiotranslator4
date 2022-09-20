@@ -312,6 +312,12 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 					for cell in row:
 						if cell.value != None:
 							current_string = str(cell.value)
+							# If this cell is content formula:
+							if DataOnly == False:
+								#print('Data only False')
+								if cell.data_type == 'f':
+									print('Formula cell: ', current_string)
+									continue
 							# ValidateSourceText in aiotranslator lib
 							result = MyTranslator.ValidateSourceText(current_string)
 							if result == False:
