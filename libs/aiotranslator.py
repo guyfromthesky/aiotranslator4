@@ -989,7 +989,65 @@ class Translator:
 		blob.upload_from_filename(filename = _download_path)
 		return db_path
 
-	def download_db_to_file(self, glossary_id, download_path):
+	def upload_temp_report_to_cloud(self, glossary_id, _temp_report_path):
+	
+		from google.cloud import storage
+		sclient = storage.Client()
+		
+		#db_path = address['db']
+		#header_path = address['header']
+		#info_path = address['info']
+		#gloss = self.get_glossary(glossary_id)
+		print('Get bucket:', self.bucket_id)
+		bucket = sclient.get_bucket(self.bucket_id)
+		print('Get blob:', glossary_id)
+		try:
+			blob_id = self.get_glossary_path(glossary_id)
+		except:
+			return False	
+	
+		if blob_id == None:
+			print('This project is not exist, create a new one!')
+			blob_id = self.add_project_to_config(glossary_id)
+		if blob_id == None:
+			return
+
+		_blob_name, _ext = os.path.splitext(blob_id)
+
+		for file_name in ['db', 'header', 'info']:
+			current_id = _blob_name + "_" + file_name + _ext
+			blob = bucket.blob(current_id)
+			if file_name == 'db':
+				try:
+					current_timestamp  = self.get_timestamp()
+					list_folder = _blob_name.split('/')
+					db_name = list_folder[-1]
+					root = list_folder[0:-1]
+					root_name = '/'.join(root)
+					new_blob = root_name + '/Backup/' + db_name + "_db_" + current_timestamp + _ext
+					print('Backup blob to: ', new_blob)
+					bucket.copy_blob(blob, bucket, new_blob)
+				except Exception as e:
+					print('Fail to backup blob:', e)
+				_gloosary_id = current_id
+
+			Upload_Path = _temp_report_path
+
+			supported_language = _temp_report_path['language']
+			print('Uploading to blob:', current_id)
+			try:
+				blob.upload_from_filename(filename = Upload_Path)
+			except Exception as exception:
+				print('Uploading Fail.')
+				if isinstance(exception, Forbidden):
+					return "Forbidden"
+				else:
+					return False
+		print('Create glossary from blob: ', _gloosary_id)
+		return self.update_glossary(glossary_id, _gloosary_id, supported_language)
+	
+
+	def download_temp_report_to_file(self, glossary_id, download_path):
 		print('Downloading db to:', download_path)
 		for gloss_data in self.glossary_data_list:
 			gloss_id = gloss_data[0]
@@ -2023,7 +2081,7 @@ def generate_translator(
 		bucket_id = 'nxvnbucket',
 		db_list_uri = 'config/db_list.csv',
 		project_bucket_id = 'credible-bay-281107'):	
-	print('Translator options:', locals())
+
 	MyTranslator = Translator(	from_language = from_language, 
 								to_language = to_language, 
 								glossary_id =  glossary_id, 

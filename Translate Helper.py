@@ -18,7 +18,7 @@ from pyperclip import copy, paste
 #from tkinter.ttk import *
 from tkinter.ttk import Entry, Label, Style
 from tkinter.ttk import Checkbutton, OptionMenu, Notebook, Radiobutton, LabelFrame, Button
-from tkinter import Tk, Frame, Toplevel
+from tkinter import Tk, Frame, Toplevel, Scale
 
 # Widget type
 from tkinter import Menu, filedialog, messagebox
@@ -30,7 +30,7 @@ from tkinter import WORD
 # sticky state
 from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, BOTTOM
 # Config state
-from tkinter import DISABLED, NORMAL
+from tkinter import DISABLED, NORMAL, HORIZONTAL
 from tkhtmlview import HTMLScrolledText
 
 #from tkinter import filedialog
@@ -64,9 +64,9 @@ from google.cloud import logging
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4119
+REV = 4120
 ver_num = get_version(REV) 
-version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
+version = tool_display_name  + " " +  ver_num
 
 DELAY = 20
 
@@ -157,7 +157,7 @@ class MyTranslatorHelper(Frame):
 
 		if self.LicensePath.get() != "":
 			self.generate_translator_engine()
-
+			'''
 			MsgBox = messagebox.askquestion ('Bug Writer', self.LanguagePack.ToolTips['LoadReport'],icon = 'info') 
 			if MsgBox == 'yes':
 				self.parent.withdraw()
@@ -168,6 +168,12 @@ class MyTranslatorHelper(Frame):
 				self.parent.withdraw()
 				self.parent.update_idletasks()
 				self.parent.deiconify()
+			'''
+			self.parent.withdraw()
+			self.parent.update_idletasks()
+			self.LoadTempReport()
+			self.parent.deiconify()
+			
 				
 		else:
 			closed_box = messagebox.askokcancel('Bug Writer', 'No license selected, please select the key in Translate setting.',icon = 'info')
@@ -232,6 +238,7 @@ class MyTranslatorHelper(Frame):
 		self.bottom_panel = BottomPanel(self, BG_CL)
 		
 	def Generate_Tab_UI(self):
+		print('FRAME_BG', FRAME_BG)
 		MainPanel = Frame(self, name='mainpanel', bg=FRAME_BG)
 		MainPanel.pack(side=TOP, fill=BOTH, expand=Y)
 		self.TAB_CONTROL = Notebook(MainPanel, name='notebook')
@@ -274,12 +281,12 @@ class MyTranslatorHelper(Frame):
 		self.TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
 
 	def Generate_Menu_UI(self):
-		menubar = Menu(self.parent, background=BG_CL, fg='white')
+		menubar = Menu(self.parent, background=BG_CL, fg=FG_CL)
 
 		menubar.configure(background=BG_CL, cursor='hand2')
 
 		# Adding File Menu and commands 
-		file = Menu(menubar, tearoff = 0, background=BG_CL, fg='white')
+		file = Menu(menubar, tearoff = 0, background=BG_CL, fg=FG_CL)
 		# Adding Load Menu  
 		menubar.add_cascade(label =  self.LanguagePack.Menu['File'], menu = file) 
 		file.add_command(label =  self.LanguagePack.Menu['LoadLicensePath'], command = self.Btn_Select_License_Path) 
@@ -291,7 +298,7 @@ class MyTranslatorHelper(Frame):
 		#file.add_separator() 
 		file.add_command(label =  self.LanguagePack.Menu['Exit'], command = self.on_closing) 
 		# Adding Help Menu
-		hotkey = Menu(menubar, tearoff = 0, background=BG_CL, fg='white')
+		hotkey = Menu(menubar, tearoff = 0, background=BG_CL, fg=FG_CL)
 		menubar.add_cascade(label =  'Hotkey', menu = hotkey) 
 		hotkey.add_command(label = 'Save Report - Ctrl + S', command = self._save_report)
 		hotkey.add_command(label = 'Load Report - Ctrl + L', command = self._load_report)
@@ -302,7 +309,7 @@ class MyTranslatorHelper(Frame):
 		#hotkey.add_separator()  
 		#hotkey.add_command(label = 'Grammar check - Ctrl + Q') 
 
-		help_ = Menu(menubar, tearoff = 0, background=BG_CL, fg='white')
+		help_ = Menu(menubar, tearoff = 0, background=BG_CL, fg= FG_CL)
 		menubar.add_cascade(label =  self.LanguagePack.Menu['Help'], menu = help_) 
 		help_.add_command(label =  self.LanguagePack.Menu['GuideLine'], command = self.OpenWeb) 
 		help_.add_separator()
@@ -310,7 +317,7 @@ class MyTranslatorHelper(Frame):
 		self.parent.config(menu = menubar)
 		
 		# Adding Help Menu
-		language = Menu(menubar, tearoff = 0, background=BG_CL, fg='white')
+		language = Menu(menubar, tearoff = 0, background=BG_CL, fg= FG_CL)
 		menubar.add_cascade(label =  self.LanguagePack.Menu['Language'], menu = language) 
 		language.add_command(label =  self.LanguagePack.Menu['Hangul'], command = self.SetLanguageKorean) 
 		language.add_command(label =  self.LanguagePack.Menu['English'], command = self.SetLanguageEnglish) 
@@ -470,6 +477,8 @@ class MyTranslatorHelper(Frame):
 		self.SourceText.bind("<Double-Return>", self.bind_translate)
 		self.SourceText.bind("<Double-Tab>", self.BindSwap)
 
+		self.SourceText.bind('<Key>', self.SaveTempReport)
+
 		self.TargetText = Text(Tab, width = self.SOURCE_WIDTH, height=self.ROW_SIZE, undo=True) #
 		self.TargetText.grid(row = Row, column=6, columnspan=5, rowspan=self.ROW_SIZE, padx=5, pady=5, sticky=E)
 		
@@ -539,6 +548,13 @@ class MyTranslatorHelper(Frame):
 		self.Browse_License_Btn = Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path)
 		self.Browse_License_Btn.grid(row=Row, column=10, padx=5, pady=5, sticky=E)
 
+		Row += 1
+		Label(Tab, text= self.LanguagePack.Label['Transparent']).grid(row=Row, rowspan = 2, column=1, padx=5, pady=5, sticky=W)
+		self.TransparentPercent = Scale(Tab, length = 600, from_ = 0, to = 100, variable= self.Transparent, command= self.SaveAppTransparency, orient=HORIZONTAL, bg=FRAME_BG, bd = 0, fg = FG_CL, highlightbackground = FRAME_BG, 	
+troughcolor = BG_CL)
+		self.TransparentPercent.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=E+W)
+		Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Reset'], command= self.rebuild_UI).grid(row=Row, column=10, padx=5, pady=5, rowspan = 2, sticky=E)
+
 
 	def Btn_Select_License_Path(self):
 		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectDB'],filetypes = (("JSON files","*.json" ), ), )	
@@ -561,6 +577,8 @@ class MyTranslatorHelper(Frame):
 		self.UseSimpleTemplate = IntVar()
 
 		self.LicensePath = StringVar()
+		self.Transparent = IntVar()
+
 		#self.DictionaryPath = StringVar()
 		self.TMPath = StringVar()
 
@@ -581,6 +599,10 @@ class MyTranslatorHelper(Frame):
 		self.AppLanguage  = self.Configuration['Bug_Writer']['app_lang']
 		license_file_path = self.Configuration['Translator']['license_file']
 		self.LicensePath.set(license_file_path)
+
+
+		Transparent  = self.Configuration['Bug_Writer']['Transparent']
+		self.Transparent.set(Transparent)
 
 		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = license_file_path
 		self.TMPath.set(self.Configuration['Translator']['translation_memory'])
@@ -651,6 +673,9 @@ class MyTranslatorHelper(Frame):
 		self.Notice.set(self.LanguagePack.ToolTips['AppLanuageUpdate'] + " "+ language) 
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'app_lang', language)
 	
+	def SaveAppTransparency(self, transparency):
+		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'Transparent', transparency)
+
 	def SelectDictionary(self):
 		filename = filedialog.askopenfilename(title = "Select Database file",filetypes = (("Dictionary files","*.xlsx *.xlsm"), ), )	
 		if filename != "":
@@ -1057,9 +1082,7 @@ class MyTranslatorHelper(Frame):
 
 	#Execute function
 	def BtnCopy(self):
-
 		self.get_source_text()
-		
 		#Translated = self.TargetText.get("1.0", END)
 		#Translated = Translated.replace('\r', '')
 		copy(self.main_translation)
@@ -1551,6 +1574,9 @@ class MyTranslatorHelper(Frame):
 		TextShouldBe = self.TextShouldBe.get("1.0", END)
 		HeaderA = self.HeaderOptionA.get()
 		HeaderB = self.HeaderOptionB.get()
+
+		SourceText = self.SourceText.get("1.0", END)
+
 		try:
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTitle', TextTitle, True)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextServer', TextServer, True)
@@ -1563,6 +1589,10 @@ class MyTranslatorHelper(Frame):
 
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)
+
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'SimpleTranslator', SourceText, True)
+				
+
 		except Exception as e:
 			print('Cannot save the report:', e)
 			pass
@@ -1666,6 +1696,10 @@ class MyTranslatorHelper(Frame):
 	
 			self.HeaderOptionA.set(self.Configuration['Temp_BugDetails']['HeaderA'])
 			self.HeaderOptionB.set(self.Configuration['Temp_BugDetails']['HeaderB'])
+
+			SourceText  = self.Configuration['Temp_BugDetails']['SimpleTranslator']
+			self.SourceText.delete("1.0", END)
+			self.SourceText.insert("end", SourceText)
 
 
 		except Exception as e:
@@ -2102,8 +2136,16 @@ def main():
 	tm_manager = MyManager.list()
 	language_tool_enable = False
 
+	try:
+		AppConfig = ConfigLoader(Writer = True)
+		Configuration = AppConfig.Config
+		Transparency  = Configuration['Bug_Writer']['Transparent']
+	except Exception as e:
+		print("Error while getting Tranparency: ", e)
+		Transparency = 97
+	
 	root = Tk()
-	root.attributes("-alpha", 0.97)
+	root.attributes("-alpha", (Transparency/100))
 
 	style = Style(root)
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
@@ -2126,30 +2168,31 @@ def main():
 	else:
 		color_mode = 'light'
 
-	global BG_CL, FG_CL, FRAME_BG, MENU_BG
+	global BG_CL, FG_CL, FRAME_BG, MENU_BG, FOLK_BLUE
 	
 	if color_mode == 'light':	
 		BG_CL = None
 		FG_CL = None
 		FRAME_BG = None
 		MENU_BG = None
+		FOLK_BLUE = None
 	else:
 		BG_CL = '#191c1d'
 		FG_CL = 'white'
 		FRAME_BG = '#33393b'
 		MENU_BG = '#474D4E'	
+		FOLK_BLUE = '#215D9C'
 
 	#root.geometry("400x350+300+300")
 	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
-		
+
 	try:
 		root.attributes('-topmost', True)
 		application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 		root.attributes('-topmost', False)
 		root.mainloop()
 		application.MyTranslator.send_tracking_record()
-	except Exception as e:
-		
+	except Exception as e:	
 		root.withdraw()
 
 		try:
@@ -2161,7 +2204,7 @@ def main():
 			client = logging.Client()
 		except:
 			print('Fail to communicate with logging server')
-			print("error message:", e)
+			print("Usage logging error:", e)
 			messagebox.showinfo(title='Critical error', message=e)
 			return
 

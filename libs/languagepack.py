@@ -164,6 +164,9 @@ class LanguagePackEN:
 
 	Label['PreConition'] = "Pre-condition:"
 
+	Label['Transparent'] = "Transparent percent:"
+
+
 	Tab = {}
 	Tab['Main'] = "Main Menu"
 	Tab['General'] = "General Setting"
@@ -431,6 +434,9 @@ class LanguagePackKR:
 	Label['EnvInfo'] = "환경정보:"
 
 	Label['PreConition'] = "전제 조건"
+
+	Label['Transparent'] = "투명 퍼센트:"
+
 
 	Tab = {}
 	Tab['Main'] = "메인 메뉴"

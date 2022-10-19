@@ -131,11 +131,20 @@ class ConfigLoader:
 		self.Init_Config_Option_Numberic(config, Section, 'source_lang', 2)
 		self.Init_Config_Option_Numberic(config, Section, 'secondary_target_lang', 6)
 
+		
 		self.Init_Config_Option_Numberic(config, Section, 'test_info_inable', 1)
 		self.Init_Config_Option_Numberic(config, Section, 'use_simple_template', 0)
 		self.Init_Config_Option_Numberic(config, Section, 'usage', 0)
 		
 		self.Init_Config_Option(config, Section, 'app_lang', 'en')
+
+		self.Init_Config_Option_Numberic(config, Section, 'Transparent', 97)
+		self.Init_Config_Option(config, Section, 'BackgroundColor', "")
+		self.Init_Config_Option(config, Section, 'ForcegroundColor', "")
+		self.Init_Config_Option(config, Section, 'FrameColor', "")
+		self.Init_Config_Option(config, Section, 'MenuColor', "")
+		self.Init_Config_Option(config, Section, 'UsedTheme', "", True)
+
 		Section = 'BugDetails'
 		
 		self.Init_Config_Option(config, Section, 'TextTitle', "", True)
@@ -172,6 +181,16 @@ class ConfigLoader:
 		self.Init_Config_Option(config, Section, 'HeaderA', "")
 		self.Init_Config_Option(config, Section, 'HeaderB', "")
 
+		self.Init_Config_Option(config, Section, 'SimpleTranslator', "")
+
+
+	
+
+		#BG_CL = None
+		#FG_CL = None
+		#FRAME_BG = None
+		#MENU_BG = None
+		#FOLK_BLUE = None
 		
 		Section = 'Simple_Translator'
 		if not config.has_section(Section):

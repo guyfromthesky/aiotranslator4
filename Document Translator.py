@@ -315,7 +315,7 @@ class DocumentTranslator(Frame):
 		self.TextLicensePath.grid(row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
 		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.SelectTM).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
 		
-
+		
 
 	def Generate_Debugger_UI(self, Tab):	
 

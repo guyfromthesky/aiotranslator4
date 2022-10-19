@@ -18,7 +18,7 @@ from pyperclip import copy, paste
 #from tkinter.ttk import *
 from tkinter.ttk import Entry, Label, Style
 from tkinter.ttk import Checkbutton, OptionMenu, Notebook, Radiobutton, LabelFrame, Button
-from tkinter import Tk, Frame, Toplevel, Canvas
+from tkinter import Tk, Frame, Toplevel, Canvas, Scale, colorchooser
 
 # Widget type
 from tkinter import Menu, filedialog, messagebox
@@ -30,7 +30,7 @@ from tkinter import WORD
 # sticky state
 from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, BOTTOM, RIGHT
 # Config state
-from tkinter import DISABLED, NORMAL
+from tkinter import DISABLED, NORMAL, HORIZONTAL
 
 from tkhtmlview import HTMLScrolledText
 import textwrap
@@ -71,10 +71,6 @@ ver_num = get_version(REV)
 
 DELAY = 20
 DELAY2 = 300000
-BG_CL = '#191c1d'
-FG_CL = 'white'
-FRAME_BG = '#33393b'
-MENU_BG = '#474D4E'
 
 #**********************************************************************************
 # UI handle ***********************************************************************
@@ -147,6 +143,7 @@ class MyTranslatorHelper(Frame):
 		self.init_ui()
 		self.init_UI_setting()
 		
+		#self.change_color()
 
 		if REV < int(self.latest_version):
 			self.Error('Current version is lower than the minimal version allowed. Please update.')	
@@ -164,13 +161,10 @@ class MyTranslatorHelper(Frame):
 		else:
 			self.Error('No license selected, please select the key in Translate setting.')	
 		
-
-		MsgBox = messagebox.askquestion ('Bug Writer', self.LanguagePack.ToolTips['LoadReport'],icon = 'info') 
-		if MsgBox == 'yes':
-			self.parent.withdraw()
-			self.parent.update_idletasks()
-			self.LoadTempReport()
-			self.parent.deiconify()
+		self.parent.withdraw()
+		self.parent.update_idletasks()
+		self.LoadTempReport()
+		self.parent.deiconify()
 
 		self.parent.minsize(self.parent.winfo_width(), self.parent.winfo_height())
 		x_cordinate = int((self.parent.winfo_screenwidth() / 2) - (self.parent.winfo_width() / 2))
@@ -185,6 +179,13 @@ class MyTranslatorHelper(Frame):
 		if messagebox.askokcancel(tool_display_name, "Do you want to quit?"):
 			self.parent.destroy()
 			self.TranslatorProcess.terminate()
+
+	def rebuild_UI(self):
+		if messagebox.askokcancel("Quit", "Do you want to restart?"):
+			self.parent.destroy()
+			Main()
+		else:
+			messagebox.showinfo('Language update','The application\'s language will be changed in next session.')	
 
 	def move_window(self, event):
 		self.parent.geometry('+{0}+{1}'.format(event.x_root, event.y_root))
@@ -288,12 +289,12 @@ class MyTranslatorHelper(Frame):
 		TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
 
 	def Generate_Menu_UI(self):
-		menubar = Menu(self.parent, background=BG_CL, fg='white')
+		menubar = Menu(self.parent, background=BG_CL, fg=FG_CL)
 
 		menubar.configure(background=BG_CL, cursor='hand2')
 
 		# Adding File Menu and commands 
-		file = Menu(menubar, tearoff = 0, background=BG_CL, fg='white')
+		file = Menu(menubar, tearoff = 0, background=BG_CL, fg=FG_CL)
 		# Adding Load Menu  
 		menubar.add_cascade(label =  self.LanguagePack.Menu['File'], menu = file) 
 		file.add_command(label =  self.LanguagePack.Menu['LoadLicensePath'], command = self.Btn_Select_License_Path) 
@@ -305,7 +306,7 @@ class MyTranslatorHelper(Frame):
 		#file.add_separator() 
 		file.add_command(label =  self.LanguagePack.Menu['Exit'], command = self.on_closing) 
 		# Adding Help Menu
-		hotkey = Menu(menubar, tearoff = 0, background=BG_CL, fg='white')
+		hotkey = Menu(menubar, tearoff = 0, background=BG_CL, fg=FG_CL)
 		menubar.add_cascade(label =  'Hotkey', menu = hotkey) 
 		hotkey.add_command(label = 'Save Report - Ctrl + S', command = self._save_report)
 		hotkey.add_command(label = 'Load Report - Ctrl + L', command = self._load_report)
@@ -316,7 +317,7 @@ class MyTranslatorHelper(Frame):
 		hotkey.add_separator()  
 		hotkey.add_command(label = 'Grammar check - Ctrl + Q') 
 
-		help_ = Menu(menubar, tearoff = 0, background=BG_CL, fg='white')
+		help_ = Menu(menubar, tearoff = 0, background=BG_CL, fg=FG_CL)
 		menubar.add_cascade(label =  self.LanguagePack.Menu['Help'], menu = help_) 
 		help_.add_command(label =  self.LanguagePack.Menu['GuideLine'], command = self.OpenWeb) 
 		help_.add_separator()
@@ -324,7 +325,7 @@ class MyTranslatorHelper(Frame):
 		self.parent.config(menu = menubar)
 		
 		# Adding Help Menu
-		language = Menu(menubar, tearoff = 0, background=BG_CL, fg='white')
+		language = Menu(menubar, tearoff = 0, background=BG_CL, fg=FG_CL)
 		menubar.add_cascade(label =  self.LanguagePack.Menu['Language'], menu = language) 
 		language.add_command(label =  self.LanguagePack.Menu['Hangul'], command = self.SetLanguageKorean) 
 		language.add_command(label =  self.LanguagePack.Menu['English'], command = self.SetLanguageEnglish) 
@@ -490,7 +491,8 @@ class MyTranslatorHelper(Frame):
 		self.SourceText = Text(Tab, width = self.SOURCE_WIDTH, height=self.ROW_SIZE, undo=True) 
 		self.SourceText.grid(row=Row, column=1, columnspan=5, rowspan=self.ROW_SIZE, padx=5, pady=5, sticky=E+W)
 		self.SourceText.bind("<Double-Return>", self.bind_translate)
-		self.SourceText.bind("<Double-Tab>", self.BindSwap)
+		#self.SourceText.bind("<Double-Tab>", self.BindSwap)
+		self.SourceText.bind('<Key>', self.SaveTempReport)
 
 		self.TargetText = Text(Tab, width = self.SOURCE_WIDTH, height=self.ROW_SIZE, undo=True) #
 		self.TargetText.grid(row = Row, column=6, columnspan=5, rowspan=self.ROW_SIZE, padx=5, pady=5, sticky=E)
@@ -552,8 +554,100 @@ class MyTranslatorHelper(Frame):
 		Label(Tab, text= self.LanguagePack.Label['LicensePath']).grid(row=Row, column=1, padx=5, pady=5, sticky=E)
 		self.TextLicensePath = Entry(Tab,width = 100, state="readonly", textvariable=self.LicensePath)
 		self.TextLicensePath.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=W+E)
-		Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path).grid(row=Row, column=10, padx=5, pady=5, sticky=E)
-		
+		self.Browse_License_Btn = Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path)
+		self.Browse_License_Btn.grid(row=Row, column=10, padx=5, pady=5, sticky=E)
+
+
+		Row += 1
+		Label(Tab, text= self.LanguagePack.Label['Transparent']).grid(row=Row, rowspan = 2, column=1, padx=5, pady=5, sticky=W)
+		self.TransparentPercent = Scale(Tab, length = 600, from_ = 0, to = 100, variable= self.Transparent, command= self.SaveAppTransparency, orient=HORIZONTAL, bg=FRAME_BG, bd = 0, fg = FG_CL, highlightbackground = FRAME_BG, 	
+troughcolor = BG_CL)
+		self.TransparentPercent.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=E+W)
+		Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Reset'], command= self.rebuild_UI).grid(row=Row, column=10, padx=5, pady=5, rowspan = 2, sticky=E)
+
+		Row += 1
+		# List theme
+		fake_root = Tk()
+		CWD = os.getcwd()
+		themes_dir = os.path.join(CWD, "theme") 
+		for file in os.listdir(themes_dir):
+			real_path = os.path.join(themes_dir, file) 
+			if file.endswith(".tcl"):
+				try:
+					fake_root.tk.call("source", real_path)	
+				except:
+					continue
+			
+		temp_style = Style(fake_root)
+		all_theme = temp_style.theme_names()
+		_style = Style(self.parent)
+		used_theme = _style.theme_use()
+	
+		fake_root.destroy()
+		self.used_theme = StringVar(value=used_theme)
+
+		Label(Tab, text= "Available theme:").grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+		List_Theme = OptionMenu(Tab, self.used_theme, *all_theme, command = self.BtnSelectTheme)
+		List_Theme.config(width=self.HALF_BUTTON_SIZE)
+		List_Theme["menu"].config(bg=MENU_BG, fg= FG_CL)
+		List_Theme.grid(row=Row, column=3, sticky=E)
+
+		#Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.BtnSelectBackgroundColour).grid(row=Row, column=3, padx=5, pady=5, rowspan = 2, sticky=E)
+
+		Row += 1
+		Label(Tab, text= "Background Color:").grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+		Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.BtnSelectBackgroundColour).grid(row=Row, column=3, padx=5, pady=5, sticky=E)
+
+		Row += 1
+		Label(Tab, text= "Forceground Color:").grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+		Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.BtnSelectForcegroundColour).grid(row=Row, column=3, padx=5, pady=5, sticky=E)
+
+		Row += 1
+		Label(Tab, text= "Frame Color:").grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+		Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.BtnSelectFrameColour).grid(row=Row, column=3, padx=5, pady=5, sticky=E)
+
+
+		Row += 1
+		Label(Tab, text= "Menu Color:").grid(row=Row, column=1, padx=5, pady=5, sticky=W)
+		Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.BtnSelectMenuColour).grid(row=Row, column=3, padx=5, pady=5, sticky=E)
+
+	def BtnSelectTheme(self, item):
+		print('Updated theme to: ', item)
+		if item != None:
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'UsedTheme', item, True)
+
+	def BtnSelectBackgroundColour(self):
+		colorStr, Color = colorchooser.askcolor(parent=self, title='Select Colour', initialcolor=BG_CL)
+		if Color != None:
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'BackgroundColor', Color)
+	
+
+	def BtnSelectForcegroundColour(self):
+		colorStr, Color = colorchooser.askcolor(parent=self, title='Select Colour', initialcolor=FG_CL)
+
+		if Color != None:
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'ForcegroundColor', Color)
+
+
+	def BtnSelectFrameColour(self):
+		colorStr, Color = colorchooser.askcolor(parent=self, title='Select Colour', initialcolor=FRAME_BG)
+
+		if Color != None:
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'FrameColor', Color)
+	
+	def BtnSelectMenuColour(self):
+		colorStr, Color = colorchooser.askcolor(parent=self, title='Select Colour', initialcolor=MENU_BG)
+		if Color != None:
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'MenuColor', Color)
+	
+	def change_color(self):
+		for wdg in self.parent.winfo_children():
+			wdg =  self.parent.nametowidget(wdg)
+			if isinstance(wdg, Label):
+				wdg.config(bg=BG_CL)
+			elif isinstance(wdg, Entry):
+				wdg.config(fg=FG_CL)
+
 
 	def Btn_Select_License_Path(self):
 		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectDB'],filetypes = (("JSON files","*.json" ), ), )	
@@ -563,6 +657,7 @@ class MyTranslatorHelper(Frame):
 
 			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LicensePath
 			self.LicensePath.set(LicensePath)
+			self.rebuild_UI()
 		else:
 			self.Notice.set("No file is selected")
 
@@ -574,7 +669,8 @@ class MyTranslatorHelper(Frame):
 		self.UseSimpleTemplate = IntVar()
 
 		self.LicensePath = StringVar()
-		#self.DictionaryPath = StringVar()
+		self.Transparent = IntVar()
+
 		self.TMPath = StringVar()
 
 		self.CurrentDataSource = StringVar()
@@ -594,6 +690,9 @@ class MyTranslatorHelper(Frame):
 		self.AppLanguage  = self.Configuration['Bug_Writer']['app_lang']
 		license_file_path = self.Configuration['Translator']['license_file']
 		self.LicensePath.set(license_file_path)
+
+		Transparent  = self.Configuration['Bug_Writer']['Transparent']
+		self.Transparent.set(Transparent)
 
 		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = license_file_path
 		self.TMPath.set(self.Configuration['Translator']['translation_memory'])
@@ -649,18 +748,21 @@ class MyTranslatorHelper(Frame):
 	def SetLanguageKorean(self):
 		self.AppLanguage = 'kr'
 		self.SaveAppLanguage(self.AppLanguage)
-		#self.initUI()
+		self.rebuild_UI()
 	
 	def SetLanguageEnglish(self):
 		self.AppLanguage = 'en'
 		self.SaveAppLanguage(self.AppLanguage)
-		#self.initUI()
+		self.rebuild_UI()
 
 	def SaveAppLanguage(self, language):
 
 		self.Notice.set(self.LanguagePack.ToolTips['AppLanuageUpdate'] + " "+ language) 
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'app_lang', language)
 	
+	def SaveAppTransparency(self, transparency):
+		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'Transparent', transparency)
+
 	def SelectDictionary(self):
 		filename = filedialog.askopenfilename(title = "Select Database file",filetypes = (("Dictionary files","*.xlsx *.xlsm"), ), )	
 		if filename != "":
@@ -1411,17 +1513,6 @@ class MyTranslatorHelper(Frame):
 		return
 
 	#Reset buttons
-	def ResetTestVersion(self):	
-		self.TextServer.delete("1.0", END)
-		self.TextClient.delete("1.0", END)
-		self.TextClient.insert("end", "ver.")
-		return
-
-	def ResetTestInfo(self):
-		self.TextReprodTime.delete("1.0", END)
-		self.TextAccount.delete("1.0", END)
-		return
-
 	def ResetTestReport(self):
 		self.HeaderOptionA.set('')
 		self.HeaderOptionB.set('')
@@ -1653,30 +1744,43 @@ class MyTranslatorHelper(Frame):
 		except:
 			pass
 
-	def SaveTempReport(self, event):
-		TextTitle = self.TextTitle.get("1.0", END)			
-		
+	def SaveTempReport(self, event=None):
+		print('Save temp report')
+		TextTitle = self.TextTitle.get("1.0", END)	
+
 		EnvInfo = self.EnvInfo.get("1.0", END)
 		Reproducibility = self.Reproducibility.get("1.0", END)
 		
+		TextReprodTime = self.TextReprodTime.get("1.0", END)
+		TextAccount = self.TextAccount.get("1.0", END)
 		TextTestReport = self.TextTestReport.get("1.0", END)
 		TextReproduceSteps = self.TextReproduceSteps.get("1.0", END)
 		TextShouldBe = self.TextShouldBe.get("1.0", END)
 		HeaderA = self.HeaderOptionA.get()
 		HeaderB = self.HeaderOptionB.get()
+
+		SourceText = self.SourceText.get("1.0", END)
+
 		try:
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTitle', TextTitle, True)
-			
+
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'EnvInfo', EnvInfo, True)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'Reproducibility', Reproducibility, True)
 
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReprodTime', TextReprodTime, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextAccount', TextAccount, True)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTestReport', TextTestReport, True)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextShouldBe', TextShouldBe, True)
 
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)
-		except:
+
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'SimpleTranslator', SourceText, True)
+				
+
+		except Exception as e:
+			print('Cannot save the report:', e)
 			pass
 
 
@@ -1761,9 +1865,13 @@ class MyTranslatorHelper(Frame):
 			self.HeaderOptionA.set(self.Configuration['Temp_BugDetails']['HeaderA'])
 			self.HeaderOptionB.set(self.Configuration['Temp_BugDetails']['HeaderB'])
 
+			SourceText  = self.Configuration['Temp_BugDetails']['SimpleTranslator']
+			self.SourceText.delete("1.0", END)
+			self.SourceText.insert("end", SourceText)
+
 		except:
 			print('Fail somewhere')
-			pass		
+			pass				
 
 
 	def SaveSetting(self):
@@ -2169,7 +2277,7 @@ def fixed_map(style, option):
 	return [elm for elm in style.map('Treeview', query_opt=option) if
 	  elm[:2] != ('!disabled', '!selected')]
 
-def MainLoop():
+def Main():
 	print('Create shareable Memory variable')
 	MyTranslator = Queue()
 	return_text = Queue()
@@ -2178,6 +2286,24 @@ def MainLoop():
 	tm_manager = MyManager.list()
 
 	language_tool_enable = True
+
+	global BG_CL, FG_CL, FRAME_BG, MENU_BG, FOLK_BLUE
+
+	try:
+		AppConfig = ConfigLoader(Writer = True)
+		Configuration = AppConfig.Config
+		Transparency  = Configuration['Bug_Writer']['Transparent']
+		BG_CL = Configuration['Bug_Writer']['BackgroundColor']
+		FG_CL = Configuration['Bug_Writer']['ForcegroundColor']
+		FRAME_BG = Configuration['Bug_Writer']['FrameColor']
+		MENU_BG = Configuration['Bug_Writer']['MenuColor']
+		UsedTheme = Configuration['Bug_Writer']['UsedTheme']
+
+	except Exception as e:
+		print("Error while getting Tranparency: ", e)
+		Transparency = 97
+		UsedTheme = 'awdark'
+
 	try:
 		download_path = os.environ.get('LTP_PATH',os.path.join(os.path.expanduser("~"), ".cache", "language_tool_python"))
 		print('Language tool path:', download_path)
@@ -2197,27 +2323,78 @@ def MainLoop():
 		VERSION = tool_display_name  + " " +  ver_num	
 	print('Create UI')
 	root = Tk()
-	root.attributes("-alpha", 0.99)
+	root.attributes("-alpha", (Transparency/100))
 
 	style = Style(root)
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
 	style.map('TFrame', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
 	CWD = os.getcwd()
 
-	THEME_DIR = os.path.join(CWD, "theme\\awdark.tcl") 
-	if os.path.isfile(THEME_DIR) == True:
-		try:
-			root.tk.call("source", THEME_DIR)
-			style.theme_use('awdark')
+	if UsedTheme != '':
+		
+		try: 
+			# Load available theme:
+			print("Used Theme", UsedTheme)
+			themes_dir = os.path.join(CWD, "theme") 
+			for file in os.listdir(themes_dir):
+				real_path = os.path.join(themes_dir, file) 
+				if file.endswith(".tcl"):
+					if UsedTheme in file:
+						print('Theme is used:', file)
+						try:
+							root.tk.call("source", real_path)	
+							print('Import file: ', real_path)
+						except:
+							pass
+						break
+			style.theme_use(UsedTheme)
+			if str(BG_CL) == 'None':
+				BG_CL = '#191c1d'
+			if str(FG_CL) == 'None':
+				FG_CL = 'white'
+			if str(FRAME_BG) == 'None':	
+				FRAME_BG = '#33393b'
+			if str(MENU_BG) == 'None':		
+				MENU_BG = '#474D4E'	
+			color_mode = 'custom'
 		except Exception as e:
-			print('Error while loading theme: ', e)	
+			print("Error:", e)
+			color_mode = 'light'
 	else:
-		print('White Mode')
-		global BG_CL, FG_CL, FRAME_BG, MENU_BG
+		print('Theme is not selected')
+		UsedTheme = 'awdark'
+		color_mode = 'dark'
+		THEME_DIR = os.path.join(CWD, "theme\\awdark.tcl") 
+		if os.path.isfile(THEME_DIR) == True:
+			try:
+				root.tk.call("source", THEME_DIR)
+				style.theme_use('awdark')
+				
+			except Exception as e:
+				print('Error while loading theme: ', e)	
+				color_mode = 'light'
+
+		else:
+			color_mode = 'light'
+		if color_mode == 'dark':
+			BG_CL = '#191c1d'
+			FG_CL = 'white'
+			FRAME_BG = '#33393b'
+			MENU_BG = '#474D4E'	
+			FOLK_BLUE = '#215D9C'
+
+	if color_mode == 'light':        
 		BG_CL = None
 		FG_CL = None
 		FRAME_BG = None
 		MENU_BG = None
+		FOLK_BLUE = None
+
+	AppConfig.Save_Config(AppConfig.Writer_Config_Path, 'Bug_Writer', 'UsedTheme', UsedTheme, True)
+	AppConfig.Save_Config(AppConfig.Writer_Config_Path, 'Bug_Writer', 'BackgroundColor', BG_CL)
+	AppConfig.Save_Config(AppConfig.Writer_Config_Path, 'Bug_Writer', 'ForcegroundColor', FG_CL)
+	AppConfig.Save_Config(AppConfig.Writer_Config_Path, 'Bug_Writer', 'FrameColor', FRAME_BG)
+	AppConfig.Save_Config(AppConfig.Writer_Config_Path, 'Bug_Writer', 'MenuColor', MENU_BG)
 	
 	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 		
@@ -2280,4 +2457,4 @@ if __name__ == '__main__':
 	#AIOTracker.GenerateToolUsageEvent(version)
 	#AIOTracker.UpdateTrackingData()
 
-	MainLoop()
+	Main()

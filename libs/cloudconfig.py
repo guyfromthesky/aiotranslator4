@@ -34,7 +34,7 @@ class CloudConfigLoader:
 		#self.Config['latest_version']
 		#self.Config['banned']
 		self.load_project_info_from_bucket()
-		print('Config:', self.Config)
+		#print('Config:', self.Config)
 
 	def load_project_id_from_json(self):
 		print('load_project_id_from_json')

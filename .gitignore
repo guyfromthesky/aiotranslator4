@@ -9,3 +9,13 @@ libs/__pycache__/aioconfigmanager.cpython-38.pyc
 libs/__pycache__/aiotranslator_v2.cpython-38.pycư
 libs/__pycache__/aiotranslator.cpython-38.pyc
 libs/__pycache__/documentprocessing.cpython-38.pyc
+*.svg
+*.tcl
+*.png
+*.toc
+*.pyz
+*.zip
+*.manifest
+*.pkg
+*.html
+*.tcl
