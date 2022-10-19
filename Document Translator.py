@@ -842,7 +842,7 @@ class DocumentTranslator(Frame):
 				if db_path != False:
 		
 					self.Uploader_Debugger.insert("end", "\n\r")
-					self.Uploader_Debugger.insert("end", "CSV DB is generaterd")
+					self.Uploader_Debugger.insert("end", "CSV DB is generated")
 					self.Uploader_Debugger.insert("end", "\n\r")
 					self.Uploader_Debugger.insert("end", "Compare generated DB with the current version")
 			except queue.Empty:
@@ -853,7 +853,7 @@ class DocumentTranslator(Frame):
 				db_path = self.ResultQueue.get(0)
 				if db_path != False:
 					self.Uploader_Debugger.insert("end", "\n\r")
-					self.Uploader_Debugger.insert("end", "CSV DB is generaterd")
+					self.Uploader_Debugger.insert("end", "CSV DB is generated")
 					self.Uploader_Debugger.insert("end", "\n\r")
 					self.Uploader_Debugger.insert("end", "Compare generated DB with the current version")
 			except queue.Empty:
