@@ -181,7 +181,7 @@ class ConfigLoader:
 		self.Init_Config_Option(config, Section, 'HeaderA', "")
 		self.Init_Config_Option(config, Section, 'HeaderB', "")
 
-		self.Init_Config_Option(config, Section, 'SimpleTranslator', "")
+		self.Init_Config_Option(config, Section, 'SimpleTranslator', "", True)
 
 
 	

@@ -47,7 +47,6 @@ import queue
 
 import webbrowser
 
-from libs.aiotranslator import ver_num as TranslatorVersion
 from libs.aiotranslator import generate_translator
 
 from libs.aioconfigmanager import ConfigLoader
@@ -65,7 +64,7 @@ from google.cloud import logging
 
 tool_display_name = "[MDNF] Translate Helper"
 tool_name = 'writer'
-REV = 4117
+REV = 4122
 ver_num = get_version(REV) 
 #VERSION = tool_display_name  + " " +  ver_num + " | Language Tool v5.6"
 
@@ -170,9 +169,15 @@ class MyTranslatorHelper(Frame):
 		x_cordinate = int((self.parent.winfo_screenwidth() / 2) - (self.parent.winfo_width() / 2))
 		y_cordinate = int((self.parent.winfo_screenheight() / 2) - (self.parent.winfo_height() / 2))
 		self.parent.geometry("+{}+{}".format(x_cordinate, y_cordinate-20))
-		
+		self.get_widget_name()
 		self.after(DELAY2, self.status_listening)	
 
+	def get_widget_name(self):
+		for attribute in dir(self):
+			_widget = str(type(getattr(self, attribute)))
+			if 'tkinter.' in _widget:
+				print(attribute, _widget)
+		
 
 	# Menu function
 	def on_closing(self):
@@ -1751,8 +1756,8 @@ troughcolor = BG_CL)
 		EnvInfo = self.EnvInfo.get("1.0", END)
 		Reproducibility = self.Reproducibility.get("1.0", END)
 		
-		TextReprodTime = self.TextReprodTime.get("1.0", END)
-		TextAccount = self.TextAccount.get("1.0", END)
+		#TextReprodTime = self.TextReprodTime.get("1.0", END)
+		#TextAccount = self.TextAccount.get("1.0", END)
 		TextTestReport = self.TextTestReport.get("1.0", END)
 		TextReproduceSteps = self.TextReproduceSteps.get("1.0", END)
 		TextShouldBe = self.TextShouldBe.get("1.0", END)
@@ -1767,8 +1772,8 @@ troughcolor = BG_CL)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'EnvInfo', EnvInfo, True)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'Reproducibility', Reproducibility, True)
 
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReprodTime', TextReprodTime, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextAccount', TextAccount, True)
+			#self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReprodTime', TextReprodTime, True)
+			#self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextAccount', TextAccount, True)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTestReport', TextTestReport, True)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextShouldBe', TextShouldBe, True)
