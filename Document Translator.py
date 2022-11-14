@@ -1793,7 +1793,7 @@ def function_create_db_data(DB_Path):
 									if sheetname != 'header':
 										db_writer.writerow(['', db_entry['KO'], db_entry['EN'].lower(), db_entry['CN'], db_entry['JP'], db_entry['VI'].lower(), sheetname])
 									elif sheetname != 'info':
-										header_writer.writerow([db_entry['KO'], db_entry['EN'].lower(), db_entry['CN'], db_entry['JP'], db_entry['VI'].lower(), sheetname])
+										header_writer.writerow([db_entry['KO'], db_entry['EN'], db_entry['CN'], db_entry['JP'], db_entry['VI'], sheetname])
 								#db_object['db'][sheetname].append(db_entry)
 
 				
