@@ -69,6 +69,7 @@ ver_num = get_version(REV)
 version = tool_display_name  + " " +  ver_num
 
 DELAY = 20
+DELAY_2 = 15000
 
 #**********************************************************************************
 # UI handle ***********************************************************************
@@ -188,8 +189,17 @@ class MyTranslatorHelper(Frame):
 		y_cordinate = int((self.parent.winfo_screenheight() / 2) - (self.parent.winfo_height() / 2))
 		self.parent.geometry("+{}+{}".format(x_cordinate, y_cordinate-20))
 
-		#self.after(DELAY2, self.status_listening)	
+		self.after(DELAY_2, self.auto_save)
 		
+	def auto_save(self):
+		"Auto save every once in a while."
+		try:
+			self.SaveTempReport()
+		except Exception as err:
+			print('Error when auto saving: ', err)
+		finally:
+			self.after(DELAY, self.auto_save)
+
 	# Menu function
 	def Error(self, ErrorText):
 		messagebox.showinfo('Translate error...', ErrorText)	
@@ -451,7 +461,6 @@ class MyTranslatorHelper(Frame):
 		self.TextShouldBe = CustomText(Tab, width=50, height=7, undo=True, wrap=WORD) 
 		self.TextShouldBe.grid(row=Row, column=6, columnspan=5, padx=5, pady=5, stick=W+E)
 
-		Tab.bind_all('<Key>', self.SaveTempReport)
 		Tab.bind_all('<Control-r>', self.generate_report)
 		Tab.bind_all('<Control-t>', self.GetTitle)
 		Tab.bind_all('<Control-s>', self._save_report)
@@ -476,8 +485,6 @@ class MyTranslatorHelper(Frame):
 		self.SourceText.grid(row=Row, column=1, columnspan=5, rowspan=self.ROW_SIZE, padx=5, pady=5, sticky=E+W)
 		self.SourceText.bind("<Double-Return>", self.bind_translate)
 		self.SourceText.bind("<Double-Tab>", self.BindSwap)
-
-		self.SourceText.bind('<Key>', self.SaveTempReport)
 
 		self.TargetText = Text(Tab, width = self.SOURCE_WIDTH, height=self.ROW_SIZE, undo=True) #
 		self.TargetText.grid(row = Row, column=6, columnspan=5, rowspan=self.ROW_SIZE, padx=5, pady=5, sticky=E)
