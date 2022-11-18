@@ -65,7 +65,7 @@ from google.cloud import logging
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4220
+REV = 4221
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num
 
@@ -864,7 +864,7 @@ class MyTranslatorHelper(Frame):
 		self.TransparentPercent = Scale(
 			Tab,
 			length=600,
-			from_=0,
+			from_=20,
 			to=100,
 			variable=self.Transparent,
 			command=self.SaveAppTransparency,
@@ -1036,8 +1036,9 @@ class MyTranslatorHelper(Frame):
 		
 		messagebox.showinfo(
 			title='Info',
-			message='Please restart the app to apply the change.')
+			message='App will restart to apply the change.')
 		self.parent.destroy()
+		main()
 
 	# Init functions
 	# Some option is saved for the next time use
@@ -1128,7 +1129,7 @@ class MyTranslatorHelper(Frame):
 			config_theme_name = self.Configuration['Bug_Writer']['theme name']
 			style = Style(self.parent) # self.parent is root
 
-			accepted_themes = ['awdark', 'awlight']
+			supported_themes = ['awdark', 'awlight']
 			# theme_dir = self.AppConfig.theme_loading_path
 			theme_dir = os.path.join(os.getcwd() + r'\\theme')
 			theme_files = os.listdir(theme_dir)
@@ -1136,21 +1137,23 @@ class MyTranslatorHelper(Frame):
 			for theme_file in theme_files:
 				file_name, file_ext = os.path.splitext(theme_file)
 				if file_ext == '.tcl':
-					if file_name in accepted_themes:
+					if file_name in supported_themes:
 						# Import tcl files
 						self.parent.tk.call(
 							"source", f'{theme_dir}\\{theme_file}')
 						self.theme_names.append(file_name)
 				else:
 					continue
-			# System default color is removed if adding below
+			# System default color is removed if adding below!!!!
 			# style.map(
 			# 	'.', #'.' means all ttk widgets
 			# 	foreground=fixed_map(style, 'foreground'),
 			# 	background=fixed_map(style, 'background'))
 
 			if config_theme_name not in self.theme_names:
-				raise Exception('No supported theme in config.')
+				raise Exception('Cannot use the theme saved in the config'
+					' because it is not supported or required files have'
+					' been removed.')
 
 			# # Add all available theme
 			# for theme_name in style.theme_names():
@@ -1158,7 +1161,8 @@ class MyTranslatorHelper(Frame):
 			self.change_theme_color(config_theme_name)
 			style.theme_use(config_theme_name)
 		except Exception as err:
-			print(f'Error while initializing theme: {err}\n'
+			print('Error while initializing theme:\n'
+				f'- {err}\n'
 				'The system default theme will be used instead.')
 
 
