@@ -205,7 +205,7 @@ class MyTranslatorHelper(Frame):
 		self.after(DELAY_2, self.auto_save)
 
 	def auto_save(self):
-		"""Automatically save input every once in awhile."""
+		"""Automatically save input every once in a while."""
 		try:
 			self.SaveTempReport()
 		except Exception as err:
@@ -2336,27 +2336,14 @@ class MyTranslatorHelper(Frame):
 		except Exception as e:
 			print('Cannot save the report:', e)
 			pass
-
-	def check_key_press(self, event=None):
-		self.key_press_count += 1
-		print(self.key_press_count)
-
-	def check_key_release(self, event=None):
-		
-		print(f'before sleep: {self.key_press_count}')
-		
-		self.key_release_count += 1
-		print(f'after sleep: {self.key_press_count}')
-		if self.key_press_count == self.key_release_count:
-			self.SaveTempReport()
-		
 	
 	def SaveTempReport(self, event=None):
-		"""Save the text input of all fields every time a key is pressed
-		to the config for the next session.
-		"""
-		# print('Save temp report')
-		TextTitle = self.TextTitle.get("1.0", END)			
+		"""Save the text input of all fields."""
+		# print('Save temp report.')
+		# "END" will add 1 extra newline at the end when getting value
+		# from Text widget. If using "end -1 chars", it will raise an
+		# error if get value is empty.
+		TextTitle = self.TextTitle.get("1.0", END)
 		TextServer = self.TextServer.get("1.0", END)
 		TextClient = self.TextClient.get("1.0", END)
 		TextReprodTime = self.TextReprodTime.get("1.0", END)
@@ -2368,6 +2355,13 @@ class MyTranslatorHelper(Frame):
 		HeaderB = self.HeaderOptionB.get()
 
 		SourceText = self.SourceText.get("1.0", END)
+
+		header_option_a_v2 = self.header_option_a_v2.get()
+		header_option_b_v2 = self.header_option_b_v2.get()
+		text_bug_title_v2 = self.text_bug_title_v2.get("1.0", END)
+		text_repro_step_source = self.text_repro_step_source.get("1.0", END)
+		text_expected_result_source = self.text_expected_result_source.get("1.0", END)
+		text_description_source = self.text_description_source.get("1.0", END)
 
 		try:
 			## BUG WRITER TAB
@@ -2435,32 +2429,32 @@ class MyTranslatorHelper(Frame):
 				self.AppConfig.Writer_Config_Path,
 				'Temp_BugDetails_v2',
 				'Header A',
-				self.header_option_a_v2.get())
+				header_option_a_v2)
 			self.AppConfig.Save_Config(
 				self.AppConfig.Writer_Config_Path,
 				'Temp_BugDetails_v2',
 				'Header B',
-				self.header_option_b_v2.get())
+				header_option_b_v2)
 			self.AppConfig.Save_Config(
 				self.AppConfig.Writer_Config_Path,
 				'Temp_BugDetails_v2',
 				'Bug Title',
-				self.text_bug_title_v2.get("1.0", END), True)
+				text_bug_title_v2, True)
 			self.AppConfig.Save_Config(
 				self.AppConfig.Writer_Config_Path,
 				'Temp_BugDetails_v2',
 				'Reproduce Steps',
-				self.text_repro_step_source.get("1.0", END), True)
+				text_repro_step_source, True)
 			self.AppConfig.Save_Config(
 				self.AppConfig.Writer_Config_Path,
 				'Temp_BugDetails_v2',
 				'Expected Results',
-				self.text_expected_result_source.get("1.0", END), True)
+				text_expected_result_source, True)
 			self.AppConfig.Save_Config(
 				self.AppConfig.Writer_Config_Path,
 				'Temp_BugDetails_v2',
 				'Description',
-				self.text_description_source.get("1.0", END), True)
+				text_description_source, True)
 		except Exception as e:
 			print('SaveTemp cannot save the report:', e)
 			pass
@@ -2528,41 +2522,43 @@ class MyTranslatorHelper(Frame):
 		
 		The text is loaded from the config.
 		"""
+		# ".rstrip('\n')" is used to remove the 1 extra newline added
+		# when getting value from Text widget in SaveTempReport().
 		try:
 			self.AppConfig.Refresh_Config_Data()
 			self.Configuration = self.AppConfig.Config
 			
 			TextTitle  = self.Configuration['Temp_BugDetails']['TextTitle']
 			self.TextTitle.delete("1.0", END)
-			self.TextTitle.insert("end", TextTitle)
+			self.TextTitle.insert("end", TextTitle.rstrip('\n'))
 			
 			TextServer  = self.Configuration['Temp_BugDetails']['TextServer']
 			self.TextServer.delete("1.0", END)
-			self.TextServer.insert("end", TextServer)
+			self.TextServer.insert("end", TextServer.rstrip('\n'))
 			
 			TextClient  = self.Configuration['Temp_BugDetails']['TextClient']
 			self.TextClient.delete("1.0", END)
-			self.TextClient.insert("end", TextClient)
+			self.TextClient.insert("end", TextClient.rstrip('\n'))
 			
 			TextReprodTime  = self.Configuration['Temp_BugDetails']['TextReprodTime']
 			self.TextReprodTime.delete("1.0", END)
-			self.TextReprodTime.insert("end", TextReprodTime)
+			self.TextReprodTime.insert("end", TextReprodTime.rstrip('\n'))
 			
 			TextAccount  = self.Configuration['Temp_BugDetails']['TextAccount']
 			self.TextAccount.delete("1.0", END)
-			self.TextAccount.insert("end", TextAccount)
+			self.TextAccount.insert("end", TextAccount.rstrip('\n'))
 			
 			TextTestReport  = self.Configuration['Temp_BugDetails']['TextTestReport']
 			self.TextTestReport.delete("1.0", END)
-			self.TextTestReport.insert("end", TextTestReport)
+			self.TextTestReport.insert("end", TextTestReport.rstrip('\n'))
 			
 			TextShouldBe  = self.Configuration['Temp_BugDetails']['TextShouldBe']
 			self.TextShouldBe.delete("1.0", END)
-			self.TextShouldBe.insert("end", TextShouldBe)
+			self.TextShouldBe.insert("end", TextShouldBe.rstrip('\n'))
 				
 			TextReproduceSteps  = self.Configuration['Temp_BugDetails']['TextReproduceSteps']
 			self.TextReproduceSteps.delete("1.0", END)
-			self.TextReproduceSteps.insert("end", TextReproduceSteps)
+			self.TextReproduceSteps.insert("end", TextReproduceSteps.rstrip('\n'))
 	
 			self.HeaderOptionA.set(self.Configuration['Temp_BugDetails']['HeaderA'])
 			self.HeaderOptionB.set(self.Configuration['Temp_BugDetails']['HeaderB'])
@@ -2570,7 +2566,7 @@ class MyTranslatorHelper(Frame):
 			## SIMPLE TRANSLATOR TAB
 			SourceText  = self.Configuration['Temp_BugDetails']['SimpleTranslator']
 			self.SourceText.delete("1.0", END)
-			self.SourceText.insert("end", SourceText)
+			self.SourceText.insert("end", SourceText.rstrip('\n'))
 			
 			## BUG WRITER_V2 TAB
 			self.header_option_a_v2.set(
@@ -2578,22 +2574,25 @@ class MyTranslatorHelper(Frame):
 			self.header_option_b_v2.set(
 				self.Configuration['Temp_BugDetails_v2']['Header B'])
 			
+			text_bug_title_v2 = self.Configuration['Temp_BugDetails_v2']['Bug Title']
 			self.text_bug_title_v2.delete("1.0", END)
 			self.text_bug_title_v2.insert(
-				"end", self.Configuration['Temp_BugDetails_v2']['Bug Title'])
+				"end", text_bug_title_v2.rstrip('\n'))
 			
+			text_repro_step_source = self.Configuration['Temp_BugDetails_v2']['Reproduce Steps']
 			self.text_repro_step_source.delete("1.0", END)
 			self.text_repro_step_source.insert(
-				"end", self.Configuration['Temp_BugDetails_v2']['Reproduce Steps'])
+				"end", text_repro_step_source.rstrip('\n'))
 			
+			text_expected_result_source = self.Configuration['Temp_BugDetails_v2']['Expected Results']
 			self.text_expected_result_source.delete("1.0", END)
 			self.text_expected_result_source.insert(
-				"end", self.Configuration['Temp_BugDetails_v2']['Expected Results'])
+				"end", text_expected_result_source.rstrip('\n'))
 			
+			text_description_source = self.Configuration['Temp_BugDetails_v2']['Description']
 			self.text_description_source.delete("1.0", END)
 			self.text_description_source.insert(
-				"end", self.Configuration['Temp_BugDetails_v2']['Description'])
-
+				"end", text_description_source.rstrip('\n'))
 		except Exception as e:
 			print('LoadTemp failed somewhere:', e)
 
