@@ -613,9 +613,9 @@ class MyTranslatorHelper(Frame):
 		Row += 1
 		self.btn_copy_bug_title_v2 = Button(
 			Tab,
-			text='Get Title',
+			text='Copy Bug Title',
 			width=self.BUTTON_SIZE,
-			command=self.get_title_v2, state=DISABLED)
+			command=self.get_title_v2)
 		self.btn_copy_bug_title_v2.grid(
 			row=Row, column=8, padx=5, pady=5, sticky=E)
 
@@ -851,7 +851,8 @@ class MyTranslatorHelper(Frame):
 		Label(Tab, textvariable=self.Notice).grid(row=Row, column=1, columnspan = 10, padx=5, pady=5, sticky= E+W)
 		Row += 1
 
-		Label(Tab, text= self.LanguagePack.Label['LicensePath']).grid(row=Row, column=1, padx=5, pady=5, sticky=E)
+		Label(
+			Tab, text= self.LanguagePack.Label['LicensePath']).grid(row=Row, column=1, padx=5, pady=5, sticky=E)
 		self.TextLicensePath = Entry(Tab,width = 150, state="readonly", textvariable=self.LicensePath)
 		self.TextLicensePath.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=W+E)
 		self.Browse_License_Btn = Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path)
@@ -881,6 +882,12 @@ class MyTranslatorHelper(Frame):
 		Row += 2
 		Label(Tab, text='Theme name:') \
 			.grid(row=Row, rowspan=2, column=1, padx=5, pady=5, sticky=E)
+		self.btn_remove_theme = Button(
+			Tab,
+			width=self.HALF_BUTTON_SIZE,
+			text="Remove Theme",
+			command=self.remove_theme)
+		self.btn_remove_theme.grid(row=Row, column=10)
 		self.strvar_theme_name = StringVar()
 		col = 3 # to add more buttons horizontally
 		for theme_name in self.theme_names:
@@ -899,17 +906,15 @@ class MyTranslatorHelper(Frame):
 			else:
 				col = 3
 				Row += 1
-		Button(
-				Tab,
-				width=self.HALF_BUTTON_SIZE,
-				text="Remove Theme",
-				command=self.remove_theme) \
-			.grid(row=Row, column=10)
 		
 		# Display selected theme
 		config_theme_name = self.Configuration['Bug_Writer']['theme name']
 		if config_theme_name in self.theme_names:
 			self.strvar_theme_name.set(config_theme_name)
+
+		# Disable [Remove Theme] button if no theme is selected.
+		if self.strvar_theme_name.get() not in self.theme_names:
+			self.btn_remove_theme.config(state=DISABLED)
 
 	def Btn_Select_License_Path(self):
 		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectDB'],filetypes = (("JSON files","*.json" ), ), )	
@@ -930,17 +935,23 @@ class MyTranslatorHelper(Frame):
 			config_theme_name -- str
 				Theme name retrieved from config. (Default: '')
 		"""
-		style = Style(self.parent) # self.parent is root
-		theme_name = self.strvar_theme_name.get()
-		
-		self.AppConfig.Save_Config(
-			self.AppConfig.Writer_Config_Path,
-			'Bug_Writer',
-			'theme name',
-			theme_name)
-		self.change_theme_color(theme_name)
-		style.theme_use(theme_name)
-		self.apply_theme_color()
+		try:
+			style = Style(self.parent) # self.parent is root
+			theme_name = self.strvar_theme_name.get()
+			
+			self.AppConfig.Save_Config(
+				self.AppConfig.Writer_Config_Path,
+				'Bug_Writer',
+				'theme name',
+				theme_name)
+			self.change_theme_color(theme_name)
+			style.theme_use(theme_name)
+			self.apply_theme_color()
+			self.btn_remove_theme.configure(state=NORMAL)
+		except Exception as err:
+			messagebox.showerror(
+				title='Error',
+				message=f'Error occurs when selecting theme: {err}')
 	
 	def change_theme_color(self, theme_name: str):
 		"""Change widget color.
@@ -1017,8 +1028,15 @@ class MyTranslatorHelper(Frame):
 
 	def remove_theme(self):
 		"""Remove the theme saved in config then restart the app."""
-		self.Configuration['Bug_Writer']['theme name'] = ''
-		self.Notice.set('Please restart the app to apply the change.')
+		self.AppConfig.Save_Config(
+			self.AppConfig.Writer_Config_Path,
+			'Bug_Writer',
+			'theme name',
+			'')
+		
+		messagebox.showinfo(
+			title='Info',
+			message='Please restart the app to apply the change.')
 		self.parent.destroy()
 
 	# Init functions
@@ -1111,7 +1129,8 @@ class MyTranslatorHelper(Frame):
 			style = Style(self.parent) # self.parent is root
 
 			accepted_themes = ['awdark', 'awlight']
-			theme_dir = self.AppConfig.theme_loading_path
+			# theme_dir = self.AppConfig.theme_loading_path
+			theme_dir = os.path.join(os.getcwd() + r'\\theme')
 			theme_files = os.listdir(theme_dir)
 			# Add to theme selection in Translate Setting tab
 			for theme_file in theme_files:
@@ -1131,7 +1150,7 @@ class MyTranslatorHelper(Frame):
 			# 	background=fixed_map(style, 'background'))
 
 			if config_theme_name not in self.theme_names:
-				raise Exception('No allowed theme color in config.')
+				raise Exception('No supported theme in config.')
 
 			# # Add all available theme
 			# for theme_name in style.theme_names():
@@ -1140,7 +1159,7 @@ class MyTranslatorHelper(Frame):
 			style.theme_use(config_theme_name)
 		except Exception as err:
 			print(f'Error while initializing theme: {err}\n'
-				'The default theme will be used instead.')
+				'The system default theme will be used instead.')
 
 
 
@@ -1901,7 +1920,6 @@ class MyTranslatorHelper(Frame):
 		self.btn_translate_description_v2.configure(state=DISABLED)
 		self.btn_translate_all_v2.configure(state=DISABLED)
 		self.btn_translate_title_v2.configure(state=DISABLED)
-		self.btn_copy_bug_title_v2.configure(state=DISABLED)
 
 		self.ReviewReportBtn.configure(state=DISABLED)
 
@@ -1934,7 +1952,9 @@ class MyTranslatorHelper(Frame):
 		self.btn_translate_description_v2.configure(state=NORMAL)
 		self.btn_translate_all_v2.configure(state=NORMAL)
 		self.btn_translate_title_v2.configure(state=NORMAL)
-		self.btn_copy_bug_title_v2.configure(state=NORMAL)
+
+		if self.strvar_theme_name in self.theme_names:
+			self.btn_remove_theme.configure(state=NORMAL)
 
 		#self.db_correction.configure(state=NORMAL)
 
