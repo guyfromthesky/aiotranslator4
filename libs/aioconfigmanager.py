@@ -1,3 +1,8 @@
+"""Module to modify the config.
+
+To add a new setting, add the related to Init_Setting functions first.
+"""
+
 #Regular expression handling
 import re
 import configparser
@@ -24,6 +29,7 @@ class ConfigLoader:
 			self.Translator_Config_Path = self.appdata + '\\translator.ini'
 			self.Writer_Config_Path = self.appdata + '\\writer.ini'
 			self.Custom_Writer_Config_Path = self.appdata + '\\custom_writer.ini'
+			self.theme_loading_path = f'{self.appdata}\\theme'
 		# Folder
 		self.TM_Backup_Folder_Path = self.appdata + '\\TM'
 
@@ -138,12 +144,13 @@ class ConfigLoader:
 		
 		self.Init_Config_Option(config, Section, 'app_lang', 'en')
 
-		self.Init_Config_Option_Numberic(config, Section, 'Transparent', 97)
+		self.Init_Config_Option_Float(config, Section, 'Transparent', 97)
 		self.Init_Config_Option(config, Section, 'BackgroundColor', "")
 		self.Init_Config_Option(config, Section, 'ForcegroundColor', "")
 		self.Init_Config_Option(config, Section, 'FrameColor', "")
 		self.Init_Config_Option(config, Section, 'MenuColor', "")
 		self.Init_Config_Option(config, Section, 'UsedTheme', "", True)
+		self.Init_Config_Option(config, Section, 'theme name', "",)
 
 		Section = 'BugDetails'
 		
@@ -182,9 +189,15 @@ class ConfigLoader:
 		self.Init_Config_Option(config, Section, 'HeaderB', "")
 
 		self.Init_Config_Option(config, Section, 'SimpleTranslator', "", True)
-
-
-	
+		
+		## BUG WRITER_V2 TAB
+		Section = 'Temp_BugDetails_v2'
+		self.Init_Config_Option(config, Section, 'Header A', "")
+		self.Init_Config_Option(config, Section, 'Header B', "")
+		self.Init_Config_Option(config, Section, 'Bug Title', "", True)
+		self.Init_Config_Option(config, Section, 'Reproduce Steps', "", True)
+		self.Init_Config_Option(config, Section, 'Expected Results', "", True)
+		self.Init_Config_Option(config, Section, 'Description', "", True)
 
 		#BG_CL = None
 		#FG_CL = None
@@ -326,6 +339,25 @@ class ConfigLoader:
 			# The section have that option
 			else:
 				self.Config[Section][Option] = int(Config_Obj[Section][Option])
+		
+	def Init_Config_Option_Float(self, Config_Obj, Section, Option, Default_Value, Encoded = False):
+		# Config does not exist
+		if not Section in self.Config:
+			self.Config[Section] = {}
+		# Config does not have that section
+		if not Config_Obj.has_section(Section):
+			Config_Obj.add_section(Section)
+			Config_Obj.set(Section, Option, str(Default_Value))
+			self.Config[Section][Option] = Default_Value
+		# Config have that section
+		else:
+			# The section does not have that option
+			if not Config_Obj.has_option(Section, Option):
+				Config_Obj.set(Section, Option,str(Default_Value))
+				self.Config[Section][Option] = Default_Value
+			# The section have that option
+			else:
+				self.Config[Section][Option] = float(Config_Obj[Section][Option])
 				
 	def Config_Save_Path(self, Config_Obj, Section, Path_Value, Default_Value):
 		if not Section in self.Config:

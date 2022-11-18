@@ -879,7 +879,7 @@ class MyTranslatorHelper(Frame):
 			.grid(row=Row, column=10, padx=5, pady=5, rowspan=2, sticky=E)
 
 		Row += 2
-		Label(Tab, text='Theme Name:') \
+		Label(Tab, text='Theme name:') \
 			.grid(row=Row, rowspan=2, column=1, padx=5, pady=5, sticky=E)
 		self.strvar_theme_name = StringVar()
 		col = 3 # to add more buttons horizontally
@@ -893,7 +893,18 @@ class MyTranslatorHelper(Frame):
 			self.radiobutton_theme_name.config(width=self.HALF_BUTTON_SIZE)
 			self.radiobutton_theme_name.grid(
 				row=Row, column=col, padx=0, pady=5, sticky=W)
-			col += 1
+			# Go to new line when reaching column 8
+			if col < 8:
+				col += 1
+			else:
+				col = 3
+				Row += 1
+		Button(
+				Tab,
+				width=self.HALF_BUTTON_SIZE,
+				text="Remove Theme",
+				command=self.remove_theme) \
+			.grid(row=Row, column=10)
 		
 		# Display selected theme
 		config_theme_name = self.Configuration['Bug_Writer']['theme name']
@@ -1004,6 +1015,12 @@ class MyTranslatorHelper(Frame):
 			text_widget['insertbackground'] = \
 				self.widget_color['text_insertbackground']
 
+	def remove_theme(self):
+		"""Remove the theme saved in config then restart the app."""
+		self.Configuration['Bug_Writer']['theme name'] = ''
+		self.Notice.set('Please restart the app to apply the change.')
+		self.parent.destroy()
+
 	# Init functions
 	# Some option is saved for the next time use
 	def init_App_Setting(self):
@@ -1094,22 +1111,20 @@ class MyTranslatorHelper(Frame):
 			style = Style(self.parent) # self.parent is root
 
 			accepted_themes = ['awdark', 'awlight']
-			theme_dir = os.path.join(os.getcwd(), "theme")
+			theme_dir = self.AppConfig.theme_loading_path
 			theme_files = os.listdir(theme_dir)
 			# Add to theme selection in Translate Setting tab
 			for theme_file in theme_files:
-				print(theme_file)
 				file_name, file_ext = os.path.splitext(theme_file)
 				if file_ext == '.tcl':
 					if file_name in accepted_themes:
-						# Tell tcl where to find the awdark packages
+						# Import tcl files
 						self.parent.tk.call(
 							"source", f'{theme_dir}\\{theme_file}')
 						self.theme_names.append(file_name)
 				else:
 					continue
-			
-			# System default color is removed if add these
+			# System default color is removed if adding below
 			# style.map(
 			# 	'.', #'.' means all ttk widgets
 			# 	foreground=fixed_map(style, 'foreground'),
@@ -2316,7 +2331,7 @@ class MyTranslatorHelper(Frame):
 		"""Save the text input of all fields every time a key is pressed
 		to the config for the next session.
 		"""
-		print('Save temp report')
+		# print('Save temp report')
 		TextTitle = self.TextTitle.get("1.0", END)			
 		TextServer = self.TextServer.get("1.0", END)
 		TextClient = self.TextClient.get("1.0", END)
