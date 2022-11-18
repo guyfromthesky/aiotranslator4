@@ -582,6 +582,12 @@ class Translator:
 	# Translator main function.
 	# All the text will be passed into this function.
 	def translate(self, Input):
+		"""Return the translated text.
+		
+		Returns:
+			translation --- list
+				A list of translated text.
+		"""
 		if self.to_language == self.from_language:
 			return Input
 		#print('Translate:', Input)
@@ -592,24 +598,23 @@ class Translator:
 		else:
 			return False
 
-		#print('source_text', source_text)
+		print('source_text', source_text)
 
 		raw_source = []
 		to_translate = []
 		to_translate_index = []
 		translation = []
-	
+
 		for text in source_text:
 			translation.append(text)
 
-		
 		for i in range(len(translation)):
 			text = str(translation[i])
 			# Check if the text we send to google translate does not belong to these case below:
 			# + Number
 			# + Url
 			# + In-valid source language
-			# + Text has been ranslated before
+			# + Text has been translated before
 			validation = self.ValidateSourceText(text)
 			#print('Details:', text, 'Result:', validation)
 			if validation == False:
@@ -621,7 +626,9 @@ class Translator:
 					index_num = raw_source.index(text)
 					# If the index number is found, appen the index
 					to_translate_index[index_num].append(i)
-				except Exception  as e:
+				# except part is run if the text to translate
+				# doesn't exist yet.
+				except Exception as e:
 					#print('Exception: ', e)
 					raw_source.append(text)
 					to_translate.append(text)
@@ -657,15 +664,120 @@ class Translator:
 			#translation[to_translate_index[i]] = translated[i]
 			if self.tm_update == True:
 				#print('Append TM: ', translated[i], raw_source[i] )
-				self.append_temporary_tm(str_translated = translated[i], str_input = raw_source[i])
+				self.append_temporary_tm(
+					str_translated=translated[i],
+					str_input=raw_source[i])
 
 		if isinstance(Input, str):
 			return translation[0]
 		else:
 			return translation
-	
-	def activated_translator(self, source_text):
+
+	def multifield_translate(self, source_text: dict) -> dict:
+		"""Return the translated text.
+
+		Args:
+	 		source_text -- dict
+
+		Returns:
+			translation -- dict
+				dict contains multiple fields as keys.
+		"""
+		if self.to_language == self.from_language:
+			return source_text
+
+		field_length = {}
+		translated_text = {}
+		raw_source = []
+		to_translate = []
+		to_translate_index = []
+		translation = []
+
+		for field in source_text:
+			field_length[field] = len(source_text[field])
+			for text in source_text[field]:
+				translation.append(text)
+		for i in range(len(translation)):
+			text_paragraph = str(translation[i])
+			# Check if the text we send to google translate does not belong to these case below:
+			# + Number
+			# + Url
+			# + In-valid source language
+			# + Text has been translated before
+			validation = self.ValidateSourceText(text_paragraph)
+			#print('Details:', text, 'Result:', validation)
+			if validation == False:
+				continue
+			if validation == True:
+				try:
+					# Check if the text has been request to translate
+					# This check is to remove duplicate translate request
+					index_num = raw_source.index(text_paragraph)
+					# If the index number is found, appen the index
+					to_translate_index[index_num].append(i)
+				# except part is run if the text to translate
+				# doesn't exist yet.
+				except Exception as e:
+					#print('Exception: ', e)
+					raw_source.append(text_paragraph)
+					to_translate.append(text_paragraph)
+					to_translate_index.append([i])
+				#print('Append done')
+				#raw_source.append(text)
+				#to_translate.append(pre_translate)
+				#to_translate_index.append(i)
+			else:
+				#translated by memory
+				translation[i] = validation
+
+		if len(to_translate) > 0:
+			try:
+				# print('to_translate:', to_translate)
+				translated = self.activated_translator(to_translate)
+				# print('Translated:', translated)
+			except Exception  as e:
+				print('error:', e)
+				translated = []
+		else:
+			translated = []
+
+		# Update the translation
+		if translated == False:
+			print('Translate error!')
+			return source_text
+
+		for i in range(len(translated)):
+			for index_number in to_translate_index[i]:
+				translation[index_number] = translated[i]
+			#translation[to_translate_index[i]] = translated[i]
+			if self.tm_update == True:
+				#print('Append TM: ', translated[i], raw_source[i] )
+				self.append_temporary_tm(
+					str_translated=translated[i],
+					str_input=raw_source[i])
+
+		# Distribute the translated parts to the same field as
+		# pre-translation.
+		for field in field_length:
+			translated_text[field] = []
+			index = 0
+			while index < field_length[field]:
+				translated_text[field].append(translation.pop(0))
+				index += 1
 		
+		return translated_text
+		
+	def activated_translator(self, source_text):
+		"""Return the translated text from google_translate_v3() or 
+		google_glossary_translate().
+		
+		Args:
+			source_text -- list
+
+		Returns:
+			translation -- list
+				Translated phrases.
+		"""
 		#print('Active translator', 'from:', self.from_language, 'to:', self.to_language)
 		
 		count = 0
@@ -686,7 +798,8 @@ class Translator:
 			if self.glossary_id == "":
 				translation = self.google_translate_v3(source_text)
 			else:	
-				if self.from_language in self.glossary_language and self.to_language in self.glossary_language:
+				if self.from_language in self.glossary_language \
+						and self.to_language in self.glossary_language:
 					#print('Translate with glossary')
 					translation = self.google_glossary_translate(source_text)
 				else:
@@ -694,7 +807,7 @@ class Translator:
 					translation = self.google_translate_v3(source_text)
 		except Exception as _error_message:
 			print('Activated translation error:', _error_message)
-		#print('Translation:', translation)
+		print('Translation:', translation)
 		if translation == None:	
 	
 			try:
@@ -735,7 +848,7 @@ class Translator:
 			#print('TM usage:', count)
 			self.append_api_usage_logging(count)
 
-		return translation	
+		return translation
 
 	def translate_header(self, source_text):
 		for pair in self.header:
@@ -770,6 +883,8 @@ class Translator:
 		#print('target_language_code', target_language_code)
 		source_language_code = self.correct_language_code(self.from_language)
 		#print('source_language_code', source_language_code)
+		# response structure:
+		# a kind of list of translations{translated_text: str}
 		response = Client.translate_text(
 			request={
 				"contents": ToTranslate,
@@ -803,8 +918,9 @@ class Translator:
 		Glossary = Client.glossary_path(self.project_bucket_id, "us-central1", self.glossary_id)
 		#Glossary = Client.glossary_path(self.project_bucket_id, "us-central1", 'General-DB')
 		#print('Glossary', Glossary)
-		Glossary_Config = translator.TranslateTextGlossaryConfig(glossary=Glossary, ignore_case=True)
-		print('Glossary_Config', Glossary)
+		Glossary_Config = translator.TranslateTextGlossaryConfig(
+			glossary=Glossary, ignore_case=True)
+		# print('Glossary_Config', Glossary)
 		response = Client.translate_text(
 			request={
 				"contents": ToTranslate,
@@ -1123,7 +1239,8 @@ class Translator:
 		blob = bucket.get_blob(header_uri)
 		if blob != None:
 			try:
-				_download_path = self.config_path + '\\AIO Translator\\temp_header.csv'
+				_download_path = self.config_path \
+					+ '\\AIO Translator\\temp_header.csv'
 				blob.download_to_filename(_download_path)	
 			except Exception as e:
 				print('Fail to load blob:', e)
@@ -1131,7 +1248,8 @@ class Translator:
 				return
 
 			# Load DB as DataFrame
-			self.all_header = pd.read_csv(_download_path, usecols=self.supported_language)
+			self.all_header = pd.read_csv(
+				_download_path, usecols=self.supported_language)
 			try:
 				os.remove(_download_path)
 			except Exception as e:
@@ -1202,7 +1320,8 @@ class Translator:
 	def update_header_from_dataframe(self):
 		
 		if self.from_language != self.to_language:
-			if self.from_language in self.all_header and self.to_language in self.all_header:
+			if self.from_language in self.all_header \
+					and self.to_language in self.all_header:
 				#Create normal dict list:
 				print('Create Header list from Dataframe')
 				
@@ -1894,9 +2013,10 @@ class Translator:
 	# Add a KR-en pair into TM
 	def append_temporary_tm(self, str_translated = "", str_input = ""):
 		#print('Generate Temp TM:', str_translated, str_input)
-		translated = str_translated.lower()
-		Input = str_input.lower()
-		new_row = {self.to_language: translated, self.from_language: Input}
+		# translated = str_translated.lower()
+		# input = str_input.lower()
+		# new_row = {self.to_language: translated, self.from_language: input}
+		new_row = {self.to_language: str_translated, self.from_language: str_input}
 		self.temporary_tm.append(new_row)
 
 	# Remove duplicated pair, lower string in the TM
