@@ -132,6 +132,7 @@ class MyTranslatorHelper(Frame):
 
 		# Widget list vars to change color via Translate Setting tab.
 		self.text_widgets = []
+		self.label_widgets = []
 		self.menu_widgets = []
 		self.frame_widgets = []
 
@@ -238,8 +239,6 @@ class MyTranslatorHelper(Frame):
 			Generate_BugWriter_UI(self, self.BugWriterTab)
 			Generate_SimpleTranslator_UI(self, self.SimpleTranslatorTab)
 			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
-
-			#self.Init_Translator_Config
 			self.apply_theme_color()
 		except Exception as e:
 			print(f'An error occurs while initializing UI: {e}')
@@ -252,32 +251,6 @@ class MyTranslatorHelper(Frame):
 	def create_buttom_panel(self):
 		self.bottom_panel = BottomPanel(self)
 		
-	def select_theme_name(self):
-		"""Save the theme name value to Configuration and change
-		the theme based on the selection in the UI.
-		
-		Args:
-			config_theme_name -- str
-				Theme name retrieved from config. (Default: '')
-		"""
-		try:
-			style = Style(self.parent) # self.parent is root
-			theme_name = self.strvar_theme_name.get()
-			
-			self.AppConfig.Save_Config(
-				self.AppConfig.Writer_Config_Path,
-				'Bug_Writer',
-				'theme_name',
-				theme_name)
-			self.change_theme_color(theme_name)
-			style.theme_use(theme_name)
-			self.apply_theme_color()
-			self.btn_remove_theme.configure(state=NORMAL)
-		except Exception as err:
-			messagebox.showerror(
-				title='Error',
-				message=f'Error occurs when selecting theme: {err}')
-
 	# Init functions
 	# Some option is saved for the next time use
 	def init_App_Setting(self):
@@ -444,7 +417,6 @@ class MyTranslatorHelper(Frame):
 				message=f'Error occurs when selecting theme: {err}')
 
 	def change_theme_color(self, theme_name: str):
-
 		print('change_theme_color', theme_name)
 		"""Change widget color.
 		
@@ -471,7 +443,9 @@ class MyTranslatorHelper(Frame):
 				'menu_fg': '#ffffff',
 				'text_bg': '#191c1d',
 				'text_fg': '#ffffff',
-				'text_insertbackground': '#ffffff'
+				'text_insertbackground': '#ffffff',
+				'label_bg': '#393f3f',
+				'label_fg': 'white'
 			}
 		elif theme_name == 'awlight':
 			self.widget_color = {
@@ -481,7 +455,9 @@ class MyTranslatorHelper(Frame):
 				'menu_fg': '#000000',
 				'text_bg': '#ffffff',
 				'text_fg': '#000000',
-				'text_insertbackground': '#000000'
+				'text_insertbackground': '#000000',
+				'label_bg': '#191c1d',
+				'label_fg': '#ffffff'
 			}
 		elif theme_name == 'clam':
 			self.widget_color = {
@@ -491,7 +467,9 @@ class MyTranslatorHelper(Frame):
 				'menu_fg': '#000000',
 				'text_bg': '#ffffff',
 				'text_fg': '#000000',
-				'text_insertbackground': '#000000'
+				'text_insertbackground': '#000000',
+				'label_bg': '#191c1d',
+				'label_fg': '#ffffff'
 			}
 		else:
 			self.widget_color = {
@@ -501,13 +479,20 @@ class MyTranslatorHelper(Frame):
 				'menu_fg': '#000000', # font color
 				'text_bg': '#ffffff',
 				'text_fg': '#000000', # font color
-				'text_insertbackground': '#000000' # text cursor
+				'text_insertbackground': '#000000',
+				'label_bg': '#191c1d',
+				'label_fg': '#ffffff'
 			}
 	
 	def apply_theme_color(self):
 		print('apply_theme_color')
+		#print('self.frame_widgets', self.frame_widgets)
+		#print('self.menu_widgets', self.menu_widgets)
+		#print('self.text_widgets', self.text_widgets)
 		"""Apply color to widgets."""
 		self.parent['bg'] = self.widget_color['parent_bg']
+		#self.parent['fg'] = self.widget_color['parent_bg']
+
 		for frame_widget in self.frame_widgets:
 			frame_widget['bg'] = self.widget_color['frame_bg']
 		for menu_widget in self.menu_widgets:
@@ -518,6 +503,11 @@ class MyTranslatorHelper(Frame):
 			text_widget['fg'] = self.widget_color['text_fg']
 			text_widget['insertbackground'] = \
 				self.widget_color['text_insertbackground']
+		for label_widget in self.label_widgets:
+			label_widget['bg'] = self.widget_color['parent_bg']
+			label_widget['fg'] = self.widget_color['text_fg']
+			#text_widget['insertbackground'] = self.widget_color['text_insertbackground']
+
 
 	def remove_theme(self):
 		print('remove_theme')

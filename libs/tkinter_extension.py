@@ -579,7 +579,6 @@ def Generate_BugWriter_Menu_UI(master):
 # SETTING UI
 def Generate_Translate_Setting_UI(master, Tab):
 	"""Create Translate Setting tab."""
-
 	Row = 1
 
 	Label(Tab, textvariable=master.Notice).grid(row=Row, column=1, columnspan = 10, padx=5, pady=5, sticky= E+W)
@@ -642,7 +641,7 @@ def Generate_Translate_Setting_UI(master, Tab):
 			Row += 1
 	
 	# Display selected theme
-	config_theme_name = master.Configuration['Bug_Writer']['theme name']
+	config_theme_name = master.Configuration['Bug_Writer']['theme_name']
 	if config_theme_name in master.theme_names:
 		master.strvar_theme_name.set(config_theme_name)
 
@@ -650,9 +649,14 @@ def Generate_Translate_Setting_UI(master, Tab):
 	if master.strvar_theme_name.get() not in master.theme_names:
 		master.btn_remove_theme.config(state=DISABLED)
 
+	for child in Tab.winfo_children():
+		if isinstance(child, Text) or isinstance(child, CustomText):
+			master.text_widgets.append(child)
+		elif isinstance(child, Label):
+			master.label_widgets.append(child)	
+
 # BASIC BUG WRITER TEMPLATE
 def Generate_BugWriter_UI(master, Tab):
-
 	Row=1
 	Label(Tab, text= master.LanguagePack.Label['SourceLanguage'], width= master.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
 	Label(Tab, text= master.LanguagePack.Label['MainLanguage'], width= master.HALF_BUTTON_SIZE).grid(row = Row, column = 2, padx=5, pady=5, stick=E+W)
@@ -787,81 +791,82 @@ def Generate_BugWriter_UI(master, Tab):
 	for child in Tab.winfo_children():
 		if isinstance(child, Text) or isinstance(child, CustomText):
 			master.text_widgets.append(child)
+		elif isinstance(child, Label):
+			master.label_widgets.append(child)
+
 
 def matches(fieldValue, acListEntry):
 	pattern = re.compile(re.escape(fieldValue) + '.*', re.IGNORECASE)
 	return re.match(pattern, acListEntry)
 
 def Generate_SimpleTranslator_UI(master, Tab):
+	Row=1
+	Label(Tab, textvariable=master.Notice).grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=E)
 
-		
-		Row=1
-		Label(Tab, textvariable=master.Notice).grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=E)
+	Row +=1
+	Label(Tab, text=master.LanguagePack.Label['SourceText']).grid(row=Row, column=1, columnspan = 5, padx=5, pady=0)
+	Label(Tab, text=master.LanguagePack.Label['TargetText']).grid(row=Row, column=6, columnspan = 5, padx=0, pady=0)
+	#New Row
 
-		Row +=1
-		Label(Tab, text=master.LanguagePack.Label['SourceText']).grid(row=Row, column=1, columnspan = 5, padx=5, pady=0)
-		Label(Tab, text=master.LanguagePack.Label['TargetText']).grid(row=Row, column=6, columnspan = 5, padx=0, pady=0)
-		#New Row
+	Row +=1
+	master.SourceText = Text(Tab, width = master.SOURCE_WIDTH, height=master.ROW_SIZE, undo=True) 
+	master.SourceText.grid(row=Row, column=1, columnspan=5, rowspan=master.ROW_SIZE, padx=5, pady=5, sticky=E+W)
+	master.SourceText.bind("<Double-Tab>", master.BindSwap)
 
-		Row +=1
-		master.SourceText = Text(Tab, width = master.SOURCE_WIDTH, height=master.ROW_SIZE, undo=True) 
-		master.SourceText.grid(row=Row, column=1, columnspan=5, rowspan=master.ROW_SIZE, padx=5, pady=5, sticky=E+W)
-		master.SourceText.bind("<Double-Tab>", master.BindSwap)
+	master.TargetText = Text(Tab, width = master.SOURCE_WIDTH, height=master.ROW_SIZE, undo=True) #
+	master.TargetText.grid(row = Row, column=6, columnspan=5, rowspan=master.ROW_SIZE, padx=5, pady=5, sticky=E)
+	
+	Row +=master.ROW_SIZE
 
-		master.TargetText = Text(Tab, width = master.SOURCE_WIDTH, height=master.ROW_SIZE, undo=True) #
-		master.TargetText.grid(row = Row, column=6, columnspan=5, rowspan=master.ROW_SIZE, padx=5, pady=5, sticky=E)
-		
-		Row +=master.ROW_SIZE
+	Label(Tab, text= master.LanguagePack.Label['SourceLanguage'], width= master.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
+	
 
-		Label(Tab, text= master.LanguagePack.Label['SourceLanguage'], width= master.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
-		
-
-		master.simple_source_language_select = OptionMenu(Tab, master.simple_source_language, *master.language_list, command = master.set_simple_language)
-		master.simple_source_language_select.config(width=master.HALF_BUTTON_SIZE)
-		master.simple_source_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
-		master.simple_source_language.set('Hangul')
+	master.simple_source_language_select = OptionMenu(Tab, master.simple_source_language, *master.language_list, command = master.set_simple_language)
+	master.simple_source_language_select.config(width=master.HALF_BUTTON_SIZE)
+	master.simple_source_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
+	master.simple_source_language.set('Hangul')
 
 
 
-		Button(Tab, text=master.LanguagePack.Button['Swap'], width = 20, command= master.Swap).grid(row=Row, column=8, padx=5, pady=5)	
-		
-		Button(Tab, text=master.LanguagePack.Button['Copy'], width = master.BUTTON_SIZE, command= master.BtnCopy).grid(row = Row, column=9, padx=5, pady=5, sticky=E)
+	Button(Tab, text=master.LanguagePack.Button['Swap'], width = 20, command= master.Swap).grid(row=Row, column=8, padx=5, pady=5)	
+	
+	Button(Tab, text=master.LanguagePack.Button['Copy'], width = master.BUTTON_SIZE, command= master.BtnCopy).grid(row = Row, column=9, padx=5, pady=5, sticky=E)
 
-		master.TranslateBtn = Button(Tab, text=master.LanguagePack.Button['Translate'], width = master.BUTTON_SIZE, command= master.single_translate, state=DISABLED)
-		master.TranslateBtn.grid(row=Row, column=10, padx=0, pady=5, sticky=E)		
+	master.TranslateBtn = Button(Tab, text=master.LanguagePack.Button['Translate'], width = master.BUTTON_SIZE, command= master.single_translate, state=DISABLED)
+	master.TranslateBtn.grid(row=Row, column=10, padx=0, pady=5, sticky=E)		
 
-		Row +=1
+	Row +=1
 
-		Label(Tab, text= master.LanguagePack.Label['MainLanguage'], width= master.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
-		
-		
-		master.simple_target_language_select = OptionMenu(Tab, master.simple_target_language, *master.language_list, command = master.set_simple_language)
-		master.simple_target_language_select.config(width=master.HALF_BUTTON_SIZE)
-		master.simple_target_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
-		master.simple_target_language.set('English')		
-		
-		Label(Tab, text= master.LanguagePack.Label['SecondaryLanguage'], width= master.HALF_BUTTON_SIZE).grid(row = Row, column = 3, padx=5, pady=5, stick=E+W)
-		
-		secondary_language_list = master.language_list + ['']
+	Label(Tab, text= master.LanguagePack.Label['MainLanguage'], width= master.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
+	
+	
+	master.simple_target_language_select = OptionMenu(Tab, master.simple_target_language, *master.language_list, command = master.set_simple_language)
+	master.simple_target_language_select.config(width=master.HALF_BUTTON_SIZE)
+	master.simple_target_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
+	master.simple_target_language.set('English')		
+	
+	Label(Tab, text= master.LanguagePack.Label['SecondaryLanguage'], width= master.HALF_BUTTON_SIZE).grid(row = Row, column = 3, padx=5, pady=5, stick=E+W)
+	
+	secondary_language_list = master.language_list + ['']
 
-		
-		master.simple_secondary_target_language_select = OptionMenu(Tab, master.simple_secondary_target_language, *secondary_language_list, command = master.set_simple_language)
-		master.simple_secondary_target_language_select.config(width=master.HALF_BUTTON_SIZE)
-		master.simple_secondary_target_language_select.grid(row=Row, column=4, padx=0, pady=5, sticky=W)
-		master.simple_secondary_target_language.set('Japanese')
-		
-		Button(Tab, text= 'Trilingual Copy', width = master.BUTTON_SIZE, command= master.btn_trilingual).grid(row = Row, column=8, padx=5, pady=5)
-		
-		Button(Tab, text=master.LanguagePack.Button['Bilingual'], width = master.BUTTON_SIZE, command= master.btn_bilingual_copy).grid(row = Row, column=9, padx=5, pady=5, sticky=E)
-		master.dual_translate_btn = Button(Tab, text= 'Dual Translate', width = master.BUTTON_SIZE, command= master.dual_translate, state=DISABLED)
-		master.dual_translate_btn.grid(row = Row, column=10, padx=0, pady=5, sticky=E)
-		#master.Translate_bilingual_Btn = Button(Tab, text=master.LanguagePack.Button['TranslateAndBilingual'], width = master.BUTTON_SIZE, command= master.BtnTranslateAndBilingual)
-		#master.Translate_bilingual_Btn.grid(row = Row, column=10, padx=5, pady=5, sticky=E)
+	
+	master.simple_secondary_target_language_select = OptionMenu(Tab, master.simple_secondary_target_language, *secondary_language_list, command = master.set_simple_language)
+	master.simple_secondary_target_language_select.config(width=master.HALF_BUTTON_SIZE)
+	master.simple_secondary_target_language_select.grid(row=Row, column=4, padx=0, pady=5, sticky=W)
+	master.simple_secondary_target_language.set('Japanese')
+	
+	Button(Tab, text= 'Trilingual Copy', width = master.BUTTON_SIZE, command= master.btn_trilingual).grid(row = Row, column=8, padx=5, pady=5)
+	
+	Button(Tab, text=master.LanguagePack.Button['Bilingual'], width = master.BUTTON_SIZE, command= master.btn_bilingual_copy).grid(row = Row, column=9, padx=5, pady=5, sticky=E)
+	master.dual_translate_btn = Button(Tab, text= 'Dual Translate', width = master.BUTTON_SIZE, command= master.dual_translate, state=DISABLED)
+	master.dual_translate_btn.grid(row = Row, column=10, padx=0, pady=5, sticky=E)
 
-		# Add all Text in the tab to a list to change color dynamically
-		for child in Tab.winfo_children():
-			if isinstance(child, Text):
-				master.text_widgets.append(child)
+	# Add all Text in the tab to a list to change color dynamically
+	for child in Tab.winfo_children():
+		if isinstance(child, Text) or isinstance(child, CustomText):
+			master.text_widgets.append(child)
+		elif isinstance(child, Label):
+			master.label_widgets.append(child)
 
 # Related function
 def Btn_Select_License_Path(master):
