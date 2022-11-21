@@ -150,7 +150,8 @@ class ConfigLoader:
 		self.Init_Config_Option(config, Section, 'FrameColor', "")
 		self.Init_Config_Option(config, Section, 'MenuColor', "")
 		self.Init_Config_Option(config, Section, 'UsedTheme', "", True)
-		self.Init_Config_Option(config, Section, 'theme name', "",)
+		
+		self.Init_Config_Option(config, Section, 'theme_name', "clam", True)
 
 		Section = 'BugDetails'
 		

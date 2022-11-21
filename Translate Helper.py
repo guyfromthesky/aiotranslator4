@@ -24,7 +24,7 @@ from tkinter import Tk, Frame, Toplevel, Scale
 from tkinter import Menu, filedialog, messagebox
 from tkinter import Text
 # Variable type
-from tkinter import IntVar, StringVar
+from tkinter import IntVar, StringVar, DoubleVar
 # Wrap type
 from tkinter import WORD
 # sticky state
@@ -57,6 +57,10 @@ from libs.cloudconfig import CloudConfigLoader
 
 from libs.version import get_version
 from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText
+
+from libs.tkinter_extension import Generate_BugWriter_Tab_UI, Generate_BugWriter_Menu_UI, Generate_Translate_Setting_UI
+from libs.tkinter_extension import Generate_BugWriter_UI, Generate_SimpleTranslator_UI
+
 
 #from openpyxl import load_workbook, worksheet, Workbook
 
@@ -126,6 +130,11 @@ class MyTranslatorHelper(Frame):
 		self.main_translation = ''
 		self.primary_translation = ''
 
+		# Widget list vars to change color via Translate Setting tab.
+		self.text_widgets = []
+		self.menu_widgets = []
+		self.frame_widgets = []
+
 		self.init_App_Setting()
 		
 		if self.AppLanguage != 'kr':
@@ -137,6 +146,8 @@ class MyTranslatorHelper(Frame):
 
 		self.LanguagePack = LanguagePack
 		
+
+		self.init_theme()
 		self.create_buttom_panel()
 		self.init_ui()
 		
@@ -158,24 +169,11 @@ class MyTranslatorHelper(Frame):
 
 		if self.LicensePath.get() != "":
 			self.generate_translator_engine()
-			'''
-			MsgBox = messagebox.askquestion ('Bug Writer', self.LanguagePack.ToolTips['LoadReport'],icon = 'info') 
-			if MsgBox == 'yes':
-				self.parent.withdraw()
-				self.parent.update_idletasks()
-				self.LoadTempReport()
-				self.parent.deiconify()
-			else:
-				self.parent.withdraw()
-				self.parent.update_idletasks()
-				self.parent.deiconify()
-			'''
 			self.parent.withdraw()
 			self.parent.update_idletasks()
 			self.LoadTempReport()
 			self.parent.deiconify()
-			
-				
+					
 		else:
 			closed_box = messagebox.askokcancel('Bug Writer', 'No license selected, please select the key in Translate setting.',icon = 'info')
 
@@ -233,348 +231,52 @@ class MyTranslatorHelper(Frame):
 		self.parent.resizable(False, False)
 		self.parent.title(version)
 
-		self.Generate_Menu_UI()
-		self.Generate_Tab_UI()
+		Generate_BugWriter_Menu_UI(self)
+		Generate_BugWriter_Tab_UI(self)
 
-		#Shared variable
+		try:
+			Generate_BugWriter_UI(self, self.BugWriterTab)
+			Generate_SimpleTranslator_UI(self, self.SimpleTranslatorTab)
+			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
 
-		self.Generate_BugWriter_UI(self.BugWriter)
-		self.Generate_SimpleTranslator_UI(self.SimpleTranslator)
-		self.Generate_TranslateSetting_UI(self.TranslateSetting)
+			#self.Init_Translator_Config
+			self.apply_theme_color()
+		except Exception as e:
+			print(f'An error occurs while initializing UI: {e}')
+
+
+
 		#self.Generate_Search_UI(self.Searcher)
 
 		#self.Init_Translator_Config
 	def create_buttom_panel(self):
-		self.bottom_panel = BottomPanel(self, BG_CL)
+		self.bottom_panel = BottomPanel(self)
 		
-	def Generate_Tab_UI(self):
-		print('FRAME_BG', FRAME_BG)
-		MainPanel = Frame(self, name='mainpanel', bg=FRAME_BG)
-		MainPanel.pack(side=TOP, fill=BOTH, expand=Y)
-		self.TAB_CONTROL = Notebook(MainPanel, name='notebook')
-		# extend bindings to top level window allowing
-		#   CTRL+TAB - cycles thru tabs
-		#   SHIFT+CTRL+TAB - previous tab
-		#   ALT+K - select tab using mnemonic (K = underlined letter)
-		self.TAB_CONTROL.enable_traversal()
-		#TAB_CONTROL = Notebook(self.parent)
+	def select_theme_name(self):
+		"""Save the theme name value to Configuration and change
+		the theme based on the selection in the UI.
 		
-		#Tab1
-		self.BugWriter = Frame(self.TAB_CONTROL, bg=FRAME_BG)
-		self.BugWriter.configure(background=FRAME_BG)
-		self.TAB_CONTROL.add(self.BugWriter, text=self.LanguagePack.Tab['BugWriter'])
-		
-		#self.CustomWriter = Frame(TAB_CONTROL)
-		#TAB_CONTROL.add(self.CustomWriter, text=self.LanguagePack.Tab['CustomBugWriter'])
-
-		#Tab2
-		self.SimpleTranslator = Frame(self.TAB_CONTROL, bg=FRAME_BG)
-		self.SimpleTranslator.configure(background=FRAME_BG)
-		self.TAB_CONTROL.add(self.SimpleTranslator, text=self.LanguagePack.Tab['SimpleTranslator'])
-
-		#Tab3
-		self.TranslateSetting = Frame(self.TAB_CONTROL, bg=FRAME_BG)
-		self.TranslateSetting.configure(background=FRAME_BG)
-		self.TAB_CONTROL.add(self.TranslateSetting, text=  self.LanguagePack.Tab['Translator'])
-
-		#Tab4
-		#self.Searcher = Frame(TAB_CONTROL)
-		#TAB_CONTROL.add(self.Searcher, text=  self.LanguagePack.Tab['DBSeacher'])
-
-		#Tab4
-		#self.TM_Browser = ttk.Frame(TAB_CONTROL)
-		#TAB_CONTROL.add(self.TM_Browser, text=self.LanguagePack.Tab['Utility'])
-
-		#Tab5
-		#self.TMEditor = ttk.Frame(TAB_CONTROL)
-		#TAB_CONTROL.add(self.TMEditor, text=self.LanguagePack.Tab['TMEditor'])
-		self.TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
-
-	def Generate_Menu_UI(self):
-		menubar = Menu(self.parent, background=BG_CL, fg=FG_CL)
-
-		menubar.configure(background=BG_CL, cursor='hand2')
-
-		# Adding File Menu and commands 
-		file = Menu(menubar, tearoff = 0, background=BG_CL, fg=FG_CL)
-		# Adding Load Menu  
-		menubar.add_cascade(label =  self.LanguagePack.Menu['File'], menu = file) 
-		file.add_command(label =  self.LanguagePack.Menu['LoadLicensePath'], command = self.Btn_Select_License_Path) 
-		#file.add_command(label =  self.LanguagePack.Menu['LoadDictionary'], command = self.SelectDictionary) 
-
-		#file.add_command(label =  self.LanguagePack.Menu['LoadTM'], command = self.SelectTM) 
-		file.add_separator() 
-		#file.add_command(label =  self.LanguagePack.Menu['CreateTM'], command = self.SaveNewTM)
-		#file.add_separator() 
-		file.add_command(label =  self.LanguagePack.Menu['Exit'], command = self.on_closing) 
-		# Adding Help Menu
-		hotkey = Menu(menubar, tearoff = 0, background=BG_CL, fg=FG_CL)
-		menubar.add_cascade(label =  'Hotkey', menu = hotkey) 
-		hotkey.add_command(label = 'Save Report - Ctrl + S', command = self._save_report)
-		hotkey.add_command(label = 'Load Report - Ctrl + L', command = self._load_report)
-		hotkey.add_command(label = 'Reset Report - Ctrl + Q', command = self.ResetReport)
-		hotkey.add_separator()
-		hotkey.add_command(label = 'Get Title - Ctrl + T', command = self.GetTitle)
-		hotkey.add_command(label = 'Get Report - Ctrl + R', command = self.generate_report)
-		#hotkey.add_separator()  
-		#hotkey.add_command(label = 'Grammar check - Ctrl + Q') 
-
-		help_ = Menu(menubar, tearoff = 0, background=BG_CL, fg= FG_CL)
-		menubar.add_cascade(label =  self.LanguagePack.Menu['Help'], menu = help_) 
-		help_.add_command(label =  self.LanguagePack.Menu['GuideLine'], command = self.OpenWeb) 
-		help_.add_separator()
-		help_.add_command(label =  self.LanguagePack.Menu['About'], command = self.About) 
-		self.parent.config(menu = menubar)
-		
-		# Adding Help Menu
-		language = Menu(menubar, tearoff = 0, background=BG_CL, fg= FG_CL)
-		menubar.add_cascade(label =  self.LanguagePack.Menu['Language'], menu = language) 
-		language.add_command(label =  self.LanguagePack.Menu['Hangul'], command = self.SetLanguageKorean) 
-		language.add_command(label =  self.LanguagePack.Menu['English'], command = self.SetLanguageEnglish) 
-		self.parent.config(menu = menubar) 
-
-	def Generate_BugWriter_UI(self, Tab):
-
-		Row=1
-		Label(Tab, text= self.LanguagePack.Label['SourceLanguage'], width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
-		Label(Tab, text= self.LanguagePack.Label['MainLanguage'], width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 2, padx=5, pady=5, stick=E+W)
-		Label(Tab, text= self.LanguagePack.Label['SecondaryLanguage'], width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 3, padx=5, pady=5, stick=E+W)
-		Label(Tab, textvariable=self.Notice).grid(row=Row, column=4, columnspan=7, padx=5, pady=5, stick=E)
-
-		Row += 1
-
-		self.source_language = StringVar()
-		self.source_language_select = OptionMenu(Tab, self.source_language, *self.language_list, command = self.set_writer_language)
-		self.source_language_select.config(width=self.HALF_BUTTON_SIZE)
-		self.source_language_select["menu"].config(bg=MENU_BG, fg= FG_CL)
-		self.source_language_select.grid(row=Row, column=1, padx=0, pady=5, sticky=W)
-
-		self.target_language = StringVar()
-		self.target_language_select = OptionMenu(Tab, self.target_language, *self.language_list, command = self.set_writer_language)
-		self.target_language_select.config(width=self.HALF_BUTTON_SIZE)
-		self.target_language_select["menu"].config(bg=MENU_BG, fg= FG_CL)
-		self.target_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
-		
-		self.secondary_target_language = StringVar()
-		secondary_language_list = self.language_list + ['']
-		self.secondary_target_language_select = OptionMenu(Tab, self.secondary_target_language, *secondary_language_list, command = self.set_writer_language)
-		self.secondary_target_language_select.config(width=self.HALF_BUTTON_SIZE)
-		self.secondary_target_language_select["menu"].config(bg=MENU_BG, fg= FG_CL)
-		self.secondary_target_language_select.grid(row=Row, column=3, padx=0, pady=5, sticky=W)
-
-		
-		#Button(Tab, width = self.HALF_BUTTON_SIZE, text= self.LanguagePack.Button['Save'], command= self._save_project_key).grid(row=Row, column=7, padx=5, pady=5, sticky=E)
-		self.GetTitleBtn = Button(Tab, text=self.LanguagePack.Button['GetTitle'], width=10, command=self.GetTitle, state=DISABLED)
-		self.GetTitleBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
-		
-		Row+=1
-		Label(Tab, text=self.LanguagePack.Label['BugTitle']).grid(row=Row, column = 1, padx=5, pady=5, stick=W)
-
-		#AutocompleteCombobox
-		self.HeaderOptionA = AutocompleteCombobox(Tab)
-		self.HeaderOptionA.Set_Entry_Width(self.HALF_BUTTON_SIZE*2)
-		self.HeaderOptionA.set_completion_list(self.header_list)
-		self.HeaderOptionA.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
-		
-		self.TextTitle = CustomText(Tab, width=90, height=3, undo=True, wrap=WORD)
-		self.TextTitle.grid(row=Row, column=4, columnspan=7, rowspan=2, padx=5, pady=5, stick=E)
-
-		Row+=1
-
-		self.HeaderOptionB = AutocompleteCombobox(Tab)
-		self.HeaderOptionB.Set_Entry_Width(self.HALF_BUTTON_SIZE*2)
-		self.HeaderOptionB.set_completion_list(self.header_list)
-		self.HeaderOptionB.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
-		
-		Row+=1
-		Label(Tab, text=self.LanguagePack.Label['Server']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
-
-		self.TextServer = Text(Tab, width=35, height=1, undo=True)
-		self.TextServer.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, stick=W)
-	
-		Label(Tab, text=self.LanguagePack.Label['ReproduceTime']).grid(row=Row, column=4, padx=5, pady=5, stick=W)
-
-		self.TextReprodTime = Text(Tab,width=20, height=1, undo=True)
-		self.TextReprodTime.grid(row=Row, column=5, columnspan=3, padx=5, pady=5, stick=W+E)
-
-		
-		Checkbutton(Tab, text=self.LanguagePack.Label['TestInfo'], variable = self.SkipTestInfo, command = self.SaveSetting).grid(row=Row, column=8, padx=5, pady=5, stick=W)
-		#self.SkipTestInfo.set(1)
-
-		Button(Tab, text=self.LanguagePack.Button['Reset'], width=10, command= self.ResetTestReport).grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
-
-
-		Row+=1
-		Label(Tab, text=self.LanguagePack.Label['Client']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
-
-		self.TextClient = Text(Tab, width=35, height=1, undo=True)
-		self.TextClient.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, stick=W)
-		self.TextClient.insert("end", "ver.")
-
-		self.TextAccount = Text(Tab,width=20, height=1, undo=True)
-		Label(Tab, text=self.LanguagePack.Label['IDChar']).grid(row=Row, column=4, padx=5, pady=5, stick=W)
-		
-		self.TextAccount.grid(row=Row, column=5, columnspan=3, padx=5, pady=5, stick=W+E)
-
-		Checkbutton(Tab, text= 'Use Simple Template', variable = self.UseSimpleTemplate, command = self.SaveSetting).grid(row=Row, column=8, padx=5, pady=5, stick=W)
-		#self.UseSimpleTemplate.set(1)
-
-		Button(Tab, text=self.LanguagePack.Button['Load'], width=10, command= self._load_report).grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
-		Button(Tab, text=self.LanguagePack.Button['Save'], width=10, command= self._save_report).grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
-
-		Row+=1
-		Label(Tab, width=10, text=self.LanguagePack.Label['Report']).grid(row=Row, column=1, columnspan=2, padx=5, pady=5, stick=W)
-		
-		Label(Tab, width=10, text=self.LanguagePack.Label['Search']).grid(row=Row, column=4, padx=5, pady=5, stick=W)
-
-		self.search_entry = AutocompleteEntry([], Tab, listboxLength=6, width=100, matchesFunction=matches)
-		self.search_entry.grid(row=Row, column=5, columnspan=6, padx=5, pady=5, sticky=E)
-
-		Row+=1
-		self.TextTestReport = CustomText(Tab, width=130, height=8, undo=True, wrap=WORD)
-		self.TextTestReport.grid(row=Row, column=1, columnspan=10, rowspan=7, padx=5, pady=5, stick=W+E)
-		Row+=7
-		
-		
-		Row+=1
-		Label(Tab, width=10, text=self.LanguagePack.Label['Steps']).grid(row=Row, column=1, columnspan=2, padx=0, pady=0, stick=W)
-
-
-		Label(Tab, width=10, text=self.LanguagePack.Label['Expected']).grid(row=Row, column=6, columnspan=2, padx=0, pady=0, stick=W)
-		#Button(Tab, text=self.LanguagePack.Button['Load'], width=10, command= self._load_report).grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
-		#self.grammar_check = Button(Tab, text="Grammar Check", width=10, command= self.analyze_grammar)
-		#self.grammar_check.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
-
-		#self.db_correction = Button(Tab, text="DB Falt Alarm", width=10	, command= self.analyze_fault_terminology, state=DISABLED)
-		#self.db_correction.grid(row=Row, column=8, padx=5, pady=5, stick=W+E)
-
-		self.ReviewReportBtn = Button(Tab, text="Review Report", width=10, command= self.review_report, state=DISABLED, style=self.Btn_Style)
-		self.ReviewReportBtn.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)	
-
-		self.GetReportBtn = Button(Tab, text=self.LanguagePack.Button['GetReport'], width=10, command= self.generate_report, state=DISABLED)
-		self.GetReportBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
-		
-
-		Row+=1
-		self.TextReproduceSteps = CustomText(Tab, width=50, height=7, undo=True, wrap=WORD)
-		self.TextReproduceSteps.grid(row=Row, column=1, columnspan=5, rowspan=7, padx=5, pady=5, stick=W+E)
-		self.TextShouldBe = CustomText(Tab, width=50, height=7, undo=True, wrap=WORD) 
-		self.TextShouldBe.grid(row=Row, column=6, columnspan=5, padx=5, pady=5, stick=W+E)
-
-		Tab.bind_all('<Control-r>', self.generate_report)
-		Tab.bind_all('<Control-t>', self.GetTitle)
-		Tab.bind_all('<Control-s>', self._save_report)
-		Tab.bind_all('<Control-l>', self._load_report)
-		Tab.bind_all('<Control-q>', self.ResetReport)
-
-	
-	### UI of SIMPLE TRANSLATOR ###
-	def Generate_SimpleTranslator_UI(self, Tab):
-
-		
-		Row=1
-		Label(Tab, textvariable=self.Notice).grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=E)
-
-		Row +=1
-		Label(Tab, text=self.LanguagePack.Label['SourceText']).grid(row=Row, column=1, columnspan = 5, padx=5, pady=0)
-		Label(Tab, text=self.LanguagePack.Label['TargetText']).grid(row=Row, column=6, columnspan = 5, padx=0, pady=0)
-		#New Row
-
-		Row +=1
-		self.SourceText = Text(Tab, width = self.SOURCE_WIDTH, height=self.ROW_SIZE, undo=True) 
-		self.SourceText.grid(row=Row, column=1, columnspan=5, rowspan=self.ROW_SIZE, padx=5, pady=5, sticky=E+W)
-		self.SourceText.bind("<Double-Return>", self.bind_translate)
-		self.SourceText.bind("<Double-Tab>", self.BindSwap)
-
-		self.TargetText = Text(Tab, width = self.SOURCE_WIDTH, height=self.ROW_SIZE, undo=True) #
-		self.TargetText.grid(row = Row, column=6, columnspan=5, rowspan=self.ROW_SIZE, padx=5, pady=5, sticky=E)
-		
-		Row +=self.ROW_SIZE
-
-		Label(Tab, text= self.LanguagePack.Label['SourceLanguage'], width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
-		
-		self.simple_source_language = StringVar()
-		self.simple_source_language_select = OptionMenu(Tab, self.simple_source_language, *self.language_list, command = self.set_simple_language)
-		self.simple_source_language_select.config(width=self.HALF_BUTTON_SIZE)
-		self.simple_source_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
-		self.simple_source_language.set('Hangul')
-
-
-
-		Button(Tab, text=self.LanguagePack.Button['Swap'], width = 20, command= self.Swap).grid(row=Row, column=8, padx=5, pady=5)	
-		
-		Button(Tab, text=self.LanguagePack.Button['Copy'], width = self.BUTTON_SIZE, command= self.BtnCopy).grid(row = Row, column=9, padx=5, pady=5, sticky=E)
-
-		self.TranslateBtn = Button(Tab, text=self.LanguagePack.Button['Translate'], width = self.BUTTON_SIZE, command= self.single_translate, state=DISABLED)
-		self.TranslateBtn.grid(row=Row, column=10, padx=0, pady=5, sticky=E)		
-
-		Row +=1
-
-		Label(Tab, text= self.LanguagePack.Label['MainLanguage'], width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
-		
-		self.simple_target_language = StringVar()
-		self.simple_target_language_select = OptionMenu(Tab, self.simple_target_language, *self.language_list, command = self.set_simple_language)
-		self.simple_target_language_select.config(width=self.HALF_BUTTON_SIZE)
-		self.simple_target_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
-		self.simple_target_language.set('English')		
-		
-		Label(Tab, text= self.LanguagePack.Label['SecondaryLanguage'], width= self.HALF_BUTTON_SIZE).grid(row = Row, column = 3, padx=5, pady=5, stick=E+W)
-		
-		secondary_language_list = self.language_list + ['']
-
-		self.simple_secondary_target_language = StringVar()
-		self.simple_secondary_target_language_select = OptionMenu(Tab, self.simple_secondary_target_language, *secondary_language_list, command = self.set_simple_language)
-		self.simple_secondary_target_language_select.config(width=self.HALF_BUTTON_SIZE)
-		self.simple_secondary_target_language_select.grid(row=Row, column=4, padx=0, pady=5, sticky=W)
-		self.simple_secondary_target_language.set('Japanese')
-		
-		Button(Tab, text= 'Trilingual Copy', width = self.BUTTON_SIZE, command= self.btn_trilingual).grid(row = Row, column=8, padx=5, pady=5)
-		
-		Button(Tab, text=self.LanguagePack.Button['Bilingual'], width = self.BUTTON_SIZE, command= self.btn_bilingual_copy).grid(row = Row, column=9, padx=5, pady=5, sticky=E)
-		self.dual_translate_btn = Button(Tab, text= 'Dual Translate', width = self.BUTTON_SIZE, command= self.dual_translate, state=DISABLED)
-		self.dual_translate_btn.grid(row = Row, column=10, padx=0, pady=5, sticky=E)
-		#self.Translate_bilingual_Btn = Button(Tab, text=self.LanguagePack.Button['TranslateAndBilingual'], width = self.BUTTON_SIZE, command= self.BtnTranslateAndBilingual)
-		#self.Translate_bilingual_Btn.grid(row = Row, column=10, padx=5, pady=5, sticky=E)
-
-	def Generate_Search_UI(self, Tab):
-		Row = 1
-
-		self.search_entry = AutocompleteEntry([], Tab, listboxLength=6, width=32, matchesFunction=matches)
-		self.search_entry.grid(row=0, column=0, columnspan = 10, padx=5, pady=5, sticky= W)
-
-	
-
-	def Generate_TranslateSetting_UI(self, Tab):
-		Row = 1
-		Label(Tab, textvariable=self.Notice).grid(row=Row, column=1, columnspan = 10, padx=5, pady=5, sticky= E+W)
-		Row += 1
-
-		Label(Tab, text= self.LanguagePack.Label['LicensePath']).grid(row=Row, column=1, padx=5, pady=5, sticky=E)
-		self.TextLicensePath = Entry(Tab,width = 150, state="readonly", textvariable=self.LicensePath)
-		self.TextLicensePath.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=W+E)
-		self.Browse_License_Btn = Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Browse'], command= self.Btn_Select_License_Path)
-		self.Browse_License_Btn.grid(row=Row, column=10, padx=5, pady=5, sticky=E)
-
-		Row += 1
-		Label(Tab, text= self.LanguagePack.Label['Transparent']).grid(row=Row, rowspan = 2, column=1, padx=5, pady=5, sticky=W)
-		self.TransparentPercent = Scale(Tab, length = 600, from_ = 0, to = 100, variable= self.Transparent, command= self.SaveAppTransparency, orient=HORIZONTAL, bg=FRAME_BG, bd = 0, fg = FG_CL, highlightbackground = FRAME_BG, 	
-troughcolor = BG_CL)
-		self.TransparentPercent.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=E+W)
-		Button(Tab, width = self.HALF_BUTTON_SIZE, text=  self.LanguagePack.Button['Reset'], command= self.rebuild_UI).grid(row=Row, column=10, padx=5, pady=5, rowspan = 2, sticky=E)
-
-
-	def Btn_Select_License_Path(self):
-		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectDB'],filetypes = (("JSON files","*.json" ), ), )	
-		if filename != "":
-			LicensePath = self.CorrectPath(filename)
-			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'license_file', LicensePath, True)
-			os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LicensePath
-			self.LicensePath.set(LicensePath)
-			self.rebuild_UI()
+		Args:
+			config_theme_name -- str
+				Theme name retrieved from config. (Default: '')
+		"""
+		try:
+			style = Style(self.parent) # self.parent is root
+			theme_name = self.strvar_theme_name.get()
 			
-		else:
-			self.Notice.set("No file is selected")
-
+			self.AppConfig.Save_Config(
+				self.AppConfig.Writer_Config_Path,
+				'Bug_Writer',
+				'theme name',
+				theme_name)
+			self.change_theme_color(theme_name)
+			style.theme_use(theme_name)
+			self.apply_theme_color()
+			self.btn_remove_theme.configure(state=NORMAL)
+		except Exception as err:
+			messagebox.showerror(
+				title='Error',
+				message=f'Error occurs when selecting theme: {err}')
 
 	# Init functions
 	# Some option is saved for the next time use
@@ -584,7 +286,7 @@ troughcolor = BG_CL)
 		self.UseSimpleTemplate = IntVar()
 
 		self.LicensePath = StringVar()
-		self.Transparent = IntVar()
+		self.Transparent = DoubleVar()
 
 		#self.DictionaryPath = StringVar()
 		self.TMPath = StringVar()
@@ -608,7 +310,7 @@ troughcolor = BG_CL)
 		self.LicensePath.set(license_file_path)
 
 
-		Transparent  = self.Configuration['Bug_Writer']['Transparent']
+		Transparent = self.Configuration['Bug_Writer']['Transparent']
 		self.Transparent.set(Transparent)
 
 		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = license_file_path
@@ -620,6 +322,8 @@ troughcolor = BG_CL)
 
 		self.glossary_id = self.Configuration['Translator']['glossary_id']
 		
+		self.Configuration['Translator']['theme_name']
+
 		try:
 			cloud_config = CloudConfigLoader()
 			cloud_configuration = cloud_config.Config
@@ -631,7 +335,18 @@ troughcolor = BG_CL)
 			self.latest_version = 1000
 			
 		
+		self.source_language = StringVar()	
+		self.target_language = StringVar()
+		self.secondary_target_language = StringVar()
+
+		self.simple_source_language = StringVar()
+		self.simple_target_language = StringVar()
+		self.simple_secondary_target_language = StringVar()
+
+		self.strvar_theme_name = StringVar()
 		#self.Config['bucket_db_list']
+
+
 		#self.Config['glossary_data_list']
 		
 
@@ -658,6 +373,166 @@ troughcolor = BG_CL)
 		else:
 			self.simple_secondary_target_language.set(self.language_list[simple_secondary_language])
 
+	def init_theme(self):
+		"""Applied the theme name saved in the settings on init."""
+		print('init_theme')
+		try:
+			self.theme_names = ['clam']
+			self.theme_name = self.Configuration['Bug_Writer']['theme_name']
+			style = Style(self.parent) # self.parent is root
+
+			supported_themes = ['awdark', 'awlight']
+			# theme_dir = self.AppConfig.theme_loading_path
+			theme_dir = os.path.join(os.getcwd() + r'\\theme')
+			theme_files = os.listdir(theme_dir)
+			# Add to theme selection in Translate Setting tab
+			for theme_file in theme_files:
+				file_name, file_ext = os.path.splitext(theme_file)
+				if file_ext == '.tcl':
+					if file_name in supported_themes:
+						# Import tcl files
+						self.parent.tk.call(
+							"source", f'{theme_dir}\\{theme_file}')
+						self.theme_names.append(file_name)
+				else:
+					continue
+			# System default color is removed if adding below!!!!
+			# style.map(
+			# 	'.', #'.' means all ttk widgets
+			# 	foreground=fixed_map(style, 'foreground'),
+			# 	background=fixed_map(style, 'background'))
+
+			if self.theme_name not in self.theme_names:
+				raise Exception('Cannot use the theme saved in the config'
+					' because it is not supported or required files have'
+					' been removed.')
+
+			# # Add all available theme
+			# for theme_name in style.theme_names():
+			# 	self.theme_names.append(theme_name)
+			self.change_theme_color(self.theme_name)
+			style.theme_use(self.theme_name)
+		except Exception as err:
+			print('Error while initializing theme:\n'
+				f'- {err}\n'
+				'The system default theme will be used instead.')
+
+	def select_theme_name(self):
+		"""Save the theme name value to Configuration and change
+		the theme based on the selection in the UI.
+		
+		Args:
+			config_theme_name -- str
+				Theme name retrieved from config. (Default: '')
+		"""
+		try:
+			style = Style(self.parent) # self.parent is root
+			theme_name = self.strvar_theme_name.get()
+			
+			self.AppConfig.Save_Config(
+				self.AppConfig.Writer_Config_Path,
+				'Bug_Writer',
+				'theme name',
+				theme_name)
+			self.change_theme_color(theme_name)
+			style.theme_use(theme_name)
+			self.apply_theme_color()
+			self.btn_remove_theme.configure(state=NORMAL)
+		except Exception as err:
+			messagebox.showerror(
+				title='Error',
+				message=f'Error occurs when selecting theme: {err}')
+
+	def change_theme_color(self, theme_name: str):
+
+		print('change_theme_color', theme_name)
+		"""Change widget color.
+		
+		Args:
+			theme_name -- str
+				Theme that is available on the computer. Retrieved
+				from config or selection in Translate Setting tab.
+		"""
+		# if theme_name == 'awdark':
+		# 	self.widget_color = {
+		# 		'parent_bg': '#191c1d',
+		# 		'frame_bg': '#191c1d',
+		# 		'menu_bg': '#474D4E',
+		# 		'menu_fg': 'white',
+		# 		'text_bg': '#191c1d',
+		# 		'text_fg': 'white',
+		# 		'text_insertbackground': 'white'
+		# 	}
+		if theme_name == 'awdark':
+			self.widget_color = {
+				'parent_bg': '#33393b',
+				'frame_bg': '#33393b',
+				'menu_bg': '#474D4E',
+				'menu_fg': '#ffffff',
+				'text_bg': '#191c1d',
+				'text_fg': '#ffffff',
+				'text_insertbackground': '#ffffff'
+			}
+		elif theme_name == 'awlight':
+			self.widget_color = {
+				'parent_bg': '#e8e8e7',
+				'frame_bg': '#e8e8e7',
+				'menu_bg': '#e8e8e7',
+				'menu_fg': '#000000',
+				'text_bg': '#ffffff',
+				'text_fg': '#000000',
+				'text_insertbackground': '#000000'
+			}
+		elif theme_name == 'clam':
+			self.widget_color = {
+				'parent_bg': '#dcdad5',
+				'frame_bg': '#dcdad5',
+				'menu_bg': '#dcdad5',
+				'menu_fg': '#000000',
+				'text_bg': '#ffffff',
+				'text_fg': '#000000',
+				'text_insertbackground': '#000000'
+			}
+		else:
+			self.widget_color = {
+				'parent_bg': '#ffffff',
+				'frame_bg': 'SystemButtonFace',
+				'menu_bg': 'SystemButtonFace',
+				'menu_fg': '#000000', # font color
+				'text_bg': '#ffffff',
+				'text_fg': '#000000', # font color
+				'text_insertbackground': '#000000' # text cursor
+			}
+	
+	def apply_theme_color(self):
+		print('apply_theme_color')
+		"""Apply color to widgets."""
+		self.parent['bg'] = self.widget_color['parent_bg']
+		for frame_widget in self.frame_widgets:
+			frame_widget['bg'] = self.widget_color['frame_bg']
+		for menu_widget in self.menu_widgets:
+			menu_widget['bg'] = self.widget_color['menu_bg']
+			menu_widget['fg'] = self.widget_color['menu_fg']
+		for text_widget in self.text_widgets:
+			text_widget['bg'] = self.widget_color['text_bg']
+			text_widget['fg'] = self.widget_color['text_fg']
+			text_widget['insertbackground'] = \
+				self.widget_color['text_insertbackground']
+
+	def remove_theme(self):
+		print('remove_theme')
+		"""Remove the theme saved in config then restart the app."""
+		self.AppConfig.Save_Config(
+			self.AppConfig.Writer_Config_Path,
+			'Bug_Writer',
+			'theme name',
+			'')
+		
+		messagebox.showinfo(
+			title='Info',
+			message='App will restart to apply the change.')
+		self.parent.destroy()
+		main()
 
 #######################################################################
 # Menu function
@@ -1569,8 +1444,10 @@ troughcolor = BG_CL)
 		except Exception as e:
 			print('Cannot sve the report:', e)
 			pass
+
+
 	def SaveTempReport(self, event=None):
-		print('Save temp report')
+
 		TextTitle = self.TextTitle.get("1.0", END)			
 		TextServer = self.TextServer.get("1.0", END)
 		TextClient = self.TextClient.get("1.0", END)
@@ -1744,8 +1621,8 @@ class ConfirmationPopup:
 		Button(self.master, width = 20, text= 'Confirm').grid(row=row, column=2, columnspan=1, padx=5, pady=5, sticky=E)
 
 class BottomPanel(Frame):
-	def __init__(self, master, bg_cl):
-		Frame.__init__(self, master, bg=bg_cl) 
+	def __init__(self, master):
+		Frame.__init__(self, master) 
 		#self.pack(side=BOTTOM, fill=X)          # resize with parent
 		
 		# separator widget
@@ -2119,10 +1996,6 @@ def AddCssLayout(Title, content):
 def Add_Style(Text):
 	return '___________' + Text + '___________' 
 
-def matches(fieldValue, acListEntry):
-	pattern = re.compile(re.escape(fieldValue) + '.*', re.IGNORECASE)
-	return re.match(pattern, acListEntry)
-
 def fixed_map(style, option):
 	# Fix for setting text colour for Tkinter 8.6.9
 	# From: https://core.tcl.tk/tk/info/509cafafae
@@ -2153,42 +2026,6 @@ def main():
 	
 	root = Tk()
 	root.attributes("-alpha", (Transparency/100))
-
-	style = Style(root)
-	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
-	style.map('TFrame', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
-	style.map('TButton', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
-	
-	CWD = os.getcwd()
-
-	THEME_DIR = os.path.join(CWD, "theme\\awdark.tcl") 
-	color_mode = 'dark'
-	if os.path.isfile(THEME_DIR) == True:
-		try:
-			root.tk.call("source", THEME_DIR)
-			style.theme_use('awdark')
-			
-		except Exception as e:
-			print('Error while loading theme: ', e)	
-			color_mode = 'light'
-
-	else:
-		color_mode = 'light'
-
-	global BG_CL, FG_CL, FRAME_BG, MENU_BG, FOLK_BLUE
-	
-	if color_mode == 'light':	
-		BG_CL = None
-		FG_CL = None
-		FRAME_BG = None
-		MENU_BG = None
-		FOLK_BLUE = None
-	else:
-		BG_CL = '#191c1d'
-		FG_CL = 'white'
-		FRAME_BG = '#33393b'
-		MENU_BG = '#474D4E'	
-		FOLK_BLUE = '#215D9C'
 
 	#root.geometry("400x350+300+300")
 	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
