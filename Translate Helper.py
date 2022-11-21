@@ -555,7 +555,20 @@ class MyTranslatorHelper(Frame):
 		self.Notice.set(self.LanguagePack.ToolTips['AppLanuageUpdate'] + " "+ language) 
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'app_lang', language)
 	
+	def Demo_App_Transparency(self, transparency):
+		transparency = int(float(transparency))
+		if transparency < 40:
+			transparency = 40
+		self.parent.attributes("-alpha", float(transparency)/100)
+		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'Transparent', transparency)
+		
+
 	def SaveAppTransparency(self, transparency):
+		print("Save transparency")
+		_transparency = int(float(transparency))
+		if _transparency < 40:
+			_transparency = 40
+		self.parent.attributes("-alpha", float(_transparency)/100)
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'Transparent', transparency)
 
 	def SelectDictionary(self):

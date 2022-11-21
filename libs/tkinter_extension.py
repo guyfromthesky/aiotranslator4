@@ -600,11 +600,15 @@ def Generate_Translate_Setting_UI(master, Tab):
 		from_=20,
 		to=100,
 		variable=master.Transparent,
-		command=master.SaveAppTransparency,
+		command=master.Demo_App_Transparency,
 		orient=HORIZONTAL,)
 	master.TransparentPercent.grid(
 		row=Row, rowspan=2, column=3, columnspan=7, padx=5, pady=5,
 		sticky=E+W)
+		
+	# FIX LATER
+	#master.TransparentPercent.bind('<ButtonRelease-1>',master.SaveAppTransparency)	
+
 	Button(
 			Tab,
 			width=master.HALF_BUTTON_SIZE,
@@ -868,7 +872,7 @@ def Generate_SimpleTranslator_UI(master, Tab):
 		elif isinstance(child, Label):
 			master.label_widgets.append(child)
 	Tab.bind_all('<Key>', master.handle_wait)
-	
+
 # Related function
 def Btn_Select_License_Path(master):
 	filename = filedialog.askopenfilename(title =  master.LanguagePack.ToolTips['SelectDB'],filetypes = (("JSON files","*.json" ), ), )	
