@@ -267,7 +267,7 @@ class MyTranslatorHelper(Frame):
 			self.AppConfig.Save_Config(
 				self.AppConfig.Writer_Config_Path,
 				'Bug_Writer',
-				'theme name',
+				'theme_name',
 				theme_name)
 			self.change_theme_color(theme_name)
 			style.theme_use(theme_name)
@@ -322,7 +322,7 @@ class MyTranslatorHelper(Frame):
 
 		self.glossary_id = self.Configuration['Translator']['glossary_id']
 		
-		self.Configuration['Translator']['theme_name']
+		self.used_theme = self.Configuration['Bug_Writer']['theme_name']
 
 		try:
 			cloud_config = CloudConfigLoader()
@@ -378,7 +378,7 @@ class MyTranslatorHelper(Frame):
 		print('init_theme')
 		try:
 			self.theme_names = ['clam']
-			self.theme_name = self.Configuration['Bug_Writer']['theme_name']
+			
 			style = Style(self.parent) # self.parent is root
 
 			supported_themes = ['awdark', 'awlight']
@@ -402,7 +402,7 @@ class MyTranslatorHelper(Frame):
 			# 	foreground=fixed_map(style, 'foreground'),
 			# 	background=fixed_map(style, 'background'))
 
-			if self.theme_name not in self.theme_names:
+			if self.used_theme not in self.theme_names:
 				raise Exception('Cannot use the theme saved in the config'
 					' because it is not supported or required files have'
 					' been removed.')
@@ -410,8 +410,8 @@ class MyTranslatorHelper(Frame):
 			# # Add all available theme
 			# for theme_name in style.theme_names():
 			# 	self.theme_names.append(theme_name)
-			self.change_theme_color(self.theme_name)
-			style.theme_use(self.theme_name)
+			self.change_theme_color(self.used_theme)
+			style.theme_use(self.used_theme)
 		except Exception as err:
 			print('Error while initializing theme:\n'
 				f'- {err}\n'
@@ -432,7 +432,7 @@ class MyTranslatorHelper(Frame):
 			self.AppConfig.Save_Config(
 				self.AppConfig.Writer_Config_Path,
 				'Bug_Writer',
-				'theme name',
+				'theme_name',
 				theme_name)
 			self.change_theme_color(theme_name)
 			style.theme_use(theme_name)
@@ -525,7 +525,7 @@ class MyTranslatorHelper(Frame):
 		self.AppConfig.Save_Config(
 			self.AppConfig.Writer_Config_Path,
 			'Bug_Writer',
-			'theme name',
+			'theme_name',
 			'')
 		
 		messagebox.showinfo(
