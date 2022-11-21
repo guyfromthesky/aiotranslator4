@@ -779,7 +779,7 @@ def Generate_BugWriter_UI(master, Tab):
 	master.TextShouldBe = CustomText(Tab, width=50, height=7, undo=True, wrap=WORD) 
 	master.TextShouldBe.grid(row=Row, column=6, columnspan=5, padx=5, pady=5, stick=W+E)
 
-	# Tab.bind_all('<Key>', master.check_key_press)
+	Tab.bind_all('<Key>', master.handle_wait)
 	# Tab.bind_all('<KeyRelease>', master.check_key_release)
 	Tab.bind_all('<Control-r>', master.generate_report)
 	Tab.bind_all('<Control-t>', master.GetTitle)
@@ -867,7 +867,8 @@ def Generate_SimpleTranslator_UI(master, Tab):
 			master.text_widgets.append(child)
 		elif isinstance(child, Label):
 			master.label_widgets.append(child)
-
+	Tab.bind_all('<Key>', master.handle_wait)
+	
 # Related function
 def Btn_Select_License_Path(master):
 	filename = filedialog.askopenfilename(title =  master.LanguagePack.ToolTips['SelectDB'],filetypes = (("JSON files","*.json" ), ), )	

@@ -70,7 +70,7 @@ ver_num = get_version(REV)
 version = tool_display_name  + " " +  ver_num
 
 DELAY = 20
-DELAY_2 = 15000
+DELAY2 = 15000
 
 #**********************************************************************************
 # UI handle ***********************************************************************
@@ -202,7 +202,7 @@ class MyTranslatorHelper(Frame):
 		y_cordinate = int((self.parent.winfo_screenheight() / 2) - (self.parent.winfo_height() / 2))
 		self.parent.geometry("+{}+{}".format(x_cordinate, y_cordinate-20))
 
-		self.after(DELAY_2, self.auto_save)
+		#self.after(DELAY2, self.auto_save)
 
 	def auto_save(self):
 		"""Automatically save input every once in a while."""
@@ -211,8 +211,17 @@ class MyTranslatorHelper(Frame):
 		except Exception as err:
 			print('Error when auto saving: ', err)
 		finally:
-			self.after(DELAY_2, self.auto_save)
-		
+			self.after(DELAY2, self.auto_save)
+	
+	def handle_wait(self,event):
+        # cancel the old job
+		if self._after_id is not None:
+			self.after_cancel(self._after_id)
+
+		# create a new job
+		self._after_id = self.after(DELAY2, self.change_color)
+
+    
 	# Menu function
 	def Error(self, ErrorText):
 		messagebox.showinfo('Translate error...', ErrorText)	
@@ -1015,6 +1024,7 @@ class MyTranslatorHelper(Frame):
 	def apply_theme_color(self):
 		"""Apply color to widgets."""
 		self.parent['bg'] = self.widget_color['parent_bg']
+		
 		for frame_widget in self.frame_widgets:
 			frame_widget['bg'] = self.widget_color['frame_bg']
 		for menu_widget in self.menu_widgets:

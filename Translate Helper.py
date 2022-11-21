@@ -73,7 +73,7 @@ ver_num = get_version(REV)
 version = tool_display_name  + " " +  ver_num
 
 DELAY = 20
-DELAY_2 = 15000
+DELAY2 = 5000
 
 #**********************************************************************************
 # UI handle ***********************************************************************
@@ -136,6 +136,8 @@ class MyTranslatorHelper(Frame):
 		self.menu_widgets = []
 		self.frame_widgets = []
 
+		self._after_id = None
+
 		self.init_App_Setting()
 		
 		if self.AppLanguage != 'kr':
@@ -188,7 +190,7 @@ class MyTranslatorHelper(Frame):
 		y_cordinate = int((self.parent.winfo_screenheight() / 2) - (self.parent.winfo_height() / 2))
 		self.parent.geometry("+{}+{}".format(x_cordinate, y_cordinate-20))
 
-		self.after(DELAY_2, self.auto_save)
+		#self.after(DELAY2, self.auto_save)
 		
 	def auto_save(self):
 		"Auto save every once in a while."
@@ -198,7 +200,15 @@ class MyTranslatorHelper(Frame):
 			print('Error when auto saving: ', err)
 		finally:
 			self.after(DELAY, self.auto_save)
+	
+	def handle_wait(self,event):
+        # cancel the old job
+		if self._after_id is not None:
+			self.after_cancel(self._after_id)
+        # create a new job
+		self._after_id = self.after(DELAY2, self.SaveTempReport)
 
+    
 	# Menu function
 	def Error(self, ErrorText):
 		messagebox.showinfo('Translate error...', ErrorText)	
@@ -1437,7 +1447,7 @@ class MyTranslatorHelper(Frame):
 
 
 	def SaveTempReport(self, event=None):
-
+		print('Report is saved!')
 		TextTitle = self.TextTitle.get("1.0", END)			
 		TextServer = self.TextServer.get("1.0", END)
 		TextClient = self.TextClient.get("1.0", END)
