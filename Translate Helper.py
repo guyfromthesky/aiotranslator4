@@ -68,12 +68,12 @@ from google.cloud import logging
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4120
+REV = 4121
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num
 
 DELAY = 20
-DELAY2 = 5000
+DELAY2 = 1000
 
 #**********************************************************************************
 # UI handle ***********************************************************************
@@ -1450,6 +1450,7 @@ class MyTranslatorHelper(Frame):
 		print('Report is saved!')
 		TextTitle = self.TextTitle.get("1.0", END)			
 		TextServer = self.TextServer.get("1.0", END)
+
 		TextClient = self.TextClient.get("1.0", END)
 		TextReprodTime = self.TextReprodTime.get("1.0", END)
 		TextAccount = self.TextAccount.get("1.0", END)
