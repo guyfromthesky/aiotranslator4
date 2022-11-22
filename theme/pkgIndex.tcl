@@ -38,3 +38,21 @@ package ifneeded awwinxpblue 7.9.1 \
     [list source [file join $dir awwinxpblue.tcl]]
 package ifneeded ttk::theme::awwinxpblue 7.9.1 \
     [list source [file join $dir awwinxpblue.tcl]]
+
+if {![file isdirectory [file join $dir Breeze]]} { return }
+if {![package vsatisfies [package provide Tcl] 8.6]} { return }
+
+package ifneeded ttk::theme::Breeze 0.8 \
+    [list source [file join $dir breeze.tcl]]
+package ifneeded breeze 0.8 \
+    [list source [file join $dir breeze.tcl]]
+
+package ifneeded ttk::theme::forest-light 1.0 \
+    [list source [file join $dir breeze.tcl]]
+package ifneeded forest-light 1.0 \
+    [list source [file join $dir breeze.tcl]]
+
+package ifneeded ttk::theme::forest-dark 1.0 \
+    [list source [file join $dir breeze.tcl]]
+package ifneeded forest-dark 1.0 \
+    [list source [file join $dir breeze.tcl]]

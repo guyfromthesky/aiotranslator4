@@ -663,7 +663,7 @@ def Generate_BugWriter_UI(master, Tab):
 	Label(Tab, text= master.LanguagePack.Label['SourceLanguage'], width= master.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
 	Label(Tab, text= master.LanguagePack.Label['MainLanguage'], width= master.HALF_BUTTON_SIZE).grid(row = Row, column = 2, padx=5, pady=5, stick=E+W)
 	Label(Tab, text= master.LanguagePack.Label['SecondaryLanguage'], width= master.HALF_BUTTON_SIZE).grid(row = Row, column = 3, padx=5, pady=5, stick=E+W)
-	Label(Tab, textvariable=master.Notice).grid(row=Row, column=4, columnspan=7, padx=5, pady=5, stick=E)
+	Label(Tab, textvariable=master.Notice).grid(row=Row, column=4, columnspan=7, padx=5, pady=5, stick=W+E)
 
 	Row += 1
 
@@ -803,7 +803,7 @@ def matches(fieldValue, acListEntry):
 
 def Generate_SimpleTranslator_UI(master, Tab):
 	Row=1
-	Label(Tab, textvariable=master.Notice).grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=E)
+	Label(Tab, textvariable=master.Notice).grid(row=Row, column=1, columnspan=10, padx=5, pady=5, sticky=W+E)
 
 	Row +=1
 	Label(Tab, text=master.LanguagePack.Label['SourceText']).grid(row=Row, column=1, columnspan = 5, padx=5, pady=0)

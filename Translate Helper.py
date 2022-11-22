@@ -306,7 +306,7 @@ class MyTranslatorHelper(Frame):
 		self.glossary_id = self.Configuration['Translator']['glossary_id']
 		
 		self.used_theme = self.Configuration['Bug_Writer']['theme_name']
-
+		print(self.used_theme)
 		try:
 			cloud_config = CloudConfigLoader()
 			cloud_configuration = cloud_config.Config
@@ -363,8 +363,8 @@ class MyTranslatorHelper(Frame):
 			self.theme_names = ['clam']
 			
 			style = Style(self.parent) # self.parent is root
-
 			supported_themes = ['awdark', 'awlight']
+			#supported_themes = ['awdark', 'awlight', 'forest-dark', 'forest-light']
 			# theme_dir = self.AppConfig.theme_loading_path
 			theme_dir = os.path.join(os.getcwd() + r'\\theme')
 			theme_files = os.listdir(theme_dir)
@@ -374,6 +374,7 @@ class MyTranslatorHelper(Frame):
 				if file_ext == '.tcl':
 					if file_name in supported_themes:
 						# Import tcl files
+						print('Import theme:', f'{theme_dir}\\{theme_file}')
 						self.parent.tk.call(
 							"source", f'{theme_dir}\\{theme_file}')
 						self.theme_names.append(file_name)
@@ -420,7 +421,7 @@ class MyTranslatorHelper(Frame):
 				self.AppConfig.Writer_Config_Path,
 				'Bug_Writer',
 				'theme_name',
-				theme_name)
+				theme_name, True)
 			self.change_theme_color(theme_name)
 			style.theme_use(theme_name)
 			self.apply_theme_color()
@@ -460,6 +461,40 @@ class MyTranslatorHelper(Frame):
 				'text_insertbackground': '#ffffff',
 				'label_bg': '#393f3f',
 				'label_fg': 'white'
+			}
+		elif theme_name == 'breeze':
+			self.widget_color = {
+				'parent_bg': '#e8e8e7',
+				'frame_bg': '#e8e8e7',
+				'menu_bg': '#e8e8e7',
+				'menu_fg': '#000000',
+				'text_bg': '#ffffff',
+				'text_fg': '#000000',
+				'text_insertbackground': '#000000',
+				'label_bg': '#191c1d',
+				'label_fg': '#ffffff'
+			}	
+		elif theme_name == 'forest-light':
+			self.widget_color = {
+				'parent_bg': '#e8e8e7',
+				'frame_bg': '#e8e8e7',
+				'menu_bg': '#e8e8e7',
+				'menu_fg': '#000000',
+				'text_bg': '#ffffff',
+				'text_fg': '#000000',
+				'text_insertbackground': '#000000',
+				'label_bg': '#191c1d',
+				'label_fg': '#ffffff'
+			}
+		elif theme_name == 'forest-dark':
+			self.widget_color = {
+				'parent_bg': '#313131',
+				'frame_bg': '#313131',
+				'menu_bg': '#313131',
+				'menu_fg': '#eeeeee',
+				'text_bg': '#eeeeee',
+				'text_fg': '#eeeeee',
+				'text_insertbackground': '#eeeeee',
 			}
 		elif theme_name == 'awlight':
 			self.widget_color = {
