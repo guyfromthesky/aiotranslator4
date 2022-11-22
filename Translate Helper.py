@@ -399,6 +399,10 @@ class MyTranslatorHelper(Frame):
 			print('Error while initializing theme:\n'
 				f'- {err}\n'
 				'The system default theme will be used instead.')
+		transparency  = self.Configuration['Bug_Writer']['Transparent']
+
+		self.Apply_Transparency(transparency)
+
 
 	def select_theme_name(self):
 		"""Save the theme name value to Configuration and change
@@ -556,20 +560,26 @@ class MyTranslatorHelper(Frame):
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'app_lang', language)
 	
 	def Demo_App_Transparency(self, transparency):
-		transparency = int(float(transparency))
-		if transparency < 40:
-			transparency = 40
-		self.parent.attributes("-alpha", float(transparency)/100)
+		
+		self.Apply_Transparency(transparency)
+
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'Transparent', transparency)
 		
 
-	def SaveAppTransparency(self, transparency):
-		print("Save transparency")
-		_transparency = int(float(transparency))
-		if _transparency < 40:
-			_transparency = 40
-		self.parent.attributes("-alpha", float(_transparency)/100)
+	def SaveAppTransparency(self, event):
+		transparency = self.TransparentPercent.get()
+		self.Apply_Transparency(transparency)
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'Transparent', transparency)
+
+	def Apply_Transparency(self, transparency):
+		_transparency = int(float(transparency))
+		if _transparency < 75:
+			_transparency = 80 - (_transparency/3)
+		elif _transparency < 50:
+			_transparency = 50 - (_transparency/5)
+		elif _transparency < 25:
+			_transparency = 25 - (_transparency/10)	
+		self.parent.attributes("-alpha", float(_transparency)/100)
 
 	def SelectDictionary(self):
 		filename = filedialog.askopenfilename(title = "Select Database file",filetypes = (("Dictionary files","*.xlsx *.xlsm"), ), )	

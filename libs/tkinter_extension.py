@@ -605,10 +605,8 @@ def Generate_Translate_Setting_UI(master, Tab):
 	master.TransparentPercent.grid(
 		row=Row, rowspan=2, column=3, columnspan=7, padx=5, pady=5,
 		sticky=E+W)
-		
-	# FIX LATER
-	#master.TransparentPercent.bind('<ButtonRelease-1>',master.SaveAppTransparency)	
-
+	master.TransparentPercent.bind('<ButtonRelease-1>', master.SaveAppTransparency)	
+	
 	Button(
 			Tab,
 			width=master.HALF_BUTTON_SIZE,
