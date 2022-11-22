@@ -560,14 +560,10 @@ class MyTranslatorHelper(Frame):
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'app_lang', language)
 	
 	def Demo_App_Transparency(self, transparency):
-		
 		self.Apply_Transparency(transparency)
 
-		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'Transparent', transparency)
-		
-
 	def SaveAppTransparency(self, event):
-		transparency = self.TransparentPercent.get()
+		transparency = int(float(self.TransparentPercent.get()))
 		self.Apply_Transparency(transparency)
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'Transparent', transparency)
 
