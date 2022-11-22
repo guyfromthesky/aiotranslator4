@@ -60,7 +60,7 @@ from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, Cust
 
 from libs.tkinter_extension import Generate_BugWriter_Tab_UI, Generate_BugWriter_Menu_UI, Generate_Translate_Setting_UI
 from libs.tkinter_extension import Generate_BugWriter_UI, Generate_SimpleTranslator_UI
-
+from libs.tkinter_extension import Apply_Transparency, BugWriter_BottomPanel
 
 #from openpyxl import load_workbook, worksheet, Workbook
 
@@ -151,11 +151,11 @@ class MyTranslatorHelper(Frame):
 		
 
 		self.init_theme()
-		self.create_buttom_panel()
+		
 		self.init_ui()
 		
 		self.init_UI_setting()
-		
+
 		#self.LoadTempReport()
 
 
@@ -192,15 +192,6 @@ class MyTranslatorHelper(Frame):
 
 		#self.after(DELAY2, self.auto_save)
 		
-	def auto_save(self):
-		"Auto save every once in a while."
-		try:
-			self.SaveTempReport()
-		except Exception as err:
-			print('Error when auto saving: ', err)
-		finally:
-			self.after(DELAY, self.auto_save)
-	
 	def handle_wait(self,event):
         # cancel the old job
 		if self._after_id is not None:
@@ -249,6 +240,9 @@ class MyTranslatorHelper(Frame):
 			Generate_BugWriter_UI(self, self.BugWriterTab)
 			Generate_SimpleTranslator_UI(self, self.SimpleTranslatorTab)
 			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
+
+			self.bottom_panel = BugWriter_BottomPanel(self)
+			
 			self.apply_theme_color()
 		except Exception as e:
 			print(f'An error occurs while initializing UI: {e}')
@@ -258,8 +252,9 @@ class MyTranslatorHelper(Frame):
 		#self.Generate_Search_UI(self.Searcher)
 
 		#self.Init_Translator_Config
-	def create_buttom_panel(self):
-		self.bottom_panel = BottomPanel(self)
+
+		
+	
 		
 	# Init functions
 	# Some option is saved for the next time use
@@ -306,7 +301,7 @@ class MyTranslatorHelper(Frame):
 		self.glossary_id = self.Configuration['Translator']['glossary_id']
 		
 		self.used_theme = self.Configuration['Bug_Writer']['theme_name']
-		print(self.used_theme)
+	
 		try:
 			cloud_config = CloudConfigLoader()
 			cloud_configuration = cloud_config.Config
@@ -402,7 +397,7 @@ class MyTranslatorHelper(Frame):
 				'The system default theme will be used instead.')
 		transparency  = self.Configuration['Bug_Writer']['Transparent']
 
-		self.Apply_Transparency(transparency)
+		Apply_Transparency(transparency, self)
 
 
 	def select_theme_name(self):
@@ -593,24 +588,6 @@ class MyTranslatorHelper(Frame):
 
 		self.Notice.set(self.LanguagePack.ToolTips['AppLanuageUpdate'] + " "+ language) 
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'app_lang', language)
-	
-	def Demo_App_Transparency(self, transparency):
-		self.Apply_Transparency(transparency)
-
-	def SaveAppTransparency(self, event):
-		transparency = int(float(self.TransparentPercent.get()))
-		self.Apply_Transparency(transparency)
-		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'Transparent', transparency)
-
-	def Apply_Transparency(self, transparency):
-		_transparency = int(float(transparency))
-		if _transparency < 75:
-			_transparency = 80 - (_transparency/3)
-		elif _transparency < 50:
-			_transparency = 50 - (_transparency/5)
-		elif _transparency < 25:
-			_transparency = 25 - (_transparency/10)	
-		self.parent.attributes("-alpha", float(_transparency)/100)
 
 	def SelectDictionary(self):
 		filename = filedialog.askopenfilename(title = "Select Database file",filetypes = (("Dictionary files","*.xlsx *.xlsm"), ), )	
@@ -776,13 +753,13 @@ class MyTranslatorHelper(Frame):
 			self.DictionaryStatus.set(db_count)
 			glossary_list = [""] + self.MyTranslator.glossary_list
 
-			self.bottom_panel.project_id_select.set_completion_list(glossary_list)
+			self.project_id_select.set_completion_list(glossary_list)
 			#print('saved gloss:', self.glossary_id)
 			#print('list gloss', self.MyTranslator.glossary_list)
 			if self.glossary_id in self.MyTranslator.glossary_list:
-				self.bottom_panel.project_id_select.set(self.glossary_id)
+				self.project_id_select.set(self.glossary_id)
 			else:
-				self.bottom_panel.project_id_select.set("")
+				self.project_id_select.set("")
 
 			if isinstance(self.MyTranslator.version, str):
 				version = self.MyTranslator.version[0:10]
@@ -1153,7 +1130,7 @@ class MyTranslatorHelper(Frame):
 		self.dual_translate_btn.configure(state=DISABLED)
 		#self.RenewTranslator.configure(state=DISABLED)
 		#self.RenewTranslatorMain.configure(state=DISABLED)
-		self.bottom_panel.RenewTranslatorMain.configure(state=DISABLED)
+		self.RenewTranslatorMain.configure(state=DISABLED)
 		
 		self.secondary_target_language_select.configure(state=DISABLED)
 		self.target_language_select.configure(state=DISABLED)
@@ -1163,7 +1140,7 @@ class MyTranslatorHelper(Frame):
 		self.simple_target_language_select.configure(state=DISABLED)
 		self.simple_source_language_select.configure(state=DISABLED)
 		
-		self.bottom_panel.project_id_select.configure(state=DISABLED)
+		self.project_id_select.configure(state=DISABLED)
 
 		#self.Translate_bilingual_Btn.configure(state=DISABLED)
 		self.TranslateBtn.configure(state=DISABLED)
@@ -1180,7 +1157,7 @@ class MyTranslatorHelper(Frame):
 		self.dual_translate_btn.configure(state=NORMAL)
 		#self.RenewTranslator.configure(state=NORMAL)
 		#self.RenewTranslatorMain.configure(state=NORMAL)
-		self.bottom_panel.RenewTranslatorMain.configure(state=NORMAL)
+		self.RenewTranslatorMain.configure(state=NORMAL)
 
 		self.secondary_target_language_select.configure(state=NORMAL)
 		self.target_language_select.configure(state=NORMAL)
@@ -1190,7 +1167,7 @@ class MyTranslatorHelper(Frame):
 		self.simple_target_language_select.configure(state=NORMAL)
 		self.simple_source_language_select.configure(state=NORMAL)
 
-		self.bottom_panel.project_id_select.configure(state=NORMAL)
+		self.project_id_select.configure(state=NORMAL)
 
 		#self.Translate_bilingual_Btn.configure(state=NORMAL)
 		self.TranslateBtn.configure(state=NORMAL)
@@ -1287,8 +1264,8 @@ class MyTranslatorHelper(Frame):
 			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
 			print('Update language pair from: ', source_language, ' to ',  target_language)
 		self.Notice.set(self.LanguagePack.ToolTips['GenerateBugTitle'])
-		self.strSourceTitle = self.TextTitle.get("1.0", END).replace('\n', '')
-		self.strSourceTitle = self.TextTitle.get("1.0", END).replace('\r\n', '')
+		#self.strSourceTitle = self.TextTitle.get("1.0", END).replace('\n', '')
+		self.strSourceTitle = self.TextTitle.get("1.0", END).rstrip()
 		self.Title_Translate = Process(target=SimpleTranslate, args=(self.return_text, self.MyTranslator, self.strSourceTitle,))
 		self.Title_Translate.start()
 		self.after(DELAY, self.TextTitleGet)
@@ -1540,7 +1517,7 @@ class MyTranslatorHelper(Frame):
 
 	def _save_project_key(self, event=None):
 		
-		self.glossary_id = self.bottom_panel.project_id_select.get()
+		self.glossary_id = self.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
 		if self.glossary_id in self.MyTranslator.glossary_list:
 			print('Save current project key: ', self.glossary_id)
@@ -1675,56 +1652,6 @@ class ConfirmationPopup:
 		Button(self.master, width = 20, text= 'Decline All').grid(row=row, column=1, columnspan=1, padx=5, pady=5, sticky=E)
 		Button(self.master, width = 20, text= 'Confirm').grid(row=row, column=2, columnspan=1, padx=5, pady=5, sticky=E)
 
-class BottomPanel(Frame):
-	def __init__(self, master):
-		Frame.__init__(self, master) 
-		#self.pack(side=BOTTOM, fill=X)          # resize with parent
-		
-		# separator widget
-		#Separator(orient=HORIZONTAL).grid(in_=self, row=0, column=1, sticky=E+W, pady=5)
-		#Row = 1
-		
-		#Label(text='Version', width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5, sticky=W)
-		#Col += 1
-		#Label(textvariable=master.VersionStatus, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5, sticky=W)
-		#master.VersionStatus.set('-')
-		Col = 1
-		Row = 1
-		self.Bottom_Frame = LabelFrame(master, text="DB INFO", padding=0,)
-		self.Bottom_Frame.pack(side=BOTTOM, fill=X)
-		#self.Bottom_Frame = master
-		
-		Label(text='Update', width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=E)
-		Col += 1
-		Label(textvariable=master._update_day, width=20).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5, sticky=E)
-		master._update_day.set('-')
-		Col += 1
-		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
-		DictionaryLabelA.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=E)
-		Col += 1
-		Label(textvariable=master.DictionaryStatus, width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5, sticky=E)
-		master.DictionaryStatus.set('0')
-		Col += 1
-		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=E)
-		Col += 1
-		Label(textvariable=master.HeaderStatus, width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5, sticky=E)
-		master.HeaderStatus.set('0')
-		Col += 1
-		Label(text= master.LanguagePack.Label['ProjectKey'], width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=E)
-		Col += 2
-		self.project_id_select = AutocompleteCombobox()
-		self.project_id_select.Set_Entry_Width(30)
-		self.project_id_select.set_completion_list([])
-		self.project_id_select.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, stick=E)
-		self.project_id_select.bind("<<ComboboxSelected>>", master._save_project_key)
-		self.project_id_select.bind("<Return>", master._save_project_key)
-		Col += 1
-		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=15, command= master.RenewMyTranslator, state=DISABLED, style= master.Btn_Style)
-		self.RenewTranslatorMain.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, stick=E)
-
-		self.rowconfigure(0, weight=1)
-		#self.columnconfigure(0, weight=1)
-		self.Bottom_Frame.grid_columnconfigure(7, minsize=200)
 
 #Simple Translator
 def SimpleTranslate(queue, MyTranslator, Text):
@@ -2071,16 +1998,7 @@ def main():
 	tm_manager = MyManager.list()
 	language_tool_enable = False
 
-	try:
-		AppConfig = ConfigLoader(Writer = True)
-		Configuration = AppConfig.Config
-		Transparency  = Configuration['Bug_Writer']['Transparent']
-	except Exception as e:
-		print("Error while getting Tranparency: ", e)
-		Transparency = 97
-	
 	root = Tk()
-	root.attributes("-alpha", (Transparency/100))
 
 	#root.geometry("400x350+300+300")
 	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)

@@ -2,7 +2,7 @@ from tkinter.ttk import Entry, Label, Style
 from tkinter.ttk import Checkbutton, OptionMenu, Notebook, Radiobutton, LabelFrame, Button, Scale, Combobox
 
 
-from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, BOTTOM, HORIZONTAL
+from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, RIGHT, BOTTOM, HORIZONTAL
 from tkinter import INSERT, ACTIVE, NORMAL, DISABLED, WORD
 
 from tkinter import Text, IntVar, StringVar, Menu, filedialog, messagebox
@@ -241,6 +241,52 @@ class BottomPanel(Frame):
 		
 		self.rowconfigure(0, weight=1)
 		self.columnconfigure(0, weight=1)
+
+
+class BugWriter_BottomPanel(Frame):
+	def __init__(self, master):
+		Frame.__init__(self, master) 
+
+		Col = 1
+		Row = 1
+	
+		#self.Bottom_Frame = master
+		
+		Label(master.Bottom_Frame, text='Update', width=10).grid(row=Row, column=Col, padx=5, pady=5, sticky=E)
+		Col += 1
+		Label(master.Bottom_Frame, textvariable=master._update_day, width=15).grid(row=Row, column=Col, padx=0, pady=5, sticky=E)
+		master._update_day.set('-')
+		Col += 1
+		DictionaryLabelA = Label(master.Bottom_Frame, text=master.LanguagePack.Label['Database'], width=10)
+		DictionaryLabelA.grid(row=Row, column=Col, padx=5, pady=5, sticky=W)
+		Col += 1
+		Label(master.Bottom_Frame, textvariable=master.DictionaryStatus, width=15).grid(row=Row, column=Col, padx=0, pady=5, sticky=W)
+		master.DictionaryStatus.set('0')
+		Col += 1
+		Label(master.Bottom_Frame, text=master.LanguagePack.Label['Header'], width=10).grid(row=Row, column=Col, padx=5, pady=5, sticky=W)
+		Col += 1
+		Label(master.Bottom_Frame, textvariable=master.HeaderStatus, width=15).grid(row=Row, column=Col, padx=0, pady=5, sticky=W)
+		master.HeaderStatus.set('0')
+		Col += 1
+		Label(master.Bottom_Frame, text= master.LanguagePack.Label['ProjectKey'], width=10).grid(row=Row, column=Col, padx=5, pady=5, sticky=W)
+		Col += 2
+		master.project_id_select = AutocompleteCombobox()
+		master.project_id_select.Set_Entry_Width(30)
+		master.project_id_select.set_completion_list([])
+		master.project_id_select.grid(in_=master.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, stick=W)
+		master.project_id_select.bind("<<ComboboxSelected>>", master._save_project_key)
+		Col += 1
+		master.RenewTranslatorMain = Button(master.Bottom_Frame, text=master.LanguagePack.Button['RenewDatabase'], width=15, command= master.RenewMyTranslator, state=DISABLED, style= master.Btn_Style)
+		master.RenewTranslatorMain.grid(row=Row, column=Col, padx=5, pady=5, stick=W)
+		
+		master.rowconfigure(0, weight=1)
+		master.Bottom_Frame.grid_columnconfigure(7, minsize=200)
+
+		for child in master.Bottom_Frame.winfo_children():
+			if isinstance(child, Text) or isinstance(child, CustomText):
+				master.text_widgets.append(child)
+			elif isinstance(child, Label):
+				master.label_widgets.append(child)	
 
 
 class AutocompleteEntry(Entry):
@@ -493,10 +539,12 @@ def ADB_Controller(Tab):
 
 
 
-# BUG WRITER UI
+# BUG WRITER CLASS
+
 
 # BUG WRITER TAB UI
 def Generate_BugWriter_Tab_UI(master):
+
 	MainPanel = Frame(master, name='mainpanel')
 	MainPanel.pack(side=TOP, fill=BOTH, expand=Y)
 	master.TAB_CONTROL = Notebook(MainPanel, name='notebook')
@@ -522,10 +570,24 @@ def Generate_BugWriter_Tab_UI(master):
 	master.TranslateSettingTab = Frame(master.TAB_CONTROL)
 	master.TAB_CONTROL.add(master.TranslateSettingTab, text=master.LanguagePack.Tab['Translator'])
 
-	master.TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
+	master.TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=False)
 
+
+	#BOTTOM_PANEL = Frame(master, name='bottom_panel')
+	#BOTTOM_PANEL.pack(side=BOTTOM, fill=BOTH, expand=Y)
+
+	#master.BOTTOM_PANEL = Frame(MainPanel, name='notebook')
+	#master.BOTTOM_PANEL.pack(side=BOTTOM, fill=BOTH, expand=Y)
+
+	master.Bottom_Frame = Frame(master)
+	master.Bottom_Frame.pack(side=RIGHT, fill=Y, expand=False)
+	
 	for frame_widget in master.TAB_CONTROL.winfo_children():
 		master.frame_widgets.append(frame_widget)
+	master.frame_widgets.append(master.Bottom_Frame)
+	master.frame_widgets.append(MainPanel)
+	master.frame_widgets.append(master)
+	
 
 # BUG WRITER 
 def Generate_BugWriter_Menu_UI(master):
@@ -600,12 +662,13 @@ def Generate_Translate_Setting_UI(master, Tab):
 		from_=20,
 		to=100,
 		variable=master.Transparent,
-		command=master.Demo_App_Transparency,
+		command= lambda value, root = master: Apply_Transparency(value, master),
+		 
 		orient=HORIZONTAL,)
 	master.TransparentPercent.grid(
 		row=Row, rowspan=2, column=3, columnspan=7, padx=5, pady=5,
 		sticky=E+W)
-	master.TransparentPercent.bind('<ButtonRelease-1>', master.SaveAppTransparency)	
+	master.TransparentPercent.bind('<ButtonRelease-1>', lambda event, root = master: SaveAppTransparency(event, master),)	
 	
 	Button(
 			Tab,
@@ -796,6 +859,245 @@ def Generate_BugWriter_UI(master, Tab):
 		elif isinstance(child, Label):
 			master.label_widgets.append(child)
 
+def Generate_MDNF_BugWriter_UI(master, Tab):
+	# Title
+	Row=1
+
+	Label(Tab, text= master.LanguagePack.Label['SourceLanguage'], width= master.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
+	Label(Tab, text= master.LanguagePack.Label['MainLanguage'], width= master.HALF_BUTTON_SIZE).grid(row = Row, column = 2, padx=5, pady=5, stick=E+W)
+	Label(Tab, text= master.LanguagePack.Label['SecondaryLanguage'], width= master.HALF_BUTTON_SIZE).grid(row = Row, column = 3, padx=5, pady=5, stick=E+W)
+	Label(Tab, textvariable=master.Notice).grid(row=Row, column=4, columnspan=7, padx=5, pady=5, stick=E)
+
+	Row += 1
+
+	master.source_language_select = OptionMenu(Tab, master.source_language, *master.language_list, command = master.set_writer_language)
+	master.source_language_select.config(width=master.HALF_BUTTON_SIZE)
+	master.source_language_select.grid(row=Row, column=1, padx=0, pady=5, sticky=W)
+
+	master.target_language_select = OptionMenu(Tab, master.target_language, *master.language_list, command = master.set_writer_language)
+	master.target_language_select.config(width=master.HALF_BUTTON_SIZE)
+	master.target_language_select.grid(row=Row, column=2, padx=5, pady=5, sticky=W)
+	
+	secondary_language_list = master.language_list + ['']
+	master.secondary_target_language_select = OptionMenu(Tab, master.secondary_target_language, *secondary_language_list, command = master.set_writer_language)
+	master.secondary_target_language_select.config(width=master.HALF_BUTTON_SIZE)
+	master.secondary_target_language_select.grid(row=Row, column=3, padx=5, pady=5, sticky=W)
+
+	Label(Tab, width=10, text=master.LanguagePack.Label['Search']).grid(row=Row, column=4, padx=0, pady=5, stick=W)
+	master.search_entry = AutocompleteEntry([], Tab, listboxLength=6, width=50, matchesFunction=matches)
+	master.search_entry.grid(row=Row, column=5, columnspan=5, padx=5, pady=5, sticky=W+E)
+
+
+	master.GetTitleBtn = Button(Tab, text=master.LanguagePack.Button['GetTitle'], width=10, command=master.GetTitle, state=DISABLED, style=master.Btn_Style)
+	master.GetTitleBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
+	
+	Row+=1
+	Label(Tab, text=master.LanguagePack.Label['BugTitle']).grid(row=Row, column = 1, padx=5, pady=5, stick=W)
+
+	#AutocompleteCombobox
+	master.HeaderOptionA = AutocompleteCombobox(Tab)
+	master.HeaderOptionA.Set_Entry_Width(master.HALF_BUTTON_SIZE*2)
+	master.HeaderOptionA.set_completion_list(master.header_list)
+	master.HeaderOptionA.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
+	
+	master.TextTitle = CustomText(Tab, width=90, height=3, undo=True, wrap=WORD)
+	master.TextTitle.grid(row=Row, column=4, columnspan=7, rowspan=2, padx=5, pady=5, stick=W+E)
+	
+	Row+=1
+
+	master.HeaderOptionB = AutocompleteCombobox(Tab)
+	master.HeaderOptionB.Set_Entry_Width(master.HALF_BUTTON_SIZE*2)
+	master.HeaderOptionB.set_completion_list(master.header_list)
+	master.HeaderOptionB.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
+	
+
+	# Report
+	Row+=1
+	Label(Tab, text=master.LanguagePack.Label['Reproducibility']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
+	master.Reproducibility = Text(Tab, width=20, height=1, undo=True)
+	master.Reproducibility.grid(row=Row, column=2, columnspan=2,  padx=5, pady=5, stick=W+E)		
+
+
+	#Label(Tab, width=10, text=master.LanguagePack.Label['Search']).grid(row=Row, column=4, padx=0, pady=5, stick=W)
+	#master.search_entry = AutocompleteEntry([], Tab, listboxLength=6, width=50, matchesFunction=matches)
+	#master.search_entry.grid(row=Row, column=5, columnspan=5, padx=5, pady=5, sticky=W+E)
+
+	Button(Tab, text=master.LanguagePack.Button['Reset'], width=10, command= master.ResetTestReport).grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
+	
+	Row+=1
+	Label(Tab, text=master.LanguagePack.Label['EnvInfo']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
+	
+	#Checkbutton(Tab, text= 'Use Simple Template', variable = master.UseSimpleTemplate, command = master.SaveSetting).grid(row=Row, column=8, padx=5, pady=5, stick=W)
+	#master.UseSimpleTemplate.set(1)
+	
+	Label(Tab, width=10, text=master.LanguagePack.Label['Report']).grid(row=Row, column=4, columnspan=2, padx=0, pady=5, stick=W)
+
+	#Button(Tab, text=master.LanguagePack.Button['Load'], width=10, command= master.LoadTempReport).grid(row=Row, column=8, padx=5, pady=5, stick=W+E)
+
+	Button(Tab, text=master.LanguagePack.Button['Load'], width=10, command= master._load_report, style=master.Btn_Style).grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
+	
+	Button(Tab, text=master.LanguagePack.Button['Save'], width=10, command= master._save_report, style=master.Btn_Style).grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
+
+	Row+=1
+	master.EnvInfo = Text(Tab, width=40, height=9, undo=True)
+	master.EnvInfo.grid(row=Row, column=1, columnspan=3, rowspan= 9,  padx=5, pady=5, stick=W+E)
+	
+	master.ResetInfoSection()
+	
+
+	master.TextTestReport = CustomText(Tab, width=90, height=9, undo=True, wrap=WORD)
+	master.TextTestReport.grid(row=Row, column=4, columnspan=7, rowspan=9, padx=5, pady=5, stick=W+E)
+	Row+=8
+	
+	
+	Row+=1
+	Label(Tab, width=10, text=master.LanguagePack.Label['Steps']).grid(row=Row, column=1, columnspan=2, padx=0, pady=0, stick=W)
+
+
+	Label(Tab, width=10, text=master.LanguagePack.Label['Expected']).grid(row=Row, column=6, columnspan=2, padx=0, pady=0, stick=W)
+	#Button(Tab, text=master.LanguagePack.Button['Load'], width=10, command= master._load_report).grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
+	
+	#master.grammar_check.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
+
+	#master.db_correction = Button(Tab, text="DB Falt Alarm", width=10	, command= master.analyze_fault_terminology, state=DISABLED)
+	#master.db_correction.grid(row=Row, column=8, padx=5, pady=5, stick=W+E)
+	#master.grammar_check = Button(Tab, text="Grammar Check", width=10, command= master.analyze_grammar)
+	#master.grammar_check.grid(row=Row, column=7, padx=5, pady=5, stick=W+E)	
+	master.ReviewReportBtn = Button(Tab, text="Review Report", width=10, command= master.review_report, state=DISABLED, style=master.Btn_Style)
+	master.ReviewReportBtn.grid(row=Row, column=8, padx=5, pady=5, stick=W+E)	
+
+	#master.ReviewReportBtn = Button(Tab, text="Review Report", width=10, command= master.review_report, state=DISABLED, style=master.Btn_Style)
+	#master.ReviewReportBtn.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)	
+
+	master.GetReportBtn = Button(Tab, text=master.LanguagePack.Button['GetReport'], width=10, command= master.generate_report, state=DISABLED, style=master.Btn_Style)
+	master.GetReportBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
+	
+
+	Row+=1
+	master.TextReproduceSteps = CustomText(Tab, width=50, height=7, undo=True, wrap=WORD)
+	master.TextReproduceSteps.grid(row=Row, column=1, columnspan=5, rowspan=7, padx=5, pady=5, stick=W+E)
+	master.TextShouldBe = CustomText(Tab, width=50, height=7, undo=True, wrap=WORD) 
+	master.TextShouldBe.grid(row=Row, column=6, columnspan=5, padx=5, pady=5, stick=W+E)
+	
+	if master.language_tool_enable == True:
+		Tab.bind_all('<Control-q>', master.analyze_report_grammar)
+	
+	master.TextTitle.focus_set()
+	Tab.bind_all('<Key>', master.handle_wait)
+	Tab.bind_all('<Control-r>', master.generate_report)
+	Tab.bind_all('<Control-t>', master.GetTitle)
+	Tab.bind_all('<Control-s>', master._save_report)
+	Tab.bind_all('<Control-l>', master._load_report)
+	Tab.bind_all('<Control-q>', master.ResetReport)
+
+	for child in Tab.winfo_children():
+		if isinstance(child, Text) or isinstance(child, CustomText):
+			master.text_widgets.append(child)
+		elif isinstance(child, Label):
+			master.label_widgets.append(child)	
+
+def Generate_XH_BugWriter_UI(master, Tab):
+
+	Row=1
+	Label(master, text= master.LanguagePack.Label['SourceLanguage'], width= master.HALF_BUTTON_SIZE).grid(row = Row, column = 1, padx=5, pady=5, stick=E+W)
+	Label(master, text= master.LanguagePack.Label['MainLanguage'], width= master.HALF_BUTTON_SIZE).grid(row = Row, column = 2, padx=5, pady=5, stick=E+W)
+	Label(master, text= master.LanguagePack.Label['SecondaryLanguage'], width= master.HALF_BUTTON_SIZE).grid(row = Row, column = 3, padx=5, pady=5, stick=E+W)
+	Label(master, textvariable=master.Notice).grid(row=Row, column=4, columnspan=7, padx=5, pady=5, stick=E)
+
+	Row += 1
+	
+	master.source_language = StringVar()
+	master.source_language_select = OptionMenu(master, master.source_language, *master.language_list, command = master.set_writer_language)
+	master.source_language_select.config(width=master.HALF_BUTTON_SIZE)
+	master.source_language_select.grid(row=Row, column=1, padx=0, pady=5, sticky=W)
+
+	master.target_language = StringVar()
+	master.target_language_select = OptionMenu(master, master.target_language, *master.language_list, command = master.set_writer_language)
+	master.target_language_select.config(width=master.HALF_BUTTON_SIZE)
+	master.target_language_select.grid(row=Row, column=2, padx=5, pady=5, sticky=W)
+	
+	master.secondary_target_language = StringVar()
+	secondary_language_list = master.language_list + ['']
+	master.secondary_target_language_select = OptionMenu(master, master.secondary_target_language, *secondary_language_list, command = master.set_writer_language)
+	master.secondary_target_language_select.config(width=master.HALF_BUTTON_SIZE)
+	master.secondary_target_language_select.grid(row=Row, column=3, padx=5, pady=5, sticky=W)
+
+	Label(master, width=10, text=master.LanguagePack.Label['Search']).grid(row=Row, column=4, padx=0, pady=5, stick=W)
+	master.search_entry = AutocompleteEntry([], master, listboxLength=6, width=55, matchesFunction=matches)
+	master.search_entry.grid(row=Row, column=5, columnspan=5, padx=5, pady=5, sticky=W+E)
+
+
+	master.GetTitleBtn = Button(master, text=master.LanguagePack.Button['GetTitle'], width=10, command=master.GetTitle, state=DISABLED, style=master.Btn_Style)
+	master.GetTitleBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
+	
+	Row+=1
+	Label(master, text=master.LanguagePack.Label['BugTitle']).grid(row=Row, column = 1, padx=5, pady=5, stick=W)
+
+	#AutocompleteCombobox
+	master.HeaderOptionA = AutocompleteCombobox(master)
+	master.HeaderOptionA.Set_Entry_Width(master.HALF_BUTTON_SIZE*2)
+	master.HeaderOptionA.set_completion_list(master.header_list)
+	master.HeaderOptionA.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
+	
+	master.TextTitle = CustomText(master, width=97, height=3, undo=True, wrap=WORD)
+	master.TextTitle.grid(row=Row, column=4, columnspan=7, rowspan=2, padx=5, pady=5, stick=W+E)
+	
+	Row+=1
+
+	master.HeaderOptionB = AutocompleteCombobox(master)
+	master.HeaderOptionB.Set_Entry_Width(master.HALF_BUTTON_SIZE*2)
+	master.HeaderOptionB.set_completion_list(master.header_list)
+	master.HeaderOptionB.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
+
+	Row+=1
+	Label(master, text=master.LanguagePack.Label['PreConition']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
+	
+	Label(master, width=10, text=master.LanguagePack.Label['Report']).grid(row=Row, column=6, columnspan=2, padx=0, pady=5, stick=W)
+
+	Row+=1
+	master.Precondition = Text(master, width=75, height=9, undo=True)
+	master.Precondition.grid(row=Row, column=1, columnspan=5, rowspan= 9,  padx=5, pady=5, stick=W+E)
+	
+	#master.ResetInfoSection()
+	
+
+	master.TextTestReport = CustomText(master, width=75, height=9, undo=True, wrap=WORD)
+	master.TextTestReport.grid(row=Row, column=6, columnspan=5, rowspan=9, padx=5, pady=5, stick=W+E)
+	Row+=8
+	
+	
+	Row+=1
+	Label(master, width=10, text=master.LanguagePack.Label['Steps']).grid(row=Row, column=1, columnspan=2, padx=0, pady=0, stick=W)
+
+
+	Label(master, width=10, text=master.LanguagePack.Label['Expected']).grid(row=Row, column=6, columnspan=2, padx=0, pady=0, stick=W)
+
+	master.ReviewReportBtn = Button(master, text="Review Report", width=10, command= master.review_report,  state=DISABLED, style=master.Btn_Style)
+	master.ReviewReportBtn.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)	
+
+	master.GetReportBtn = Button(master, text=master.LanguagePack.Button['GetReport'], width=10, command= master.generate_report,  state=DISABLED, style=master.Btn_Style)
+	master.GetReportBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
+	
+
+	Row+=1
+	master.TextReproduceSteps = CustomText(master, width=50, height=8, undo=True, wrap=WORD)
+	master.TextReproduceSteps.grid(row=Row, column=1, columnspan=5, rowspan=7, padx=5, pady=5, stick=W+E)
+	master.TextShouldBe = CustomText(master, width=50, height=8, undo=True, wrap=WORD) 
+	master.TextShouldBe.grid(row=Row, column=6, columnspan=5, padx=5, pady=5, stick=W+E)
+
+	master.TextTitle.focus_set()
+	Tab.bind_all('<Key>', master.handle_wait)
+	Tab.bind_all('<Control-r>', master.generate_report)
+	Tab.bind_all('<Control-t>', master.GetTitle)
+	Tab.bind_all('<Control-s>', master._save_report)
+	Tab.bind_all('<Control-l>', master._load_report)
+	Tab.bind_all('<Control-q>', master.ResetReport)
+
+	for child in Tab.winfo_children():
+		if isinstance(child, Text) or isinstance(child, CustomText):
+			master.text_widgets.append(child)
+		elif isinstance(child, Label):
+			master.label_widgets.append(child)	
 
 def matches(fieldValue, acListEntry):
 	pattern = re.compile(re.escape(fieldValue) + '.*', re.IGNORECASE)
@@ -891,3 +1193,20 @@ def review_report(master):
 	master.report_review = HTMLScrolledText(child_windows)
 	master.report_review.set_html(master.html_content)
 	master.report_review.pack(pady=5, padx=5, fill=BOTH)
+
+# SUPPORT FUNCTION
+
+def SaveAppTransparency(event, master):
+	transparency = int(float(master.TransparentPercent.get()))
+	Apply_Transparency(transparency, master)
+	master.AppConfig.Save_Config(master.AppConfig.Writer_Config_Path, 'Bug_Writer', 'Transparent', transparency)
+
+def Apply_Transparency(transparency, master):
+	_transparency = int(float(transparency))
+	if _transparency < 75:
+		_transparency = 80 - (_transparency/3)
+	elif _transparency < 50:
+		_transparency = 50 - (_transparency/5)
+	elif _transparency < 25:
+		_transparency = 25 - (_transparency/10)	
+	master.parent.attributes("-alpha", float(_transparency)/100)
