@@ -1281,8 +1281,11 @@ class MyTranslatorHelper(Frame):
 			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
 			print('Update language pair from: ', source_language, ' to ',  target_language)
 		self.Notice.set(self.LanguagePack.ToolTips['GenerateBugTitle'])
+
 		self.strSourceTitle = self.TextTitle.get("1.0", END).rstrip()
-		print('Raw source text:', self.strSourceTitle)
+
+
+
 		self.Title_Translate = Process(target=SimpleTranslate, args=(self.return_text, self.MyTranslator, self.strSourceTitle,))
 		self.Title_Translate.start()
 		self.after(DELAY, self.TextTitleGet)

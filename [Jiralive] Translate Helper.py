@@ -57,7 +57,7 @@ from libs.cloudconfig import CloudConfigLoader
 #from libs.grammarcheck import LanguageTool
 
 from libs.version import get_version
-from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText
+from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText, BugWriter_BottomPanel
 
 #from openpyxl import load_workbook, worksheet, Workbook
 
@@ -150,7 +150,7 @@ class MyTranslatorHelper(Frame):
 		self.LanguagePack = LanguagePack
 		
 		self.init_theme()
-		self.create_buttom_panel()
+
 		self.init_ui()
 		
 		self.init_UI_setting()
@@ -264,14 +264,10 @@ class MyTranslatorHelper(Frame):
 			self.generate_bug_writer_v2_ui(self.bug_writer_v2)
 			self.Generate_SimpleTranslator_UI(self.SimpleTranslator)
 			self.Generate_TranslateSetting_UI(self.TranslateSetting)
-			#self.Generate_Search_UI(self.Searcher)
-
-			#self.Init_Translator_Config
+			self.bottom_panel = BugWriter_BottomPanel(self)
 			self.apply_theme_color()
 		except Exception as e:
 			print(f'An error occurs while initializing UI: {e}')
-	def create_buttom_panel(self):
-		self.bottom_panel = BottomPanel(self)
 		
 	def Generate_Tab_UI(self):
 		MainPanel = Frame(self, name='mainpanel')
@@ -917,7 +913,7 @@ class MyTranslatorHelper(Frame):
 				Row += 1
 		
 		# Display selected theme
-		config_theme_name = self.Configuration['Bug_Writer']['theme name']
+		config_theme_name = self.Configuration['Bug_Writer']['theme_name']
 		if config_theme_name in self.theme_names:
 			self.strvar_theme_name.set(config_theme_name)
 
@@ -951,7 +947,7 @@ class MyTranslatorHelper(Frame):
 			self.AppConfig.Save_Config(
 				self.AppConfig.Writer_Config_Path,
 				'Bug_Writer',
-				'theme name',
+				'theme_name',
 				theme_name)
 			self.change_theme_color(theme_name)
 			style.theme_use(theme_name)
@@ -1041,7 +1037,7 @@ class MyTranslatorHelper(Frame):
 		self.AppConfig.Save_Config(
 			self.AppConfig.Writer_Config_Path,
 			'Bug_Writer',
-			'theme name',
+			'theme_name',
 			'')
 		
 		messagebox.showinfo(
@@ -1136,7 +1132,7 @@ class MyTranslatorHelper(Frame):
 		"""Applied the theme name saved in the settings on init."""
 		try:
 			self.theme_names = ['clam']
-			config_theme_name = self.Configuration['Bug_Writer']['theme name']
+			config_theme_name = self.Configuration['Bug_Writer']['theme_name']
 			style = Style(self.parent) # self.parent is root
 
 			supported_themes = ['awdark', 'awlight']
@@ -1366,13 +1362,13 @@ class MyTranslatorHelper(Frame):
 			self.DictionaryStatus.set(db_count)
 			glossary_list = [""] + self.MyTranslator.glossary_list
 
-			self.bottom_panel.project_id_select.set_completion_list(glossary_list)
+			self.project_id_select.set_completion_list(glossary_list)
 			#print('saved gloss:', self.glossary_id)
 			#print('list gloss', self.MyTranslator.glossary_list)
 			if self.glossary_id in self.MyTranslator.glossary_list:
-				self.bottom_panel.project_id_select.set(self.glossary_id)
+				self.project_id_select.set(self.glossary_id)
 			else:
-				self.bottom_panel.project_id_select.set("")
+				self.project_id_select.set("")
 
 			if isinstance(self.MyTranslator.version, str):
 				version = self.MyTranslator.version[0:10]
@@ -1915,7 +1911,7 @@ class MyTranslatorHelper(Frame):
 		self.dual_translate_btn.configure(state=DISABLED)
 		#self.RenewTranslator.configure(state=DISABLED)
 		#self.RenewTranslatorMain.configure(state=DISABLED)
-		self.bottom_panel.RenewTranslatorMain.configure(state=DISABLED)
+		self.RenewTranslatorMain.configure(state=DISABLED)
 		
 		self.secondary_target_language_select.configure(state=DISABLED)
 		self.target_language_select.configure(state=DISABLED)
@@ -1925,7 +1921,7 @@ class MyTranslatorHelper(Frame):
 		self.simple_target_language_select.configure(state=DISABLED)
 		self.simple_source_language_select.configure(state=DISABLED)
 		
-		self.bottom_panel.project_id_select.configure(state=DISABLED)
+		self.project_id_select.configure(state=DISABLED)
 
 		#self.Translate_bilingual_Btn.configure(state=DISABLED)
 		self.TranslateBtn.configure(state=DISABLED)
@@ -1947,7 +1943,7 @@ class MyTranslatorHelper(Frame):
 		self.dual_translate_btn.configure(state=NORMAL)
 		#self.RenewTranslator.configure(state=NORMAL)
 		#self.RenewTranslatorMain.configure(state=NORMAL)
-		self.bottom_panel.RenewTranslatorMain.configure(state=NORMAL)
+		self.RenewTranslatorMain.configure(state=NORMAL)
 
 		self.secondary_target_language_select.configure(state=NORMAL)
 		self.target_language_select.configure(state=NORMAL)
@@ -1957,7 +1953,7 @@ class MyTranslatorHelper(Frame):
 		self.simple_target_language_select.configure(state=NORMAL)
 		self.simple_source_language_select.configure(state=NORMAL)
 
-		self.bottom_panel.project_id_select.configure(state=NORMAL)
+		self.project_id_select.configure(state=NORMAL)
 
 		#self.Translate_bilingual_Btn.configure(state=NORMAL)
 		self.TranslateBtn.configure(state=NORMAL)
@@ -2471,7 +2467,7 @@ class MyTranslatorHelper(Frame):
 
 	def _save_project_key(self, event=None):
 		
-		self.glossary_id = self.bottom_panel.project_id_select.get()
+		self.glossary_id = self.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
 		if self.glossary_id in self.MyTranslator.glossary_list:
 			print('Save current project key: ', self.glossary_id)
@@ -2635,57 +2631,6 @@ class ConfirmationPopup:
 			row += 1
 		Button(self.master, width = 20, text= 'Decline All').grid(row=row, column=1, columnspan=1, padx=5, pady=5, sticky=E)
 		Button(self.master, width = 20, text= 'Confirm').grid(row=row, column=2, columnspan=1, padx=5, pady=5, sticky=E)
-
-class BottomPanel(Frame):
-	def __init__(self, master):
-		Frame.__init__(self, master)
-		#self.pack(side=BOTTOM, fill=X)          # resize with parent
-		
-		# separator widget
-		#Separator(orient=HORIZONTAL).grid(in_=self, row=0, column=1, sticky=E+W, pady=5)
-		#Row = 1
-		
-		#Label(text='Version', width=15).grid(in_=self, row=Row, column=Col, padx=5, pady=5, sticky=W)
-		#Col += 1
-		#Label(textvariable=master.VersionStatus, width=15).grid(in_=self, row=Row, column=Col, padx=0, pady=5, sticky=W)
-		#master.VersionStatus.set('-')
-		Col = 1
-		Row = 1
-		self.Bottom_Frame = LabelFrame(master, text="DB INFO", padding=0,)
-		self.Bottom_Frame.pack(side=BOTTOM, fill=X)
-		#self.Bottom_Frame = master
-		
-		Label(text='Update', width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=E)
-		Col += 1
-		Label(textvariable=master._update_day, width=20).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5, sticky=E)
-		master._update_day.set('-')
-		Col += 1
-		DictionaryLabelA = Label(text=master.LanguagePack.Label['Database'], width=15)
-		DictionaryLabelA.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=E)
-		Col += 1
-		Label(textvariable=master.DictionaryStatus, width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5, sticky=E)
-		master.DictionaryStatus.set('0')
-		Col += 1
-		Label(text=master.LanguagePack.Label['Header'], width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=E)
-		Col += 1
-		Label(textvariable=master.HeaderStatus, width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=0, pady=5, sticky=E)
-		master.HeaderStatus.set('0')
-		Col += 1
-		Label(text= master.LanguagePack.Label['ProjectKey'], width=15).grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, sticky=E)
-		Col += 2
-		self.project_id_select = AutocompleteCombobox()
-		self.project_id_select.Set_Entry_Width(30)
-		self.project_id_select.set_completion_list([])
-		self.project_id_select.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, stick=E)
-		self.project_id_select.bind("<<ComboboxSelected>>", master._save_project_key)
-		self.project_id_select.bind("<Return>", master._save_project_key)
-		Col += 1
-		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=15, command= master.RenewMyTranslator, state=DISABLED, style= master.Btn_Style)
-		self.RenewTranslatorMain.grid(in_=self.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, stick=E)
-
-		self.rowconfigure(0, weight=1)
-		#self.columnconfigure(0, weight=1)
-		self.Bottom_Frame.grid_columnconfigure(7, minsize=200)
 
 #Simple Translator
 def SimpleTranslate(queue, MyTranslator, source_text):
