@@ -300,7 +300,8 @@ class Translator:
 		self.glossary_list = []
 		self.glossary_list_full = self.full_list_glossaries()
 		for _gloss in self.glossary_list_full:
-			self.glossary_list.append(_gloss)		
+			if _gloss in self.bucket_db_list:
+				self.glossary_list.append(_gloss)		
 
 
 	def load_request_log(self, log_file):
