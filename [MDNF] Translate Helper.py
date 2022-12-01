@@ -45,8 +45,6 @@ from multiprocessing import Queue, Process, Manager
 import pickle
 import queue 
 
-import webbrowser
-
 from libs.aiotranslator import generate_translator
 
 from libs.aioconfigmanager import ConfigLoader
@@ -62,12 +60,13 @@ from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, Cust
 from libs.tkinter_extension import Generate_BugWriter_Tab_UI, Generate_BugWriter_Menu_UI, Generate_Translate_Setting_UI
 from libs.tkinter_extension import Generate_MDNF_BugWriter_UI, Generate_SimpleTranslator_UI, Apply_Transparency, BugWriter_BottomPanel
 
+import webbrowser
 
 from google.cloud import logging
 
 tool_display_name = "[MDNF] Translate Helper"
 tool_name = 'writer'
-REV = 4123
+REV = 4124
 ver_num = get_version(REV) 
 #VERSION = tool_display_name  + " " +  ver_num + " | Language Tool v5.6"
 
@@ -105,7 +104,7 @@ class MyTranslatorHelper(Frame):
 		self.grammar_check_list = []
 		self.grammar_corrected_list = []
 
-		self.SOURCE_WIDTH = 70
+		self.SOURCE_WIDTH = 72
 		self.BUTTON_SIZE = 20
 		self.HALF_BUTTON_SIZE = 15
 		self.ROW_SIZE = 24
@@ -156,6 +155,7 @@ class MyTranslatorHelper(Frame):
 
 		if REV < int(self.latest_version):
 			self.Error('Current version is lower than the minimal version allowed. Please update.')	
+			
 			webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/Translate+Helper")
 			self.quit()
 			return
@@ -204,26 +204,6 @@ class MyTranslatorHelper(Frame):
 		else:
 			messagebox.showinfo('Language update','The application\'s language will be changed in next session.')	
 
-	def move_window(self, event):
-		self.parent.geometry('+{0}+{1}'.format(event.x_root, event.y_root))
-
-	def ConfirmationBox(self, title, message):
-		toplevel = Toplevel(self.parent)
-	
-		toplevel.title(title)
-		toplevel.geometry(f"300x100+{self.parent.winfo_x()}+{self.parent.winfo_y()}")
-		
-	
-		l1=Label(toplevel, image="::tk::icons::question")
-		l1.grid(row=0, column=0, pady=(7, 0), padx=(10, 30), sticky="e")
-		l2=Label(toplevel,text=message)
-		l2.grid(row=0, column=1, columnspan=3, pady=(7, 10), sticky="w")
-	
-		b1=Button(toplevel,text="Yes",command=self.parent.destroy,width = 10, style=self.Btn_Style)
-		b1.grid(row=1, column=1, padx=(2, 35), sticky="e")
-		b2=Button(toplevel,text="No",command=toplevel.destroy,width = 10, style=self.Btn_Style)
-		b2.grid(row=1, column=2, padx=(2, 35), sticky="e")
-
 	def status_listening(self):
 		
 		if self.MyTranslator == None:
@@ -232,14 +212,11 @@ class MyTranslatorHelper(Frame):
 			self.after(DELAY2, self.status_listening)
 		#print('Device status:', device_status, time.time()- Start)
 
-	def Error(self, ErrorText):
-		messagebox.showerror('Translate error...', ErrorText)	
+	
 
-	def OpenWeb(self):
-		webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/%5BTranslation%5D+AIO+Translator")
+	
 
-	def About(self):
-		messagebox.showinfo("About....", "Creator: Evan@nexonnetworks.com")
+	
 
 	def init_ui(self):
 		self.parent.resizable(False, False)
@@ -262,10 +239,6 @@ class MyTranslatorHelper(Frame):
 
 		#self.Init_Translator_Config
 		
-	def BtnSelectTheme(self, item):
-		print('Updated theme to: ', item)
-		if item != None:
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'UsedTheme', item, True)
 
 	# Init functions
 	# Some option is saved for the next time use
@@ -359,8 +332,8 @@ class MyTranslatorHelper(Frame):
 			self.theme_names = ['clam']
 			
 			style = Style(self.parent) # self.parent is root
-			supported_themes = ['awdark', 'awlight']
-			#supported_themes = ['awdark', 'awlight', 'forest-dark', 'forest-light']
+			#supported_themes = ['awdark', 'awlight']
+			supported_themes = ['awdark', 'awlight', 'forest-dark', 'forest-light']
 			# theme_dir = self.AppConfig.theme_loading_path
 			theme_dir = os.path.join(os.getcwd() + r'\\theme')
 			theme_files = os.listdir(theme_dir)
@@ -472,15 +445,13 @@ class MyTranslatorHelper(Frame):
 			}	
 		elif theme_name == 'forest-light':
 			self.widget_color = {
-				'parent_bg': '#e8e8e7',
-				'frame_bg': '#e8e8e7',
+				'parent_bg': '#ffffff',
+				'frame_bg': '#ffffff',
 				'menu_bg': '#e8e8e7',
-				'menu_fg': '#000000',
+				'menu_fg': '#313131',
 				'text_bg': '#ffffff',
-				'text_fg': '#000000',
-				'text_insertbackground': '#000000',
-				'label_bg': '#191c1d',
-				'label_fg': '#ffffff'
+				'text_fg': '#313131',
+				'text_insertbackground': '#313131',
 			}
 		elif theme_name == 'forest-dark':
 			self.widget_color = {
@@ -488,9 +459,9 @@ class MyTranslatorHelper(Frame):
 				'frame_bg': '#313131',
 				'menu_bg': '#313131',
 				'menu_fg': '#eeeeee',
-				'text_bg': '#eeeeee',
+				'text_bg': '#313131',
 				'text_fg': '#eeeeee',
-				'text_insertbackground': '#eeeeee',
+				'text_insertbackground': '#313131',
 			}
 		elif theme_name == 'awlight':
 			self.widget_color = {
@@ -1569,6 +1540,7 @@ class MyTranslatorHelper(Frame):
 
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)
+			
 		except:
 			pass
 

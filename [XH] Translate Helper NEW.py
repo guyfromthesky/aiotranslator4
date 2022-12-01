@@ -65,7 +65,7 @@ from libs.tkinter_extension import Generate_XH_BugWriter_UI, Generate_SimpleTran
 
 from google.cloud import logging
 
-tool_display_name = "[MDNF] Translate Helper"
+tool_display_name = "[XH] Translate Helper"
 tool_name = 'writer'
 REV = 4123
 ver_num = get_version(REV) 
@@ -149,7 +149,6 @@ class MyTranslatorHelper(Frame):
 		self.LanguagePack = LanguagePack
 		
 		self.init_theme()
-		self.create_buttom_panel()
 		self.init_ui()
 		self.init_UI_setting()
 		
@@ -232,41 +231,24 @@ class MyTranslatorHelper(Frame):
 			self.after(DELAY2, self.status_listening)
 		#print('Device status:', device_status, time.time()- Start)
 
-	def Error(self, ErrorText):
-		messagebox.showerror('Translate error...', ErrorText)	
-
-	def OpenWeb(self):
-		webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/%5BTranslation%5D+AIO+Translator")
-
-	def About(self):
-		messagebox.showinfo("About....", "Creator: Evan@nexonnetworks.com")
-
 	def init_ui(self):
 		self.parent.resizable(False, False)
 		self.parent.title(VERSION)
 
 		Generate_BugWriter_Menu_UI(self)
 		Generate_BugWriter_Tab_UI(self)
-
+		Generate_XH_BugWriter_UI(self, self.BugWriterTab)
 		try:
-			Generate_XH_BugWriter_UI(self, self.BugWriterTab)
+			#Generate_XH_BugWriter_UI(self, self.BugWriterTab)
 			Generate_SimpleTranslator_UI(self, self.SimpleTranslatorTab)
 			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
+
+			self.bottom_panel = BugWriter_BottomPanel(self)
+			
 			self.apply_theme_color()
 		except Exception as e:
 			print(f'An error occurs while initializing UI: {e}')
 
-		#ADB_Controller(self.ADB_Controller)
-		#self.Generate_Search_UI(self.Searcher)
-
-		#self.Init_Translator_Config
-	def create_buttom_panel(self):
-		self.bottom_panel = BugWriter_BottomPanel(self)
-		
-	def BtnSelectTheme(self, item):
-		print('Updated theme to: ', item)
-		if item != None:
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'UsedTheme', item, True)
 
 	# Init functions
 	# Some option is saved for the next time use
@@ -308,6 +290,7 @@ class MyTranslatorHelper(Frame):
 		self.project_bucket_id = self.Configuration['Translator']['project_bucket_id']
 
 		self.glossary_id = self.Configuration['Translator']['glossary_id']
+
 		self.used_theme = self.Configuration['Bug_Writer']['theme_name']
 		try:
 			cloud_config = CloudConfigLoader()
@@ -756,13 +739,13 @@ class MyTranslatorHelper(Frame):
 			self.DictionaryStatus.set(db_count)
 			glossary_list = [""] + self.MyTranslator.glossary_list
 
-			self.bottom_panel.project_id_select.set_completion_list(glossary_list)
+			self.project_id_select.set_completion_list(glossary_list)
 			#print('saved gloss:', self.glossary_id)
 			#print('list gloss', self.MyTranslator.glossary_list)
 			if self.glossary_id in self.MyTranslator.glossary_list:
-				self.bottom_panel.project_id_select.set(self.glossary_id)
+				self.project_id_select.set(self.glossary_id)
 			else:
-				self.bottom_panel.project_id_select.set("")
+				self.project_id_select.set("")
 
 			if isinstance(self.MyTranslator.version, str):
 				version = self.MyTranslator.version[0:10]
@@ -1137,7 +1120,7 @@ class MyTranslatorHelper(Frame):
 		self.dual_translate_btn.configure(state=DISABLED)
 		#self.RenewTranslator.configure(state=DISABLED)
 		#self.RenewTranslatorMain.configure(state=DISABLED)
-		self.bottom_panel.RenewTranslatorMain.configure(state=DISABLED)
+		self.RenewTranslatorMain.configure(state=DISABLED)
 		
 		self.secondary_target_language_select.configure(state=DISABLED)
 		self.target_language_select.configure(state=DISABLED)
@@ -1147,7 +1130,7 @@ class MyTranslatorHelper(Frame):
 		self.simple_target_language_select.configure(state=DISABLED)
 		self.simple_source_language_select.configure(state=DISABLED)
 		
-		self.bottom_panel.project_id_select.configure(state=DISABLED)
+		self.project_id_select.configure(state=DISABLED)
 
 		#self.Translate_bilingual_Btn.configure(state=DISABLED)
 		self.TranslateBtn.configure(state=DISABLED)
@@ -1164,7 +1147,7 @@ class MyTranslatorHelper(Frame):
 		self.dual_translate_btn.configure(state=NORMAL)
 		#self.RenewTranslator.configure(state=NORMAL)
 		#self.RenewTranslatorMain.configure(state=NORMAL)
-		self.bottom_panel.RenewTranslatorMain.configure(state=NORMAL)
+		self.RenewTranslatorMain.configure(state=NORMAL)
 
 		self.secondary_target_language_select.configure(state=NORMAL)
 		self.target_language_select.configure(state=NORMAL)
@@ -1174,7 +1157,7 @@ class MyTranslatorHelper(Frame):
 		self.simple_target_language_select.configure(state=NORMAL)
 		self.simple_source_language_select.configure(state=NORMAL)
 
-		self.bottom_panel.project_id_select.configure(state=NORMAL)
+		self.project_id_select.configure(state=NORMAL)
 
 		#self.Translate_bilingual_Btn.configure(state=NORMAL)
 		#self.db_correction.configure(state=NORMAL)
@@ -1566,6 +1549,7 @@ class MyTranslatorHelper(Frame):
 
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)
+
 		except:
 			pass
 
@@ -1612,7 +1596,7 @@ class MyTranslatorHelper(Frame):
 
 	def _save_project_key(self, event=None):
 		
-		self.glossary_id = self.bottom_panel.project_id_select.get()
+		self.glossary_id = self.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
 		print('Save current project key: ', self.glossary_id)
 		self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'glossary_id', self.glossary_id)

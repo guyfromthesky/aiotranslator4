@@ -19,3 +19,8 @@ libs/__pycache__/documentprocessing.cpython-38.pyc
 *.pkg
 *.html
 *.tcl
+*.gif
+*.toc
+*.toc
+*.pyz
+*.exe

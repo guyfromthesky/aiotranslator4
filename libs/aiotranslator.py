@@ -44,7 +44,7 @@ from pandas.core.frame import DataFrame
 from libs.version import get_version
 
 Tool = "translator"
-rev = 4118
+rev = 4119
 ver_num = get_version(rev)
 Translatorversion = Tool + " " + ver_num
 

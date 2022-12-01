@@ -105,8 +105,8 @@ class MyTranslatorHelper(Frame):
 		self.grammar_check_list = []
 		self.grammar_corrected_list = []
 
-		self.SOURCE_WIDTH = 70
-		self.BUTTON_SIZE = 20
+		self.SOURCE_WIDTH = 88
+		self.BUTTON_SIZE = 20 
 		self.HALF_BUTTON_SIZE = 15
 		self.ROW_SIZE = 24
 		
@@ -135,6 +135,7 @@ class MyTranslatorHelper(Frame):
 		self.label_widgets = []
 		self.menu_widgets = []
 		self.frame_widgets = []
+		self.Radiobutton_widgets = []
 
 		self._after_id = None
 
@@ -293,9 +294,11 @@ class MyTranslatorHelper(Frame):
 
 		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = license_file_path
 		self.TMPath.set(self.Configuration['Translator']['translation_memory'])
-
+		# Address of the bucket
 		self.bucket_id = self.Configuration['Translator']['bucket_id']
+		# Address of the project config file
 		self.db_list_uri = self.Configuration['Translator']['db_list_uri']
+		# Address of the project config file
 		self.project_bucket_id = self.Configuration['Translator']['project_bucket_id']
 
 		self.glossary_id = self.Configuration['Translator']['glossary_id']
@@ -358,8 +361,11 @@ class MyTranslatorHelper(Frame):
 			self.theme_names = ['clam']
 			
 			style = Style(self.parent) # self.parent is root
-			supported_themes = ['awdark', 'awlight']
-			#supported_themes = ['awdark', 'awlight', 'forest-dark', 'forest-light']
+			#supported_themes = ['awdark', 'awlight']
+			supported_themes = ['awdark', 'awlight', 'forest-dark', 'forest-light',]
+								#"arc", "black",	"clearlooks", "equilux", 
+								#"kroc", "plastik", "radiance", "winxpblue"]
+			
 			# theme_dir = self.AppConfig.theme_loading_path
 			theme_dir = os.path.join(os.getcwd() + r'\\theme')
 			theme_files = os.listdir(theme_dir)
@@ -457,17 +463,17 @@ class MyTranslatorHelper(Frame):
 				'label_bg': '#393f3f',
 				'label_fg': 'white'
 			}
-		elif theme_name == 'breeze':
+		elif theme_name == 'clearlooks':
 			self.widget_color = {
-				'parent_bg': '#e8e8e7',
-				'frame_bg': '#e8e8e7',
-				'menu_bg': '#e8e8e7',
-				'menu_fg': '#000000',
-				'text_bg': '#ffffff',
-				'text_fg': '#000000',
-				'text_insertbackground': '#000000',
-				'label_bg': '#191c1d',
-				'label_fg': '#ffffff'
+				'parent_bg': '#efebe7',
+				'frame_bg': '#efebe7',
+				'menu_bg': '#7c99ad',
+				'menu_fg': '#ffffff',
+				'text_bg': '#efebe7',
+				'text_fg': 'black',
+				'text_insertbackground': '#efebe7',
+				'label_bg': '#efebe7',
+				'label_fg': 'black'
 			}	
 		elif theme_name == 'forest-light':
 			self.widget_color = {
@@ -475,7 +481,7 @@ class MyTranslatorHelper(Frame):
 				'frame_bg': '#e8e8e7',
 				'menu_bg': '#e8e8e7',
 				'menu_fg': '#000000',
-				'text_bg': '#ffffff',
+				'text_bg': '#e8e8e7',
 				'text_fg': '#000000',
 				'text_insertbackground': '#000000',
 				'label_bg': '#191c1d',
@@ -487,7 +493,7 @@ class MyTranslatorHelper(Frame):
 				'frame_bg': '#313131',
 				'menu_bg': '#313131',
 				'menu_fg': '#eeeeee',
-				'text_bg': '#eeeeee',
+				'text_bg': '#313131',
 				'text_fg': '#eeeeee',
 				'text_insertbackground': '#eeeeee',
 			}
@@ -550,8 +556,13 @@ class MyTranslatorHelper(Frame):
 		for label_widget in self.label_widgets:
 			label_widget['bg'] = self.widget_color['parent_bg']
 			label_widget['fg'] = self.widget_color['text_fg']
+
+		for Radiobutton_widget in self.Radiobutton_widgets:
+			Radiobutton_widget['bg'] = self.widget_color['parent_bg']
 			#text_widget['insertbackground'] = self.widget_color['text_insertbackground']
 
+		
+		#self.parent.wm_attributes('-transparentcolor', text_widget['bg'])
 
 	def remove_theme(self):
 		print('remove_theme')
@@ -751,7 +762,14 @@ class MyTranslatorHelper(Frame):
 				db_count = 0
 			
 			self.DictionaryStatus.set(db_count)
+
+			#_glossary_list = [""] + self.MyTranslator.glossary_list
+			#glossary_list = []
+			#for project in _glossary_list:
+			#	if project in self.MyTranslator.bucket_db_list:
+			#		glossary_list.append(project)
 			glossary_list = [""] + self.MyTranslator.glossary_list
+			
 
 			self.project_id_select.set_completion_list(glossary_list)
 			#print('saved gloss:', self.glossary_id)
@@ -1450,7 +1468,7 @@ class MyTranslatorHelper(Frame):
 
 	def _save_report(self,event=None):
 		print('Save report')
-		TextTitle = self.TextTitle.get("1.0", END)			
+		TextTitle = self.TextTitle.get("1.0", END)		
 		TextServer = self.TextServer.get("1.0", END)
 		TextClient = self.TextClient.get("1.0", END)
 		TextReprodTime = self.TextReprodTime.get("1.0", END)
@@ -1472,6 +1490,8 @@ class MyTranslatorHelper(Frame):
 
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)
+
+			
 		except Exception as e:
 			print('Cannot sve the report:', e)
 			pass
@@ -1999,14 +2019,17 @@ def main():
 	language_tool_enable = False
 
 	root = Tk()
-
+	#root.iconbitmap(r"theme\ico\ico.ico")
+	
 	#root.geometry("400x350+300+300")
 	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 
 	try:
-		root.attributes('-topmost', True)
+		#root.attributes('-topmost', True)
 		application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
-		root.attributes('-topmost', False)
+		if os.path.isfile(r'theme/background/bg.png'):
+			root.iconbitmap(r"theme\ico\ico.ico")
+		#root.attributes('-topmost', False)
 		root.mainloop()
 		application.MyTranslator.send_tracking_record()
 	except Exception as e:	
