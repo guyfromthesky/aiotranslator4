@@ -44,7 +44,7 @@ from pandas.core.frame import DataFrame
 from libs.version import get_version
 
 Tool = "translator"
-rev = 4119
+rev = 4120
 ver_num = get_version(rev)
 Translatorversion = Tool + " " + ver_num
 
@@ -866,6 +866,22 @@ class Translator:
 			return 'zh-TW'
 		return language_code
 
+	def add_notranslate_tag(self, source_text):
+		for index in range(len(source_text)):
+			string_to_translate = source_text[index]
+			special_texts = re.findall("\<([^\"]*)\>", string_to_translate)
+			print('special_texts list', special_texts)
+			for special_text in special_texts:
+				source_text[index]  = string_to_translate.replace("<" + special_text + ">", ("<span class=\"notranslate\">" + special_text + "</span>"))
+		return source_text
+
+	def remove_notranslate_tag(self, translation):
+		_translation = unescape(translation.translated_text)
+		_translation = _translation.replace("span class=\"notranslate\">" , "")
+		_translation = _translation.replace("</span" , "")
+		return _translation
+
+
 	def google_translate_v3(self, source_text):
 		#print('Translate with GoogleAPItranslate')
 		"""Translates a given text with google api."""
@@ -876,6 +892,8 @@ class Translator:
 		else:
 			ToTranslate = [source_text]
 
+		#Preprocessing translate text:
+		source_text = self.add_notranslate_tag(source_text)
 		# Supported language codes: https://cloud.google.com/translate/docs/languages
 		
 		Client = translator.TranslationServiceClient()
@@ -897,7 +915,8 @@ class Translator:
 
 		ListReturn = []
 		for translation in response.translations:
-			ListReturn.append(unescape(translation.translated_text))
+			_translation = self.remove_notranslate_tag(translation)
+			ListReturn.append(_translation)
 
 		return ListReturn
 
@@ -912,6 +931,8 @@ class Translator:
 			ToTranslate = source_text
 		else:
 			ToTranslate = [source_text]
+		#Preprocessing translate text:
+		source_text = self.add_notranslate_tag(source_text)
 
 		# Supported language codes: https://cloud.google.com/translate/docs/languages
 		Client = translator.TranslationServiceClient()
@@ -935,9 +956,9 @@ class Translator:
 		ListReturn = []
 		# Handle Translation Response is in translations instead of glossary_translations
 		if 'translated_text' in response.glossary_translations[0]:	
-			#print('Translated with glossary')
 			for translation in response.glossary_translations:
-				ListReturn.append(unescape(translation.translated_text))
+				_translation = self.remove_notranslate_tag(translation)
+				ListReturn.append(_translation)
 		else:
 			return False
 		#print('ListReturn', ListReturn)
