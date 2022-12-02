@@ -755,24 +755,24 @@ def Generate_Translate_Setting_UI(master, Tab):
 			master.text_widgets.append(child)
 		elif isinstance(child, Label):
 			master.label_widgets.append(child)
-		elif isinstance(child, OptionMenu):
-			master.OptionMenu_widget.append(child)		
+		elif isinstance(child, Radiobutton):
+			master.Radiobutton_widgets.append(child)	
 
 	for child in Right_Frame.winfo_children():
 		if isinstance(child, Text) or isinstance(child, CustomText):
 			master.text_widgets.append(child)
 		elif isinstance(child, Label):
 			master.label_widgets.append(child)
-		elif isinstance(child, OptionMenu):
-			master.OptionMenu_widget.append(child)	
+		elif isinstance(child, Radiobutton):
+			master.Radiobutton_widgets.append(child)
 
 	for child in Top_Frame.winfo_children():
 		if isinstance(child, Text) or isinstance(child, CustomText):
 			master.text_widgets.append(child)
 		elif isinstance(child, Label):
 			master.label_widgets.append(child)
-		elif isinstance(child, OptionMenu):
-			master.OptionMenu_widget.append(child)	
+		elif isinstance(child, Radiobutton):
+			master.Radiobutton_widgets.append(child)	
 
 
 	master.frame_widgets.append(Right_Frame)
@@ -1202,7 +1202,7 @@ def Generate_SimpleTranslator_UI(master, Tab):
 	Button(Main_Frame, text=master.LanguagePack.Button['Copy'], width = master.BUTTON_SIZE, command= master.BtnCopy, style=master.Btn_Style).grid(row = Row, column=7, padx=5, pady=5, sticky=E)
 
 	master.TranslateBtn = Button(Main_Frame, text=master.LanguagePack.Button['Translate'], width = master.BUTTON_SIZE, command= master.single_translate, style=master.Btn_Style, state=DISABLED)
-	master.TranslateBtn.grid(row=Row, column=9, padx=5, pady=5, sticky=E)		
+	master.TranslateBtn.grid(row=Row, column=8, padx=5, pady=5, sticky=E)		
 
 	Row +=1
 
@@ -1226,9 +1226,9 @@ def Generate_SimpleTranslator_UI(master, Tab):
 	
 	Button(Main_Frame, text= 'Trilingual Copy', width = master.BUTTON_SIZE, command= master.btn_trilingual, style=master.Btn_Style).grid(row = Row, column=6, padx=5, pady=5)
 	
-	Button(Main_Frame, text=master.LanguagePack.Button['Bilingual'], width = master.BUTTON_SIZE, command= master.btn_bilingual_copy, style=master.Btn_Style).grid(row = Row, column=8, padx=5, pady=5, sticky=E)
+	Button(Main_Frame, text=master.LanguagePack.Button['Bilingual'], width = master.BUTTON_SIZE, command= master.btn_bilingual_copy, style=master.Btn_Style).grid(row = Row, column=7, padx=5, pady=5, sticky=E)
 	master.dual_translate_btn = Button(Main_Frame, text= 'Dual Translate', width = master.BUTTON_SIZE, command= master.dual_translate, style=master.Btn_Style, state=DISABLED)
-	master.dual_translate_btn.grid(row = Row, column=9, padx=5, pady=5, sticky=E)
+	master.dual_translate_btn.grid(row = Row, column=8, padx=5, pady=5, sticky=E)
 
 	# Add all Text in the tab to a list to change color dynamically
 	for child in Main_Frame.winfo_children():

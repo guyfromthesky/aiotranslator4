@@ -24,3 +24,6 @@ libs/__pycache__/documentprocessing.cpython-38.pyc
 *.toc
 *.pyz
 *.exe
+*.toc
+*.zip
+*.toc

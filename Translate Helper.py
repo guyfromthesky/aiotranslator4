@@ -68,7 +68,7 @@ from google.cloud import logging
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4121
+REV = 4123
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num
 
@@ -362,7 +362,7 @@ class MyTranslatorHelper(Frame):
 			
 			style = Style(self.parent) # self.parent is root
 			#supported_themes = ['awdark', 'awlight']
-			supported_themes = ['awdark', 'awlight', 'forest-dark', 'forest-light',]
+			supported_themes = ['awdark', 'awlight', 'forest-dark',]
 								#"arc", "black",	"clearlooks", "equilux", 
 								#"kroc", "plastik", "radiance", "winxpblue"]
 			
