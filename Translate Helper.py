@@ -45,6 +45,7 @@ import pickle
 import queue 
 
 import webbrowser
+import inspect
 
 from libs.aiotranslator import ver_num as TranslatorVersion
 from libs.aiotranslator import generate_translator
@@ -68,7 +69,7 @@ from google.cloud import logging
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4123
+REV = 4124
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num
 
@@ -105,10 +106,10 @@ class MyTranslatorHelper(Frame):
 		self.grammar_check_list = []
 		self.grammar_corrected_list = []
 
-		self.SOURCE_WIDTH = 88
+		self.SOURCE_WIDTH = 75
 		self.BUTTON_SIZE = 20 
 		self.HALF_BUTTON_SIZE = 15
-		self.ROW_SIZE = 24
+		self.ROW_SIZE = 23
 		
 		self.Btn_Style = "Accent.TButton"
 
@@ -362,7 +363,7 @@ class MyTranslatorHelper(Frame):
 			
 			style = Style(self.parent) # self.parent is root
 			#supported_themes = ['awdark', 'awlight']
-			supported_themes = ['awdark', 'awlight', 'forest-dark',]
+			supported_themes = ['awdark', 'awlight', 'forest-dark', 'forest-light']
 								#"arc", "black",	"clearlooks", "equilux", 
 								#"kroc", "plastik", "radiance", "winxpblue"]
 			
@@ -463,29 +464,27 @@ class MyTranslatorHelper(Frame):
 				'label_bg': '#393f3f',
 				'label_fg': 'white'
 			}
-		elif theme_name == 'clearlooks':
-			self.widget_color = {
-				'parent_bg': '#efebe7',
-				'frame_bg': '#efebe7',
-				'menu_bg': '#7c99ad',
-				'menu_fg': '#ffffff',
-				'text_bg': '#efebe7',
-				'text_fg': 'black',
-				'text_insertbackground': '#efebe7',
-				'label_bg': '#efebe7',
-				'label_fg': 'black'
-			}	
-		elif theme_name == 'forest-light':
+		elif theme_name == 'breeze':
 			self.widget_color = {
 				'parent_bg': '#e8e8e7',
 				'frame_bg': '#e8e8e7',
 				'menu_bg': '#e8e8e7',
 				'menu_fg': '#000000',
-				'text_bg': '#e8e8e7',
+				'text_bg': '#ffffff',
 				'text_fg': '#000000',
 				'text_insertbackground': '#000000',
 				'label_bg': '#191c1d',
 				'label_fg': '#ffffff'
+			}	
+		elif theme_name == 'forest-light':
+			self.widget_color = {
+				'parent_bg': '#ffffff',
+				'frame_bg': '#ffffff',
+				'menu_bg': '#e8e8e7',
+				'menu_fg': '#313131',
+				'text_bg': '#ffffff',
+				'text_fg': '#313131',
+				'text_insertbackground': '#313131',
 			}
 		elif theme_name == 'forest-dark':
 			self.widget_color = {
@@ -495,7 +494,7 @@ class MyTranslatorHelper(Frame):
 				'menu_fg': '#eeeeee',
 				'text_bg': '#313131',
 				'text_fg': '#eeeeee',
-				'text_insertbackground': '#eeeeee',
+				'text_insertbackground': '#313131',
 			}
 		elif theme_name == 'awlight':
 			self.widget_color = {
@@ -557,8 +556,8 @@ class MyTranslatorHelper(Frame):
 			label_widget['bg'] = self.widget_color['parent_bg']
 			label_widget['fg'] = self.widget_color['text_fg']
 
-		for Radiobutton_widget in self.Radiobutton_widgets:
-			Radiobutton_widget['bg'] = self.widget_color['parent_bg']
+		#for Radiobutton_widget in self.Radiobutton_widgets:
+		#	Radiobutton_widget['bg'] = self.widget_color['parent_bg']
 			#text_widget['insertbackground'] = self.widget_color['text_insertbackground']
 
 		
@@ -1468,26 +1467,19 @@ class MyTranslatorHelper(Frame):
 
 	def _save_report(self,event=None):
 		print('Save report')
-		TextTitle = self.TextTitle.get("1.0", END)		
-		TextServer = self.TextServer.get("1.0", END)
-		TextClient = self.TextClient.get("1.0", END)
-		TextReprodTime = self.TextReprodTime.get("1.0", END)
-		TextAccount = self.TextAccount.get("1.0", END)
-		TextTestReport = self.TextTestReport.get("1.0", END)
-		TextReproduceSteps = self.TextReproduceSteps.get("1.0", END)
-		TextShouldBe = self.TextShouldBe.get("1.0", END)
-		HeaderA = self.HeaderOptionA.get()
-		HeaderB = self.HeaderOptionB.get()
 		try:
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTitle', TextTitle, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextServer', TextServer, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextClient', TextClient, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReprodTime', TextReprodTime, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextAccount', TextAccount, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTestReport', TextTestReport, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextShouldBe', TextShouldBe, True)
+			
 
+			for widget_name in self.Configuration['Temp_BugDetails']:
+				for widget in dir(self):
+					if widget == widget_name:
+						_widget = getattr(self, widget)
+						_string = _widget.get("1.0", END)
+					
+						self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', widget_name, _string, True)
+
+			HeaderA = self.HeaderOptionA.get()
+			HeaderB = self.HeaderOptionB.get()		
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)
 
@@ -1498,37 +1490,19 @@ class MyTranslatorHelper(Frame):
 
 
 	def SaveTempReport(self, event=None):
-		print('Report is saved!')
-		TextTitle = self.TextTitle.get("1.0", END)			
-		TextServer = self.TextServer.get("1.0", END)
-
-		TextClient = self.TextClient.get("1.0", END)
-		TextReprodTime = self.TextReprodTime.get("1.0", END)
-		TextAccount = self.TextAccount.get("1.0", END)
-		TextTestReport = self.TextTestReport.get("1.0", END)
-		TextReproduceSteps = self.TextReproduceSteps.get("1.0", END)
-		TextShouldBe = self.TextShouldBe.get("1.0", END)
-		HeaderA = self.HeaderOptionA.get()
-		HeaderB = self.HeaderOptionB.get()
-
-		SourceText = self.SourceText.get("1.0", END)
-
+		
 		try:
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTitle', TextTitle, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextServer', TextServer, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextClient', TextClient, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReprodTime', TextReprodTime, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextAccount', TextAccount, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTestReport', TextTestReport, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextShouldBe', TextShouldBe, True)
+			for widget_name in self.Configuration['Temp_BugDetails']:
+				for widget in dir(self):
+					if widget == widget_name:
+						_widget = getattr(self, widget)
+						_string = _widget.get("1.0", END)
+						self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', widget_name, _string, True)
 
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderA', HeaderA)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)
-
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'SimpleTranslator', SourceText, True)
-				
-
+			HeaderA = self.HeaderOptionA.get()
+			HeaderB = self.HeaderOptionB.get()		
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)			
 		except Exception as e:
 			print('Cannot save the report:', e)
 			pass
@@ -1548,47 +1522,23 @@ class MyTranslatorHelper(Frame):
 			messagebox.showinfo('Error', "The selected project doesn't exist.")
 
 	def _load_report(self,event=None):
-		print('Load report')
+	
 		try:
 			self.AppConfig.Refresh_Config_Data()
 			self.Configuration = self.AppConfig.Config
-			
-			TextTitle  = self.Configuration['BugDetails']['TextTitle']
-			self.TextTitle.delete("1.0", END)
-			self.TextTitle.insert("end", TextTitle)
-			
-			TextServer  = self.Configuration['BugDetails']['TextServer']
-			self.TextServer.delete("1.0", END)
-			self.TextServer.insert("end", TextServer)
-			
-			TextClient  = self.Configuration['BugDetails']['TextClient']
-			self.TextClient.delete("1.0", END)
-			self.TextClient.insert("end", TextClient)
-			
-			TextReprodTime  = self.Configuration['BugDetails']['TextReprodTime']
-			self.TextReprodTime.delete("1.0", END)
-			self.TextReprodTime.insert("end", TextReprodTime)
-			
-			TextAccount  = self.Configuration['BugDetails']['TextAccount']
-			self.TextAccount.delete("1.0", END)
-			self.TextAccount.insert("end", TextAccount)
-			
-			TextTestReport  = self.Configuration['BugDetails']['TextTestReport']
-			self.TextTestReport.delete("1.0", END)
-			self.TextTestReport.insert("end", TextTestReport)
-			
-			TextShouldBe  = self.Configuration['BugDetails']['TextShouldBe']
-			self.TextShouldBe.delete("1.0", END)
-			self.TextShouldBe.insert("end", TextShouldBe)
-				
-			TextReproduceSteps  = self.Configuration['BugDetails']['TextReproduceSteps']
-			self.TextReproduceSteps.delete("1.0", END)
-			self.TextReproduceSteps.insert("end", TextReproduceSteps)
+			for widget_name in self.Configuration['BugDetails']:
+				temp_string = self.Configuration['BugDetails'][widget_name]
+				if temp_string != None:
+					temp_string = temp_string.rstrip('\n')
+				for widget in dir(self):
+					if widget == widget_name:
+						_widget = getattr(self, widget)
+						_widget.delete("1.0", END)
+						_widget.insert("end", temp_string)
 	
 			self.HeaderOptionA.set(self.Configuration['BugDetails']['HeaderA'])
 			self.HeaderOptionB.set(self.Configuration['BugDetails']['HeaderB'])
-
-
+			
 		except Exception as e:
 			print('Fail somewhere:', e)
 			pass
@@ -1598,43 +1548,25 @@ class MyTranslatorHelper(Frame):
 			self.AppConfig.Refresh_Config_Data()
 			self.Configuration = self.AppConfig.Config
 			
-			TextTitle  = self.Configuration['Temp_BugDetails']['TextTitle']
-			self.TextTitle.delete("1.0", END)
-			self.TextTitle.insert("end", TextTitle)
-			
-			TextServer  = self.Configuration['Temp_BugDetails']['TextServer']
-			self.TextServer.delete("1.0", END)
-			self.TextServer.insert("end", TextServer)
-			
-			TextClient  = self.Configuration['Temp_BugDetails']['TextClient']
-			self.TextClient.delete("1.0", END)
-			self.TextClient.insert("end", TextClient)
-			
-			TextReprodTime  = self.Configuration['Temp_BugDetails']['TextReprodTime']
-			self.TextReprodTime.delete("1.0", END)
-			self.TextReprodTime.insert("end", TextReprodTime)
-			
-			TextAccount  = self.Configuration['Temp_BugDetails']['TextAccount']
-			self.TextAccount.delete("1.0", END)
-			self.TextAccount.insert("end", TextAccount)
-			
-			TextTestReport  = self.Configuration['Temp_BugDetails']['TextTestReport']
-			self.TextTestReport.delete("1.0", END)
-			self.TextTestReport.insert("end", TextTestReport)
-			
-			TextShouldBe  = self.Configuration['Temp_BugDetails']['TextShouldBe']
-			self.TextShouldBe.delete("1.0", END)
-			self.TextShouldBe.insert("end", TextShouldBe)
+			self.AppConfig.Refresh_Config_Data()
+			self.Configuration = self.AppConfig.Config
+			for widget_name in self.Configuration['Temp_BugDetails']:
+				temp_string = self.Configuration['Temp_BugDetails'][widget_name]
 				
-			TextReproduceSteps  = self.Configuration['Temp_BugDetails']['TextReproduceSteps']
-			self.TextReproduceSteps.delete("1.0", END)
-			self.TextReproduceSteps.insert("end", TextReproduceSteps)
+				for widget in dir(self):
+					if widget == widget_name:
+						_widget = getattr(self, widget)
+						_widget.delete("1.0", END)
+						_widget.insert("end", temp_string)
 	
 			self.HeaderOptionA.set(self.Configuration['Temp_BugDetails']['HeaderA'])
 			self.HeaderOptionB.set(self.Configuration['Temp_BugDetails']['HeaderB'])
 
 			SourceText  = self.Configuration['Temp_BugDetails']['SimpleTranslator']
 			self.SourceText.delete("1.0", END)
+			if SourceText != None:
+				SourceText = SourceText.rstrip('\n')
+
 			self.SourceText.insert("end", SourceText)
 
 

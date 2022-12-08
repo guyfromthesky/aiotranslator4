@@ -29,6 +29,7 @@ import pandas as pd
 #System lib
 import os
 import sys
+import shutil
 import unicodedata
 import string
 import socket
@@ -108,7 +109,6 @@ class Translator:
 		# Check and get the location of TM file
 		# If path is invalid or not stated, use local TM
 		self.init_tm_path(tm_path)
-	
 		# Select correct log file.
 		self.init_logging_file()
 
@@ -159,8 +159,6 @@ class Translator:
 			# Create the glassary if any (require permission)
 			# Display the length of the
 			self.prepare_glossary_info()
-
-
 			print('Total time to load db + glossary:', str(datetime.now() - current_time))
 		except Exception  as e:
 			print("Error when loading bucket:", e)
@@ -292,7 +290,12 @@ class Translator:
 		return str(year) + "_" + str(week) + '_' + str(day)
 
 	def get_timestamp(self):
-		return str(datetime.now())
+		timestamp = str(datetime.now().strftime("%d_%m_%Y_%H_%M_%S_%f"))		
+		return timestamp
+	
+	def get_month_timestamp(self):
+		monthstamp = str(datetime.now().strftime("%m_%Y"))	
+		return monthstamp
 
 	# Might use on DB uploader
 	def get_glossary_list(self):
@@ -599,7 +602,7 @@ class Translator:
 		else:
 			return False
 
-		print('source_text', source_text)
+		#print('source_text', source_text)
 
 		raw_source = []
 		to_translate = []
@@ -808,7 +811,7 @@ class Translator:
 					translation = self.google_translate_v3(source_text)
 		except Exception as _error_message:
 			print('Activated translation error:', _error_message)
-		print('Translation:', translation)
+		#print('Translation:', translation)
 		if translation == None:	
 	
 			try:
@@ -870,7 +873,7 @@ class Translator:
 		for index in range(len(source_text)):
 			string_to_translate = source_text[index]
 			special_texts = re.findall("\<([^\"]*)\>", string_to_translate)
-			print('special_texts list', special_texts)
+			#print('special_texts list', special_texts)
 			for special_text in special_texts:
 				source_text[index]  = string_to_translate.replace("<" + special_text + ">", ("<span class=\"notranslate\">" + special_text + "</span>"))
 		return source_text
@@ -1757,8 +1760,8 @@ class Translator:
 		return
 
 	def init_translation_memory(self):
-		self.current_tm = pd.DataFrame(columns=self.supported_language)
-		self.translation_memory_size = len(self.current_tm)	
+		return pd.DataFrame(columns=self.supported_language)
+
 
 	def init_temporary_tm(self):
 		self.temporary_tm[:] = []
@@ -1787,36 +1790,33 @@ class Translator:
 			return 0
 
 	def import_tm_v2(self, pickle_data):
-		self.init_translation_memory()
+		_current_tm = self.init_translation_memory()
 		for Pair in pickle_data:
 			#new_row = {'en': Pair[1], 'ko':Pair[0], 'cn': NaN, 'jp': NaN, 'vi': NaN}
 			new_row = {'en': Pair[1], 'ko':Pair[0], 'cn': NaN, 'jp': NaN, 'vi': NaN}
-			self.current_tm = self.current_tm.append(new_row, ignore_index=True)	
+			_current_tm = _current_tm.append(new_row, ignore_index=True)	
 		pickle_data = {}	
 		if self.glossary_id == "":
 			_glossary = 'Default'
 		else:
 			_glossary = self.glossary_id
 
-		pickle_data[_glossary] = self.current_tm
+		pickle_data[_glossary] = _current_tm
 		pickle_data['tm_version'] = 4
 
 		try:
 			with open(self.tm_path, 'wb') as pickle_file:
 				print("Updating pickle file....", self.tm_path)
 				pickle.dump(pickle_data, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
-				return True
+				
 		except Exception  as e:
 			print("Error while convert TM v2 to TM v4:", e)
-			return e
+		
+		return _current_tm
 
 	def import_tm_v3(self, pickle_data):
-		self.init_translation_memory()
-		
-		self.current_tm = pd.DataFrame({'en': pickle_data['EN'],'ko': pickle_data['KO']})
-		#self.current_tm['cn'] = NaN
-		#self.current_tm['jp'] = NaN
-		#self.current_tm['vi'] = NaN
+
+		_current_tm = pd.DataFrame({'en': pickle_data['EN'],'ko': pickle_data['KO']})
 		
 		pickle_data = {}	
 		if self.glossary_id == "":
@@ -1824,16 +1824,17 @@ class Translator:
 		else:
 			_glossary = self.glossary_id
 
-		pickle_data[_glossary] = self.current_tm
+		pickle_data[_glossary] = _current_tm
 		pickle_data['tm_version'] = 4
 
 		try:
 			with open(self.tm_path, 'wb') as pickle_file:
 				print("Updating pickle file....", self.tm_path)
 				pickle.dump(pickle_data, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
-
 		except Exception  as e:
 			print("Error while convert TM v3 to TM v4:", e)		
+
+		return _current_tm
 
 
 	# Load TM detail from pickle file.
@@ -1843,7 +1844,8 @@ class Translator:
 		#print('Import TM from pickle file', str(self.tm_path))
 
 		self.init_temporary_tm()
-		self.init_translation_memory()
+		
+		self.monthly_tm_backup()
 
 		if self.tm_path == None:
 			return
@@ -1860,12 +1862,14 @@ class Translator:
 				if _tm_version == 4:
 					if self.glossary_id in all_tm:
 						self.current_tm = all_tm[self.glossary_id]
+
 					else:
+						self.current_tm = self.init_translation_memory()
 						print('New project')
 				elif _tm_version == 3:
-					self.import_tm_v3(all_tm)
+					self.current_tm = self.import_tm_v3(all_tm)
 				elif _tm_version == 2:
-					self.import_tm_v2(all_tm)
+					self.current_tm = self.import_tm_v2(all_tm)
 				else:
 					print('Broken TM file.')	
 			except Exception as e:
@@ -1885,7 +1889,7 @@ class Translator:
 			self.translation_memory = self.translation_memory[[self.from_language, self.to_language]]
 			#self.translation_memory.drop_duplicates(inplace=True)
 		else:
-			self.init_translation_memory()
+			self.current_tm = self.init_translation_memory()
 		#print('Current TM  Dataframe:', self.translation_memory)
 		self.translation_memory_size = len(self.translation_memory)	
 		print('Size of TM: ', self.translation_memory_size)
@@ -1909,55 +1913,128 @@ class Translator:
 		else:
 			_glossary = self.glossary_id
 
+		# Append the temporary_tm (RAM) to TM file (ROM)
 		if len(self.temporary_tm) > 0:
-			while True:
-				try:
-					with open(self.tm_path, 'rb') as pickle_load:
-						all_tm = pickle.load(pickle_load)
-					#print('All tm:', all_tm)
-					_tm_version = self.get_tm_version(all_tm)
-					print('TM version:', _tm_version)
-					if _tm_version == 4:
-						print('Valid')
-					elif _tm_version == 3:
-						self.import_tm_v3(all_tm)
-						all_tm = {}
-					elif _tm_version == 2:
-						self.import_tm_v2(all_tm)
-						all_tm = {}
-					else:
-						all_tm = {}
-
-					if 'tm_version' not in all_tm:
-						all_tm['tm_version'] = 4
-
-					if _glossary not in all_tm:
-						self.init_translation_memory()
-						all_tm[_glossary] = self.current_tm
-					else:
-						self.current_tm = all_tm[_glossary]
-
-					for Pair in self.temporary_tm:
-						try:
-							self.current_tm = self.append_tm_dataframe(self.current_tm, Pair)
-						except Exception as e:
-							print('Append TM DF error:', e)	
-					self.current_tm = self.current_tm.reindex()
-					all_tm[_glossary] = self.current_tm
-					
+			try:
+				Counter = 0
+				while Counter < 1000:
 					try:
-						with open(self.tm_path, 'wb') as pickle_file:
-							print("Updating pickle file....", self.tm_path)
-							pickle.dump(all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
-						print('Size TM in memory', len(self.temporary_tm))
-						self.init_temporary_tm()
-						return new_tm_size
-					except Exception  as e:
-						print("Error:", e)
+						with open(self.tm_path, 'rb') as pickle_load:
+							_all_tm = pickle.load(pickle_load)
+					except Exception as e:
+						print("Error while reading TM file: ", e)
+						Counter += 1
+						continue
+					break
+				
+				# TM in pkl file:	
+				_current_tm = None
+
+				_tm_version = self.get_tm_version(_all_tm)
+				if _tm_version == 4:
+					_current_tm = _all_tm[_glossary]
+				elif _tm_version == 3:
+					_current_tm = self.import_tm_v3(_all_tm)
+					_all_tm = {}
+				elif _tm_version == 2:
+					_current_tm = self.import_tm_v2(_all_tm)
+		
+					_all_tm = {}
+				else:
+					_all_tm = {}
+
+				if 'tm_version' not in _all_tm:
+					_all_tm['tm_version'] = 4
+
+				if _glossary not in _all_tm:
+					_all_tm[_glossary] = pd.DataFrame(columns=self.supported_language)	
+					_all_tm[_glossary] = _current_tm
+				
+				_current_translation_memory_size = len(_all_tm[_glossary])
+				print('Current TM size:', _current_translation_memory_size)
+				_translation_memory_size = len(self.current_tm)
+				# If self.translation_memory_size = size of the TM at the time we load it.
+				# _current_translation_memory_size = size of the TM no
+				if int(_translation_memory_size * 0.7) > _current_translation_memory_size:
+					print('_translation_memory_size', _translation_memory_size)
+					print('_current_translation_memory_size', _current_translation_memory_size)
+					# Broken TM file or a large amount of TM is removed
+					# we will re-create the TM base on the TM in the RAM
+					# Before that, we will make a copy of the current TM for recovery:
+					self.backup_tm_file()
+					# TM in the TM file (ROM) will be ignore, TM in RAM will be use.
+					_current_tm = self.current_tm
+
+				for Pair in self.temporary_tm:
+					try:
+						_current_tm = self.append_tm_dataframe(_current_tm, Pair)
+					except Exception as e:
+						print('Append TM DF error:', e)	
+				_current_tm = _current_tm.reindex()
+				#print('Size TM after reindex:', _translation_memory_size)
+				_all_tm[_glossary] = _current_tm
+				# Write the tm
+				try:
+					# Confirm that the length of current TM greater than the length in TM file
+					_second_backup_file = self.backup_tm_file()
+					_current_tm_file_size = os.path.getsize(_second_backup_file)
+	
+					with open(self.tm_path, 'wb') as pickle_file:
+						print("Updating pickle file....", self.tm_path)
+						pickle.dump(_all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+					_new_tm_file_size = 	os.path.getsize(self.tm_path)
+					# Double confirm process, confirm if file size is greater than old one
+					if _current_tm_file_size > _new_tm_file_size:
+						# Revert to old version if new TM file is smaller than the old one
+						print("Reverse TM file to older version")
+						os.remove(self.tm_path)
+						shutil.copy(_second_backup_file, self.tm_path)
+						os.remove(_second_backup_file)
+						raise Exception("Error while appending TM file, TM file has been reversed to the older version.")
+					else:
+						os.remove(_second_backup_file)
+						#TM append safety, remove backup file.
+					_translation_memory_size = len(_current_tm)
+					print('Size TM after append:', _translation_memory_size)
+					self.init_temporary_tm()
+					return new_tm_size
 				except Exception  as e:
-					print("Error:", e)		
+					print("Error:", e)
+			except Exception  as e:
+				print("Error:", e)		
 		return 0
 	
+	def monthly_tm_backup(self):
+		_dirname = os.path.dirname(self.tm_path)
+		
+		_basename = os.path.basename(self.tm_path)
+		_filename, _ext = os.path.splitext(_basename)
+		_month_stamp = self.get_month_timestamp()
+		_backup_dir = os.path.join(_dirname, "Monthly Backup TM")
+		_backup_file  = os.path.join(_backup_dir, _filename + "_backup_" + _month_stamp + _ext)
+		if not os.path.isdir(_backup_dir):
+			os.mkdir(_backup_dir)	
+		if not os.path.isfile(_backup_file):
+			
+			try:
+				shutil.copy(self.tm_path, _backup_file)
+				print('Backup file is not exist, create a new one:', _backup_file)
+			except Exception as e:
+				print("Fail to backup TM file:", e)	
+		
+
+	def backup_tm_file(self):
+		_dirname = os.path.dirname(self.tm_path)
+		_basename = os.path.basename(self.tm_path)
+		_filename, _ext = os.path.splitext(_basename)
+		_time_stamp = self.get_timestamp()
+		_backup_dir = os.path.join(_dirname, "Backup TM")
+		if not os.path.isdir(_backup_dir):
+			os.mkdir(_backup_dir)	
+		_backup_file  = os.path.join(_backup_dir, _filename + "_backup_" + _time_stamp + _ext)
+		shutil.copy(self.tm_path, _backup_file)
+		return _backup_file
+
 	def export_current_translation_memory(self):
 		'''
 		This function will overwrite the current self.current_tm to pickle file.
@@ -2182,8 +2259,12 @@ class Translator:
 		indices = index[condition]
 		indices_list = indices.tolist()
 		#print('indices_list', len(indices_list))
+
 		if len(indices_list) == 0:
-			dataframe = dataframe.append({self.to_language: index_value, self.from_language: append_value}, ignore_index=True)
+			#dataframe = dataframe.append({self.to_language: index_value, self.from_language: append_value}, ignore_index=True)
+			#print('Length before concat:', len(dataframe))
+			dataframe = pd.concat([dataframe, pd.DataFrame({self.to_language: index_value, self.from_language: append_value}, index=[0])], ignore_index=True)
+			#print('Length after concat:', len(dataframe))
 			return dataframe
 		else:
 			append_indices = indices_list[0]

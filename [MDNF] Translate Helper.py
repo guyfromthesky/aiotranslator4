@@ -104,7 +104,7 @@ class MyTranslatorHelper(Frame):
 		self.grammar_check_list = []
 		self.grammar_corrected_list = []
 
-		self.SOURCE_WIDTH = 72
+		self.SOURCE_WIDTH = 75
 		self.BUTTON_SIZE = 20
 		self.HALF_BUTTON_SIZE = 15
 		self.ROW_SIZE = 24
@@ -1320,7 +1320,7 @@ class MyTranslatorHelper(Frame):
 		self.TextTestReport.delete("1.0", END)
 		self.TextReproduceSteps.delete("1.0", END)
 		self.TextShouldBe.delete("1.0", END)	
-		
+		self.Reproducibility.delete("1.0", END)	
 		self.ResetInfoSection()
 	
 		return
@@ -1516,69 +1516,44 @@ class MyTranslatorHelper(Frame):
 	
 			self.Grammar_Check.join()
 
-
-	def _save_report(self, event = None):
-		TextTitle = self.TextTitle.get("1.0", END)			
-		
-		EnvInfo = self.EnvInfo.get("1.0", END)
-		Reproducibility = self.Reproducibility.get("1.0", END)
-		
-		TextTestReport = self.TextTestReport.get("1.0", END)
-		TextReproduceSteps = self.TextReproduceSteps.get("1.0", END)
-		TextShouldBe = self.TextShouldBe.get("1.0", END)
-		HeaderA = self.HeaderOptionA.get()
-		HeaderB = self.HeaderOptionB.get()
+	def _save_report(self,event=None):
+		print('Save report')
 		try:
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTitle', TextTitle, True)
+	
+			for widget_name in self.Configuration['BugDetails']:
+				for widget in dir(self):
+					if widget == widget_name:
+						_widget = getattr(self, widget)
+						_string = _widget.get("1.0", END)
+					
+						self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', widget_name, _string, True)
 
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'EnvInfo', EnvInfo, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'Reproducibility', Reproducibility, True)
-			
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTestReport', TextTestReport, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextShouldBe', TextShouldBe, True)
-
+			HeaderA = self.HeaderOptionA.get()
+			HeaderB = self.HeaderOptionB.get()		
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)
+
 			
-		except:
+		except Exception as e:
+			print('Cannot sve the report:', e)
 			pass
+
 
 	def SaveTempReport(self, event=None):
 		print('Save temp report')
-		TextTitle = self.TextTitle.get("1.0", END)	
-
-		EnvInfo = self.EnvInfo.get("1.0", END)
-		Reproducibility = self.Reproducibility.get("1.0", END)
-		
-		#TextReprodTime = self.TextReprodTime.get("1.0", END)
-		#TextAccount = self.TextAccount.get("1.0", END)
-		TextTestReport = self.TextTestReport.get("1.0", END)
-		TextReproduceSteps = self.TextReproduceSteps.get("1.0", END)
-		TextShouldBe = self.TextShouldBe.get("1.0", END)
-		HeaderA = self.HeaderOptionA.get()
-		HeaderB = self.HeaderOptionB.get()
-
-		SourceText = self.SourceText.get("1.0", END)
-
 		try:
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTitle', TextTitle, True)
-
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'EnvInfo', EnvInfo, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'Reproducibility', Reproducibility, True)
-
-			#self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReprodTime', TextReprodTime, True)
-			#self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextAccount', TextAccount, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTestReport', TextTestReport, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextShouldBe', TextShouldBe, True)
-
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderA', HeaderA)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)
-
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'SimpleTranslator', SourceText, True)
+			for widget_name in self.Configuration['Temp_BugDetails']:
 				
-
+				for widget in dir(self):
+					if widget == widget_name:
+						_widget = getattr(self, widget)
+						_string = _widget.get("1.0", END)
+						self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', widget_name, _string, True)
+						
+			HeaderA = self.HeaderOptionA.get()
+			HeaderB = self.HeaderOptionB.get()		
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)			
 		except Exception as e:
 			print('Cannot save the report:', e)
 			pass
@@ -1589,46 +1564,31 @@ class MyTranslatorHelper(Frame):
 		
 		self.glossary_id = self.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
-		print('Save current project key: ', self.glossary_id)
-		self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'glossary_id', self.glossary_id)
-		self.MyTranslator.glossary_id = self.glossary_id
-		self.RenewMyTranslator()
+		if self.glossary_id in self.MyTranslator.glossary_list:
+			print('Save current project key: ', self.glossary_id)
+			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'glossary_id', self.glossary_id)
+			self.MyTranslator.glossary_id = self.glossary_id
+			self.RenewMyTranslator()
+		else:
+			messagebox.showinfo('Error', "The selected project doesn't exist.")
 
-	def _load_report(self, event= None):
+	def _load_report(self,event=None):
+		
 		try:
 			self.AppConfig.Refresh_Config_Data()
 			self.Configuration = self.AppConfig.Config
-			print(self.Configuration)
-			if 'BugDetails' not in self.AppConfig.Config:
-				return
-			TextTitle  = self.Configuration['BugDetails']['TextTitle']
-			self.TextTitle.delete("1.0", END)
-			self.TextTitle.insert("end", TextTitle)
-			
-			EnvInfo  = self.Configuration['BugDetails']['EnvInfo']
-			self.EnvInfo.delete("1.0", END)
-			self.EnvInfo.insert("end", EnvInfo)
-			
-			Reproducibility  = self.Configuration['BugDetails']['Reproducibility']
-			self.Reproducibility.delete("1.0", END)
-			self.Reproducibility.insert("end", Reproducibility)
-			
-			TextTestReport  = self.Configuration['BugDetails']['TextTestReport']
-			self.TextTestReport.delete("1.0", END)
-			self.TextTestReport.insert("end", TextTestReport)
-			
-			TextShouldBe  = self.Configuration['BugDetails']['TextShouldBe']
-			self.TextShouldBe.delete("1.0", END)
-			self.TextShouldBe.insert("end", TextShouldBe)
-				
-			TextReproduceSteps  = self.Configuration['BugDetails']['TextReproduceSteps']
-			self.TextReproduceSteps.delete("1.0", END)
-			self.TextReproduceSteps.insert("end", TextReproduceSteps)
+	
+			for widget_name in self.Configuration['BugDetails']:
+				temp_string = self.Configuration['BugDetails'][widget_name].rstrip('\n')
+				for widget in dir(self):
+					if widget == widget_name:
+						_widget = getattr(self, widget)
+						_widget.delete("1.0", END)
+						_widget.insert("end", temp_string)
 	
 			self.HeaderOptionA.set(self.Configuration['BugDetails']['HeaderA'])
 			self.HeaderOptionB.set(self.Configuration['BugDetails']['HeaderB'])
-
-
+			
 		except Exception as e:
 			print('Fail somewhere:', e)
 			pass
@@ -1637,41 +1597,25 @@ class MyTranslatorHelper(Frame):
 		try:
 			self.AppConfig.Refresh_Config_Data()
 			self.Configuration = self.AppConfig.Config
-			
-			TextTitle  = self.Configuration['Temp_BugDetails']['TextTitle']
-			self.TextTitle.delete("1.0", END)
-			self.TextTitle.insert("end", TextTitle)
-			
-			EnvInfo  = self.Configuration['Temp_BugDetails']['EnvInfo']
-			self.EnvInfo.delete("1.0", END)
-			self.EnvInfo.insert("end", EnvInfo)
-			
-			Reproducibility  = self.Configuration['Temp_BugDetails']['Reproducibility']
-			self.Reproducibility.delete("1.0", END)
-			self.Reproducibility.insert("end", Reproducibility)
-			
-			TextTestReport  = self.Configuration['Temp_BugDetails']['TextTestReport']
-			self.TextTestReport.delete("1.0", END)
-			self.TextTestReport.insert("end", TextTestReport)
-			
-			TextShouldBe  = self.Configuration['Temp_BugDetails']['TextShouldBe']
-			self.TextShouldBe.delete("1.0", END)
-			self.TextShouldBe.insert("end", TextShouldBe)
-				
-			TextReproduceSteps  = self.Configuration['Temp_BugDetails']['TextReproduceSteps']
-			self.TextReproduceSteps.delete("1.0", END)
-			self.TextReproduceSteps.insert("end", TextReproduceSteps)
+		
+			for widget_name in self.Configuration['Temp_BugDetails']:
+				temp_string = self.Configuration['Temp_BugDetails'][widget_name].rstrip('\n')
+				for widget in dir(self):
+					if widget == widget_name:
+						_widget = getattr(self, widget)
+						_widget.delete("1.0", END)
+						_widget.insert("end", temp_string)
 	
 			self.HeaderOptionA.set(self.Configuration['Temp_BugDetails']['HeaderA'])
 			self.HeaderOptionB.set(self.Configuration['Temp_BugDetails']['HeaderB'])
 
-			SourceText  = self.Configuration['Temp_BugDetails']['SimpleTranslator']
+			SourceText  = self.Configuration['Temp_BugDetails']['SimpleTranslator'].rstrip('\n')
 			self.SourceText.delete("1.0", END)
 			self.SourceText.insert("end", SourceText)
 
-		except:
-			print('Fail somewhere')
-			pass				
+
+		except Exception as e:
+			print('Fail somewhere:', e)
 
 
 	def SaveSetting(self):

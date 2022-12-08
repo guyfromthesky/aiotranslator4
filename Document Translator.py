@@ -58,7 +58,7 @@ import pandas as pd
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4122
+rev = 4125
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -1962,8 +1962,8 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 			StatusQueue.put('TM append this section: ' + str(newTM))
 			#StatusQueue.put('TM In-memory: ' + str(len(MyTranslator.TMManager)))
 
-		except:
-			pass
+		except Exception as e:
+			StatusQueue.put('Error while appending TM: ' + str(e))
 
 def fixed_map(style, option):
 	# Fix for setting text colour for Tkinter 8.6.9

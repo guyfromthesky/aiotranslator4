@@ -354,7 +354,7 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 		Task_todo = []
 		
 		while len(task_list) > 0:
-			print('Len task:', len(task_list))
+			#print('Len task:', len(task_list))
 			Translated = []
 			TaskLength = 0
 			

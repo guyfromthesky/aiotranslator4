@@ -676,24 +676,22 @@ def Generate_Translate_Setting_UI(master, Tab):
 	Left_Frame = Frame(Tab)
 	Left_Frame.pack(side = LEFT, fill=BOTH, expand= Y)
 
-	
 	Row = 1
-	Label(Top_Frame, textvariable=master.Notice).grid(row=Row, column=1, columnspan = 10, padx=5, pady=5, sticky= E+W)
+	Label(Top_Frame, textvariable=master.Notice).grid(row=Row, column=0, columnspan = 10, padx=5, pady=5, sticky= E+W)
 
 	Row += 1
-	Label(
-		Left_Frame, text= master.LanguagePack.Label['LicensePath']).grid(row=Row, column=1, padx=5, pady=5, sticky=E)
-	master.TextLicensePath = Entry(Left_Frame,width = 120, state="readonly", textvariable=master.LicensePath)
-	master.TextLicensePath.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=W+E)
+	Label(Left_Frame, text= master.LanguagePack.Label['LicensePath']).grid(row=Row, column=0, padx=5, pady=5, sticky=E)
+	master.TextLicensePath = Entry(Left_Frame,width = 100, state="readonly", textvariable=master.LicensePath)
+	master.TextLicensePath.grid(row=Row, column=2, columnspan=7, padx=5, pady=5, sticky=W+E)
 	master.Browse_License_Btn = Button(Right_Frame, width = master.HALF_BUTTON_SIZE, text=  master.LanguagePack.Button['Browse'], command = lambda: Btn_Select_License_Path(master), style=master.Btn_Style)
-	master.Browse_License_Btn.grid(row=Row, column=10, padx=5, pady=5, sticky=W)
+	master.Browse_License_Btn.grid(row=Row, column=9, padx=5, pady=5, sticky=W)
 
 	Row += 1
 	Label(Left_Frame, text= master.LanguagePack.Label['Transparent']) \
-		.grid(row=Row, rowspan = 2, column=1, padx=5, pady=5, sticky=W)
+		.grid(row=Row, rowspan = 2, column=0, padx=5, pady=5, sticky=W)
 	master.TransparentPercent = Scale(
 		Left_Frame,
-		length=500,
+		length=400,
 		from_=20,
 		to=100,
 		variable=master.Transparent,
@@ -701,7 +699,7 @@ def Generate_Translate_Setting_UI(master, Tab):
 		 
 		orient=HORIZONTAL,)
 	master.TransparentPercent.grid(
-		row=Row, rowspan=2, column=3, columnspan=7, padx=5, pady=5,
+		row=Row, rowspan=2, column=2, columnspan=7, padx=5, pady=5,
 		sticky=E+W)
 	master.TransparentPercent.bind('<ButtonRelease-1>', lambda event, root = master: SaveAppTransparency(event, master),)	
 	
@@ -710,20 +708,20 @@ def Generate_Translate_Setting_UI(master, Tab):
 			width=master.HALF_BUTTON_SIZE,
 			text=master.LanguagePack.Button['Reset'],
 			command=master.rebuild_UI, style=master.Btn_Style) \
-		.grid(row=Row, column=10, padx=5, pady=5, rowspan=2, sticky=W)
+		.grid(row=Row, column=9, padx=5, pady=5, rowspan=2, sticky=W)
 
 	Row += 2
 	Label(Left_Frame, text='Theme name:') \
-		.grid(row=Row, rowspan=2, column=1, padx=5, pady=5, sticky=E)
+		.grid(row=Row, rowspan=2, column=0, padx=5, pady=5, sticky=E)
 	master.btn_remove_theme = Button(
 		Right_Frame,
 		width=master.HALF_BUTTON_SIZE,
 		text="Remove Theme",
 		command=master.remove_theme, style=master.Btn_Style)
-	master.btn_remove_theme.grid(row=Row, column=10,  padx=5, pady=5, sticky=W)
+	master.btn_remove_theme.grid(row=Row, column=9,  padx=5, pady=5, sticky=W)
 
 	
-	col = 3 # to add more buttons horizontally
+	col = 2 # to add more buttons horizontally
 	for theme_name in master.theme_names:
 		master.radiobutton_theme_name = Radiobutton(
 			Left_Frame,
@@ -735,10 +733,10 @@ def Generate_Translate_Setting_UI(master, Tab):
 		master.radiobutton_theme_name.grid(
 			row=Row, column=col, padx=0, pady=5, sticky=W)
 		# Go to new line when reaching column 8
-		if col < 8:
+		if col < 7:
 			col += 1
 		else:
-			col = 3
+			col = 2
 			Row += 1
 	
 	# Display selected theme
@@ -755,24 +753,20 @@ def Generate_Translate_Setting_UI(master, Tab):
 			master.text_widgets.append(child)
 		elif isinstance(child, Label):
 			master.label_widgets.append(child)
-		elif isinstance(child, Radiobutton):
-			master.Radiobutton_widgets.append(child)	
+		
 
 	for child in Right_Frame.winfo_children():
 		if isinstance(child, Text) or isinstance(child, CustomText):
 			master.text_widgets.append(child)
 		elif isinstance(child, Label):
 			master.label_widgets.append(child)
-		elif isinstance(child, Radiobutton):
-			master.Radiobutton_widgets.append(child)
-
+		
 	for child in Top_Frame.winfo_children():
 		if isinstance(child, Text) or isinstance(child, CustomText):
 			master.text_widgets.append(child)
 		elif isinstance(child, Label):
 			master.label_widgets.append(child)
-		elif isinstance(child, Radiobutton):
-			master.Radiobutton_widgets.append(child)	
+		
 
 
 	master.frame_widgets.append(Right_Frame)
@@ -808,7 +802,7 @@ def Generate_BugWriter_UI(master, Tab):
 	master.secondary_target_language_select.grid(row=Row, column=3, padx=0, pady=5, sticky=W)
 	
 	#Button(Tab, width = master.HALF_BUTTON_SIZE, text= master.LanguagePack.Button['Save'], command= master._save_project_key).grid(row=Row, column=7, padx=5, pady=5, sticky=E)
-	master.GetTitleBtn = Button(Tab, text=master.LanguagePack.Button['GetTitle'], width=10, command=master.GetTitle, state=DISABLED)
+	master.GetTitleBtn = Button(Tab, text=master.LanguagePack.Button['GetTitle'], width=10, command=master.GetTitle, state=DISABLED, style=master.Btn_Style)
 	master.GetTitleBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 	
 	Row+=1
@@ -820,8 +814,8 @@ def Generate_BugWriter_UI(master, Tab):
 	master.HeaderOptionA.set_completion_list(master.header_list)
 	master.HeaderOptionA.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
 	
-	master.TextTitle = CustomText(Tab, width=90, height=3, undo=True, wrap=WORD)
-	master.TextTitle.grid(row=Row, column=4, columnspan=7, rowspan=2, padx=5, pady=5, stick=E)
+	master.TextTitle = CustomText(Tab, width=75, height=3, undo=True, wrap=WORD)
+	master.TextTitle.grid(row=Row, column=4, columnspan=8, rowspan=2, padx=5, pady=5, stick=W+E)
 
 	Row+=1
 
@@ -845,7 +839,7 @@ def Generate_BugWriter_UI(master, Tab):
 	Checkbutton(Tab, text=master.LanguagePack.Label['TestInfo'], variable = master.SkipTestInfo, command = master.SaveSetting).grid(row=Row, column=8, padx=5, pady=5, stick=W)
 	#master.SkipTestInfo.set(1)
 
-	Button(Tab, text=master.LanguagePack.Button['Reset'], width=10, command= master.ResetTestReport).grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
+	Button(Tab, text=master.LanguagePack.Button['Reset'], width=10, command= master.ResetTestReport, style=master.Btn_Style).grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 
 
 	Row+=1
@@ -863,19 +857,19 @@ def Generate_BugWriter_UI(master, Tab):
 	Checkbutton(Tab, text= 'Use Simple Template', variable = master.UseSimpleTemplate, command = master.SaveSetting).grid(row=Row, column=8, padx=5, pady=5, stick=W)
 	#master.UseSimpleTemplate.set(1)
 
-	Button(Tab, text=master.LanguagePack.Button['Load'], width=10, command= master._load_report).grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
-	Button(Tab, text=master.LanguagePack.Button['Save'], width=10, command= master._save_report).grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
+	Button(Tab, text=master.LanguagePack.Button['Load'], width=10, command= master._load_report, style=master.Btn_Style).grid(row=Row, column=9, padx=5, pady=5, stick=W+E)
+	Button(Tab, text=master.LanguagePack.Button['Save'], width=10, command= master._save_report, style=master.Btn_Style).grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 
 	Row+=1
 	Label(Tab, width=10, text=master.LanguagePack.Label['Report']).grid(row=Row, column=1, columnspan=2, padx=5, pady=5, stick=W)
 	
 	Label(Tab, width=10, text=master.LanguagePack.Label['Search']).grid(row=Row, column=4, padx=5, pady=5, stick=W)
 
-	master.search_entry = AutocompleteEntry([], Tab, listboxLength=6, width=100, matchesFunction=matches)
+	master.search_entry = AutocompleteEntry([], Tab, listboxLength=6, width=75, matchesFunction=matches)
 	master.search_entry.grid(row=Row, column=5, columnspan=6, padx=5, pady=5, sticky=E)
 
 	Row+=1
-	master.TextTestReport = CustomText(Tab, width=130, height=8, undo=True, wrap=WORD)
+	master.TextTestReport = CustomText(Tab, width=100, height=8, undo=True, wrap=WORD)
 	master.TextTestReport.grid(row=Row, column=1, columnspan=10, rowspan=7, padx=5, pady=5, stick=W+E)
 	Row+=7
 	
@@ -896,7 +890,7 @@ def Generate_BugWriter_UI(master, Tab):
 	master.ReviewReportBtn = Button(Tab, text="Review Report", width=10, command = lambda: review_report(master), state=DISABLED, style=master.Btn_Style)
 	master.ReviewReportBtn.grid(row=Row, column=9, padx=5, pady=5, stick=W+E)	
 
-	master.GetReportBtn = Button(Tab, text=master.LanguagePack.Button['GetReport'], width=10, command= master.generate_report, state=DISABLED)
+	master.GetReportBtn = Button(Tab, text=master.LanguagePack.Button['GetReport'], width=10, command= master.generate_report, state=DISABLED, style=master.Btn_Style)
 	master.GetReportBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 	
 
@@ -950,8 +944,7 @@ def Generate_MDNF_BugWriter_UI(master, Tab):
 	master.search_entry = AutocompleteEntry([], Tab, listboxLength=6, width=50, matchesFunction=matches)
 	master.search_entry.grid(row=Row, column=5, columnspan=5, padx=5, pady=5, sticky=W+E)
 
-
-	master.GetTitleBtn = Button(Tab, text=master.LanguagePack.Button['GetTitle'], width=10, command=master.GetTitle, state=DISABLED, style=master.Btn_Style)
+	master.GetTitleBtn = Button(Tab, text=master.LanguagePack.Button['GetTitle'], width=10, command=master.GetTitle, style=master.Btn_Style, state=DISABLED)
 	master.GetTitleBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 	
 	Row+=1
@@ -1167,8 +1160,14 @@ def Generate_SimpleTranslator_UI(master, Tab):
 	#Right_Frame.pack(side = RIGHT, fill=BOTH, expand= False)
 	Main_Frame = Frame(Tab)
 	Main_Frame.pack(side = BOTTOM, fill=BOTH, expand= False)
-
-
+	
+	master.parent.update()
+	x_delta = int(round((master.parent.winfo_width() - 1080)/20))
+	master.SOURCE_WIDTH += x_delta
+	print(master.SOURCE_WIDTH, master.parent.winfo_width())
+	print(master.ROW_SIZE, master.parent.winfo_height())
+	y_delta = int(round((master.parent.winfo_height() - 560)/20))
+	master.ROW_SIZE += y_delta 
 	Row=1
 	Label(Top_Frame, textvariable=master.Notice).grid(row=Row, column=0, columnspan=10, padx=5, pady=5, sticky=W+E)
 
