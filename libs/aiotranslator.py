@@ -896,7 +896,8 @@ class Translator:
 			ToTranslate = [source_text]
 
 		#Preprocessing translate text:
-		source_text = self.add_notranslate_tag(source_text)
+		if self.used_tool == 'writer':
+			source_text = self.add_notranslate_tag(source_text)
 		# Supported language codes: https://cloud.google.com/translate/docs/languages
 		
 		Client = translator.TranslationServiceClient()

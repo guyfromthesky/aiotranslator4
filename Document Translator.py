@@ -56,9 +56,12 @@ from libs.tkinter_extension import AutocompleteCombobox
 from google.cloud import logging
 import pandas as pd
 
+import pkgutil
+
+
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4125
+rev = 4126
 ver_num = get_version(rev) 
 version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
 
@@ -2043,10 +2046,52 @@ def main():
 	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
 
 	#application = DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue, status_queue = StatusQueue, my_translator_queue = MyTranslatorQueue, my_db_queue = MyDB, tm_manager = TMManager)
+	try:
+		version_byte_data = pkgutil.get_data( 'Document Translator', 'source/version.txt' )
+		print(version_byte_data)
+		version = version_byte_data.decode('utf-8')
+		print('Ver num', version)
+		messagebox.showinfo(title='Ver num', message=version)
+
+		#root.iconbitmap(r"theme\ico\ico.ico")
+	except Exception as e:
+		print('1.Error while loading version number', e)
+	try:
+		version_byte_data = pkgutil.get_data( 'source', 'version.txt' )
+		print(version_byte_data)
+		version = version_byte_data.decode('utf-8')
+		print('Ver num', version)
+		messagebox.showinfo(title='Ver num', message=version)
+
+		#root.iconbitmap(r"theme\ico\ico.ico")
+	except Exception as e:
+		print('2.Error while loading version number', e)
+	try:
+		version_byte_data = pkgutil.get_data( 'source', 'source/version.txt' )
+		print(version_byte_data)
+		version = version_byte_data.decode('utf-8')
+		print('Ver num', version)
+		messagebox.showinfo(title='Ver num', message=version)
+
+		#root.iconbitmap(r"theme\ico\ico.ico")
+	except Exception as e:
+		print('3.Error while loading version number', e)
+	try:
+		version_byte_data = pkgutil.get_data( 'source/source', 'version.txt' )
+		print(version_byte_data)
+		version = version_byte_data.decode('utf-8')
+		print('Ver num', version)
+		messagebox.showinfo(title='Ver num', message=version)
+
+		#root.iconbitmap(r"theme\ico\ico.ico")
+	except Exception as e:
+		print('3.Error while loading version number', e)
 
 	try:
 		application = DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue, status_queue = StatusQueue, my_translator_queue = MyTranslatorQueue, my_db_queue = MyDB, tm_manager = TMManager)
 		root.mainloop()
+	
+		
 		#print('Root is terminated sending logging from current session')
 		#app.MyTranslator.send_tracking_record()
 		#Remove created process
@@ -2058,7 +2103,7 @@ def main():
 		except Exception as e2:
 			print(e2)
 		print("Fail to launch the application:", e)	
-		messagebox.showinfo(title='Fail to launch the application', message=e)
+		messagebox.showinfo(title='Fail to launch the application', message="Error details has been reported.\n Please contact with me (evan) if you need urgent support.")
 
 
 if __name__ == '__main__':
