@@ -15,8 +15,7 @@ IMPORTANT: Do NOT post this list to the issue-tracker. Use it as a basis for
             tracking down the missing module yourself. Thanks!
 
 missing module named _posixshmem - imported by multiprocessing.resource_tracker (conditional), multiprocessing.shared_memory (conditional)
-missing module named org - imported by copy (optional)
-missing module named 'org.python' - imported by pickle (optional), xml.sax (delayed, conditional), setuptools.sandbox (conditional)
+missing module named 'org.python' - imported by copy (optional), xml.sax (delayed, conditional), setuptools.sandbox (conditional)
 missing module named 'java.lang' - imported by platform (delayed, optional), xml.sax._exceptions (conditional)
 missing module named multiprocessing.BufferTooShort - imported by multiprocessing (top-level), multiprocessing.connection (top-level)
 missing module named multiprocessing.AuthenticationError - imported by multiprocessing (top-level), multiprocessing.connection (top-level)
@@ -268,6 +267,7 @@ missing module named win32evtlog - imported by logging.handlers (delayed, option
 missing module named win32evtlogutil - imported by logging.handlers (delayed, optional)
 missing module named Image - imported by pptx.parts.image (optional)
 missing module named 'pptx.exceptions' - imported by pptx.opc.serialized (top-level)
+missing module named org - imported by pickle (optional)
 missing module named fcntl - imported by subprocess (optional)
 missing module named multiprocessing.freeze_support - imported by multiprocessing (top-level), C:\Users\evan\Documents\GitHub\aiotranslator4\Document Translator.py (top-level)
 missing module named multiprocessing.Manager - imported by multiprocessing (top-level), C:\Users\evan\Documents\GitHub\aiotranslator4\Document Translator.py (top-level), libs.documentprocessing (top-level), Shared.libs.documentprocessing (top-level)
