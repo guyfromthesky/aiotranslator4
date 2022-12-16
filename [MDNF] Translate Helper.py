@@ -73,6 +73,7 @@ ver_num = get_version(REV)
 DELAY = 20
 DELAY2 = 300000
 
+
 #**********************************************************************************
 # UI handle ***********************************************************************
 #**********************************************************************************
@@ -1328,15 +1329,6 @@ class MyTranslatorHelper(Frame):
 
 	def ResetInfoSection(self):
 		self.EnvInfo.delete("1.0", END)	
-		self.EnvInfo.insert("end", "Platform: ")
-		self.EnvInfo.insert("end", "\nDeviceModel: ")
-		self.EnvInfo.insert("end", "\nBuildType: ")
-		self.EnvInfo.insert("end", "\nClientVersion: ")
-		self.EnvInfo.insert("end", "\nResVersion: ")
-		self.EnvInfo.insert("end", "\nVersionCode: ")
-		self.EnvInfo.insert("end", "\nScriptVersionCode: ")
-		self.EnvInfo.insert("end", "\nClientCommitID: ")
-		self.EnvInfo.insert("end", "\nScriptCommitID: ")
 
 	#GUI function
 	def collect_report_elements(self):
@@ -1727,7 +1719,20 @@ def correct_sentence(result_manager, sentence_list, language):
 	language_tool.language_tool.close()
 	return
 
+def ListToString(List, repro):
+	Details = ''
+	if (repro == 0):
+		for row in List:
+			Details += row + '\r\n\r\n'
+	else:
+		line = 1
+		for row in List:
+			Details += '*'+str(line)+')* '+ row + '\r\n\r\n'
+			line+=1
+	return Details
+
 #Bug Writer 
+ 
 def Translate_Simple(Object, simple_template, my_translator, secondary_target_language = None):
 	
 	to_translate = []
@@ -1806,59 +1811,52 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 		if secondary_target_language not in [None, '']:
 			secondary_TextReproduceSteps.append(second_language_translation[index])	
 
-	Lang = my_translator.to_language
-	
+	Lang = my_translator.to_language	
 
-	strReport_to_language = Create_Row_CSS_Section("상세설명", New_TextTestReport)	
-	strReprodSteps_to_language = Create_Step_CSS_Section("재현스텝", New_TextReproduceSteps)	
-	strShouldBe_to_language = Create_Row_CSS_Section("기대결과", New_TextShouldBe)	
-
-	strReport_from_language = Create_Row_CSS_Section("Detail Description", Old_TextTestReport)	
-	strReprodSteps_from_language = Create_Step_CSS_Section("Reproduce Steps", Old_TextReproduceSteps)	
-	strShouldBe_from_language = Create_Row_CSS_Section("Expected Result", Old_TextShouldBe)	
-	
 	CssText = ''
-	CssText += strReport_to_language
-	CssText += '\r\n'
-	CssText += strReprodSteps_to_language
-	CssText += '\r\n'
-	CssText += '<p><b>[재현빈도]</b><br/></p>' 
-	CssText += '\r\n'
+	CssText += '*[상세설명]*'
+	CssText += '\r\n\r\n'
+	CssText += ListToString(New_TextTestReport, 0)
+	CssText += '\r\n\r\n'
+	CssText += '*[재현스텝]*'
+	CssText += '\r\n\r\n'
+	CssText += ListToString(New_TextReproduceSteps, 1)
+	CssText += '\r\n\r\n'
+	CssText += '*[재현빈도]*' 
+	CssText += '\r\n\r\n'
 			
 	Reproducibility = Object['Reproducibility']
 
-	CssText += '<p>'+ Reproducibility + '&nbsp;</p>'
-	CssText += '\r\n'
-	CssText += strShouldBe_to_language
-	CssText += '\r\n'
-	CssText += '<p><b>[환경정보]</b><br/></p>' 
+	CssText += Reproducibility
+	CssText += '\r\n\r\n'
+	CssText += '*[기대결과]*'
+	CssText += '\r\n\r\n'
+	CssText += ListToString(New_TextShouldBe, 0)
+	CssText += '\r\n\r\n' 
 
-
-	EnvInfo = Object['EnvInfo'].split('\n')
-
-	for item in EnvInfo:
-		if str(item) != "":
-			CssText += '\r\n'
-			CssText += '<p>'+ item + '</p>'
-
-	CssText += '\r\n'
-	CssText += '<p><span style="font-size:14pt"><span style="color:#3498db"><b>제2언어 - Secondary language</b></span></span></p>'
-	CssText += strReport_from_language
-	CssText += '\r\n'
-	CssText += strReprodSteps_from_language
-	CssText += '\r\n'
-	CssText += '<p><b>[Reproducibility]</b><br/></p>' 
-	CssText += '\r\n'
+	CssText += '*제2언어 - Secondary language*'
+	CssText += '\r\n\r\n'
+	CssText += '*[Detail Description]*'
+	CssText += '\r\n\r\n'
+	CssText += ListToString(Old_TextTestReport, 0)
+	CssText += '\r\n\r\n'
+	CssText += '*[Reproduce Steps]*'
+	CssText += '\r\n\r\n'
+	CssText += ListToString(Old_TextReproduceSteps, 1)
+	CssText += '\r\n\r\n'
+	CssText += '*[Reproducibility]*' 
+	CssText += '\r\n\r\n'
 			
 	Reproducibility = Object['Reproducibility']
 
-	CssText += '<p>'+ Reproducibility + '&nbsp;</p>'
-	CssText += '\r\n'
-	CssText += strShouldBe_from_language
-	CssText += '\r\n'
+	CssText += Reproducibility
+	CssText += '\r\n\r\n'
+	CssText += '*[Expected Result]*'
+	CssText += '\r\n\r\n'
+	CssText += ListToString(Old_TextShouldBe, 0)
 	
 	print('Copy to clipboard')
-	copy(CssText)
+	copy(CssText.strip())
 
 def Create_Step_CSS_Section(Title, Text_List):
 	

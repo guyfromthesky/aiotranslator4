@@ -669,7 +669,7 @@ def Generate_Translate_Setting_UI(master, Tab):
 
 
 	Top_Frame = Frame(Tab)
-	Top_Frame.pack(side = TOP, fill=BOTH, expand= False)
+	Top_Frame.pack(side = TOP, fill=None, expand= False)
 
 	Right_Frame = Frame(Tab)
 	Right_Frame.pack(side = RIGHT, fill=BOTH, expand= False)
@@ -997,6 +997,7 @@ def Generate_MDNF_BugWriter_UI(master, Tab):
 	Row+=1
 	master.EnvInfo = Text(Tab, width=40, height=9, undo=True)
 	master.EnvInfo.grid(row=Row, column=1, columnspan=3, rowspan= 9,  padx=5, pady=5, stick=W+E)
+	master.EnvInfo.config(state=DISABLED)
 	
 	master.ResetInfoSection()
 	
@@ -1154,7 +1155,7 @@ def matches(fieldValue, acListEntry):
 
 def Generate_SimpleTranslator_UI(master, Tab):
 	Top_Frame = Frame(Tab)
-	Top_Frame.pack(side = TOP, fill=BOTH, expand= False)
+	Top_Frame.pack(side = TOP, fill=None, expand= False)
 
 	#Right_Frame = Frame(Tab)
 	#Right_Frame.pack(side = RIGHT, fill=BOTH, expand= False)
