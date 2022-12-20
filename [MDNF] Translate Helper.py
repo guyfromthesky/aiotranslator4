@@ -66,13 +66,14 @@ from google.cloud import logging
 
 tool_display_name = "[MDNF] Translate Helper"
 tool_name = 'writer'
-REV = 4124
+REV = 4125
 ver_num = get_version(REV) 
 #VERSION = tool_display_name  + " " +  ver_num + " | Language Tool v5.6"
 
 DELAY = 20
 DELAY2 = 300000
 
+isSimpleTranslated = False
 
 #**********************************************************************************
 # UI handle ***********************************************************************
@@ -232,6 +233,9 @@ class MyTranslatorHelper(Frame):
 			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
 			self.bottom_panel = BugWriter_BottomPanel(self)
 			self.apply_theme_color()
+			self.SourceText.bind('<KeyRelease>', self.SourceTextCallback)
+
+			
 		except Exception as e:
 			print(f'An error occurs while initializing UI: {e}')
 
@@ -800,6 +804,7 @@ class MyTranslatorHelper(Frame):
 		self.after(DELAY, self.GetSimpleTranslateStatus)
 
 	def GetSimpleTranslateStatus(self):
+		global isSimpleTranslated
 		if (self.p3.is_alive()):
 			self.after(DELAY, self.GetSimpleTranslateStatus)
 		else:
@@ -838,7 +843,7 @@ class MyTranslatorHelper(Frame):
 						self.SourceText.highlight_pattern(pattern, 'blue')
 					'''
 					self.Notice.set(self.LanguagePack.ToolTips['Translated'])
-					
+					isSimpleTranslated = True
 				else:
 					#Show = "\n".join(Translated)
 					#self.TargetText.insert("end", 'Fail to translate')
@@ -903,6 +908,7 @@ class MyTranslatorHelper(Frame):
 		self.after(DELAY, self.get_dual_translate_result)
 
 	def get_dual_translate_result(self):
+		global isSimpleTranslated
 		"""
 		[Dual Translate] button in Simple Translator
 		Generate the translated text in Target Text textbox.
@@ -960,7 +966,7 @@ class MyTranslatorHelper(Frame):
 						self.SourceText.highlight_pattern(pattern, 'blue')
 					'''
 					self.Notice.set(self.LanguagePack.ToolTips['Translated'])
-					
+					isSimpleTranslated = True
 				else:
 					#Show = "\n".join(Translated)
 					#self.TargetText.insert("end", 'Fail to translate')
@@ -970,14 +976,22 @@ class MyTranslatorHelper(Frame):
 				pass			
 
 	#Execute function
+	def SourceTextCallback(self, event):
+		global isSimpleTranslated
+		isSimpleTranslated = False
+	
 	def BtnCopy(self):
-
-		self.get_source_text()
-		
+		#self.get_source_text()			
 		#Translated = self.TargetText.get("1.0", END)
 		#Translated = Translated.replace('\r', '')
-		copy(self.main_translation)
-		self.Notice.set(self.LanguagePack.ToolTips['Copied'])
+		if isSimpleTranslated:
+			copy(self.TargetText.get("1.0", END).strip())
+			self.Notice.set(self.LanguagePack.ToolTips['Copied'])
+		else:
+			if messagebox.askokcancel(tool_display_name, "You might haven't translated yet. Please double check!\nIf you're sure that you have translated, press OK to copy!"):			
+				copy(self.TargetText.get("1.0", END).strip())
+				self.Notice.set(self.LanguagePack.ToolTips['Copied'])
+
 
 	def btn_bilingual_copy(self):
 		"""
@@ -985,15 +999,19 @@ class MyTranslatorHelper(Frame):
 		Copy the text in Source Text and Target Text to the clipboard when clicked.
 		"""
 
-		self.get_source_text()
+		#self.get_source_text()
 
 		# Copy all text in the Source Text and Target Text textbox
-		bilingual = self.TargetText.get("1.0", END) + "\n"
+		bilingual = self.TargetText.get("1.0", END).strip() + "\n"
 		bilingual += self.Separator + "\n"
-		bilingual += self.SourceText.get("1.0", END)
-		
-		copy(bilingual)
-		self.Notice.set(self.LanguagePack.ToolTips['Copied'])
+		bilingual += self.SourceText.get("1.0", END).strip()
+		if isSimpleTranslated:
+			copy(bilingual)
+			self.Notice.set(self.LanguagePack.ToolTips['Copied'])
+		else:
+			if messagebox.askokcancel(tool_display_name, "You might haven't translated yet. Please double check!\nIf you're sure that you have translated, press OK to copy!"):
+				copy(bilingual)
+				self.Notice.set(self.LanguagePack.ToolTips['Copied'])
 
 	def btn_trilingual(self):
 		
@@ -1002,18 +1020,20 @@ class MyTranslatorHelper(Frame):
 			messagebox.showinfo('Warning', 'Secondary target language is EMPTY.\nPlease select the secondary target language or use Bilingual Copy instead.')	
 			self.btn_bilingual_copy()
 			return
-		self.get_source_text()
+		#self.get_source_text()
 
 		trilingual = self.main_translation + "\n"	
 		trilingual += self.Separator + "\n"
 		trilingual += self.source_text + "\n"
 		trilingual += self.Separator + "\n"
 		trilingual += self.primary_translation
-	
-		copy(trilingual)
-
-		self.Notice.set(self.LanguagePack.ToolTips['Copied'])
-
+		if isSimpleTranslated:
+			copy(trilingual)
+			self.Notice.set(self.LanguagePack.ToolTips['Copied'])
+		else:
+			if messagebox.askokcancel(tool_display_name, "You might haven't translated yet. Please double check!\nIf you're sure that you have translated, press OK to copy!"):
+				copy(trilingual)
+				self.Notice.set(self.LanguagePack.ToolTips['Copied'])
 
 	def BtnTranslateAndBilingual(self):
 		copy("")

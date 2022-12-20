@@ -1,5 +1,6 @@
 pip install virtualenv
-
-virtualenv translator
+mkdir %userprofile%\virtualenv\
+virtualenv %userprofile%\virtualenv\
+%userprofile%\virtualenv\Scripts\activate
 pip install pyinstaller
-pip install requirements.txt
+pip install -r requirements.txt
