@@ -872,7 +872,7 @@ class Translator:
 	def add_notranslate_tag(self, source_text):
 		for index in range(len(source_text)):
 			string_to_translate = source_text[index]
-			special_texts = re.findall("\<([^\"]*)\>", string_to_translate)
+			special_texts = re.findall("\<([^\>]*)\>", string_to_translate)
 			#print('special_texts list', special_texts)
 			for special_text in special_texts:
 				source_text[index]  = string_to_translate.replace("<" + special_text + ">", ("<span class=\"notranslate\">" + special_text + "</span>"))
