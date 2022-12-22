@@ -66,7 +66,7 @@ from google.cloud import logging
 
 tool_display_name = "[MDNF] Translate Helper"
 tool_name = 'writer'
-REV = 4125
+REV = 4126
 ver_num = get_version(REV) 
 #VERSION = tool_display_name  + " " +  ver_num + " | Language Tool v5.6"
 
@@ -988,7 +988,7 @@ class MyTranslatorHelper(Frame):
 			copy(self.TargetText.get("1.0", END).strip())
 			self.Notice.set(self.LanguagePack.ToolTips['Copied'])
 		else:
-			if messagebox.askokcancel(tool_display_name, "You might haven't translated yet. Please double check!\nIf you're sure that you have translated, press OK to copy!"):			
+			if messagebox.askokcancel(tool_display_name, "Translation mismatches. Please double check!\nIf you have translated, press OK to copy."):			
 				copy(self.TargetText.get("1.0", END).strip())
 				self.Notice.set(self.LanguagePack.ToolTips['Copied'])
 
@@ -1009,7 +1009,7 @@ class MyTranslatorHelper(Frame):
 			copy(bilingual)
 			self.Notice.set(self.LanguagePack.ToolTips['Copied'])
 		else:
-			if messagebox.askokcancel(tool_display_name, "You might haven't translated yet. Please double check!\nIf you're sure that you have translated, press OK to copy!"):
+			if messagebox.askokcancel(tool_display_name, "Translation mismatches. Please double check!\nIf you have translated, press OK to copy."):
 				copy(bilingual)
 				self.Notice.set(self.LanguagePack.ToolTips['Copied'])
 
@@ -1020,7 +1020,6 @@ class MyTranslatorHelper(Frame):
 			messagebox.showinfo('Warning', 'Secondary target language is EMPTY.\nPlease select the secondary target language or use Bilingual Copy instead.')	
 			self.btn_bilingual_copy()
 			return
-		#self.get_source_text()
 
 		trilingual = self.main_translation + "\n"	
 		trilingual += self.Separator + "\n"
@@ -1031,7 +1030,7 @@ class MyTranslatorHelper(Frame):
 			copy(trilingual)
 			self.Notice.set(self.LanguagePack.ToolTips['Copied'])
 		else:
-			if messagebox.askokcancel(tool_display_name, "You might haven't translated yet. Please double check!\nIf you're sure that you have translated, press OK to copy!"):
+			if messagebox.askokcancel(tool_display_name, "Translation mismatches. Please double check!\nIf you have translated, press OK to copy."):
 				copy(trilingual)
 				self.Notice.set(self.LanguagePack.ToolTips['Copied'])
 

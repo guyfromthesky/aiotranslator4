@@ -956,7 +956,7 @@ def Generate_MDNF_BugWriter_UI(master, Tab):
 	master.HeaderOptionA.set_completion_list(master.header_list)
 	master.HeaderOptionA.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
 	
-	master.TextTitle = CustomText(Tab, width=90, height=3, undo=True, wrap=WORD)
+	master.TextTitle = CustomText(Tab, width=90, height=3, undo=True, wrap=WORD, inactiveselectbackground="grey")
 	master.TextTitle.grid(row=Row, column=4, columnspan=7, rowspan=2, padx=5, pady=5, stick=W+E)
 	
 	Row+=1
@@ -970,7 +970,7 @@ def Generate_MDNF_BugWriter_UI(master, Tab):
 	# Report
 	Row+=1
 	Label(Tab, text=master.LanguagePack.Label['Reproducibility']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
-	master.Reproducibility = Text(Tab, width=20, height=1, undo=True)
+	master.Reproducibility = Text(Tab, width=20, height=1, undo=True, inactiveselectbackground="grey")
 	master.Reproducibility.grid(row=Row, column=2, columnspan=2,  padx=5, pady=5, stick=W+E)		
 
 
@@ -995,14 +995,13 @@ def Generate_MDNF_BugWriter_UI(master, Tab):
 	Button(Tab, text=master.LanguagePack.Button['Save'], width=10, command= master._save_report, style=master.Btn_Style).grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 
 	Row+=1
-	master.EnvInfo = Text(Tab, width=40, height=9, undo=True)
+	master.EnvInfo = Text(Tab, width=40, height=9, undo=True, inactiveselectbackground="grey")
 	master.EnvInfo.grid(row=Row, column=1, columnspan=3, rowspan= 9,  padx=5, pady=5, stick=W+E)
-	master.EnvInfo.config(state=DISABLED)
 	
 	master.ResetInfoSection()
 	
 
-	master.TextTestReport = CustomText(Tab, width=90, height=9, undo=True, wrap=WORD)
+	master.TextTestReport = CustomText(Tab, width=90, height=9, undo=True, wrap=WORD, inactiveselectbackground="grey")
 	master.TextTestReport.grid(row=Row, column=4, columnspan=7, rowspan=9, padx=5, pady=5, stick=W+E)
 	Row+=8
 	
@@ -1031,9 +1030,9 @@ def Generate_MDNF_BugWriter_UI(master, Tab):
 	
 
 	Row+=1
-	master.TextReproduceSteps = CustomText(Tab, width=50, height=7, undo=True, wrap=WORD)
+	master.TextReproduceSteps = CustomText(Tab, width=50, height=7, undo=True, wrap=WORD, inactiveselectbackground="grey")
 	master.TextReproduceSteps.grid(row=Row, column=1, columnspan=5, rowspan=7, padx=5, pady=5, stick=W+E)
-	master.TextShouldBe = CustomText(Tab, width=50, height=7, undo=True, wrap=WORD) 
+	master.TextShouldBe = CustomText(Tab, width=50, height=7, undo=True, wrap=WORD, inactiveselectbackground="grey") 
 	master.TextShouldBe.grid(row=Row, column=6, columnspan=5, padx=5, pady=5, stick=W+E)
 	
 	if master.language_tool_enable == True:
@@ -1178,11 +1177,11 @@ def Generate_SimpleTranslator_UI(master, Tab):
 	#New Row
 
 	Row +=1
-	master.SourceText = Text(Main_Frame, width = master.SOURCE_WIDTH, height=master.ROW_SIZE, undo=True) 
+	master.SourceText = Text(Main_Frame, width = master.SOURCE_WIDTH, height=master.ROW_SIZE, undo=True, inactiveselectbackground="grey") 
 	master.SourceText.grid(row=Row, column=0, columnspan=5, rowspan=master.ROW_SIZE, padx=5, pady=5, sticky=N+S+E+W)
 	master.SourceText.bind("<Double-Tab>", master.BindSwap)
 
-	master.TargetText = Text(Main_Frame, width = master.SOURCE_WIDTH, height=master.ROW_SIZE, undo=True) #
+	master.TargetText = Text(Main_Frame, width = master.SOURCE_WIDTH, height=master.ROW_SIZE, undo=True, inactiveselectbackground="grey") #
 	master.TargetText.grid(row = Row, column=5, columnspan=5, rowspan=master.ROW_SIZE, padx=5, pady=5, sticky=N+S+E+W)
 	
 	Row +=master.ROW_SIZE
