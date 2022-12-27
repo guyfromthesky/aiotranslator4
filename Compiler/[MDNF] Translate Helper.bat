@@ -1,2 +1,2 @@
-"D:\App\translator_env\Scripts\pyinstaller.exe" "..\[MDNF] Translate Helper.py" -F -w --additional-hooks-dir="..\hooks" --clean --icon="..\icon\Translate Helper.ico"
+"D:\All env\Translator Env\Scripts\pyinstaller.exe" "C:\Users\evan\Documents\GitHub\aiotranslator4\Compiler\[MDNF] Translate Helper.spec"
 cmd /k
