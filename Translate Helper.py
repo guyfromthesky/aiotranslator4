@@ -347,7 +347,6 @@ class MyTranslatorHelper(Frame):
 
 	def init_theme(self):
 		"""Applied the theme name saved in the settings on init."""
-		print('init_theme')
 		try:
 			self.theme_names = self.style.theme_names()
 							#	['cosmo', 'flatly', 'litera', 'minty',
@@ -1813,11 +1812,11 @@ def main():
 	#root.iconbitmap(r"theme\ico\ico.ico")
 	
 	#root.geometry("400x350+300+300")
-	application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
+	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 
 	try:
 		#root.attributes('-topmost', True)
-		#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
+		application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 		
 		icon_path = resource_path('resource/translate_helper.ico')
 		print(icon_path)

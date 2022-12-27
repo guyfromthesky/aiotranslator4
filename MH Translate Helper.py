@@ -1890,12 +1890,12 @@ def main():
 		VERSION = tool_display_name  + " " +  ver_num	
 
 	root = Tk()
-	application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
+	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 		
 	try:
 		print('Update UI')
 		#root.attributes('-topmost', True)
-		#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
+		application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 		#application.pack(fill="both", expand=True)
 		#root.attributes('-topmost', False)
 		icon_path = resource_path('resource/translate_helper.ico')

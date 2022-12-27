@@ -66,7 +66,7 @@ from google.cloud import logging
 
 tool_display_name = "[MDNF] Translate Helper"
 tool_name = 'writer'
-REV = 4126
+REV = 4127
 ver_num = get_version(REV) 
 #VERSION = tool_display_name  + " " +  ver_num + " | Language Tool v5.6"
 
@@ -235,7 +235,8 @@ class MyTranslatorHelper(Frame):
 			Generate_SimpleTranslator_UI(self, self.SimpleTranslatorTab)
 			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
 			self.bottom_panel = BugWriter_BottomPanel(self)
-			
+			self.SourceText.bind('<KeyRelease>', self.SourceTextCallback)
+
 		except Exception as e:
 			print(f'An error occurs while initializing UI: {e}')
 
@@ -827,6 +828,10 @@ class MyTranslatorHelper(Frame):
 				pass			
 
 	#Execute function
+	def SourceTextCallback(self, event):
+		global isSimpleTranslated
+		isSimpleTranslated = False
+
 	def BtnCopy(self):
 		#self.get_source_text()			
 		#Translated = self.TargetText.get("1.0", END)
@@ -1874,15 +1879,15 @@ def main():
 		
 	try:
 		print('Update UI')
-		
+
+
+		application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
+		#application.pack(fill="both", expand=True)
+				
 		icon_path = resource_path('resource/translate_helper.ico')
 		print(icon_path)
 		if os.path.isfile(icon_path):
 			root.iconbitmap(icon_path)
-
-		application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
-		#application.pack(fill="both", expand=True)
-	
 		#root.deiconify()
 		#root.configure(**darkmode) 
 	
