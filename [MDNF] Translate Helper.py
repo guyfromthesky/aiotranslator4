@@ -16,8 +16,8 @@ from datetime import date
 from pyperclip import copy, paste
 #from tkinter import *
 #from tkinter.ttk import *
-from tkinter.ttk import Entry, Label, Style
-from tkinter.ttk import Checkbutton, OptionMenu, Notebook, Radiobutton, LabelFrame, Button
+from ttkbootstrap import Entry, Label, Style
+from ttkbootstrap import Checkbutton, OptionMenu, Notebook, Radiobutton, LabelFrame, Button
 from tkinter import Tk, Frame, Toplevel, Canvas, Scale, colorchooser
 
 # Widget type
@@ -92,8 +92,11 @@ class MyTranslatorHelper(Frame):
 		self.parent = parent
 		self.parent.protocol("WM_DELETE_WINDOW", self.on_closing)
 		
+
 		Frame.__init__(self, parent)
 		self.pack(side=TOP, expand=Y, fill=X)
+		self.style =  Style()
+
 
 		self.MyTranslator_Queue = MyTranslator_Queue
 		self.MyTranslator = None
@@ -232,9 +235,6 @@ class MyTranslatorHelper(Frame):
 			Generate_SimpleTranslator_UI(self, self.SimpleTranslatorTab)
 			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
 			self.bottom_panel = BugWriter_BottomPanel(self)
-			self.apply_theme_color()
-			self.SourceText.bind('<KeyRelease>', self.SourceTextCallback)
-
 			
 		except Exception as e:
 			print(f'An error occurs while initializing UI: {e}')
@@ -332,50 +332,25 @@ class MyTranslatorHelper(Frame):
 
 	def init_theme(self):
 		"""Applied the theme name saved in the settings on init."""
-		print('init_theme')
 		try:
-			self.theme_names = ['clam']
-			
-			style = Style(self.parent) # self.parent is root
-			#supported_themes = ['awdark', 'awlight']
-			supported_themes = ['awdark', 'awlight', 'forest-dark', 'forest-light']
-			# theme_dir = self.AppConfig.theme_loading_path
-			theme_dir = os.path.join(os.getcwd() + r'\\theme')
-			theme_files = os.listdir(theme_dir)
-			# Add to theme selection in Translate Setting tab
-			for theme_file in theme_files:
-				file_name, file_ext = os.path.splitext(theme_file)
-				if file_ext == '.tcl':
-					if file_name in supported_themes:
-						# Import tcl files
-						print('Import theme:', f'{theme_dir}\\{theme_file}')
-						self.parent.tk.call(
-							"source", f'{theme_dir}\\{theme_file}')
-						self.theme_names.append(file_name)
-				else:
-					continue
-			# System default color is removed if adding below!!!!
-			# style.map(
-			# 	'.', #'.' means all ttk widgets
-			# 	foreground=fixed_map(style, 'foreground'),
-			# 	background=fixed_map(style, 'background'))
-
+			self.theme_names = self.style.theme_names()
+							#	['cosmo', 'flatly', 'litera', 'minty',
+							#	"lumen", "sandstone",	"yeti", "pulse", 
+							#	"united", "morph", "journal", "darkly", 'superhero', 
+							#	'solar', 'cyborg', 'vapor', 'simplex', 'cerculean'
+							#		, 'pinky']
 			if self.used_theme not in self.theme_names:
 				raise Exception('Cannot use the theme saved in the config'
 					' because it is not supported or required files have'
 					' been removed.')
 
-			# # Add all available theme
-			# for theme_name in style.theme_names():
-			# 	self.theme_names.append(theme_name)
-			self.change_theme_color(self.used_theme)
-			style.theme_use(self.used_theme)
+			self.style.theme_use(self.used_theme)
+
 		except Exception as err:
 			print('Error while initializing theme:\n'
 				f'- {err}\n'
 				'The system default theme will be used instead.')
 		transparency  = self.Configuration['Bug_Writer']['Transparent']
-
 		Apply_Transparency(transparency, self)
 
 
@@ -404,130 +379,6 @@ class MyTranslatorHelper(Frame):
 			messagebox.showerror(
 				title='Error',
 				message=f'Error occurs when selecting theme: {err}')
-
-	def change_theme_color(self, theme_name: str):
-		print('change_theme_color', theme_name)
-		"""Change widget color.
-		
-		Args:
-			theme_name -- str
-				Theme that is available on the computer. Retrieved
-				from config or selection in Translate Setting tab.
-		"""
-		# if theme_name == 'awdark':
-		# 	self.widget_color = {
-		# 		'parent_bg': '#191c1d',
-		# 		'frame_bg': '#191c1d',
-		# 		'menu_bg': '#474D4E',
-		# 		'menu_fg': 'white',
-		# 		'text_bg': '#191c1d',
-		# 		'text_fg': 'white',
-		# 		'text_insertbackground': 'white'
-		# 	}
-		if theme_name == 'awdark':
-			self.widget_color = {
-				'parent_bg': '#33393b',
-				'frame_bg': '#33393b',
-				'menu_bg': '#474D4E',
-				'menu_fg': '#ffffff',
-				'text_bg': '#191c1d',
-				'text_fg': '#ffffff',
-				'text_insertbackground': '#ffffff',
-				'label_bg': '#393f3f',
-				'label_fg': 'white'
-			}
-		elif theme_name == 'breeze':
-			self.widget_color = {
-				'parent_bg': '#e8e8e7',
-				'frame_bg': '#e8e8e7',
-				'menu_bg': '#e8e8e7',
-				'menu_fg': '#000000',
-				'text_bg': '#ffffff',
-				'text_fg': '#000000',
-				'text_insertbackground': '#000000',
-				'label_bg': '#191c1d',
-				'label_fg': '#ffffff'
-			}	
-		elif theme_name == 'forest-light':
-			self.widget_color = {
-				'parent_bg': '#ffffff',
-				'frame_bg': '#ffffff',
-				'menu_bg': '#e8e8e7',
-				'menu_fg': '#313131',
-				'text_bg': '#ffffff',
-				'text_fg': '#313131',
-				'text_insertbackground': '#313131',
-			}
-		elif theme_name == 'forest-dark':
-			self.widget_color = {
-				'parent_bg': '#313131',
-				'frame_bg': '#313131',
-				'menu_bg': '#313131',
-				'menu_fg': '#eeeeee',
-				'text_bg': '#313131',
-				'text_fg': '#eeeeee',
-				'text_insertbackground': '#313131',
-			}
-		elif theme_name == 'awlight':
-			self.widget_color = {
-				'parent_bg': '#e8e8e7',
-				'frame_bg': '#e8e8e7',
-				'menu_bg': '#e8e8e7',
-				'menu_fg': '#000000',
-				'text_bg': '#ffffff',
-				'text_fg': '#000000',
-				'text_insertbackground': '#000000',
-				'label_bg': '#191c1d',
-				'label_fg': '#ffffff'
-			}
-		elif theme_name == 'clam':
-			self.widget_color = {
-				'parent_bg': '#dcdad5',
-				'frame_bg': '#dcdad5',
-				'menu_bg': '#dcdad5',
-				'menu_fg': '#000000',
-				'text_bg': '#ffffff',
-				'text_fg': '#000000',
-				'text_insertbackground': '#000000',
-				'label_bg': '#191c1d',
-				'label_fg': '#ffffff'
-			}
-		else:
-			self.widget_color = {
-				'parent_bg': '#ffffff',
-				'frame_bg': 'SystemButtonFace',
-				'menu_bg': 'SystemButtonFace',
-				'menu_fg': '#000000', # font color
-				'text_bg': '#ffffff',
-				'text_fg': '#000000', # font color
-				'text_insertbackground': '#000000',
-				'label_bg': '#191c1d',
-				'label_fg': '#ffffff'
-			}
-	
-	def apply_theme_color(self):
-		print('apply_theme_color')
-		#print('self.frame_widgets', self.frame_widgets)
-		#print('self.menu_widgets', self.menu_widgets)
-		#print('self.text_widgets', self.text_widgets)
-		"""Apply color to widgets."""
-		self.parent['bg'] = self.widget_color['parent_bg']
-		#self.parent['fg'] = self.widget_color['parent_bg']
-
-		for frame_widget in self.frame_widgets:
-			frame_widget['bg'] = self.widget_color['frame_bg']
-		for menu_widget in self.menu_widgets:
-			menu_widget['bg'] = self.widget_color['menu_bg']
-			menu_widget['fg'] = self.widget_color['menu_fg']
-		for text_widget in self.text_widgets:
-			text_widget['bg'] = self.widget_color['text_bg']
-			text_widget['fg'] = self.widget_color['text_fg']
-			text_widget['insertbackground'] = self.widget_color['text_insertbackground']
-		for label_widget in self.label_widgets:
-			label_widget['bg'] = self.widget_color['parent_bg']
-			label_widget['fg'] = self.widget_color['text_fg']
-			#text_widget['insertbackground'] = self.widget_color['text_insertbackground']
-
 
 	def remove_theme(self):
 		print('remove_theme')
@@ -976,10 +827,6 @@ class MyTranslatorHelper(Frame):
 				pass			
 
 	#Execute function
-	def SourceTextCallback(self, event):
-		global isSimpleTranslated
-		isSimpleTranslated = False
-	
 	def BtnCopy(self):
 		#self.get_source_text()			
 		#Translated = self.TargetText.get("1.0", END)
@@ -1228,6 +1075,13 @@ class MyTranslatorHelper(Frame):
 				self.TextTitle.highlight_fault_pattern(term, 'blue')
 				self.TextReproduceSteps.highlight_fault_pattern(term, 'blue')
 				self.TextShouldBe.highlight_fault_pattern(term, 'blue')
+
+	def tag_selected(self, event):
+		self.TextTestReport.tag_selected()
+		self.TextTitle.tag_selected()
+		self.TextReproduceSteps.tag_selected()
+		self.TextShouldBe.tag_selected()
+		self.SourceText.tag_selected()
 
 	def review_report(self):
 
@@ -1977,16 +1831,15 @@ def matches(fieldValue, acListEntry):
 	pattern = re.compile(re.escape(fieldValue) + '.*', re.IGNORECASE)
 	return re.match(pattern, acListEntry)
 
-def fixed_map(style, option):
-	# Fix for setting text colour for Tkinter 8.6.9
-	# From: https://core.tcl.tk/tk/info/509cafafae
-	#
-	# Returns the style map for 'option' with any styles starting with
-	# ('!disabled', '!selected', ...) filtered out.
-	# style.map() returns an empty list for missing options, so this
-	# should be future-safe.
-	return [elm for elm in style.map('Treeview', query_opt=option) if
-	  elm[:2] != ('!disabled', '!selected')]
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 def main():
 	print('Create shareable Memory variable')
@@ -2021,10 +1874,15 @@ def main():
 		
 	try:
 		print('Update UI')
-		root.attributes('-topmost', True)
+		
+		icon_path = resource_path('resource/translate_helper.ico')
+		print(icon_path)
+		if os.path.isfile(icon_path):
+			root.iconbitmap(icon_path)
+
 		application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 		#application.pack(fill="both", expand=True)
-		root.attributes('-topmost', False)
+	
 		#root.deiconify()
 		#root.configure(**darkmode) 
 	
