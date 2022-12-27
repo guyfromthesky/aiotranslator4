@@ -1,9 +1,9 @@
-from tkinter.ttk import Entry, Label, Style
-from tkinter.ttk import Checkbutton, OptionMenu, Notebook, Radiobutton, LabelFrame, Button, Scale, Combobox
+from ttkbootstrap import Entry, Label, Style
+from ttkbootstrap import Checkbutton, OptionMenu, Notebook, Radiobutton, LabelFrame, Button, Scale, Combobox
 
 
 from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, RIGHT, LEFT, BOTTOM, HORIZONTAL
-from tkinter import INSERT, ACTIVE, NORMAL, DISABLED, WORD
+from tkinter import INSERT, ACTIVE, NORMAL, DISABLED, WORD, SEL, SEL_FIRST, SEL_LAST
 
 from tkinter import Text, IntVar, StringVar, Menu, filedialog, messagebox
 from tkinter import Frame, Listbox, Label, Toplevel, PhotoImage, Canvas
@@ -112,6 +112,24 @@ class CustomText(Text):
 		Text.__init__(self, *args, **kwargs)
 		Text.tag_configure(self, "red", background='deep pink', foreground='white')
 		Text.tag_configure(self, "blue", background='deep sky blue', foreground='white')
+
+	def tag_selected(self):
+		try:
+			self.insert(SEL_FIRST, '«')
+			self.insert(SEL_LAST, '»')
+		except:
+			pass
+
+	def add_no_translate_tag(self):
+		try:
+			ranges = self.tag_ranges(SEL)
+			if ranges:
+				print('SELECTED Text is %r' % self.get(*ranges))
+			else:
+				print('NO Selected Text')
+		except:
+			pass
+	
 
 	def highlight_pattern(self, pattern, tag, start="1.0", end="end",
 						  regexp=False):
@@ -285,11 +303,6 @@ class BugWriter_BottomPanel(Frame):
 		master.rowconfigure(0, weight=1)
 		master.Bottom_Frame.grid_columnconfigure(7, minsize=200)
 
-		for child in master.Bottom_Frame.winfo_children():
-			if isinstance(child, Text) or isinstance(child, CustomText):
-				master.text_widgets.append(child)
-			elif isinstance(child, Label):
-				master.label_widgets.append(child)	
 
 
 class AutocompleteEntry(Entry):
@@ -599,11 +612,7 @@ def Generate_BugWriter_Tab_UI(master):
 	master.Bottom_Frame = Frame(master)
 	master.Bottom_Frame.pack(side=RIGHT, fill=BOTH, expand=False)
 	
-	for frame_widget in master.TAB_CONTROL.winfo_children():
-		master.frame_widgets.append(frame_widget)
-	master.frame_widgets.append(master.Bottom_Frame)
-	master.frame_widgets.append(MainPanel)
-	master.frame_widgets.append(master)
+
 	
 
 # BUG WRITER 
@@ -650,10 +659,6 @@ def Generate_BugWriter_Menu_UI(master):
 	language.add_command(label =  master.LanguagePack.Menu['Hangul'], command = master.SetLanguageKorean) 
 	language.add_command(label =  master.LanguagePack.Menu['English'], command = master.SetLanguageEnglish) 
 	master.parent.config(menu = menubar)
-
-	# To change theme
-	for menu_widget in menubar.winfo_children():
-		master.menu_widgets.append(menu_widget)
 
 def About():
 	messagebox.showinfo("About....", "Creator: Evan@nexonnetworks.com")
@@ -713,13 +718,6 @@ def Generate_Translate_Setting_UI(master, Tab):
 	Row += 2
 	Label(Left_Frame, text='Theme name:') \
 		.grid(row=Row, rowspan=2, column=0, padx=5, pady=5, sticky=E)
-	master.btn_remove_theme = Button(
-		Right_Frame,
-		width=master.HALF_BUTTON_SIZE,
-		text="Remove Theme",
-		command=master.remove_theme, style=master.Btn_Style)
-	master.btn_remove_theme.grid(row=Row, column=9,  padx=5, pady=5, sticky=W)
-
 	
 	col = 2 # to add more buttons horizontally
 	for theme_name in master.theme_names:
@@ -744,34 +742,6 @@ def Generate_Translate_Setting_UI(master, Tab):
 	if config_theme_name in master.theme_names:
 		master.strvar_theme_name.set(config_theme_name)
 
-	# Disable [Remove Theme] button if no theme is selected.
-	if master.strvar_theme_name.get() not in master.theme_names:
-		master.btn_remove_theme.config(state=DISABLED)
-
-	for child in Left_Frame.winfo_children():
-		if isinstance(child, Text) or isinstance(child, CustomText):
-			master.text_widgets.append(child)
-		elif isinstance(child, Label):
-			master.label_widgets.append(child)
-		
-
-	for child in Right_Frame.winfo_children():
-		if isinstance(child, Text) or isinstance(child, CustomText):
-			master.text_widgets.append(child)
-		elif isinstance(child, Label):
-			master.label_widgets.append(child)
-		
-	for child in Top_Frame.winfo_children():
-		if isinstance(child, Text) or isinstance(child, CustomText):
-			master.text_widgets.append(child)
-		elif isinstance(child, Label):
-			master.label_widgets.append(child)
-		
-
-
-	master.frame_widgets.append(Right_Frame)
-	master.frame_widgets.append(Left_Frame)
-	master.frame_widgets.append(Top_Frame)
 
 # BASIC BUG WRITER TEMPLATE
 def Generate_BugWriter_UI(master, Tab):
@@ -793,13 +763,13 @@ def Generate_BugWriter_UI(master, Tab):
 	
 	master.target_language_select = OptionMenu(Tab, master.target_language, *master.language_list, command = master.set_writer_language)
 	master.target_language_select.config(width=master.HALF_BUTTON_SIZE)
-	master.target_language_select.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
+	master.target_language_select.grid(row=Row, column=2, padx=5, pady=5, sticky=W)
 	
 	
 	secondary_language_list = master.language_list + ['']
 	master.secondary_target_language_select = OptionMenu(Tab, master.secondary_target_language, *secondary_language_list, command = master.set_writer_language)
 	master.secondary_target_language_select.config(width=master.HALF_BUTTON_SIZE)
-	master.secondary_target_language_select.grid(row=Row, column=3, padx=0, pady=5, sticky=W)
+	master.secondary_target_language_select.grid(row=Row, column=3, padx=5, pady=5, sticky=W)
 	
 	#Button(Tab, width = master.HALF_BUTTON_SIZE, text= master.LanguagePack.Button['Save'], command= master._save_project_key).grid(row=Row, column=7, padx=5, pady=5, sticky=E)
 	master.GetTitleBtn = Button(Tab, text=master.LanguagePack.Button['GetTitle'], width=10, command=master.GetTitle, state=DISABLED, style=master.Btn_Style)
@@ -907,14 +877,9 @@ def Generate_BugWriter_UI(master, Tab):
 	Tab.bind_all('<Control-l>', master._load_report)
 	Tab.bind_all('<Control-q>', master.ResetReport)
 
+	Tab.bind_all('<Control-g>', master.tag_selected)
 	# Add all Text in the tab to a list to change theme dynamically
-	for child in Tab.winfo_children():
-		if isinstance(child, Text) or isinstance(child, CustomText):
-			master.text_widgets.append(child)
-		elif isinstance(child, Label):
-			master.label_widgets.append(child)
-		#elif isinstance(child, OptionMenu):
-		#	master.menu_widgets.append(child)
+	
 
 def Generate_MDNF_BugWriter_UI(master, Tab):
 	# Title
@@ -1046,11 +1011,7 @@ def Generate_MDNF_BugWriter_UI(master, Tab):
 	Tab.bind_all('<Control-l>', master._load_report)
 	Tab.bind_all('<Control-q>', master.ResetReport)
 
-	for child in Tab.winfo_children():
-		if isinstance(child, Text) or isinstance(child, CustomText):
-			master.text_widgets.append(child)
-		elif isinstance(child, Label):
-			master.label_widgets.append(child)	
+	Tab.bind_all('<Control-g>', master.tag_selected)
 
 def Generate_XH_BugWriter_UI(master, Tab):
 
@@ -1064,7 +1025,7 @@ def Generate_XH_BugWriter_UI(master, Tab):
 	
 	master.source_language_select = OptionMenu(Tab, master.source_language, *master.language_list, command = master.set_writer_language)
 	master.source_language_select.config(width=master.HALF_BUTTON_SIZE)
-	master.source_language_select.grid(row=Row, column=1, padx=0, pady=5, sticky=W)
+	master.source_language_select.grid(row=Row, column=1, padx=5, pady=5, sticky=W)
 
 	master.target_language_select = OptionMenu(Tab, master.target_language, *master.language_list, command = master.set_writer_language)
 	master.target_language_select.config(width=master.HALF_BUTTON_SIZE)
@@ -1106,6 +1067,27 @@ def Generate_XH_BugWriter_UI(master, Tab):
 	
 	Label(Tab, width=10, text=master.LanguagePack.Label['Report']).grid(row=Row, column=7, columnspan=2, padx=0, pady=5, stick=W)
 
+	master.Simple_Template = Radiobutton(
+			Tab,
+			text='Simple Template',
+			value=0,
+			variable=master.UseSimpleTemplate,
+			command = master.SaveSetting)
+	master.Simple_Template.config(width=master.HALF_BUTTON_SIZE)		
+	master.Simple_Template.grid(
+			row=Row, column=9, padx=0, pady=5, sticky=E)	
+		
+	master.CSS_Template = Radiobutton(
+			Tab,
+			text='CSS Template',
+			value=1,
+			variable=master.UseSimpleTemplate,
+			command = master.SaveSetting)
+
+	master.CSS_Template.config(width=master.HALF_BUTTON_SIZE)		
+	master.CSS_Template.grid(
+			row=Row, column=10, padx=0, pady=5, sticky=E)
+
 	Row+=1
 	master.Precondition = Text(Tab, width=75, height=9, undo=True)
 	master.Precondition.grid(row=Row, column=1, columnspan=5, rowspan= 9,  padx=5, pady=5, stick=W+E)
@@ -1142,11 +1124,7 @@ def Generate_XH_BugWriter_UI(master, Tab):
 	Tab.bind_all('<Control-l>', master._load_report)
 	Tab.bind_all('<Control-q>', master.ResetReport)
 
-	for child in Tab.winfo_children():
-		if isinstance(child, Text) or isinstance(child, CustomText):
-			master.text_widgets.append(child)
-		elif isinstance(child, Label):
-			master.label_widgets.append(child)	
+	Tab.bind_all('<Control-g>', master.tag_selected)
 
 def matches(fieldValue, acListEntry):
 	pattern = re.compile(re.escape(fieldValue) + '.*', re.IGNORECASE)
@@ -1177,11 +1155,11 @@ def Generate_SimpleTranslator_UI(master, Tab):
 	#New Row
 
 	Row +=1
-	master.SourceText = Text(Main_Frame, width = master.SOURCE_WIDTH, height=master.ROW_SIZE, undo=True, inactiveselectbackground="grey") 
+	master.SourceText = CustomText(Main_Frame, width = master.SOURCE_WIDTH, height=master.ROW_SIZE, undo=True, inactiveselectbackground="grey") 
 	master.SourceText.grid(row=Row, column=0, columnspan=5, rowspan=master.ROW_SIZE, padx=5, pady=5, sticky=N+S+E+W)
 	master.SourceText.bind("<Double-Tab>", master.BindSwap)
 
-	master.TargetText = Text(Main_Frame, width = master.SOURCE_WIDTH, height=master.ROW_SIZE, undo=True, inactiveselectbackground="grey") #
+	master.TargetText = CustomText(Main_Frame, width = master.SOURCE_WIDTH, height=master.ROW_SIZE, undo=True, inactiveselectbackground="grey") #
 	master.TargetText.grid(row = Row, column=5, columnspan=5, rowspan=master.ROW_SIZE, padx=5, pady=5, sticky=N+S+E+W)
 	
 	Row +=master.ROW_SIZE
@@ -1229,25 +1207,8 @@ def Generate_SimpleTranslator_UI(master, Tab):
 	master.dual_translate_btn = Button(Main_Frame, text= 'Dual Translate', width = master.BUTTON_SIZE, command= master.dual_translate, style=master.Btn_Style, state=DISABLED)
 	master.dual_translate_btn.grid(row = Row, column=8, padx=5, pady=5, sticky=E)
 
-	# Add all Text in the tab to a list to change color dynamically
-	for child in Main_Frame.winfo_children():
-		if isinstance(child, Text) or isinstance(child, CustomText):
-			master.text_widgets.append(child)
-		elif isinstance(child, Label):
-			master.label_widgets.append(child)
-
-	for child in Top_Frame.winfo_children():
-		if isinstance(child, Text) or isinstance(child, CustomText):
-			master.text_widgets.append(child)
-		elif isinstance(child, Label):
-			master.label_widgets.append(child)	
-
-
-	master.frame_widgets.append(Main_Frame)
-	master.frame_widgets.append(Top_Frame)
-
-
 	Tab.bind_all('<Key>', master.handle_wait)
+	Tab.bind_all('<Control-g>', master.tag_selected)
 
 # Related function
 def Btn_Select_License_Path(master):
@@ -1286,3 +1247,5 @@ def Apply_Transparency(transparency, master):
 	elif _transparency < 25:
 		_transparency = 25 - (_transparency/10)	
 	master.parent.attributes("-alpha", float(_transparency)/100)
+
+

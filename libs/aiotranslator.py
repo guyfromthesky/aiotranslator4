@@ -162,7 +162,7 @@ class Translator:
 			print('Total time to load db + glossary:', str(datetime.now() - current_time))
 		except Exception  as e:
 			print("Error when loading bucket:", e)
-
+		
 
 		# Send tracking record from previous run to logging server.
 		#tracking_tesult = self.send_tracking_record()
@@ -872,16 +872,17 @@ class Translator:
 	def add_notranslate_tag(self, source_text):
 		for index in range(len(source_text)):
 			string_to_translate = source_text[index]
-			special_texts = re.findall("\<([^\>]*)\>", string_to_translate)
+			special_texts = re.findall("\«([^\»]*)\»", string_to_translate)
 			#print('special_texts list', special_texts)
 			for special_text in special_texts:
-				source_text[index]  = string_to_translate.replace("<" + special_text + ">", ("<span class=\"notranslate\">" + special_text + "</span>"))
+				source_text[index]  = string_to_translate.replace("«" + special_text + "»", ("<span class=\"notranslate\">" + special_text + "</span>"))
+		#print('New source', source_text)
 		return source_text
 
 	def remove_notranslate_tag(self, translation):
 		_translation = unescape(translation.translated_text)
-		_translation = _translation.replace("span class=\"notranslate\">" , "")
-		_translation = _translation.replace("</span" , "")
+		_translation = _translation.replace("<span class=\"notranslate\">" , "«")
+		_translation = _translation.replace("</span>" , "»")
 		return _translation
 
 
@@ -898,6 +899,7 @@ class Translator:
 		#Preprocessing translate text:
 		if self.used_tool == 'writer':
 			source_text = self.add_notranslate_tag(source_text)
+		#print('New source', source_text)	
 		# Supported language codes: https://cloud.google.com/translate/docs/languages
 		
 		Client = translator.TranslationServiceClient()
@@ -918,6 +920,7 @@ class Translator:
 		)
 
 		ListReturn = []
+		#print('Returned', response.translations)
 		for translation in response.translations:
 			_translation = self.remove_notranslate_tag(translation)
 			ListReturn.append(_translation)
@@ -936,7 +939,8 @@ class Translator:
 		else:
 			ToTranslate = [source_text]
 		#Preprocessing translate text:
-		source_text = self.add_notranslate_tag(source_text)
+		if self.used_tool == 'writer':
+			source_text = self.add_notranslate_tag(source_text)
 
 		# Supported language codes: https://cloud.google.com/translate/docs/languages
 		Client = translator.TranslationServiceClient()
@@ -959,9 +963,12 @@ class Translator:
 		)
 		ListReturn = []
 		# Handle Translation Response is in translations instead of glossary_translations
+		
 		if 'translated_text' in response.glossary_translations[0]:	
 			for translation in response.glossary_translations:
+				#print('Returned', translation)
 				_translation = self.remove_notranslate_tag(translation)
+				#print('Returned', _translation)
 				ListReturn.append(_translation)
 		else:
 			return False
@@ -1075,8 +1082,7 @@ class Translator:
 		cloud_client = storage.Client()
 		bucket = cloud_client.get_bucket(self.bucket_id)
 		blob = bucket.get_blob(self.db_list_uri)
-		#print('blob', blob)
-		
+
 		try:
 			listdb = blob.download_as_text()
 		except Exception as e:
@@ -1508,7 +1514,7 @@ class Translator:
 			print('[Error] prepare_db_data:', e)
 			self.init_db_data()
 		
-		if self.proactive_memory_translate:
+		if self.proactive_memory_translate == True:
 			self.import_translation_memory()
 
 	def prepare_db_data(self):
@@ -1846,14 +1852,17 @@ class Translator:
 
 		self.init_temporary_tm()
 		
-		self.monthly_tm_backup()
-
 		if self.tm_path == None:
+			print('Pickle file not found')
 			return
 		if not os.path.isfile(self.tm_path):
 			print('Pickle file not found')
 			return
 		else:
+			try:
+				self.monthly_tm_backup()
+			except:
+				print('Cannot backup TM file.')	
 			try:
 				with open(self.tm_path, 'rb') as pickle_load:
 					all_tm = pickle.load(pickle_load)

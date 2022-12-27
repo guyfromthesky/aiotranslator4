@@ -16,23 +16,22 @@ from datetime import date
 from pyperclip import copy, paste
 #from tkinter import *
 #from tkinter.ttk import *
-from ttkbootstrap import Entry, Label, Style
-from ttkbootstrap import Checkbutton, OptionMenu, Notebook, Radiobutton, LabelFrame, Button
-from ttkbootstrap import Progressbar, Style, Window
+from tkinter.ttk import Entry, Label, Style, Radiobutton, LabelFrame
+from tkinter.ttk import Checkbutton, OptionMenu, Notebook, Button
+from tkinter import Tk, Frame, Toplevel
 
-from tkinter import Tk, Frame, Toplevel, Scale
 
 # Widget type
 from tkinter import Menu, filedialog, messagebox
 from tkinter import Text
 # Variable type
-from tkinter import IntVar, StringVar, DoubleVar
+from tkinter import IntVar, StringVar
 # Wrap type
 from tkinter import WORD
 # sticky state
 from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, BOTTOM
 # Config state
-from tkinter import DISABLED, NORMAL, HORIZONTAL
+from tkinter import DISABLED, NORMAL
 from tkhtmlview import HTMLScrolledText
 
 #from tkinter import filedialog
@@ -47,7 +46,6 @@ import pickle
 import queue 
 
 import webbrowser
-import inspect
 
 from libs.aiotranslator import ver_num as TranslatorVersion
 from libs.aiotranslator import generate_translator
@@ -56,27 +54,27 @@ from libs.aioconfigmanager import ConfigLoader
 
 from libs.cloudconfig import CloudConfigLoader
 
-#from libs.grammarcheck import LanguageTool
+from libs.grammarcheck import LanguageTool
 
 from libs.version import get_version
-from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText
-
-from libs.tkinter_extension import Generate_BugWriter_Tab_UI, Generate_BugWriter_Menu_UI, Generate_Translate_Setting_UI
-from libs.tkinter_extension import Generate_BugWriter_UI, Generate_SimpleTranslator_UI
-from libs.tkinter_extension import Apply_Transparency, BugWriter_BottomPanel
+from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText, ConfirmationPopup
 
 #from openpyxl import load_workbook, worksheet, Workbook
 
 from google.cloud import logging
 
-tool_display_name = "Translate Helper"
+tool_display_name = "[XH] Translate Helper"
 tool_name = 'writer'
-REV = 4126
+REV = 4117
 ver_num = get_version(REV) 
-version = tool_display_name  + " " +  ver_num
+version = tool_display_name  + " " +  ver_num + "  | Language Tool v5.6" 
 
 DELAY = 20
-DELAY2 = 1000
+DELAY2 = 300000
+BG_CL = '#191c1d'
+FG_CL = 'white'
+FRAME_BG = '#33393b'
+MENU_BG = '#474D4E'
 
 #**********************************************************************************
 # UI handle ***********************************************************************
@@ -93,7 +91,6 @@ class MyTranslatorHelper(Frame):
 
 		Frame.__init__(self, parent)
 		self.pack(side=TOP, expand=Y, fill=X)
-		self.style =  Style()
 
 		self.parent = parent
 		self.parent.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -109,11 +106,11 @@ class MyTranslatorHelper(Frame):
 		self.grammar_check_list = []
 		self.grammar_corrected_list = []
 
-		self.SOURCE_WIDTH = 80
-		self.BUTTON_SIZE = 20 
+		self.SOURCE_WIDTH = 75
+		self.BUTTON_SIZE = 20
 		self.HALF_BUTTON_SIZE = 15
-		self.ROW_SIZE = 26
-		
+		self.ROW_SIZE = 24
+
 		self.Btn_Style = "Accent.TButton"
 
 		self.str_test_version = ""
@@ -134,10 +131,6 @@ class MyTranslatorHelper(Frame):
 		self.main_translation = ''
 		self.primary_translation = ''
 
-		# Widget list vars to change color via Translate Setting tab.
-
-		self._after_id = None
-
 		self.init_App_Setting()
 		
 		if self.AppLanguage != 'kr':
@@ -149,19 +142,14 @@ class MyTranslatorHelper(Frame):
 
 		self.LanguagePack = LanguagePack
 		
-
-		self.init_theme()
-		
+		self.create_buttom_panel()
 		self.init_ui()
-		
 		self.init_UI_setting()
-
-		#self.LoadTempReport()
-
+		
 
 		if REV < int(self.latest_version):
 			self.Error('Current version is lower than the minimal version allowed. Please update.')	
-			webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/AIO+Translator")
+			webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/Translate+Helper")
 			self.quit()
 			return
 
@@ -172,92 +160,58 @@ class MyTranslatorHelper(Frame):
 
 		if self.LicensePath.get() != "":
 			self.generate_translator_engine()
+		else:
+			self.Error('No license selected, please select the key in Translate setting.')	
+		
+		MsgBox = messagebox.askquestion (tool_display_name, self.LanguagePack.ToolTips['LoadReport'],icon = 'info') 
+		if MsgBox == 'yes':
 			self.parent.withdraw()
 			self.parent.update_idletasks()
 			self.LoadTempReport()
 			self.parent.deiconify()
-					
-		else:
-			closed_box = messagebox.askokcancel('Bug Writer', 'No license selected, please select the key in Translate setting.',icon = 'info')
-
-			if closed_box == True:
-				#self.Error('No license selected, please select the key in Translate setting.')
-				self.TAB_CONTROL.select(self.TranslateSetting)
-				#self.flash_btn(self.Browse_License_Btn)
-		
-		self.parent.minsize(self.parent.winfo_width(), self.parent.winfo_height())
-		x_cordinate = int((self.parent.winfo_screenwidth() / 2) - (self.parent.winfo_width() / 2))
-		y_cordinate = int((self.parent.winfo_screenheight() / 2) - (self.parent.winfo_height() / 2))
-		self.parent.geometry("+{}+{}".format(x_cordinate, y_cordinate-20))
-
-		#self.after(DELAY2, self.auto_save)
-		
-	def handle_wait(self,event):
-        # cancel the old job
-		if self._after_id is not None:
-			self.after_cancel(self._after_id)
-        # create a new job
-		self._after_id = self.after(DELAY2, self.SaveTempReport)
-
-    
+			
 	# Menu function
-	def Error(self, ErrorText):
-		messagebox.showinfo('Translate error...', ErrorText)	
-
-	def OpenWeb(self):
-		webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/AIO+Translator")
-
-	def About(self):
-		messagebox.showinfo("About....", "Creator: Evan@nexonnetworks.com")
-
 	def on_closing(self):
-		if messagebox.askokcancel(tool_display_name, "Do you want to quit?"):
+		if messagebox.askokcancel("Quit", "Do you want to quit?"):
 			self.parent.destroy()
 			self.TranslatorProcess.terminate()
 
-	def rebuild_UI(self):
-		if messagebox.askokcancel("Quit", "Do you want to restart?"):
-			self.parent.destroy()
-			main()
-		else:
-			messagebox.showinfo('Language update','The application\'s language will be changed in next session.')	
+	def Error(self, ErrorText):
+		messagebox.showerror('Error...', ErrorText)	
+
+	def OpenWeb(self):
+		webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/%5BTranslation%5D+AIO+Translator")
+
+	def About(self):
+		messagebox.showinfo("About....", "Creator: Evan@nexonnetworks.com")
 
 	def init_ui(self):
 		self.parent.resizable(False, False)
 		self.parent.title(version)
 
-		Generate_BugWriter_Menu_UI(self)
-		Generate_BugWriter_Tab_UI(self)
+		self.Generate_Menu_UI()
+		self.Generate_Tab_UI()
 
-		try:
-			Generate_BugWriter_UI(self, self.BugWriterTab)
-			Generate_SimpleTranslator_UI(self, self.SimpleTranslatorTab)
-			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
+		#Shared variable
 
-			self.bottom_panel = BugWriter_BottomPanel(self)
+		self.Generate_BugWriter_UI(self.BugWriter)
 	
-		except Exception as e:
-			print(f'An error occurs while initializing UI: {e}')
+		self.Generate_SimpleTranslator_UI(self.SimpleTranslator)
 
-
-
+		self.Generate_TranslateSetting_UI(self.TranslateSetting)
 		#self.Generate_Search_UI(self.Searcher)
 
 		#self.Init_Translator_Config
+	def create_buttom_panel(self):
+		self.bottom_panel = BugWriter_BottomPanel(self)
 
-		
-	
-		
 	# Init functions
 	# Some option is saved for the next time use
 	def init_App_Setting(self):
 		print('init_App_Setting')
-		self.SkipTestInfo = IntVar()
 		self.UseSimpleTemplate = IntVar()
 
 		self.LicensePath = StringVar()
-		self.Transparent = DoubleVar()
-
 		#self.DictionaryPath = StringVar()
 		self.TMPath = StringVar()
 
@@ -279,23 +233,15 @@ class MyTranslatorHelper(Frame):
 		license_file_path = self.Configuration['Translator']['license_file']
 		self.LicensePath.set(license_file_path)
 
-
-		Transparent = self.Configuration['Bug_Writer']['Transparent']
-		self.Transparent.set(Transparent)
-
 		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = license_file_path
 		self.TMPath.set(self.Configuration['Translator']['translation_memory'])
-		# Address of the bucket
+
 		self.bucket_id = self.Configuration['Translator']['bucket_id']
-		# Address of the project config file
 		self.db_list_uri = self.Configuration['Translator']['db_list_uri']
-		# Address of the project config file
 		self.project_bucket_id = self.Configuration['Translator']['project_bucket_id']
 
 		self.glossary_id = self.Configuration['Translator']['glossary_id']
 		
-		self.used_theme = self.Configuration['Bug_Writer']['theme_name']
-	
 		try:
 			cloud_config = CloudConfigLoader()
 			cloud_configuration = cloud_config.Config
@@ -305,20 +251,9 @@ class MyTranslatorHelper(Frame):
 			print("Error while loading cloud configuration:", e)
 			self.banning_status = False
 			self.latest_version = 1000
-			
+
 		
-		self.source_language = StringVar()	
-		self.target_language = StringVar()
-		self.secondary_target_language = StringVar()
-
-		self.simple_source_language = StringVar()
-		self.simple_target_language = StringVar()
-		self.simple_secondary_target_language = StringVar()
-
-		self.strvar_theme_name = StringVar()
 		#self.Config['bucket_db_list']
-
-
 		#self.Config['glossary_data_list']
 		
 
@@ -331,9 +266,6 @@ class MyTranslatorHelper(Frame):
 			self.secondary_target_language.set('')
 		else:
 			self.secondary_target_language.set(self.language_list[secondary_language])
-		
-		self.SkipTestInfo.set(self.Configuration['Bug_Writer']['test_info_inable'])
-		self.UseSimpleTemplate.set(self.Configuration['Bug_Writer']['use_simple_template'])
 
 
 		self.simple_source_language.set(self.language_list[self.Configuration['Simple_Translator']['source_lang']])
@@ -345,70 +277,8 @@ class MyTranslatorHelper(Frame):
 		else:
 			self.simple_secondary_target_language.set(self.language_list[simple_secondary_language])
 
-	def init_theme(self):
-		"""Applied the theme name saved in the settings on init."""
-		print('init_theme')
-		try:
-			self.theme_names = self.style.theme_names()
-							#	['cosmo', 'flatly', 'litera', 'minty',
-							#	"lumen", "sandstone",	"yeti", "pulse", 
-							#	"united", "morph", "journal", "darkly", 'superhero', 
-							#	'solar', 'cyborg', 'vapor', 'simplex', 'cerculean'
-							#		, 'pinky']
-			if self.used_theme not in self.theme_names:
-				raise Exception('Cannot use the theme saved in the config'
-					' because it is not supported or required files have'
-					' been removed.')
-
-			self.style.theme_use(self.used_theme)
-
-		except Exception as err:
-			print('Error while initializing theme:\n'
-				f'- {err}\n'
-				'The system default theme will be used instead.')
-		transparency  = self.Configuration['Bug_Writer']['Transparent']
-		Apply_Transparency(transparency, self)
 
 
-	def select_theme_name(self):
-		"""Save the theme name value to Configuration and change
-		the theme based on the selection in the UI.
-		
-		Args:
-			config_theme_name -- str
-				Theme name retrieved from config. (Default: '')
-		"""
-
-		try:
-			theme_name = self.strvar_theme_name.get()
-			print('Select theme:', theme_name)
-			self.style.theme_use(theme_name)
-			self.AppConfig.Save_Config(
-				self.AppConfig.Writer_Config_Path,
-				'Bug_Writer',
-				'theme_name',
-				theme_name, True)
-
-		except Exception as err:
-			messagebox.showerror(
-				title='Error',
-				message=f'Error occurs when selecting theme: {err}')
-
-	
-	def remove_theme(self):
-		print('remove_theme')
-		"""Remove the theme saved in config then restart the app."""
-		self.AppConfig.Save_Config(
-			self.AppConfig.Writer_Config_Path,
-			'Bug_Writer',
-			'theme_name',
-			'')
-		
-		messagebox.showinfo(
-			title='Info',
-			message='App will restart to apply the change.')
-		self.parent.destroy()
-		main()
 
 #######################################################################
 # Menu function
@@ -417,20 +287,19 @@ class MyTranslatorHelper(Frame):
 	def SetLanguageKorean(self):
 		self.AppLanguage = 'kr'
 		self.SaveAppLanguage(self.AppLanguage)
-		self.rebuild_UI()
 		#self.initUI()
 	
 	def SetLanguageEnglish(self):
 		self.AppLanguage = 'en'
 		self.SaveAppLanguage(self.AppLanguage)
-		self.rebuild_UI()
 		#self.initUI()
 
 	def SaveAppLanguage(self, language):
 
 		self.Notice.set(self.LanguagePack.ToolTips['AppLanuageUpdate'] + " "+ language) 
-		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'app_lang', language)
 
+		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Bug_Writer', 'app_lang', language)
+	
 	def SelectDictionary(self):
 		filename = filedialog.askopenfilename(title = "Select Database file",filetypes = (("Dictionary files","*.xlsx *.xlsm"), ), )	
 		if filename != "":
@@ -494,10 +363,11 @@ class MyTranslatorHelper(Frame):
 			newPath = self.CorrectPath(Outputdir + '/'+ sourcename + '.' + ext)
 			return newPath
 
-	def _create_grammar_confirmation_window(self, dif_dict, _class):
-		self.new = Toplevel(self.master)
-
-		_class(self.new, dif_dict)
+	def _create_grammar_confirmation_window(self, dif_dict, diff_index, _class):
+		self.Child_Window = Toplevel(self.master)
+		self.Child_Window.resizable(False, False)
+		self.Child_Window.title("Confirm the correction")
+		_class(self, dif_dict, diff_index)
 	
 	#I dont know why I put it here
 	def UpdateSize(self,event):
@@ -593,22 +463,15 @@ class MyTranslatorHelper(Frame):
 				db_count = 0
 			
 			self.DictionaryStatus.set(db_count)
-
-			#_glossary_list = [""] + self.MyTranslator.glossary_list
-			#glossary_list = []
-			#for project in _glossary_list:
-			#	if project in self.MyTranslator.bucket_db_list:
-			#		glossary_list.append(project)
 			glossary_list = [""] + self.MyTranslator.glossary_list
-			
 
-			self.project_id_select.set_completion_list(glossary_list)
+			self.bottom_panel.project_id_select.set_completion_list(glossary_list)
 			#print('saved gloss:', self.glossary_id)
 			#print('list gloss', self.MyTranslator.glossary_list)
 			if self.glossary_id in self.MyTranslator.glossary_list:
-				self.project_id_select.set(self.glossary_id)
+				self.bottom_panel.project_id_select.set(self.glossary_id)
 			else:
-				self.project_id_select.set("")
+				self.bottom_panel.project_id_select.set("")
 
 			if isinstance(self.MyTranslator.version, str):
 				version = self.MyTranslator.version[0:10]
@@ -626,6 +489,8 @@ class MyTranslatorHelper(Frame):
 			#self.Error('No Valid Project selected, please update the project ID in Translate Setting tab')	
 			#DBLength = self.MyTranslator.get_glossary_length()
 			#self.DictionaryStatus.set(str(DBLength))
+			
+			#self.TextTitle.focus_set()
 
 			self.TranslatorProcess.join()
 		else:
@@ -653,7 +518,6 @@ class MyTranslatorHelper(Frame):
 		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
 			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
 			print('Update language pair from: ', source_language, ' to ',  target_language)		
-
 		self.get_source_text()
 		#print('Source:', self.source_text)
 		try:
@@ -844,7 +708,9 @@ class MyTranslatorHelper(Frame):
 
 	#Execute function
 	def BtnCopy(self):
+
 		self.get_source_text()
+		
 		#Translated = self.TargetText.get("1.0", END)
 		#Translated = Translated.replace('\r', '')
 		copy(self.main_translation)
@@ -979,7 +845,7 @@ class MyTranslatorHelper(Frame):
 		self.dual_translate_btn.configure(state=DISABLED)
 		#self.RenewTranslator.configure(state=DISABLED)
 		#self.RenewTranslatorMain.configure(state=DISABLED)
-		self.RenewTranslatorMain.configure(state=DISABLED)
+		self.bottom_panel.RenewTranslatorMain.configure(state=DISABLED)
 		
 		self.secondary_target_language_select.configure(state=DISABLED)
 		self.target_language_select.configure(state=DISABLED)
@@ -989,7 +855,7 @@ class MyTranslatorHelper(Frame):
 		self.simple_target_language_select.configure(state=DISABLED)
 		self.simple_source_language_select.configure(state=DISABLED)
 		
-		self.project_id_select.configure(state=DISABLED)
+		self.bottom_panel.project_id_select.configure(state=DISABLED)
 
 		#self.Translate_bilingual_Btn.configure(state=DISABLED)
 		self.TranslateBtn.configure(state=DISABLED)
@@ -1006,7 +872,7 @@ class MyTranslatorHelper(Frame):
 		self.dual_translate_btn.configure(state=NORMAL)
 		#self.RenewTranslator.configure(state=NORMAL)
 		#self.RenewTranslatorMain.configure(state=NORMAL)
-		self.RenewTranslatorMain.configure(state=NORMAL)
+		self.bottom_panel.RenewTranslatorMain.configure(state=NORMAL)
 
 		self.secondary_target_language_select.configure(state=NORMAL)
 		self.target_language_select.configure(state=NORMAL)
@@ -1016,12 +882,14 @@ class MyTranslatorHelper(Frame):
 		self.simple_target_language_select.configure(state=NORMAL)
 		self.simple_source_language_select.configure(state=NORMAL)
 
-		self.project_id_select.configure(state=NORMAL)
+		self.bottom_panel.project_id_select.configure(state=NORMAL)
 
 		#self.Translate_bilingual_Btn.configure(state=NORMAL)
 		self.TranslateBtn.configure(state=NORMAL)
 
 		#self.db_correction.configure(state=NORMAL)
+		
+		
 
 	def RenewMyTranslator(self):
 		
@@ -1070,24 +938,17 @@ class MyTranslatorHelper(Frame):
 		self.HeaderOptionB.set_completion_list(self.header_list)
 
 
-
-	def ResetReport(self,event=None):
+	def ResetReport(self, event=None):
 		self.ResetTestReport()
 
 	def analyze_terminology(self):
 		for term in self.MyTranslator.dictionary:
 			if term not in [' ']:
+				#term = term.lower()
 				self.TextTestReport.highlight_fault_pattern(term, 'blue')
 				self.TextTitle.highlight_fault_pattern(term, 'blue')
 				self.TextReproduceSteps.highlight_fault_pattern(term, 'blue')
 				self.TextShouldBe.highlight_fault_pattern(term, 'blue')
-
-	def tag_selected(self, event):
-		self.TextTestReport.tag_selected()
-		self.TextTitle.tag_selected()
-		self.TextReproduceSteps.tag_selected()
-		self.TextShouldBe.tag_selected()
-		self.SourceText.tag_selected()
 
 	def review_report(self):
 
@@ -1102,27 +963,42 @@ class MyTranslatorHelper(Frame):
 	def analyze_fault_terminology(self):
 		for term in self.MyTranslator.dictionary:
 			if term not in [' ']:
+				term = term.lower()
 				self.TextTestReport.highlight_fault_pattern(term, 'red')
 				self.TextTitle.highlight_fault_pattern(term, 'red')
 				self.TextReproduceSteps.highlight_fault_pattern(term, 'red')
 				self.TextShouldBe.highlight_fault_pattern(term, 'red')
-				
 
-	def analyze_grammar(self):
-		self.confirm_report_grammar()
-		
+	def analyze_report_grammar(self, event = None):
+		if self.language_tool_enable == True:
+			#print('analyze_report_grammar')
+			self.disable_btn()
+			self.collect_report_elements()
+			self.confirm_report_grammar()
+		else:
+			messagebox.showerror('Error', 'Language tool is not available.')	
+			
+	def analyze_simple_grammar(self, event=None):
+		if self.language_tool_enable == True:	
+			print('analyze_simple_grammar')
+			source_language = self.language_id_list[self.language_list.index(self.simple_source_language.get())]
+			if source_language == 'en':
+				self.disable_btn()
+				self.collect_simple_text()
+				self.confirm_simple_grammar()	
 
-	def GetTitle(self, event=None):
+	def GetTitle(self, event = None):
 		self.disable_btn()
 		copy("")
+
 		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
 		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
 			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
 			print('Update language pair from: ', source_language, ' to ',  target_language)
 		self.Notice.set(self.LanguagePack.ToolTips['GenerateBugTitle'])
-		#self.strSourceTitle = self.TextTitle.get("1.0", END).replace('\n', '')
-		self.strSourceTitle = self.TextTitle.get("1.0", END).rstrip()
+		self.strSourceTitle = self.TextTitle.get("1.0", END).replace('\n', '')
+		self.strSourceTitle = self.TextTitle.get("1.0", END).replace('\r\n', '')
 		self.Title_Translate = Process(target=SimpleTranslate, args=(self.return_text, self.MyTranslator, self.strSourceTitle,))
 		self.Title_Translate.start()
 		self.after(DELAY, self.TextTitleGet)
@@ -1190,51 +1066,70 @@ class MyTranslatorHelper(Frame):
 		return
 
 	def ResetTestReport(self):
+		self.HeaderOptionA.set('')
+		self.HeaderOptionB.set('')
+
 		self.TextTitle.delete("1.0", END)
 		self.TextTestReport.delete("1.0", END)
 		self.TextReproduceSteps.delete("1.0", END)
-		self.TextShouldBe.delete("1.0", END)		
+		self.TextShouldBe.delete("1.0", END)	
+		
+		#self.ResetInfoSection()
+	
 		return
 	#END
 
+	def ResetInfoSection(self):
+		self.Precondition.delete("1.0", END)	
+		self.Precondition.insert("end", "Platform: ")
+		self.Precondition.insert("end", "\nDeviceModel: ")
+		self.Precondition.insert("end", "\nBuildType: ")
+		self.Precondition.insert("end", "\nClientVersion: ")
+		self.Precondition.insert("end", "\nResVersion: ")
+		self.Precondition.insert("end", "\nVersionCode: ")
+		self.Precondition.insert("end", "\nScriptVersionCode: ")
+		self.Precondition.insert("end", "\nClientCommitID: ")
+		self.Precondition.insert("end", "\nScriptCommitID: ")
+
 	#GUI function
 	def collect_report_elements(self):
-		TextTestServer = self.TextServer.get("1.0", END).replace('\n', '')
-		#print('TextTestServer', TextTestServer)
-		TextTestClient = self.TextClient.get("1.0", END).replace('\n', '')
-		#print('TextTestClient', TextTestClient)
 		To_Translate = {}
-		To_Translate['TextTestVersion'] = [TextTestServer, TextTestClient]
-	
-		if self.SkipTestInfo.get() == 1:
-			TextReproduceTime = self.TextReprodTime.get("1.0", END).replace('\n', '')
-			TextTestAccount = self.TextAccount.get("1.0", END).replace('\n', '')
-			To_Translate['TextTestInfo'] = [TextReproduceTime, TextTestAccount]
-		else:
-			print('Test info exclude')
-			To_Translate['TextTestInfo'] = None
-		
+		Precondition = self.Precondition.get("1.0", END)
+		To_Translate['Precondition'] = Precondition	
 		To_Translate['TextShouldBe'] = self.TextShouldBe.get("1.0", END)
 		To_Translate['TextReproduceSteps'] = self.TextReproduceSteps.get("1.0", END)
-
-		
 
 		To_Translate['TextTestReport'] = self.TextTestReport.get("1.0", END)
 		To_Translate['TextShouldBe'] = self.TextShouldBe.get("1.0", END)
 		To_Translate['TextReproduceSteps'] = self.TextReproduceSteps.get("1.0", END)
 		self.report_details = To_Translate
+		#print('Report', self.report_details)
 
-			
+	def collect_simple_text(self):
+		To_Translate = {}
+		To_Translate['Simple'] = self.SourceText.get("1.0", END)
+		self.report_details = To_Translate
 
-	def add_no_translate_tag(self, text):
-		for index in range(len(text)):
-			string_to_translate = text[index]
-			special_texts = re.findall("\<([^\>]*)\>", string_to_translate)
-			#print('special_texts list', special_texts)
-			for special_text in special_texts:
-				text[index]  = string_to_translate.replace("<" + special_text + ">", ("<span class=\"notranslate\">" + special_text + "</span>"))
-		#print('New source', source_text)
-		return text
+	def update_report_elements(self):
+		for key in self.report_details:
+			report = self.report_details[key]
+			if key == 'TextShouldBe':
+				self.TextShouldBe.delete("1.0", END)
+				self.TextShouldBe.insert("end", report)
+			elif key == 'TextReproduceSteps':
+				self.TextReproduceSteps.delete("1.0", END)
+				self.TextReproduceSteps.insert("end", report)	
+			elif key == 'TextTestReport':
+				self.TextTestReport.delete("1.0", END)
+				self.TextTestReport.insert("end", report)
+			elif key == 'Title':
+				self.TextTitle.delete("1.0", END)
+				self.TextTitle.insert("end", report)
+			elif key == 'Simple':
+				self.SourceText.delete("1.0", END)
+				self.SourceText.insert("end", report)
+			else:
+				pass
 
 	def prepare_translator_language(self):
 		return
@@ -1270,127 +1165,193 @@ class MyTranslatorHelper(Frame):
 			self.Notice.set(self.LanguagePack.ToolTips['GeneratedBugReport'])
 			self.BugWriter.join()
 			self.html_content = paste()
-			#self.html_content = '#my{zoom: 75%;}\n' + self.html_content
+			self.html_content = '#my{zoom: 75%;}\n' + self.html_content
 			self.enable_btn()
 			self.ReviewReportBtn.configure(state=NORMAL)
 
-	def generate_report(self,event=None):
+	def generate_report(self, event = None):
 		self.collect_report_elements()
 		self.GenerateReportCSS()
 
 
-	def confirm_report_grammar(self):
-		self.collect_report_elements()
-		
-		self.Notice.set('Checking grammar from the report')
-		
+	def confirm_simple_grammar(self):
+		self.collect_simple_text()
+		self.Notice.set('Checking grammar in the simple translator')
 		source_language_index = self.language_list.index(self.source_language.get())
 		source_language = self.language_id_list[source_language_index]
-		#print('report_details', self.report_details)
-		
-		self.grammar_check_list = []
+		self.grammar_index_list = {}
+		self.for_grammar_check = []
+		index = 0
 		for dict_key in self.report_details:
-			if dict_key != 'TextTestVersion':
-				if self.report_details[dict_key] != None:	
-					self.grammar_check_list.append(self.report_details[dict_key])
-		print('List sentence: ',self.grammar_check_list)
-		self.Grammar_Check = Process(target= correct_sentence, args=(self.grammar_check_result, self.grammar_check_list, source_language,))
+			self.grammar_index_list[dict_key] = []
+			if dict_key not in ['EnvInfo', 'Reproducibility']:
+				if self.report_details[dict_key] != None:
+					all_sentence = self.report_details[dict_key].rstrip().split('\n')
+					for sentence in all_sentence:
+						if sentence.isprintable():
+							self.for_grammar_check.append(sentence.rstrip())
+							self.grammar_index_list[dict_key].append(index)
+							index+=1
+			else:
+				del self.grammar_index_list[dict_key]
+
+		self.grammar_check_result[:]= []
+		self.Grammar_Check = Process(target= correct_sentence, args=(self.grammar_check_result, self.for_grammar_check, source_language,))
 		self.Grammar_Check.start()
 		self.after(DELAY, self.get_grammar_confirmation)
 
+
+	def confirm_report_grammar(self):
+		#self.collect_report_elements()
 		
+		self.Notice.set('Checking grammar in the report')
+		
+		source_language_index = self.language_list.index(self.source_language.get())
+		source_language = self.language_id_list[source_language_index]
+		
+		
+		#self.grammar_check_list = {}
+		self.grammar_index_list = {}
+		self.for_grammar_check = []
+		index = 0
+		for dict_key in self.report_details:
+			self.grammar_index_list[dict_key] = []
+			if dict_key not in ['EnvInfo', 'Reproducibility']:
+				if self.report_details[dict_key] != None:
+					all_sentence = self.report_details[dict_key].rstrip().split('\n')
+					for sentence in all_sentence:
+						if sentence.isprintable():
+							self.for_grammar_check.append(sentence.rstrip())
+							self.grammar_index_list[dict_key].append(index)
+							index+=1
+			else:
+				del self.grammar_index_list[dict_key]
 
-	def get_grammar_confirmation(self):
+		self.grammar_check_result[:]= []
+		self.Grammar_Check = Process(target= correct_sentence, args=(self.grammar_check_result, self.for_grammar_check, source_language,))
+		self.Grammar_Check.start()
+		self.after(DELAY, self.get_grammar_confirmation)
 
-		self.grammar_check_result[:]
+	def get_grammar_confirmation(self):	
 		if (self.Grammar_Check.is_alive()):
 			self.after(DELAY, self.get_grammar_confirmation)
 		else:
-
 			self.grammar_corrected_list = self.grammar_check_result
-			print('Grammar check result', self.grammar_corrected_list)
-			if len(self.grammar_corrected_list) > 0:
-				self._create_grammar_confirmation_window(self.grammar_corrected_list, ConfirmationPopup)
+			self.confirmed_list = []
+			self.confirmed_index_list = []
+			for i in range(len(self.grammar_corrected_list)):
+				if self.grammar_corrected_list[i] != self.for_grammar_check[i]:
+					self.confirmed_list.append({'old': self.for_grammar_check[i], 'new': self.grammar_corrected_list[i]})
+					self.confirmed_index_list.append(i)
+
+			if len(self.confirmed_list) > 0:
+				self._create_grammar_confirmation_window(self.confirmed_list, self.confirmed_index_list, ConfirmationPopup)
 			else:
-				self.Notice.set('Grammar check is Passed.')
+				#messagebox.showinfo('Grammar check is done', 'The report is OK')
+				self.Notice.set('Grammar check is done')
+				self.enable_btn()
 	
 			self.Grammar_Check.join()
 
 
-	def _save_report(self,event=None):
-		print('Save report')
+	def _save_report(self, event = None):
+		TextTitle = self.TextTitle.get("1.0", END)			
+		
+		Precondition = self.Precondition.get("1.0", END)
+		#Reproducibility = self.Reproducibility.get("1.0", END)
+		
+		TextTestReport = self.TextTestReport.get("1.0", END)
+		TextReproduceSteps = self.TextReproduceSteps.get("1.0", END)
+		TextShouldBe = self.TextShouldBe.get("1.0", END)
+		HeaderA = self.HeaderOptionA.get()
+		HeaderB = self.HeaderOptionB.get()
 		try:
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTitle', TextTitle, True)
+
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'Precondition', Precondition, True)
+			#self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'Reproducibility', Reproducibility, True)
 			
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTestReport', TextTestReport, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextShouldBe', TextShouldBe, True)
 
-			for widget_name in self.Configuration['Temp_BugDetails']:
-				for widget in dir(self):
-					if widget == widget_name:
-						_widget = getattr(self, widget)
-						_string = _widget.get("1.0", END)
-					
-						self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', widget_name, _string, True)
-
-			HeaderA = self.HeaderOptionA.get()
-			HeaderB = self.HeaderOptionB.get()		
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)
-
-			
-		except Exception as e:
-			print('Cannot sve the report:', e)
+		except:
 			pass
 
-
 	def SaveTempReport(self, event=None):
+		TextTitle = self.TextTitle.get("1.0", END)			
 		
+		Precondition = self.Precondition.get("1.0", END)
+		#Reproducibility = self.Reproducibility.get("1.0", END)
+		
+		TextTestReport = self.TextTestReport.get("1.0", END)
+		TextReproduceSteps = self.TextReproduceSteps.get("1.0", END)
+		TextShouldBe = self.TextShouldBe.get("1.0", END)
+		HeaderA = self.HeaderOptionA.get()
+		HeaderB = self.HeaderOptionB.get()
 		try:
-			for widget_name in self.Configuration['Temp_BugDetails']:
-				for widget in dir(self):
-					if widget == widget_name:
-						_widget = getattr(self, widget)
-						_string = _widget.get("1.0", END)
-						self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', widget_name, _string, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTitle', TextTitle, True)
+			
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'Precondition', Precondition, True)
+			#self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'Reproducibility', Reproducibility, True)
 
-			HeaderA = self.HeaderOptionA.get()
-			HeaderB = self.HeaderOptionB.get()		
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)			
-		except Exception as e:
-			print('Cannot save the report:', e)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextTestReport', TextTestReport, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'TextShouldBe', TextShouldBe, True)
+
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderA', HeaderA)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)
+		except:
 			pass
 
 
 
 	def _save_project_key(self, event=None):
 		
-		self.glossary_id = self.project_id_select.get()
+		self.glossary_id = self.bottom_panel.project_id_select.get()
 		self.glossary_id = self.glossary_id.replace('\n', '')
-		if self.glossary_id in self.MyTranslator.glossary_list:
-			print('Save current project key: ', self.glossary_id)
-			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'glossary_id', self.glossary_id)
-			self.MyTranslator.glossary_id = self.glossary_id
-			self.RenewMyTranslator()
-		else:
-			messagebox.showinfo('Error', "The selected project doesn't exist.")
+		print('Save current project key: ', self.glossary_id)
+		self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'glossary_id', self.glossary_id)
+		self.MyTranslator.glossary_id = self.glossary_id
+		self.RenewMyTranslator()
 
-	def _load_report(self,event=None):
-	
+	def _load_report(self, event = None):
 		try:
 			self.AppConfig.Refresh_Config_Data()
 			self.Configuration = self.AppConfig.Config
-			for widget_name in self.Configuration['BugDetails']:
-				temp_string = self.Configuration['BugDetails'][widget_name]
-				if temp_string != None:
-					temp_string = temp_string.rstrip('\n')
-				for widget in dir(self):
-					if widget == widget_name:
-						_widget = getattr(self, widget)
-						_widget.delete("1.0", END)
-						_widget.insert("end", temp_string)
+			print(self.Configuration)
+			if 'BugDetails' not in self.AppConfig.Config:
+				return
+			TextTitle  = self.Configuration['BugDetails']['TextTitle']
+			self.TextTitle.delete("1.0", END)
+			self.TextTitle.insert("end", TextTitle)
+			
+			Precondition  = self.Configuration['BugDetails']['Precondition']
+			self.Precondition.delete("1.0", END)
+			self.Precondition.insert("end", Precondition)
+			
+			#Reproducibility  = self.Configuration['BugDetails']['Reproducibility']
+			#self.Reproducibility.delete("1.0", END)
+			#self.Reproducibility.insert("end", Reproducibility)
+			
+			TextTestReport  = self.Configuration['BugDetails']['TextTestReport']
+			self.TextTestReport.delete("1.0", END)
+			self.TextTestReport.insert("end", TextTestReport)
+			
+			TextShouldBe  = self.Configuration['BugDetails']['TextShouldBe']
+			self.TextShouldBe.delete("1.0", END)
+			self.TextShouldBe.insert("end", TextShouldBe)
+				
+			TextReproduceSteps  = self.Configuration['BugDetails']['TextReproduceSteps']
+			self.TextReproduceSteps.delete("1.0", END)
+			self.TextReproduceSteps.insert("end", TextReproduceSteps)
 	
 			self.HeaderOptionA.set(self.Configuration['BugDetails']['HeaderA'])
 			self.HeaderOptionB.set(self.Configuration['BugDetails']['HeaderB'])
-			
+
+
 		except Exception as e:
 			print('Fail somewhere:', e)
 			pass
@@ -1400,30 +1361,36 @@ class MyTranslatorHelper(Frame):
 			self.AppConfig.Refresh_Config_Data()
 			self.Configuration = self.AppConfig.Config
 			
-			self.AppConfig.Refresh_Config_Data()
-			self.Configuration = self.AppConfig.Config
-			for widget_name in self.Configuration['Temp_BugDetails']:
-				temp_string = self.Configuration['Temp_BugDetails'][widget_name]
+			TextTitle  = self.Configuration['Temp_BugDetails']['TextTitle']
+			self.TextTitle.delete("1.0", END)
+			self.TextTitle.insert("end", TextTitle)
+			
+			Precondition  = self.Configuration['Temp_BugDetails']['Precondition']
+			self.Precondition.delete("1.0", END)
+			self.Precondition.insert("end", Precondition)
+			
+			#Reproducibility  = self.Configuration['Temp_BugDetails']['Reproducibility']
+			#self.Reproducibility.delete("1.0", END)
+			#self.Reproducibility.insert("end", Reproducibility)
+			
+			TextTestReport  = self.Configuration['Temp_BugDetails']['TextTestReport']
+			self.TextTestReport.delete("1.0", END)
+			self.TextTestReport.insert("end", TextTestReport)
+			
+			TextShouldBe  = self.Configuration['Temp_BugDetails']['TextShouldBe']
+			self.TextShouldBe.delete("1.0", END)
+			self.TextShouldBe.insert("end", TextShouldBe)
 				
-				for widget in dir(self):
-					if widget == widget_name:
-						_widget = getattr(self, widget)
-						_widget.delete("1.0", END)
-						_widget.insert("end", temp_string)
+			TextReproduceSteps  = self.Configuration['Temp_BugDetails']['TextReproduceSteps']
+			self.TextReproduceSteps.delete("1.0", END)
+			self.TextReproduceSteps.insert("end", TextReproduceSteps)
 	
 			self.HeaderOptionA.set(self.Configuration['Temp_BugDetails']['HeaderA'])
 			self.HeaderOptionB.set(self.Configuration['Temp_BugDetails']['HeaderB'])
 
-			SourceText  = self.Configuration['Temp_BugDetails']['SimpleTranslator']
-			self.SourceText.delete("1.0", END)
-			if SourceText != None:
-				SourceText = SourceText.rstrip('\n')
-
-			self.SourceText.insert("end", SourceText)
-
-
-		except Exception as e:
-			print('Fail somewhere:', e)
+		except:
+			print('Fail somewhere')
+			pass		
 
 
 	def SaveSetting(self):
@@ -1435,399 +1402,65 @@ class MyTranslatorHelper(Frame):
 
 
 
-
-
-# Class
-
-class ConfirmationPopup:
-	def __init__(self, master, dif_dict):
-		self.master = master
-		self.master.geometry("400x350+300+300")
-		self.vars = []
-		row = 1
-		for string_index in range(len(dif_dict)- 1):
-			sentence = dif_dict[string_index]['old']
-			corrected_sentence = dif_dict[string_index]['new']
-			show_text = sentence + "\t-->\t" + corrected_sentence
-			self.vars.append(IntVar())
-			l = Checkbutton(self.master, text= show_text, variable=self.vars[string_index]).grid(row = row, column = 1, padx=5, pady=5, stick=W)
-			self.vars[string_index].set(1)
-			row += 1
-		Button(self.master, width = 20, text= 'Decline All').grid(row=row, column=1, columnspan=1, padx=5, pady=5, sticky=E)
-		Button(self.master, width = 20, text= 'Confirm').grid(row=row, column=2, columnspan=1, padx=5, pady=5, sticky=E)
-
-
-#Simple Translator
-def SimpleTranslate(queue, MyTranslator, Text):
-	#Translated = MyTranslator.translate(Text)
-	try:
-		Translated = MyTranslator.translate(Text)
-		queue.put(Translated)
-	except Exception as e:
-		Error = ['Error to translate:' + str(e)]
-		queue.put(Error)
-
-def dual_translate(queue, MyTranslator, second_target_language, text):
-	try:
-		main_translation = MyTranslator.translate(text)
-		temp_language = MyTranslator.to_language
-		MyTranslator.set_target_language(second_target_language)
-		primary_translation = MyTranslator.translate(text)
-		MyTranslator.set_target_language(temp_language)
-		result = {'main': main_translation, 'primary': primary_translation}
-		queue.put(result)
-	except Exception as e:
-		Error = ['Error to translate:' + str(e)]
-		queue.put(Error)
-
-def correct_sentence(result_manager, sentence_list, language):
-	language_tool = None
-	#language_tool = LanguageTool(language)
-	for paragraph in sentence_list:
-		sentences = []
-		print('paragraph', paragraph)
-		sentences = language_tool.sentence_split(paragraph)
-		for sentence in sentences:
-			sub_sentences = sentence.split('\n')
-			print('sub_sentences', sub_sentences)
-			for sub_sentence in sub_sentences:
-				if sub_sentence != "":
-					corrected_sentence = []
-					corrected_sentence = language_tool.correct(sub_sentence)
-					if sub_sentence != corrected_sentence:
-						result_obj = {'old': sub_sentence, 'new': corrected_sentence}
-						result_manager.append(result_obj)
-
-	print('result_manager', result_manager)
-	return
-#Bug Writer 
-def Translate_Simple(Object, simple_template, my_translator, secondary_target_language = None):
-	
-	to_translate = []
-
-	TextTestReport_index = []
-	TextShouldBe_index = []
-	TextReproduceSteps_index = []
-
-	TextTestServer = Object['TextTestVersion'][0]
-	TextTestClient = Object['TextTestVersion'][1]
-
-	if Object['TextTestInfo'] != None:
-		skip_test_info = False
-		TextReproduceTime = Object['TextTestInfo'][0]
-		TextTestAccount = Object['TextTestInfo'][1]
-	else:
-		skip_test_info = True
-		TextReproduceTime = ""
-		TextTestAccount = ""
-	
-	TextTestReport = Object['TextTestReport'].replace('\r', '').split('\n')
-	TextShouldBe = Object['TextShouldBe'].replace('\r', '').split('\n')
-	TextReproduceSteps = Object['TextReproduceSteps'].replace('\r', '').split('\n')
-	
-	if simple_template != 1:
-		Details = '<p><b>Server : </b>&nbsp;' + TextTestServer + '</p>'
-		Details += '\r\n<p><b>Client : </b>&nbsp;' + TextTestClient + '</p>'	
-
-		strTestVersion = AddCssLayout("Test Version", Details)
-
-		if TextReproduceTime == "":
-			now = datetime.datetime.now()
-			TextReproduceTime = str(date.today()) + " " + str(now.hour) + ':' + str(now.minute) 
-		Details = '\r\n<p><b>Reproduce Time : </b>&nbsp;' + TextReproduceTime + '</p>'
-		Details += '\r\n<p><b>Account ID/Character Name : </b>&nbsp;' + TextTestAccount + '</p>'
-
-		strTestInfo = '\r\n' + AddCssLayout("Test Info", Details)	
-	else:
-		Title = "Test Version"
-		Details = Add_Style(Title)
-		Details += '\r\nServer : ' + TextTestServer
-		Details += '\r\nClient : ' + TextTestClient
-		
-		strTestVersion = Details
-
-		Title = "Test Info"
-		Details = "\r\n"
-		Details += Add_Style(Title)
-		Details += '\r\nReproduce Time : ' + TextReproduceTime
-		Details += '\r\nAccount ID/Character Name : ' + TextTestAccount
-
-		strTestInfo = Details	
-
-	Old_TextTestReport = []
-	Old_TextShouldBe = []
-	Old_TextReproduceSteps = []
-
-	New_TextTestReport = []
-	New_TextShouldBe = []
-	New_TextReproduceSteps = []
-
-	secondary_TextTestReport = []
-	secondary_TextShouldBe = []
-	secondary_TextReproduceSteps = []
-
-	counter = 0
-
-	for index in range(len(TextTestReport)):
-		item = TextTestReport[index]
-		if str(item) != "":
-			to_translate.append(item)
-			Old_TextTestReport.append(item)
-			TextTestReport_index.append(counter)
-			counter+=1
-
-
-	for index in range(len(TextShouldBe)):
-		item = TextShouldBe[index]
-		if str(item) != "":
-			to_translate.append(item)
-			Old_TextShouldBe.append(item)
-			TextShouldBe_index.append(counter)
-			counter+=1
-
-
-	for index in range(len(TextReproduceSteps)):
-		item = TextReproduceSteps[index]
-		if str(item) != "":
-			to_translate.append(item)
-			Old_TextReproduceSteps.append(item)
-			TextReproduceSteps_index.append(counter)
-			counter+=1
-			
-	first_language_translation = my_translator.translate(to_translate)
-	if secondary_target_language not in [None, '']:
-		temp_language = my_translator.to_language
-		my_translator.set_target_language(secondary_target_language)
-		second_language_translation = my_translator.translate(to_translate)
-		my_translator.set_target_language(temp_language)
-	else:
-		second_language_translation = []
-
-	for index in TextTestReport_index:
-		New_TextTestReport.append(first_language_translation[index])
-		if secondary_target_language != None:
-			secondary_TextTestReport.append(second_language_translation[index])
-
-	for index in TextShouldBe_index:
-		New_TextShouldBe.append(first_language_translation[index])
-		if secondary_target_language not in [None, '']:
-			secondary_TextShouldBe.append(second_language_translation[index])
-
-	for index in TextReproduceSteps_index:
-		New_TextReproduceSteps.append(first_language_translation[index])
-		if secondary_target_language not in [None, '']:
-			secondary_TextReproduceSteps.append(second_language_translation[index])	
-
-	Lang = my_translator.to_language
-	
-	if simple_template != 1:
-		strReport = Simple_Row_CSS_Template(Lang, "Report", New_TextTestReport, Old_TextTestReport, secondary_TextTestReport)	
-		strReprodSteps = Simple_Step_CSS_Template(Lang, "Reproduce Steps", New_TextReproduceSteps, Old_TextReproduceSteps, secondary_TextReproduceSteps)	
-		strShouldBe = Simple_Row_CSS_Template(Lang, "Should Be", New_TextShouldBe, Old_TextShouldBe, secondary_TextShouldBe)	
-	else:	
-		strReport = Simple_Row_Template(Lang,  "Report", New_TextTestReport, Old_TextTestReport, second_language_translation)	
-		strReprodSteps = Simple_Step_Template(Lang, "Reproduce Steps", New_TextReproduceSteps, Old_TextReproduceSteps, second_language_translation)	
-		strShouldBe = Simple_Row_Template(Lang, "Should Be", New_TextShouldBe, Old_TextShouldBe, second_language_translation)	
-	
-	CssText = strTestVersion
-	#print("Skip info:", self.SkipTestInfo.get())
-	if skip_test_info == False:
-		CssText += strTestInfo
-	CssText += strReport
-	CssText += strReprodSteps
-	CssText += strShouldBe
-
-	print('Copy to clipboard')
-	copy(CssText)
-
-def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
-	#print('Text_List_Secondary', Text_List_Secondary)
-	Details = ''
-	x = 1
-	if Lang == 'ko':		
-		for row in Text_List:
-			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
-			x += 1
-		Details += '\r\n================================================='
-		x = 1
-		for row in Text_List_Old:
-			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
-			x += 1
-		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
-			x = 1
-			for row in Text_List_Secondary:
-				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
-				x += 1	
-	else:
-		for row in Text_List_Old:
-			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
-			x += 1
-		Details += '\r\n================================================='
-		x = 1
-		for row in Text_List:
-			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
-			x += 1
-		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
-			x = 1
-			for row in Text_List_Secondary:
-				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
-				x += 1		
-	Details = AddCssLayout(Title, Details)
-	return Details
-
-def Simple_Step_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
-	print('Text_List_Secondary', Text_List_Secondary)
-	Details = "\r\n"
-	Details += Add_Style(Title)
-	x = 1
-	if Lang == 'ko':		
-		for row in Text_List:
-			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
-			x += 1
-		Details += '\r\n================================================='
-		x = 1
-		for row in Text_List_Old:
-			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
-			x += 1
-		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
-			for row in Text_List_Secondary:
-				Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
-				x += 1
-	else:
-		for row in Text_List_Old:
-			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
-			x += 1
-		Details += '\r\n================================================='
-		x = 1
-		for row in Text_List:
-			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
-			x += 1
-		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
-			for row in Text_List_Secondary:
-				Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
-				x += 1
-	return Details
-
-def Simple_Row_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
-	print('Text_List_Secondary', Text_List_Secondary)
-	Details = ''
-	if Lang == 'ko':		
-		for row in Text_List:
-			Details += '\r\n<p>'+ remove_notranslate_tag(row) + '&nbsp;</p>'
-		Details += '\r\n================================================='
-		for row in Text_List_Old:
-			Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
-		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
-			for row in Text_List_Secondary:
-				Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
-	else:
-		for row in Text_List_Old:
-			Details += '\r\n<p>'+ remove_notranslate_tag(row) + '&nbsp;</p>'
-		Details += '\r\n================================================='
-		for row in Text_List:
-			Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
-		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
-			for row in Text_List_Secondary:
-				Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
-	
-	Details = AddCssLayout(Title, Details)
-	return Details
-
-
-#Place holder
-def remove_notranslate_tag(source_text):
-	return source_text
-	
-def Simple_Row_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
-	#print('Text_List_Secondary', Text_List_Secondary)
-	Details = "\r\n"
-	Details += Add_Style(Title)
-	if Lang == 'ko':		
-		for row in Text_List:
-			Details += '\r\n'+ remove_notranslate_tag(row)
-		Details += '\r\n================================================='
-		for row in Text_List_Old:
-			Details += '\r\n'+ remove_notranslate_tag(row)
-		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
-			for row in Text_List_Secondary:
-				Details += '\r\n'+ remove_notranslate_tag(row)
-
-	else:
-		for row in Text_List_Old:
-			Details += '\r\n'+ remove_notranslate_tag(row)
-		Details += '\r\n================================================='
-		for row in Text_List:
-			Details += '\r\n'+ remove_notranslate_tag(row)
-		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
-			for row in Text_List_Secondary:
-				Details += '\r\n'+ remove_notranslate_tag(row)
-	return Details
-
-
-def AddCssLayout(Title, content):
-	CssCode = '<div class="jePanel_blue" style="background-color:#f4ffff; border:1px solid #cccccc; margin-bottom:1em; margin-left:1em; margin-right:1em; margin-top:1em">'
-	CssCode += '\r\n<div class="jePanelHeader" style="background-color:#9bc3ff; border-bottom-color:#cccccc; border-bottom-style:solid; border-bottom-width:1px; font-weight:bold; padding:.3em; text-align:center">[' + Title + ']</div>'
-	CssCode += '\r\n<div class="jePanelContent" style="padding:.5em 2em .5em 2em">'
-	CssCode += '\r\n<p>&nbsp;</p>'
-	CssCode += content
-	CssCode += '\r\n<p>&nbsp;</p>'
-	CssCode += '\r\n</div>'
-	CssCode += '\r\n</div>'
-	return CssCode
-
-
-
-def Add_Style(Text):
-	return '___________' + Text + '___________' 
-
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
-
-
-def main():
-
+def MainLoop():
+	print('Create shareable Memory variable')
 	MyTranslator = Queue()
 	return_text = Queue()
 	MyManager = Manager()
 	grammar_check_result = MyManager.list()
 	tm_manager = MyManager.list()
-	language_tool_enable = False
 
-	#root = Tk()
-	root = Window(themename="minty")
-	#root.iconbitmap(r"theme\ico\ico.ico")
-	
-	#root.geometry("400x350+300+300")
-	application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
-
+	language_tool_enable = True
 	try:
-		#root.attributes('-topmost', True)
+		download_path = os.environ.get('LTP_PATH',os.path.join(os.path.expanduser("~"), ".cache", "language_tool_python"))
+		print('Language tool path:', download_path)
+		if os.path.isdir(download_path):
+			LangTool = LanguageTool('en')
+			print(LangTool)
+			LangTool.language_tool.close()
+		else:
+			language_tool_enable = False
+	except Exception as e:
+		print("Error", e)
+		language_tool_enable = False
+
+	print('Create UI')
+	root = Tk()
+	root.attributes("-alpha", 0.96)
+	
+	
+	CWD = os.getcwd()
+	
+	THEME_DIR = os.path.join(CWD, "theme\\awdark.tcl") 
+	if os.path.isfile(THEME_DIR) == True:
+		try:
+			root.tk.call("source", THEME_DIR)
+			style.theme_use('awdark')
+			print('Use Dark Mode')
+		except Exception as e:
+			print('Error while loading theme: ', e)	
+	else:
+		print('White Mode')
+		global BG_CL, FG_CL, FRAME_BG, MENU_BG
+		BG_CL = None
+		FG_CL = None
+		FRAME_BG = None
+		MENU_BG = None
+
+	application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
+	#root.mainloop()
+	
+	try:
+		print('Update UI')
+		root.attributes('-topmost', True)
 		#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
-		
-		icon_path = resource_path('resource/translate_helper.ico')
-		print(icon_path)
-		if os.path.isfile(icon_path):
-			root.iconbitmap(icon_path)
-			
-		#root.attributes('-topmost', False)
+		root.attributes('-topmost', False)
+		#root.deiconify()
 		root.mainloop()
+		print('Send usage report')
 		application.MyTranslator.send_tracking_record()
-	except Exception as e:	
+	except Exception as e:
+		
 		root.withdraw()
 
 		try:
@@ -1839,7 +1472,7 @@ def main():
 			client = logging.Client()
 		except:
 			print('Fail to communicate with logging server')
-			print("Usage logging error:", e)
+			print("error message:", e)
 			messagebox.showinfo(title='Critical error', message=e)
 			return
 
@@ -1861,7 +1494,7 @@ def main():
 		print("error message:", e)	
 		messagebox.showinfo(title='Critical error', message=e)
 
-
+	print('Initial Done')
 
 if __name__ == '__main__':
 	if sys.platform.startswith('win'):
@@ -1870,4 +1503,4 @@ if __name__ == '__main__':
 	#AIOTracker.GenerateToolUsageEvent(version)
 	#AIOTracker.UpdateTrackingData()
 
-	main()
+	MainLoop()

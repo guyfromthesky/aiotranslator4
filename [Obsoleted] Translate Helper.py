@@ -16,10 +16,8 @@ from datetime import date
 from pyperclip import copy, paste
 #from tkinter import *
 #from tkinter.ttk import *
-from ttkbootstrap import Entry, Label, Style
-from ttkbootstrap import Checkbutton, OptionMenu, Notebook, Radiobutton, LabelFrame, Button
-from ttkbootstrap import Progressbar, Style, Window
-
+from tkinter.ttk import Entry, Label, Style
+from tkinter.ttk import Checkbutton, OptionMenu, Notebook, Radiobutton, LabelFrame, Button
 from tkinter import Tk, Frame, Toplevel, Scale
 
 # Widget type
@@ -71,7 +69,7 @@ from google.cloud import logging
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4126
+REV = 4124
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num
 
@@ -93,7 +91,6 @@ class MyTranslatorHelper(Frame):
 
 		Frame.__init__(self, parent)
 		self.pack(side=TOP, expand=Y, fill=X)
-		self.style =  Style()
 
 		self.parent = parent
 		self.parent.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -109,10 +106,10 @@ class MyTranslatorHelper(Frame):
 		self.grammar_check_list = []
 		self.grammar_corrected_list = []
 
-		self.SOURCE_WIDTH = 80
+		self.SOURCE_WIDTH = 75
 		self.BUTTON_SIZE = 20 
 		self.HALF_BUTTON_SIZE = 15
-		self.ROW_SIZE = 26
+		self.ROW_SIZE = 23
 		
 		self.Btn_Style = "Accent.TButton"
 
@@ -135,6 +132,11 @@ class MyTranslatorHelper(Frame):
 		self.primary_translation = ''
 
 		# Widget list vars to change color via Translate Setting tab.
+		self.text_widgets = []
+		self.label_widgets = []
+		self.menu_widgets = []
+		self.frame_widgets = []
+		self.Radiobutton_widgets = []
 
 		self._after_id = None
 
@@ -210,6 +212,13 @@ class MyTranslatorHelper(Frame):
 	def About(self):
 		messagebox.showinfo("About....", "Creator: Evan@nexonnetworks.com")
 
+	def flash_btn(self, btn_widget):
+		
+		# Change the color of the button
+		btn_widget.focus_set()
+		#btn_widget.configure(activebackground = "#6f6Fff")
+		self.after(100, lambda: btn_widget.focus_set())
+
 	def on_closing(self):
 		if messagebox.askokcancel(tool_display_name, "Do you want to quit?"):
 			self.parent.destroy()
@@ -235,7 +244,8 @@ class MyTranslatorHelper(Frame):
 			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
 
 			self.bottom_panel = BugWriter_BottomPanel(self)
-	
+			
+			self.apply_theme_color()
 		except Exception as e:
 			print(f'An error occurs while initializing UI: {e}')
 
@@ -349,24 +359,51 @@ class MyTranslatorHelper(Frame):
 		"""Applied the theme name saved in the settings on init."""
 		print('init_theme')
 		try:
-			self.theme_names = self.style.theme_names()
-							#	['cosmo', 'flatly', 'litera', 'minty',
-							#	"lumen", "sandstone",	"yeti", "pulse", 
-							#	"united", "morph", "journal", "darkly", 'superhero', 
-							#	'solar', 'cyborg', 'vapor', 'simplex', 'cerculean'
-							#		, 'pinky']
+			self.theme_names = ['clam']
+			
+			style = Style(self.parent) # self.parent is root
+			#supported_themes = ['awdark', 'awlight']
+			supported_themes = ['awdark', 'awlight', 'forest-dark', 'forest-light']
+								#"arc", "black",	"clearlooks", "equilux", 
+								#"kroc", "plastik", "radiance", "winxpblue"]
+			
+			# theme_dir = self.AppConfig.theme_loading_path
+			theme_dir = os.path.join(os.getcwd() + r'\\theme')
+			theme_files = os.listdir(theme_dir)
+			# Add to theme selection in Translate Setting tab
+			for theme_file in theme_files:
+				file_name, file_ext = os.path.splitext(theme_file)
+				if file_ext == '.tcl':
+					if file_name in supported_themes:
+						# Import tcl files
+						print('Import theme:', f'{theme_dir}\\{theme_file}')
+						self.parent.tk.call(
+							"source", f'{theme_dir}\\{theme_file}')
+						self.theme_names.append(file_name)
+				else:
+					continue
+			# System default color is removed if adding below!!!!
+			# style.map(
+			# 	'.', #'.' means all ttk widgets
+			# 	foreground=fixed_map(style, 'foreground'),
+			# 	background=fixed_map(style, 'background'))
+
 			if self.used_theme not in self.theme_names:
 				raise Exception('Cannot use the theme saved in the config'
 					' because it is not supported or required files have'
 					' been removed.')
 
-			self.style.theme_use(self.used_theme)
-
+			# # Add all available theme
+			# for theme_name in style.theme_names():
+			# 	self.theme_names.append(theme_name)
+			self.change_theme_color(self.used_theme)
+			style.theme_use(self.used_theme)
 		except Exception as err:
 			print('Error while initializing theme:\n'
 				f'- {err}\n'
 				'The system default theme will be used instead.')
 		transparency  = self.Configuration['Bug_Writer']['Transparent']
+
 		Apply_Transparency(transparency, self)
 
 
@@ -378,23 +415,154 @@ class MyTranslatorHelper(Frame):
 			config_theme_name -- str
 				Theme name retrieved from config. (Default: '')
 		"""
-
 		try:
+			style = Style(self.parent) # self.parent is root
 			theme_name = self.strvar_theme_name.get()
-			print('Select theme:', theme_name)
-			self.style.theme_use(theme_name)
+			
 			self.AppConfig.Save_Config(
 				self.AppConfig.Writer_Config_Path,
 				'Bug_Writer',
 				'theme_name',
 				theme_name, True)
-
+			self.change_theme_color(theme_name)
+			style.theme_use(theme_name)
+			self.apply_theme_color()
+			self.btn_remove_theme.configure(state=NORMAL)
 		except Exception as err:
 			messagebox.showerror(
 				title='Error',
 				message=f'Error occurs when selecting theme: {err}')
 
+	def change_theme_color(self, theme_name: str):
+		print('change_theme_color', theme_name)
+		"""Change widget color.
+		
+		Args:
+			theme_name -- str
+				Theme that is available on the computer. Retrieved
+				from config or selection in Translate Setting tab.
+		"""
+		# if theme_name == 'awdark':
+		# 	self.widget_color = {
+		# 		'parent_bg': '#191c1d',
+		# 		'frame_bg': '#191c1d',
+		# 		'menu_bg': '#474D4E',
+		# 		'menu_fg': 'white',
+		# 		'text_bg': '#191c1d',
+		# 		'text_fg': 'white',
+		# 		'text_insertbackground': 'white'
+		# 	}
+		if theme_name == 'awdark':
+			self.widget_color = {
+				'parent_bg': '#33393b',
+				'frame_bg': '#33393b',
+				'menu_bg': '#474D4E',
+				'menu_fg': '#ffffff',
+				'text_bg': '#191c1d',
+				'text_fg': '#ffffff',
+				'text_insertbackground': '#ffffff',
+				'label_bg': '#393f3f',
+				'label_fg': 'white'
+			}
+		elif theme_name == 'breeze':
+			self.widget_color = {
+				'parent_bg': '#e8e8e7',
+				'frame_bg': '#e8e8e7',
+				'menu_bg': '#e8e8e7',
+				'menu_fg': '#000000',
+				'text_bg': '#ffffff',
+				'text_fg': '#000000',
+				'text_insertbackground': '#000000',
+				'label_bg': '#191c1d',
+				'label_fg': '#ffffff'
+			}	
+		elif theme_name == 'forest-light':
+			self.widget_color = {
+				'parent_bg': '#ffffff',
+				'frame_bg': '#ffffff',
+				'menu_bg': '#e8e8e7',
+				'menu_fg': '#313131',
+				'text_bg': '#ffffff',
+				'text_fg': '#313131',
+				'text_insertbackground': '#313131',
+			}
+		elif theme_name == 'forest-dark':
+			self.widget_color = {
+				'parent_bg': '#313131',
+				'frame_bg': '#313131',
+				'menu_bg': '#313131',
+				'menu_fg': '#eeeeee',
+				'text_bg': '#313131',
+				'text_fg': '#eeeeee',
+				'text_insertbackground': '#313131',
+			}
+		elif theme_name == 'awlight':
+			self.widget_color = {
+				'parent_bg': '#e8e8e7',
+				'frame_bg': '#e8e8e7',
+				'menu_bg': '#e8e8e7',
+				'menu_fg': '#000000',
+				'text_bg': '#ffffff',
+				'text_fg': '#000000',
+				'text_insertbackground': '#000000',
+				'label_bg': '#191c1d',
+				'label_fg': '#ffffff'
+			}
+		elif theme_name == 'clam':
+			self.widget_color = {
+				'parent_bg': '#dcdad5',
+				'frame_bg': '#dcdad5',
+				'menu_bg': '#dcdad5',
+				'menu_fg': '#000000',
+				'text_bg': '#ffffff',
+				'text_fg': '#000000',
+				'text_insertbackground': '#000000',
+				'label_bg': '#191c1d',
+				'label_fg': '#ffffff'
+			}
+		else:
+			self.widget_color = {
+				'parent_bg': '#ffffff',
+				'frame_bg': 'SystemButtonFace',
+				'menu_bg': 'SystemButtonFace',
+				'menu_fg': '#000000', # font color
+				'text_bg': '#ffffff',
+				'text_fg': '#000000', # font color
+				'text_insertbackground': '#000000',
+				'label_bg': '#191c1d',
+				'label_fg': '#ffffff'
+			}
 	
+	def apply_theme_color(self):
+		print('apply_theme_color')
+		#print('self.frame_widgets', self.frame_widgets)
+		#print('self.menu_widgets', self.menu_widgets)
+		#print('self.text_widgets', self.text_widgets)
+		"""Apply color to widgets."""
+		self.parent['bg'] = self.widget_color['parent_bg']
+		#self.parent['fg'] = self.widget_color['parent_bg']
+
+		for frame_widget in self.frame_widgets:
+			frame_widget['bg'] = self.widget_color['frame_bg']
+		for menu_widget in self.menu_widgets:
+			menu_widget['bg'] = self.widget_color['menu_bg']
+			menu_widget['fg'] = self.widget_color['menu_fg']
+		for text_widget in self.text_widgets:
+			text_widget['bg'] = self.widget_color['text_bg']
+			text_widget['fg'] = self.widget_color['text_fg']
+			text_widget['insertbackground'] = \
+				self.widget_color['text_insertbackground']
+		for label_widget in self.label_widgets:
+			label_widget['bg'] = self.widget_color['parent_bg']
+			label_widget['fg'] = self.widget_color['text_fg']
+
+		#for Radiobutton_widget in self.Radiobutton_widgets:
+		#	Radiobutton_widget['bg'] = self.widget_color['parent_bg']
+			#text_widget['insertbackground'] = self.widget_color['text_insertbackground']
+
+		
+		#self.parent.wm_attributes('-transparentcolor', text_widget['bg'])
+
 	def remove_theme(self):
 		print('remove_theme')
 		"""Remove the theme saved in config then restart the app."""
@@ -1070,7 +1238,6 @@ class MyTranslatorHelper(Frame):
 		self.HeaderOptionB.set_completion_list(self.header_list)
 
 
-
 	def ResetReport(self,event=None):
 		self.ResetTestReport()
 
@@ -1081,13 +1248,6 @@ class MyTranslatorHelper(Frame):
 				self.TextTitle.highlight_fault_pattern(term, 'blue')
 				self.TextReproduceSteps.highlight_fault_pattern(term, 'blue')
 				self.TextShouldBe.highlight_fault_pattern(term, 'blue')
-
-	def tag_selected(self, event):
-		self.TextTestReport.tag_selected()
-		self.TextTitle.tag_selected()
-		self.TextReproduceSteps.tag_selected()
-		self.TextShouldBe.tag_selected()
-		self.SourceText.tag_selected()
 
 	def review_report(self):
 
@@ -1223,18 +1383,6 @@ class MyTranslatorHelper(Frame):
 		To_Translate['TextShouldBe'] = self.TextShouldBe.get("1.0", END)
 		To_Translate['TextReproduceSteps'] = self.TextReproduceSteps.get("1.0", END)
 		self.report_details = To_Translate
-
-			
-
-	def add_no_translate_tag(self, text):
-		for index in range(len(text)):
-			string_to_translate = text[index]
-			special_texts = re.findall("\<([^\>]*)\>", string_to_translate)
-			#print('special_texts list', special_texts)
-			for special_text in special_texts:
-				text[index]  = string_to_translate.replace("<" + special_text + ">", ("<span class=\"notranslate\">" + special_text + "</span>"))
-		#print('New source', source_text)
-		return text
 
 	def prepare_translator_language(self):
 		return
@@ -1636,7 +1784,6 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 	CssText += strReport
 	CssText += strReprodSteps
 	CssText += strShouldBe
-
 	print('Copy to clipboard')
 	copy(CssText)
 
@@ -1646,33 +1793,33 @@ def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Se
 	x = 1
 	if Lang == 'ko':		
 		for row in Text_List:
-			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
+			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 			x += 1
 		Details += '\r\n================================================='
 		x = 1
 		for row in Text_List_Old:
-			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
+			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 			x += 1
 		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			x = 1
 			for row in Text_List_Secondary:
-				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
+				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 				x += 1	
 	else:
 		for row in Text_List_Old:
-			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
+			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 			x += 1
 		Details += '\r\n================================================='
 		x = 1
 		for row in Text_List:
-			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
+			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 			x += 1
 		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			x = 1
 			for row in Text_List_Secondary:
-				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
+				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 				x += 1		
 	Details = AddCssLayout(Title, Details)
 	return Details
@@ -1684,31 +1831,31 @@ def Simple_Step_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Second
 	x = 1
 	if Lang == 'ko':		
 		for row in Text_List:
-			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
+			Details += '\r\n' + str(x) + ') ' + row
 			x += 1
 		Details += '\r\n================================================='
 		x = 1
 		for row in Text_List_Old:
-			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
+			Details += '\r\n' + str(x) + ') ' + row
 			x += 1
 		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
-				Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
+				Details += '\r\n' + str(x) + ') ' + row
 				x += 1
 	else:
 		for row in Text_List_Old:
-			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
+			Details += '\r\n' + str(x) + ') ' + row
 			x += 1
 		Details += '\r\n================================================='
 		x = 1
 		for row in Text_List:
-			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
+			Details += '\r\n' + str(x) + ') ' + row
 			x += 1
 		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
-				Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
+				Details += '\r\n' + str(x) + ') ' + row
 				x += 1
 	return Details
 
@@ -1717,58 +1864,53 @@ def Simple_Row_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Sec
 	Details = ''
 	if Lang == 'ko':		
 		for row in Text_List:
-			Details += '\r\n<p>'+ remove_notranslate_tag(row) + '&nbsp;</p>'
+			Details += '\r\n<p>'+ row + '&nbsp;</p>'
 		Details += '\r\n================================================='
 		for row in Text_List_Old:
-			Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
+			Details += '\r\n<p>' + row + '&nbsp;</p>'
 		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
-				Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
+				Details += '\r\n<p>' + row + '&nbsp;</p>'
 	else:
 		for row in Text_List_Old:
-			Details += '\r\n<p>'+ remove_notranslate_tag(row) + '&nbsp;</p>'
+			Details += '\r\n<p>'+ row + '&nbsp;</p>'
 		Details += '\r\n================================================='
 		for row in Text_List:
-			Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
+			Details += '\r\n<p>' + row + '&nbsp;</p>'
 		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
-				Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
+				Details += '\r\n<p>' + row + '&nbsp;</p>'
 	
 	Details = AddCssLayout(Title, Details)
 	return Details
 
-
-#Place holder
-def remove_notranslate_tag(source_text):
-	return source_text
-	
 def Simple_Row_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
 	#print('Text_List_Secondary', Text_List_Secondary)
 	Details = "\r\n"
 	Details += Add_Style(Title)
 	if Lang == 'ko':		
 		for row in Text_List:
-			Details += '\r\n'+ remove_notranslate_tag(row)
+			Details += '\r\n'+ row
 		Details += '\r\n================================================='
 		for row in Text_List_Old:
-			Details += '\r\n'+ remove_notranslate_tag(row)
+			Details += '\r\n'+ row
 		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
-				Details += '\r\n'+ remove_notranslate_tag(row)
+				Details += '\r\n'+ row
 
 	else:
 		for row in Text_List_Old:
-			Details += '\r\n'+ remove_notranslate_tag(row)
+			Details += '\r\n'+ row
 		Details += '\r\n================================================='
 		for row in Text_List:
-			Details += '\r\n'+ remove_notranslate_tag(row)
+			Details += '\r\n'+ row
 		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
-				Details += '\r\n'+ remove_notranslate_tag(row)
+				Details += '\r\n'+ row
 	return Details
 
 
@@ -1788,16 +1930,16 @@ def AddCssLayout(Title, content):
 def Add_Style(Text):
 	return '___________' + Text + '___________' 
 
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
-
+def fixed_map(style, option):
+	# Fix for setting text colour for Tkinter 8.6.9
+	# From: https://core.tcl.tk/tk/info/509cafafae
+	#
+	# Returns the style map for 'option' with any styles starting with
+	# ('!disabled', '!selected', ...) filtered out.
+	# style.map() returns an empty list for missing options, so this
+	# should be future-safe.
+	return [elm for elm in style.map('Treeview', query_opt=option) if
+	  elm[:2] != ('!disabled', '!selected')]
 
 def main():
 
@@ -1808,22 +1950,17 @@ def main():
 	tm_manager = MyManager.list()
 	language_tool_enable = False
 
-	#root = Tk()
-	root = Window(themename="minty")
+	root = Tk()
 	#root.iconbitmap(r"theme\ico\ico.ico")
 	
 	#root.geometry("400x350+300+300")
-	application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
+	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 
 	try:
 		#root.attributes('-topmost', True)
-		#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
-		
-		icon_path = resource_path('resource/translate_helper.ico')
-		print(icon_path)
-		if os.path.isfile(icon_path):
-			root.iconbitmap(icon_path)
-			
+		application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
+		if os.path.isfile(r'theme\ico\ico.ico'):
+			root.iconbitmap(r"theme\ico\ico.ico")
 		#root.attributes('-topmost', False)
 		root.mainloop()
 		application.MyTranslator.send_tracking_record()

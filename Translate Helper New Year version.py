@@ -71,7 +71,7 @@ from google.cloud import logging
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4126
+REV = 4125
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num
 
@@ -1070,7 +1070,6 @@ class MyTranslatorHelper(Frame):
 		self.HeaderOptionB.set_completion_list(self.header_list)
 
 
-
 	def ResetReport(self,event=None):
 		self.ResetTestReport()
 
@@ -1081,13 +1080,6 @@ class MyTranslatorHelper(Frame):
 				self.TextTitle.highlight_fault_pattern(term, 'blue')
 				self.TextReproduceSteps.highlight_fault_pattern(term, 'blue')
 				self.TextShouldBe.highlight_fault_pattern(term, 'blue')
-
-	def tag_selected(self, event):
-		self.TextTestReport.tag_selected()
-		self.TextTitle.tag_selected()
-		self.TextReproduceSteps.tag_selected()
-		self.TextShouldBe.tag_selected()
-		self.SourceText.tag_selected()
 
 	def review_report(self):
 
@@ -1223,18 +1215,6 @@ class MyTranslatorHelper(Frame):
 		To_Translate['TextShouldBe'] = self.TextShouldBe.get("1.0", END)
 		To_Translate['TextReproduceSteps'] = self.TextReproduceSteps.get("1.0", END)
 		self.report_details = To_Translate
-
-			
-
-	def add_no_translate_tag(self, text):
-		for index in range(len(text)):
-			string_to_translate = text[index]
-			special_texts = re.findall("\<([^\>]*)\>", string_to_translate)
-			#print('special_texts list', special_texts)
-			for special_text in special_texts:
-				text[index]  = string_to_translate.replace("<" + special_text + ">", ("<span class=\"notranslate\">" + special_text + "</span>"))
-		#print('New source', source_text)
-		return text
 
 	def prepare_translator_language(self):
 		return
@@ -1636,7 +1616,6 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 	CssText += strReport
 	CssText += strReprodSteps
 	CssText += strShouldBe
-
 	print('Copy to clipboard')
 	copy(CssText)
 
@@ -1646,33 +1625,33 @@ def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Se
 	x = 1
 	if Lang == 'ko':		
 		for row in Text_List:
-			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
+			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 			x += 1
 		Details += '\r\n================================================='
 		x = 1
 		for row in Text_List_Old:
-			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
+			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 			x += 1
 		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			x = 1
 			for row in Text_List_Secondary:
-				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
+				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 				x += 1	
 	else:
 		for row in Text_List_Old:
-			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
+			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 			x += 1
 		Details += '\r\n================================================='
 		x = 1
 		for row in Text_List:
-			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
+			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 			x += 1
 		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			x = 1
 			for row in Text_List_Secondary:
-				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
+				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + row + '&nbsp;</p>'
 				x += 1		
 	Details = AddCssLayout(Title, Details)
 	return Details
@@ -1684,31 +1663,31 @@ def Simple_Step_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Second
 	x = 1
 	if Lang == 'ko':		
 		for row in Text_List:
-			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
+			Details += '\r\n' + str(x) + ') ' + row
 			x += 1
 		Details += '\r\n================================================='
 		x = 1
 		for row in Text_List_Old:
-			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
+			Details += '\r\n' + str(x) + ') ' + row
 			x += 1
 		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
-				Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
+				Details += '\r\n' + str(x) + ') ' + row
 				x += 1
 	else:
 		for row in Text_List_Old:
-			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
+			Details += '\r\n' + str(x) + ') ' + row
 			x += 1
 		Details += '\r\n================================================='
 		x = 1
 		for row in Text_List:
-			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
+			Details += '\r\n' + str(x) + ') ' + row
 			x += 1
 		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
-				Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
+				Details += '\r\n' + str(x) + ') ' + row
 				x += 1
 	return Details
 
@@ -1717,58 +1696,53 @@ def Simple_Row_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Sec
 	Details = ''
 	if Lang == 'ko':		
 		for row in Text_List:
-			Details += '\r\n<p>'+ remove_notranslate_tag(row) + '&nbsp;</p>'
+			Details += '\r\n<p>'+ row + '&nbsp;</p>'
 		Details += '\r\n================================================='
 		for row in Text_List_Old:
-			Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
+			Details += '\r\n<p>' + row + '&nbsp;</p>'
 		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
-				Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
+				Details += '\r\n<p>' + row + '&nbsp;</p>'
 	else:
 		for row in Text_List_Old:
-			Details += '\r\n<p>'+ remove_notranslate_tag(row) + '&nbsp;</p>'
+			Details += '\r\n<p>'+ row + '&nbsp;</p>'
 		Details += '\r\n================================================='
 		for row in Text_List:
-			Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
+			Details += '\r\n<p>' + row + '&nbsp;</p>'
 		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
-				Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
+				Details += '\r\n<p>' + row + '&nbsp;</p>'
 	
 	Details = AddCssLayout(Title, Details)
 	return Details
 
-
-#Place holder
-def remove_notranslate_tag(source_text):
-	return source_text
-	
 def Simple_Row_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
 	#print('Text_List_Secondary', Text_List_Secondary)
 	Details = "\r\n"
 	Details += Add_Style(Title)
 	if Lang == 'ko':		
 		for row in Text_List:
-			Details += '\r\n'+ remove_notranslate_tag(row)
+			Details += '\r\n'+ row
 		Details += '\r\n================================================='
 		for row in Text_List_Old:
-			Details += '\r\n'+ remove_notranslate_tag(row)
+			Details += '\r\n'+ row
 		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
-				Details += '\r\n'+ remove_notranslate_tag(row)
+				Details += '\r\n'+ row
 
 	else:
 		for row in Text_List_Old:
-			Details += '\r\n'+ remove_notranslate_tag(row)
+			Details += '\r\n'+ row
 		Details += '\r\n================================================='
 		for row in Text_List:
-			Details += '\r\n'+ remove_notranslate_tag(row)
+			Details += '\r\n'+ row
 		if len(Text_List_Secondary) > 0:
 			Details += '\r\n================================================='
 			for row in Text_List_Secondary:
-				Details += '\r\n'+ remove_notranslate_tag(row)
+				Details += '\r\n'+ row
 	return Details
 
 
@@ -1820,10 +1794,8 @@ def main():
 		#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
 		
 		icon_path = resource_path('resource/translate_helper.ico')
-		print(icon_path)
 		if os.path.isfile(icon_path):
 			root.iconbitmap(icon_path)
-			
 		#root.attributes('-topmost', False)
 		root.mainloop()
 		application.MyTranslator.send_tracking_record()
