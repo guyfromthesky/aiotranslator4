@@ -67,7 +67,7 @@ from google.cloud import logging
 
 tool_display_name = "[MH] Translate Helper"
 tool_name = 'writer'
-REV = 4126
+REV = 4200
 ver_num = get_version(REV) 
 #VERSION = tool_display_name  + " " +  ver_num + " | Language Tool v5.6"
 
@@ -1375,30 +1375,23 @@ class MyTranslatorHelper(Frame):
 
 
 	def _save_report(self, event = None):
-		TextTitle = self.TextTitle.get("1.0", END)			
-		
-		EnvInfo = self.EnvInfo.get("1.0", END)
-		Reproducibility = self.Reproducibility.get("1.0", END)
-		
-		TextTestReport = self.TextTestReport.get("1.0", END)
-		TextReproduceSteps = self.TextReproduceSteps.get("1.0", END)
-		TextShouldBe = self.TextShouldBe.get("1.0", END)
-		HeaderA = self.HeaderOptionA.get()
-		HeaderB = self.HeaderOptionB.get()
+
 		try:
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTitle', TextTitle, True)
+			for widget_name in self.Configuration['BugDetails']:
+				for widget in dir(self):
+					if widget == widget_name:
+						_widget = getattr(self, widget)
+						_string = _widget.get("1.0", END)
+					
+						self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', widget_name, _string, True)
 
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'EnvInfo', EnvInfo, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'Reproducibility', Reproducibility, True)
-			
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTestReport', TextTestReport, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextShouldBe', TextShouldBe, True)
-
+			HeaderA = self.HeaderOptionA.get()
+			HeaderB = self.HeaderOptionB.get()		
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)
 
-		except:
+		except Exception as e:
+			print('Cannot sve the report:', e)
 			pass
 
 	def SaveTempReport(self, event=None):
@@ -1412,8 +1405,8 @@ class MyTranslatorHelper(Frame):
 
 			HeaderA = self.HeaderOptionA.get()
 			HeaderB = self.HeaderOptionB.get()		
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)			
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderA', HeaderA)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)			
 		except Exception as e:
 			print('Cannot save the report:', e)
 			pass
@@ -1477,7 +1470,10 @@ class MyTranslatorHelper(Frame):
 			self.Configuration = self.AppConfig.Config
 			for widget_name in self.Configuration['Temp_BugDetails']:
 				temp_string = self.Configuration['Temp_BugDetails'][widget_name]
-				
+
+				if temp_string != None:
+					temp_string = temp_string.rstrip('\n')
+
 				for widget in dir(self):
 					if widget == widget_name:
 						_widget = getattr(self, widget)

@@ -112,6 +112,7 @@ class CustomText(Text):
 		Text.__init__(self, *args, **kwargs)
 		Text.tag_configure(self, "red", background='deep pink', foreground='white')
 		Text.tag_configure(self, "blue", background='deep sky blue', foreground='white')
+		CustomText.__name__ = 'Text'
 
 	def tag_selected(self):
 		try:
@@ -1209,6 +1210,277 @@ def Generate_SimpleTranslator_UI(master, Tab):
 
 	Tab.bind_all('<Key>', master.handle_wait)
 	Tab.bind_all('<Control-g>', master.tag_selected)
+
+def Generate_SimpleTranslator_V2_UI(self, Tab):
+	"""Bug writer for jiralive subdomain."""
+	row_size = 8
+	field_width = int(self.SOURCE_WIDTH - 17)
+
+	## ROW 1 - LANGUAGE SELECTION LABEL AND NOTICE
+	Row=1
+	Label(Tab, textvariable=self.Notice)\
+		.grid(row=Row, column=1, columnspan=9, padx=5, pady=5, sticky=E)
+	Label(
+			Tab,
+			text=self.LanguagePack.Label['SourceLanguage'],
+			width=self.HALF_BUTTON_SIZE)\
+		.grid(row=Row, column=1, padx=5, pady=5, stick=E+W)
+	Label(
+			Tab,
+			text=self.LanguagePack.Label['MainLanguage'],
+			width=self.HALF_BUTTON_SIZE)\
+		.grid(row=Row, column=2, padx=5, pady=5, stick=E+W)
+	Label(
+			Tab,
+			text=self.LanguagePack.Label['SecondaryLanguage'],
+			width=self.HALF_BUTTON_SIZE)\
+		.grid(row=Row, column=3, padx=5, pady=5, stick=E+W)
+	
+	secondary_language_list = self.language_list + ['']
+
+	## ROW 2 - LANGUAGE SELECTION
+	Row += 1
+	# Source Language
+	self.simple_source_language = StringVar()
+	self.simple_source_language_select = OptionMenu(
+		Tab,
+		self.simple_source_language,
+		*self.language_list,
+		command=self.set_simple_language)
+	self.simple_source_language_select.config(width=self.HALF_BUTTON_SIZE)
+	self.simple_source_language_select.grid(
+		row=Row, column=1, padx=0, pady=5, sticky=W+E)
+	self.simple_source_language.set('English')
+
+	# Primary Language
+	self.simple_target_language = StringVar()
+	self.simple_target_language_select = OptionMenu(
+		Tab,
+		self.simple_target_language,
+		*self.language_list,
+		command=self.set_simple_language)
+	self.simple_target_language_select.config(
+		width=self.HALF_BUTTON_SIZE)
+	self.simple_target_language_select.grid(
+		row=Row, column=2, padx=0, pady=5, sticky=W+E)
+	self.simple_target_language.set('Hangul')
+
+	# Secondary Language
+	self.simple_secondary_target_language = StringVar()
+	self.simple_secondary_target_language_select = OptionMenu(
+		Tab,
+		self.simple_secondary_target_language,
+		*secondary_language_list,
+		command=self.set_simple_language)
+	self.simple_secondary_target_language_select.config(
+		width=self.HALF_BUTTON_SIZE)
+	self.simple_secondary_target_language_select.grid(
+		row=Row, column=3, padx=0, pady=5, sticky=W+E)
+	self.simple_secondary_target_language.set('Japanese')
+
+	self.btn_translate_all_v2 = Button(
+		Tab,
+		text="Translate All",
+		width=self.BUTTON_SIZE,
+		command=lambda: self.single_translate('btn_translate_all_v2'),
+		state=DISABLED)
+	self.btn_translate_all_v2.grid(
+		row=Row, column=7, padx=5, pady=5, sticky=W+E)
+	# self.btn_translate_all_v2.configure({'b': 'black'})
+
+	## ROW 3
+	Row += 1
+	Label(Tab, text='Bug Title:').grid(
+		row=Row, column=1, padx=5, pady=5, sticky=W+E)
+	
+	self.header_option_a_v2 = AutocompleteCombobox(Tab)
+	self.header_option_a_v2.Set_Entry_Width(self.BUTTON_SIZE)
+	self.header_option_a_v2.set_completion_list(self.header_list)
+	self.header_option_a_v2.grid(
+		row=Row, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
+	
+	self.header_option_b_v2 = AutocompleteCombobox(Tab)
+	self.header_option_b_v2.Set_Entry_Width(self.BUTTON_SIZE)
+	self.header_option_b_v2.set_completion_list(self.header_list)
+	self.header_option_b_v2.grid(
+		row=Row+1, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
+
+	self.text_bug_title_v2 = Text(
+		Tab,
+		width=field_width,
+		height=4,
+		undo=True,
+	)
+	self.text_bug_title_v2.grid(
+		row=Row, rowspan=2, column=4, columnspan=4, padx=5, pady=0,
+		sticky=W+E)
+
+	self.btn_translate_title_v2 = Button(
+		Tab,
+		text='Translate Title',
+		width=self.BUTTON_SIZE,
+		command=lambda: self.single_translate('btn_translate_title_v2'),
+		state=DISABLED)
+	self.btn_translate_title_v2.grid(
+		row=Row, column=8, padx=5, pady=0, sticky=E)
+
+	## ROW 4
+	Row += 1
+	self.btn_copy_bug_title_v2 = Button(
+		Tab,
+		text='Copy Bug Title',
+		width=self.BUTTON_SIZE,
+		command=self.get_title_v2)
+	self.btn_copy_bug_title_v2.grid(
+		row=Row, column=8, padx=5, pady=5, sticky=E)
+
+	## ROW 5
+	Row +=1
+	Label(Tab, text=self.LanguagePack.Label['SourceText'])\
+		.grid(row=Row, column=2, padx=5, pady=5, sticky=W)
+	Label(Tab, text=self.LanguagePack.Label['TargetText'])\
+		.grid(row=Row, column=5, padx=5, pady=5, sticky=W)
+	
+	## ROW 6 ~ 17 - REPRODUCE STEPS FIELD
+	Row +=1
+	Label(
+			Tab,
+			text="Reproduce Steps",
+			width=self.HALF_BUTTON_SIZE)\
+		.grid(row=Row, column=1, padx=5, pady=5, stick=E+W)
+	self.text_repro_step_source = Text(
+		Tab,
+		width=field_width,
+		height=row_size,
+		undo=True)
+	self.text_repro_step_source.grid(
+		row=Row, column=2, columnspan=3, rowspan=self.ROW_SIZE,
+		padx=5, pady=5, sticky=E+W)
+	self.text_repro_step_target = Text(
+		Tab,
+		width=field_width,
+		height=row_size,
+		undo=True)
+	self.text_repro_step_target.grid(
+		row=Row, column=5, columnspan=3, rowspan=self.ROW_SIZE,
+		padx=5, pady=5, sticky=E)
+	
+	# Lambda is used to distinguish the clicked buttons
+	self.btn_translate_repro_step = Button(
+		Tab,
+		text=self.LanguagePack.Button['Translate'],
+		width=self.BUTTON_SIZE,
+		command=lambda: self.single_translate(
+			'btn_translate_repro_step_v2'),
+		state=DISABLED)
+	self.btn_translate_repro_step.grid(
+		row=Row, column=8, padx=5, pady=5, sticky=E)
+	
+	## ROW 7
+	Row +=1
+	Button(
+			Tab,
+			text=self.LanguagePack.Button['Bilingual'],
+			width=self.BUTTON_SIZE,
+			command=lambda: self.btn_bilingual_copy(
+				'btn_bicopy_repro_step_v2')) \
+		.grid(row=Row, column=8, padx=5, pady=5, sticky=E)
+
+	## ROW 18 ~ 29 - EXPECTED RESULT FIELD
+	Row +=self.ROW_SIZE
+	Label(
+			Tab,
+			text="Expected Results",
+			width=self.HALF_BUTTON_SIZE) \
+		.grid(row=Row, column=1, padx=5, pady=5, stick=E+W)
+	self.text_expected_result_source = Text(
+		Tab,
+		width=field_width,
+		height=row_size,
+		undo=True) 
+	self.text_expected_result_source.grid(
+		row=Row, column=2, columnspan=3, rowspan=self.ROW_SIZE,
+		padx=5, pady=5, sticky=E+W)
+	self.text_expected_result_target = Text(
+		Tab,
+		width=field_width,
+		height=row_size,
+		undo=True)
+	self.text_expected_result_target.grid(
+		row=Row, column=5, columnspan=3, rowspan=self.ROW_SIZE,
+		padx=5, pady=5, sticky=E)
+	
+	# Lambda is used to distinguish the clicked buttons
+	self.btn_translate_expected_result = Button(
+		Tab,
+		text=self.LanguagePack.Button['Translate'],
+		width=self.BUTTON_SIZE,
+		command=lambda: \
+			self.single_translate('btn_translate_expected_result_v2'),
+		state=DISABLED)
+	self.btn_translate_expected_result.grid(
+		row=Row, column=8, padx=5, pady=5, sticky=E)
+	
+	## ROW 19
+	Row +=1
+	Button(
+			Tab,
+			text=self.LanguagePack.Button['Bilingual'],
+			width=self.BUTTON_SIZE,
+			command=lambda: self.btn_bilingual_copy(
+				'btn_bicopy_expected_result_v2')) \
+		.grid(row=Row, column=8, padx=5, pady=5, sticky=E)
+
+	## ROW 30 ~ 41 - SYMPTOMs AND DESCRIPTION
+	Row +=self.ROW_SIZE
+	Label(
+			Tab,
+			text="Description",
+			width=self.HALF_BUTTON_SIZE)\
+		.grid(row=Row, column=1, padx=5, pady=5, stick=E+W)
+	self.text_description_source = Text(
+		Tab,
+		width=field_width,
+		height=row_size,
+		undo=True) 
+	self.text_description_source.grid(
+		row=Row, column=2, columnspan=3, rowspan=self.ROW_SIZE,
+		padx=5, pady=5, sticky=E+W)
+	self.text_description_target = Text(
+		Tab,
+		width=field_width,
+		height=row_size,
+		undo=True)
+	self.text_description_target.grid(
+		row=Row, column=5, columnspan=3, rowspan=self.ROW_SIZE,
+		padx=5, pady=5, sticky=E)
+	
+	# Lambda is used to distinguish the clicked buttons
+	self.btn_translate_description_v2 = Button(
+		Tab,
+		text=self.LanguagePack.Button['Translate'],
+		width=self.BUTTON_SIZE,
+		command=lambda: self.single_translate(
+			'btn_translate_description_v2'),
+		state=DISABLED)
+	self.btn_translate_description_v2.grid(
+		row=Row, column=8, padx=5, pady=5, sticky=E)
+	
+	## ROW 31
+	Row +=1
+	Button(
+			Tab,
+			text=self.LanguagePack.Button['Bilingual'],
+			width=self.BUTTON_SIZE,
+			command=lambda: self.btn_bilingual_copy(
+				'btn_bicopy_description_v2')) \
+		.grid(row=Row, column=8, padx=5, pady=5, sticky=E)
+
+	# Add all Text in the tab to a list to change color dynamically
+	for child in Tab.winfo_children():
+		if isinstance(child, Text):
+			self.text_widgets.append(child)
+
 
 # Related function
 def Btn_Select_License_Path(master):
