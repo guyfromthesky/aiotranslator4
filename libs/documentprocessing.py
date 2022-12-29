@@ -10,8 +10,6 @@ import subprocess
 import time
 from datetime import datetime
 
-from Shared.libs.documentprocessing import API_LENGTH_LIMIT
-
 API_LENGTH_LIMIT = 5000
 
 # Functions used for processor

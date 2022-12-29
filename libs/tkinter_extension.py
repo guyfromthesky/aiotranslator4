@@ -705,13 +705,6 @@ def Generate_Translate_Setting_UI(master, Tab):
 		row=Row, rowspan=2, column=2, columnspan=7, padx=5, pady=5,
 		sticky=E+W)
 	master.TransparentPercent.bind('<ButtonRelease-1>', lambda event, root = master: SaveAppTransparency(event, master),)	
-	
-	Button(
-			Right_Frame,
-			width=master.HALF_BUTTON_SIZE,
-			text=master.LanguagePack.Button['Reset'],
-			command=master.rebuild_UI, style=master.Btn_Style) \
-		.grid(row=Row, column=9, padx=5, pady=5, rowspan=2, sticky=W)
 
 	Row += 2
 	Label(Left_Frame, text='Theme name:') \

@@ -298,18 +298,20 @@ class MyTranslatorHelper(Frame):
 				Theme name retrieved from config. (Default: '')
 		"""
 		try:
-			style = Style(self.parent) # self.parent is root
 			theme_name = self.strvar_theme_name.get()
-			
+			print('Select theme:', theme_name)
+			self.style.theme_use(theme_name)
 			self.AppConfig.Save_Config(
 				self.AppConfig.Writer_Config_Path,
 				'Bug_Writer',
 				'theme_name',
-				theme_name)
+				theme_name, True)
+
 		except Exception as err:
 			messagebox.showerror(
 				title='Error',
 				message=f'Error occurs when selecting theme: {err}')
+
 	
 	
 

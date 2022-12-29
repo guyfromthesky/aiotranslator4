@@ -70,7 +70,7 @@ from google.cloud import logging
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4201
+REV = 4202
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num
 
@@ -1828,10 +1828,15 @@ def main():
 			
 		#root.attributes('-topmost', False)
 		root.mainloop()
-		application.MyTranslator.send_tracking_record()
+		try:
+			application.MyTranslator.send_tracking_record()
+		except:
+			pass	
 	except Exception as e:	
-		root.withdraw()
-
+		try:
+			root.withdraw()
+		except:
+			pass
 		try:
 			#from google.cloud import logging
 			AppConfig = ConfigLoader(Writer = True)
