@@ -1282,9 +1282,11 @@ def Generate_SimpleTranslator_UI(master, Tab):
 	Tab.bind_all('<Control-g>', master.tag_selected)
 
 def Generate_SimpleTranslator_V2_UI(master, Tab):
-	"""Bug writer for jiralive subdomain."""
-	row_size = 8
-	field_width = int(master.SOURCE_WIDTH - 17)
+	"""Bug writer for jiralive subdomain.
+	
+	Total column: 10"""
+	row_height = 6
+	text_widget_width = int(master.SOURCE_WIDTH - 30)
 
 	## ROW 1 - LANGUAGE SELECTION LABEL AND NOTICE
 	Row=1
@@ -1329,8 +1331,7 @@ def Generate_SimpleTranslator_V2_UI(master, Tab):
 		master.simple_target_language,
 		*master.language_list,
 		command=master.set_simple_language)
-	master.simple_target_language_select.config(
-		width=master.HALF_BUTTON_SIZE)
+	master.simple_target_language_select.config(width=master.HALF_BUTTON_SIZE)
 	master.simple_target_language_select.grid(
 		row=Row, column=2, padx=0, pady=5, sticky=W+E)
 	master.simple_target_language.set('Hangul')
@@ -1375,10 +1376,12 @@ def Generate_SimpleTranslator_V2_UI(master, Tab):
 	master.header_option_b_v2.grid(
 		row=Row+1, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
 
-	master.text_bug_title_v2 = Text(
+	master.text_bug_title_v2 = CustomText(
 		Tab,
-		width=field_width,
+		width=text_widget_width,
 		height=4,
+		font=(master.FONT, master.FONT_SIZE),
+		wrap=WORD,
 		undo=True,
 	)
 	master.text_bug_title_v2.grid(
@@ -1388,7 +1391,7 @@ def Generate_SimpleTranslator_V2_UI(master, Tab):
 	master.btn_translate_title_v2 = Button(
 		Tab,
 		text='Translate Title',
-		width=master.BUTTON_SIZE,
+		width=master.HALF_BUTTON_SIZE,
 		command=lambda: master.single_translate('btn_translate_title_v2'),
 		state=DISABLED)
 	master.btn_translate_title_v2.grid(
@@ -1399,7 +1402,7 @@ def Generate_SimpleTranslator_V2_UI(master, Tab):
 	master.btn_copy_bug_title_v2 = Button(
 		Tab,
 		text='Copy Bug Title',
-		width=master.BUTTON_SIZE,
+		width=master.HALF_BUTTON_SIZE,
 		command=master.get_title_v2)
 	master.btn_copy_bug_title_v2.grid(
 		row=Row, column=8, padx=5, pady=5, sticky=E)
@@ -1417,19 +1420,23 @@ def Generate_SimpleTranslator_V2_UI(master, Tab):
 			Tab,
 			text="Reproduce Steps",
 			width=master.HALF_BUTTON_SIZE)\
-		.grid(row=Row, column=1, padx=5, pady=5, stick=E+W)
-	master.text_repro_step_source = Text(
+		.grid(row=Row, column=1, padx=5, pady=5, stick=W)
+	master.text_repro_step_source = CustomText(
 		Tab,
-		width=field_width,
-		height=row_size,
+		width=text_widget_width,
+		height=row_height,
+		font=(master.FONT, master.FONT_SIZE),
+		wrap=WORD,
 		undo=True)
 	master.text_repro_step_source.grid(
 		row=Row, column=2, columnspan=3, rowspan=master.ROW_SIZE,
 		padx=5, pady=5, sticky=E+W)
-	master.text_repro_step_target = Text(
+	master.text_repro_step_target = CustomText(
 		Tab,
-		width=field_width,
-		height=row_size,
+		width=text_widget_width,
+		height=row_height,
+		font=(master.FONT, master.FONT_SIZE),
+		wrap=WORD,
 		undo=True)
 	master.text_repro_step_target.grid(
 		row=Row, column=5, columnspan=3, rowspan=master.ROW_SIZE,
@@ -1439,7 +1446,7 @@ def Generate_SimpleTranslator_V2_UI(master, Tab):
 	master.btn_translate_repro_step = Button(
 		Tab,
 		text=master.LanguagePack.Button['Translate'],
-		width=master.BUTTON_SIZE,
+		width=master.HALF_BUTTON_SIZE,
 		command=lambda: master.single_translate(
 			'btn_translate_repro_step_v2'),
 		state=DISABLED)
@@ -1451,7 +1458,7 @@ def Generate_SimpleTranslator_V2_UI(master, Tab):
 	Button(
 			Tab,
 			text=master.LanguagePack.Button['Bilingual'],
-			width=master.BUTTON_SIZE,
+			width=master.HALF_BUTTON_SIZE,
 			command=lambda: master.btn_bilingual_copy(
 				'btn_bicopy_repro_step_v2')) \
 		.grid(row=Row, column=8, padx=5, pady=5, sticky=E)
@@ -1462,19 +1469,23 @@ def Generate_SimpleTranslator_V2_UI(master, Tab):
 			Tab,
 			text="Expected Results",
 			width=master.HALF_BUTTON_SIZE) \
-		.grid(row=Row, column=1, padx=5, pady=5, stick=E+W)
-	master.text_expected_result_source = Text(
+		.grid(row=Row, column=1, padx=5, pady=5, stick=W)
+	master.text_expected_result_source = CustomText(
 		Tab,
-		width=field_width,
-		height=row_size,
+		width=text_widget_width,
+		height=row_height,
+		font=(master.FONT, master.FONT_SIZE),
+		wrap=WORD,
 		undo=True) 
 	master.text_expected_result_source.grid(
 		row=Row, column=2, columnspan=3, rowspan=master.ROW_SIZE,
 		padx=5, pady=5, sticky=E+W)
-	master.text_expected_result_target = Text(
+	master.text_expected_result_target = CustomText(
 		Tab,
-		width=field_width,
-		height=row_size,
+		width=text_widget_width,
+		height=row_height,
+		font=(master.FONT, master.FONT_SIZE),
+		wrap=WORD,
 		undo=True)
 	master.text_expected_result_target.grid(
 		row=Row, column=5, columnspan=3, rowspan=master.ROW_SIZE,
@@ -1484,7 +1495,7 @@ def Generate_SimpleTranslator_V2_UI(master, Tab):
 	master.btn_translate_expected_result = Button(
 		Tab,
 		text=master.LanguagePack.Button['Translate'],
-		width=master.BUTTON_SIZE,
+		width=master.HALF_BUTTON_SIZE,
 		command=lambda: \
 			master.single_translate('btn_translate_expected_result_v2'),
 		state=DISABLED)
@@ -1496,7 +1507,7 @@ def Generate_SimpleTranslator_V2_UI(master, Tab):
 	Button(
 			Tab,
 			text=master.LanguagePack.Button['Bilingual'],
-			width=master.BUTTON_SIZE,
+			width=master.HALF_BUTTON_SIZE,
 			command=lambda: master.btn_bilingual_copy(
 				'btn_bicopy_expected_result_v2')) \
 		.grid(row=Row, column=8, padx=5, pady=5, sticky=E)
@@ -1507,19 +1518,23 @@ def Generate_SimpleTranslator_V2_UI(master, Tab):
 			Tab,
 			text="Description",
 			width=master.HALF_BUTTON_SIZE)\
-		.grid(row=Row, column=1, padx=5, pady=5, stick=E+W)
-	master.text_description_source = Text(
+		.grid(row=Row, column=1, padx=5, pady=5, stick=W)
+	master.text_description_source = CustomText(
 		Tab,
-		width=field_width,
-		height=row_size,
+		width=text_widget_width,
+		height=row_height,
+		font=(master.FONT, master.FONT_SIZE),
+		wrap=WORD,
 		undo=True) 
 	master.text_description_source.grid(
 		row=Row, column=2, columnspan=3, rowspan=master.ROW_SIZE,
 		padx=5, pady=5, sticky=E+W)
-	master.text_description_target = Text(
+	master.text_description_target = CustomText(
 		Tab,
-		width=field_width,
-		height=row_size,
+		width=text_widget_width,
+		height=row_height,
+		font=(master.FONT, master.FONT_SIZE),
+		wrap=WORD,
 		undo=True)
 	master.text_description_target.grid(
 		row=Row, column=5, columnspan=3, rowspan=master.ROW_SIZE,
@@ -1529,7 +1544,7 @@ def Generate_SimpleTranslator_V2_UI(master, Tab):
 	master.btn_translate_description_v2 = Button(
 		Tab,
 		text=master.LanguagePack.Button['Translate'],
-		width=master.BUTTON_SIZE,
+		width=master.HALF_BUTTON_SIZE,
 		command=lambda: master.single_translate(
 			'btn_translate_description_v2'),
 		state=DISABLED)
@@ -1541,7 +1556,7 @@ def Generate_SimpleTranslator_V2_UI(master, Tab):
 	Button(
 			Tab,
 			text=master.LanguagePack.Button['Bilingual'],
-			width=master.BUTTON_SIZE,
+			width=master.HALF_BUTTON_SIZE,
 			command=lambda: master.btn_bilingual_copy(
 				'btn_bicopy_description_v2')) \
 		.grid(row=Row, column=8, padx=5, pady=5, sticky=E)

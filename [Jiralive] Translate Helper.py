@@ -63,11 +63,12 @@ from libs.tkinter_extension import Apply_Transparency, BugWriter_BottomPanel
 
 #from openpyxl import load_workbook, worksheet, Workbook
 
+# from libs.general import get_version, resource_path, get_user_name
 from google.cloud import logging
 
-tool_display_name = "Translate Helper"
+tool_display_name = "[Jiralive] Translate Helper"
 tool_name = 'writer'
-REV = 4221
+REV = 4202
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num
 
@@ -110,6 +111,8 @@ class MyTranslatorHelper(Frame):
 		self.BUTTON_SIZE = 20
 		self.HALF_BUTTON_SIZE = 15
 		self.ROW_SIZE = 27
+		self.FONT = "Arial"
+		self.FONT_SIZE = 10
 		
 		self.Btn_Style = "Accent.TButton"
 
@@ -143,6 +146,8 @@ class MyTranslatorHelper(Frame):
 		self.key_release_count = 0
 
 		self.init_App_Setting()
+
+		self._after_id = None
 		
 		if self.AppLanguage != 'kr':
 			from libs.languagepack import LanguagePackEN as LanguagePack
@@ -222,7 +227,7 @@ class MyTranslatorHelper(Frame):
 			self.after_cancel(self._after_id)
 
 		# create a new job
-		self._after_id = self.after(DELAY2, self.change_color)
+		self._after_id = self.after(DELAY2, self.SaveTempReport)
 
     
 	# Menu function
@@ -2084,6 +2089,7 @@ def main():
 			grammar_check_result=grammar_check_result,
 			tm_manager=tm_manager,
 			language_tool_enable=language_tool_enable)
+
 		root.attributes('-topmost', False)
 		root.mainloop()
 		application.MyTranslator.send_tracking_record()
