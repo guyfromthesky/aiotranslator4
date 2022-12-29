@@ -55,7 +55,7 @@ from libs.cloudconfig import CloudConfigLoader
 
 from libs.grammarcheck import LanguageTool
 
-from libs.version import get_version
+from libs.general import get_version, resource_path
 from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText, ConfirmationPopup
 
 
@@ -67,9 +67,8 @@ from google.cloud import logging
 
 tool_display_name = "[MH] Translate Helper"
 tool_name = 'writer'
-REV = 4200
+REV = 4201
 ver_num = get_version(REV) 
-#VERSION = tool_display_name  + " " +  ver_num + " | Language Tool v5.6"
 
 DELAY = 20
 DELAY2 = 1000
@@ -234,6 +233,9 @@ class MyTranslatorHelper(Frame):
 		else:
 			self.after(DELAY2, self.status_listening)
 		#print('Device status:', device_status, time.time()- Start)
+
+	def Error(self, ErrorText):
+		messagebox.showinfo('Error...', ErrorText)	
 
 	def init_ui(self):
 		self.parent.resizable(False, False)
@@ -1844,17 +1846,6 @@ def Add_Style(Text):
 		return '{color:#DC143C}*실행결과(Actual Result)*{color}' 
 	elif Text == 'Expected Result':
 		return '{color:#32288E}*기대결과(Expected Result)*{color}' 	
-
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
-
 # MAIN
 
 def main():
@@ -1895,7 +1886,7 @@ def main():
 		#application.pack(fill="both", expand=True)
 		#root.attributes('-topmost', False)
 		icon_path = resource_path('resource/translate_helper.ico')
-		print(icon_path)
+		
 		if os.path.isfile(icon_path):
 			root.iconbitmap(icon_path)
 		#root.deiconify()

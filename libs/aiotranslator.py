@@ -45,7 +45,7 @@ from pandas.core.frame import DataFrame
 from libs.version import get_version
 
 Tool = "translator"
-rev = 4120
+rev = 4200
 ver_num = get_version(rev)
 Translatorversion = Tool + " " + ver_num
 
@@ -365,7 +365,7 @@ class Translator:
 		except:
 			pass
 
-	def send_tracking_record(self,file_name = None):
+	def send_tracking_record(self,file_names = None):
 		print('Send tracking record to logging')
 		self.last_section_api_usage = self.load_request_log(self.tracking_log)
 		print('translate-usage:', self.last_section_api_usage)
@@ -413,15 +413,23 @@ class Translator:
 				'tm_size': self.translation_memory_size,
 				'tm_path': self.tm_path
 			}
-			if 	file_name != None:
-				try:
-					correct_source_name = file_name.encode('cp437').decode('euc_kr')
-					correct_source_name = str(base64.b64encode(correct_source_name.encode('utf-8')))
-				except:
-					correct_source_name = file_name
-					correct_source_name = str(base64.b64encode(correct_source_name.encode('utf-8')))
-
-				data_object['file_name'] = correct_source_name
+			
+			if 	file_names != None:
+				counter = 0
+				for file_name in file_names:
+					try:
+						correct_source_name = file_name.encode('cp437').decode('euc_kr')
+						correct_source_name = str(base64.b64encode(correct_source_name.encode('utf-8')))
+					except:
+						correct_source_name = file_name
+						correct_source_name = str(base64.b64encode(correct_source_name.encode('utf-8')))
+					
+					if counter > 0:
+						data_object['file_name_'+ str(counter)] = correct_source_name
+					else:
+						data_object['file_name'] = correct_source_name
+						
+					counter+=1
 
 			tracking_object = {
 				'user': self.user_name,
@@ -527,7 +535,7 @@ class Translator:
 		source_text = source_text.lower()
 		
 		result = True
-
+		
 		if self.Validateexception(source_text) == False:
 			result = False
 
@@ -624,6 +632,7 @@ class Translator:
 			if validation == False:
 				continue
 			if validation == True:
+				#print('Details:', text, 'Result:', validation)
 				try:
 					# Check if the text has been request to translate
 					# This check is to remove duplicate translate request
@@ -783,7 +792,7 @@ class Translator:
 				Translated phrases.
 		"""
 		#print('Active translator', 'from:', self.from_language, 'to:', self.to_language)
-		
+		#print('Used tool:', self.used_tool)
 		count = 0
 		try:
 			if isinstance(source_text, list):
@@ -1796,6 +1805,13 @@ class Translator:
 		else:
 			return 0
 
+	def get_tm_sub_version(self, all_tm):
+		if isinstance(all_tm, dict):
+			# TM format v4
+			if 'tm_sub_version' in all_tm:
+				return all_tm['tm_sub_version']
+		return 0		
+
 	def import_tm_v2(self, pickle_data):
 		_current_tm = self.init_translation_memory()
 		for Pair in pickle_data:
@@ -1860,22 +1876,30 @@ class Translator:
 			return
 		else:
 			try:
-				self.monthly_tm_backup()
+				self.monthly_tm_maintain()
 			except:
 				print('Cannot backup TM file.')	
 			try:
 				with open(self.tm_path, 'rb') as pickle_load:
 					all_tm = pickle.load(pickle_load)
-					print(all_tm.keys())
+					print('All project key: ', all_tm.keys())
+					if 'tm_version' in all_tm:
+						print('TM version:', all_tm['tm_version'])
+					if 'tm_sub_version' in all_tm:
+						print('TM sub version:', all_tm['tm_sub_version'])	
 					#print('all tm:', all_tm)
 				_tm_version = self.get_tm_version(all_tm)
+				
+				
 				if _tm_version == 4:
 					if self.glossary_id in all_tm:
 						self.current_tm = all_tm[self.glossary_id]
-
+						
 					else:
 						self.current_tm = self.init_translation_memory()
 						print('New project')
+					
+
 				elif _tm_version == 3:
 					self.current_tm = self.import_tm_v3(all_tm)
 				elif _tm_version == 2:
@@ -1891,7 +1915,7 @@ class Translator:
 	def update_tm_from_dataframe(self):
 		print('Update TM from dataframe')
 		#print('Current Dataframe:', self.current_tm)
-
+		
 		if self.from_language != self.to_language:
 			self.translation_memory = self.current_tm.dropna(subset=[self.from_language])
 			self.translation_memory = self.translation_memory.dropna(subset=[self.to_language])
@@ -1941,8 +1965,15 @@ class Translator:
 				_current_tm = None
 
 				_tm_version = self.get_tm_version(_all_tm)
+
 				if _tm_version == 4:
-					_current_tm = _all_tm[_glossary]
+					if _glossary not in _all_tm:
+						#_all_tm[_glossary] = []
+						_all_tm[_glossary] = pd.DataFrame(columns=self.supported_language)	
+						_current_tm = _all_tm[_glossary]
+						#_all_tm[_glossary] = _current_tm
+					else:
+						_current_tm = _all_tm[_glossary]
 				elif _tm_version == 3:
 					_current_tm = self.import_tm_v3(_all_tm)
 					_all_tm = {}
@@ -1951,14 +1982,11 @@ class Translator:
 		
 					_all_tm = {}
 				else:
+					_current_tm = pd.DataFrame(columns=self.supported_language)	
 					_all_tm = {}
-
+				#print('_current_tm', _current_tm)
 				if 'tm_version' not in _all_tm:
 					_all_tm['tm_version'] = 4
-
-				if _glossary not in _all_tm:
-					_all_tm[_glossary] = pd.DataFrame(columns=self.supported_language)	
-					_all_tm[_glossary] = _current_tm
 				
 				_current_translation_memory_size = len(_all_tm[_glossary])
 				print('Current TM size:', _current_translation_memory_size)
@@ -1977,9 +2005,21 @@ class Translator:
 
 				for Pair in self.temporary_tm:
 					try:
+						#print('Size TM before append:', len(_current_tm))
+						#print('Pair', Pair)
 						_current_tm = self.append_tm_dataframe(_current_tm, Pair)
+						#print('Size TM after append:', len(_current_tm))
 					except Exception as e:
 						print('Append TM DF error:', e)	
+				
+
+				_tm_sub_version = self.get_tm_sub_version(self.current_tm)
+				if _tm_sub_version < 41:
+					print('Fix currupted TM')
+					_current_tm['en'] = _current_tm['en'].str.lower()
+					_current_tm.drop_duplicates(inplace=True)
+					_all_tm['tm_sub_version'] = 41
+
 				_current_tm = _current_tm.reindex()
 				#print('Size TM after reindex:', _translation_memory_size)
 				_all_tm[_glossary] = _current_tm
@@ -2009,14 +2049,32 @@ class Translator:
 					self.init_temporary_tm()
 					return new_tm_size
 				except Exception  as e:
-					print("Error:", e)
+					print("Error 1:", e)
 			except Exception  as e:
-				print("Error:", e)		
+				print("Error 2:", e)		
 		return 0
 	
+	def monthly_tm_maintain(self):
+		_check = self.maintenance_check()
+		if _check == False:
+			self.optimize_translation_memory()
+			self.monthly_tm_backup()
+
+	def maintenance_check(self):
+		_dirname = os.path.dirname(self.tm_path)
+		_basename = os.path.basename(self.tm_path)
+		_filename, _ext = os.path.splitext(_basename)
+		_month_stamp = self.get_month_timestamp()
+		_backup_dir = os.path.join(_dirname, "Monthly Backup TM")
+		_backup_file  = os.path.join(_backup_dir, _filename + "_backup_" + _month_stamp + _ext)
+		if not os.path.isdir(_backup_dir):
+			return False
+		if not os.path.isfile(_backup_file):
+			return False
+		return True	
+
 	def monthly_tm_backup(self):
 		_dirname = os.path.dirname(self.tm_path)
-		
 		_basename = os.path.basename(self.tm_path)
 		_filename, _ext = os.path.splitext(_basename)
 		_month_stamp = self.get_month_timestamp()
@@ -2025,10 +2083,10 @@ class Translator:
 		if not os.path.isdir(_backup_dir):
 			os.mkdir(_backup_dir)	
 		if not os.path.isfile(_backup_file):
-			
 			try:
 				shutil.copy(self.tm_path, _backup_file)
 				print('Backup file is not exist, create a new one:', _backup_file)
+
 			except Exception as e:
 				print("Fail to backup TM file:", e)	
 		
@@ -2122,25 +2180,24 @@ class Translator:
 	# Add a KR-en pair into TM
 	def append_temporary_tm(self, str_translated = "", str_input = ""):
 		#print('Generate Temp TM:', str_translated, str_input)
-		# translated = str_translated.lower()
-		# input = str_input.lower()
+		translated = str_translated.lower()
+		input = str_input.lower()
 		# new_row = {self.to_language: translated, self.from_language: input}
-		new_row = {self.to_language: str_translated, self.from_language: str_input}
+		new_row = {self.to_language: translated, self.from_language: input}
 		self.temporary_tm.append(new_row)
 
 	# Remove duplicated pair, lower string in the TM
 	def optimize_translation_memory(self):
 		print('Optimizing TM...')
-		print('Old TM:', len(self.translation_memory))
+		print('Old TM:', len(self.current_tm))
 		self.import_translation_memory()
+		for language in self.supported_language:
+			self.current_tm[language] = self.current_tm[language].str.lower()
 
-		self.translation_memory = self.translation_memory.append(self.temporary_tm)
-		self.translation_memory.drop_duplicates(inplace=True)
+		self.current_tm.drop_duplicates(inplace=True)
 
-		print('New TM:', len(self.translation_memory))
-
+		print('New TM:', len(self.current_tm))
 		print('Optmize TM completed...')
-		self.export_current_translation_memory()
 
 	# Used in TM Manager tool
 	# to remove TM pair in the TM
@@ -2197,19 +2254,40 @@ class Translator:
 	def memory_translate(self, source_text):
 		# Use the previous translate result to speed up the translation progress
 		source_text = source_text.lower()
+		#print('From:', self.from_language, 'To', self.to_language)
 		if self.used_tool == 'document':
-			try:
-				if len(self.translation_memory) > 0:
-					#translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
-					translated = self.translation_memory.loc[self.translation_memory[self.from_language] == source_text]
-					#print('Mem translated:', translated)
-					if len(translated) > 0:
-						#print('TM translate', translated)
-						return translated.iloc[0][self.to_language]
+			index_value = source_text
+			index = self.translation_memory.index
 
-			except Exception  as e:
-				print('Error message (TM):', e)
-				pass
+			if self.from_language in self.translation_memory:
+				condition = self.translation_memory[self.from_language] == index_value
+			else:
+				return False
+
+			indices = index[condition]
+			indices_list = indices.tolist()
+			#print('indices_list', indices_list)
+
+			if len(indices_list) > 0:
+				translate_indices = indices_list[0]
+				if not pd.isna(self.translation_memory[self.to_language][translate_indices]):
+					translated = self.translation_memory[self.to_language][translate_indices]
+					#print('Translate by TM:', translated)
+					return translated
+				else:
+					return False
+			#try:
+			#	if len(self.translation_memory) > 0:
+			#		#translated = self.translation_memory[self.to_language].where(self.translation_memory[self.from_language] == source_text)[0]
+			#		translated = self.translation_memory.loc[self.translation_memory[self.from_language] == source_text]
+			#		print('Mem translated:', translated)
+			#		if len(translated) > 0:
+			#			#print('TM translate', translated)
+			#			return translated.iloc[0][self.to_language]
+			#
+			#except Exception  as e:
+			#	print('Error message (TM):', e)
+			#	pass
 			
 		# new_row = {self.to_language: translated, self.from_language: Input}
 		# self.temporary_tm = self.temporary_tm.append(new_row)
@@ -2235,19 +2313,20 @@ class Translator:
 		#print(dataframe)
 		#print("pair", pair)
 		# pair: @dict
-		# Check if the source sentence is in the Dataframe, append the existed entry
-		index_value = pair[self.from_language]
-		append_value = pair[self.to_language]
+		# Check if the SOURCE sentence is in the Dataframe, append the existed entry
+		index_value = pair[self.from_language].lower()
+		append_value = pair[self.to_language].lower()
 
 		index = dataframe.index
 
 		if self.from_language in dataframe.columns:
 			condition = dataframe[self.from_language] == index_value
-
+		else:
+			return dataframe
 
 		indices = index[condition]
 		indices_list = indices.tolist()
-		#print('indices_list', len(indices_list))
+		#print('indices_list', indices_list)
 
 		if len(indices_list) > 0:
 			append_indices = indices_list[0]
@@ -2257,10 +2336,9 @@ class Translator:
 			else:
 				return dataframe
 
-		# Check if the target sentence is in the Dataframe, append the existed entry
-
-		index_value = pair[self.to_language] 
-		append_value = pair[self.from_language]
+		# Check if the TARGET sentence is in the Dataframe, append the existed entry
+		index_value = pair[self.to_language].lower()
+		append_value = pair[self.from_language].lower()
 		index = dataframe.index
 
 		if self.from_language in dataframe.columns:
@@ -2268,7 +2346,7 @@ class Translator:
 
 		indices = index[condition]
 		indices_list = indices.tolist()
-		#print('indices_list', len(indices_list))
+		#print('indices_list', indices_list)
 
 		if len(indices_list) == 0:
 			#dataframe = dataframe.append({self.to_language: index_value, self.from_language: append_value}, ignore_index=True)

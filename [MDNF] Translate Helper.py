@@ -188,7 +188,9 @@ class MyTranslatorHelper(Frame):
 		self.after(DELAY2, self.status_listening)	
 
 		
-
+	def Error(self, ErrorText):
+		messagebox.showinfo('Translate error...', ErrorText)	
+		
 	# Menu function
 	def handle_wait(self,event):
 		# cancel the old job

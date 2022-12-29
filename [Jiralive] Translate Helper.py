@@ -197,7 +197,7 @@ class MyTranslatorHelper(Frame):
 
 			if closed_box == True:
 				#self.Error('No license selected, please select the key in Translate setting.')
-				self.TAB_CONTROL.select(self.TranslateSetting)
+				self.TAB_CONTROL.select(self.TranslateSettingTab)
 				#self.flash_btn(self.Browse_License_Btn)
 		
 		self.parent.minsize(self.parent.winfo_width(), self.parent.winfo_height())

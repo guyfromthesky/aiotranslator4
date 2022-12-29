@@ -359,7 +359,7 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 			TaskLength = 0
 			
 			while TaskLength < API_LENGTH_LIMIT:
-				print('Len text:', TaskLength)
+				#print('Len text:', TaskLength)
 				if len(task_list) > 0:
 					Input = task_list[0].Text
 					if isinstance(Input, list):
