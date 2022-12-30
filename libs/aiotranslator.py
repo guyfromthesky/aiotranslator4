@@ -1777,9 +1777,13 @@ class Translator:
 		return
 
 	def init_log_path(self):
+		
 		self.local_log_path = self.config_path + '\\AIO Translator\\log.txt'
-		tm_dir =  os.path.dirname(self.tm_path)
-		self.tm_log_path   = os.path.join(tm_dir,  "log.txt")
+		if self.used_tool == 'writer':
+			self.tm_log_path = self.local_log_path
+		else:	
+			tm_dir =  os.path.dirname(self.tm_path)
+			self.tm_log_path   = os.path.join(tm_dir,  "log.txt")
 
 		return
 
@@ -1872,6 +1876,22 @@ class Translator:
 	# The TM support all supported languages (en, ko, jp, cn, vi)
 	# self.current_tm[all supported language] -> self.translation_memory[from language, to language]
 	def import_translation_memory(self):
+		'''
+		Used variable:
+		@ self.all_tm: dict of dataframe. Load from TM file (pickle)
+			special key: 
+				tm_version: version of TM. The current version is 4.
+				tm_sub_version: sub version. The current version is 41.
+
+		@ self.current_tm: Dataframe of the current project key (All supported language)
+			Related variable:
+				@ self.translation_memory: Dataframe that contain only self.from_language and self.to_language
+				Only available on Document Translator
+		@ self.temporary_tm: Dataframe. Store the TM in a session.
+			When a new session is start, TM from this variable will be cleared.
+				Used for Document Translator (while translating a file)
+				Use for Bug Writer (in 1 session)
+		'''
 		#print('Import TM from pickle file', str(self.tm_path))
 
 		self.init_temporary_tm()
@@ -1885,19 +1905,19 @@ class Translator:
 		else:
 			try:
 				with open(self.tm_path, 'rb') as pickle_load:
-					all_tm = pickle.load(pickle_load)
-					print('All project key: ', all_tm.keys())
-					if 'tm_version' in all_tm:
-						print('TM version:', all_tm['tm_version'])
-					if 'tm_sub_version' in all_tm:
-						print('TM sub version:', all_tm['tm_sub_version'])	
+					self.all_tm =pickle.load(pickle_load) 
+					print('All project key: ', self.all_tm.keys())
+					if 'tm_version' in self.all_tm:
+						print('TM version:', self.all_tm['tm_version'])
+					if 'tm_sub_version' in self.all_tm:
+						print('TM sub version:', self.all_tm['tm_sub_version'])	
 					#print('all tm:', all_tm)
-				_tm_version = self.get_tm_version(all_tm)
+				_tm_version = self.get_tm_version(self.all_tm)
 				
 				
 				if _tm_version == 4:
-					if self.glossary_id in all_tm:
-						self.current_tm = all_tm[self.glossary_id]
+					if self.glossary_id in self.all_tm:
+						self.current_tm = self.all_tm[self.glossary_id]
 						
 					else:
 						self.current_tm = self.init_translation_memory()
@@ -1905,9 +1925,9 @@ class Translator:
 					
 
 				elif _tm_version == 3:
-					self.current_tm = self.import_tm_v3(all_tm)
+					self.current_tm = self.import_tm_v3(self.all_tm)
 				elif _tm_version == 2:
-					self.current_tm = self.import_tm_v2(all_tm)
+					self.current_tm = self.import_tm_v2(self.all_tm)
 				else:
 					self.current_tm = self.init_translation_memory()
 					print('Broken TM file.')	
@@ -2028,14 +2048,20 @@ class Translator:
 						#print('Size TM after append:', len(_current_tm))
 					except Exception as e:
 						print('Append TM DF error:', e)	
-				
-				_tm_sub_version = self.get_tm_sub_version(self.current_tm)
-				if _tm_sub_version < 41:
-					print('Fix currupted TM')
-					_current_tm['en'] = _current_tm['en'].str.lower()
-					_current_tm.drop_duplicates(inplace=True)
-					_all_tm['tm_sub_version'] = 41
+				try:
+					_tm_sub_version = self.get_tm_sub_version(_all_tm)
+					if _tm_sub_version < 41:
+						print('Fix currupted TM')
+						for language in self.supported_language:
+							_all_tm[language] = _all_tm[language].str.lower()
 
+						_all_tm.drop_duplicates(inplace=True)
+						#_current_tm['en'] = _current_tm['en'].str.lower()
+						#_current_tm.drop_duplicates(inplace=True)
+						_all_tm['tm_sub_version'] = 41
+				except Exception as e:
+					self.write_log('Error while optimize TM:'+  str(e))	
+					
 				_current_tm = _current_tm.reindex()
 				#print('Size TM after reindex:', _translation_memory_size)
 				_all_tm[_glossary] = _current_tm
@@ -2126,7 +2152,6 @@ class Translator:
 			self.current_tm[language] = self.current_tm[language].str.lower()
 
 		self.current_tm.drop_duplicates(inplace=True)
-
 		print('New TM:', len(self.current_tm))
 		print('Optmize TM completed...')
 

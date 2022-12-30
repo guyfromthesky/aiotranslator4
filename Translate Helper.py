@@ -9,7 +9,7 @@ import re
 import copy
 #Get timestamp
 import datetime
-from datetime import date
+from datetime import date, datetime
 #import time
 #function difination
 # Copy to clipboard
@@ -224,7 +224,7 @@ class MyTranslatorHelper(Frame):
 
 		Generate_BugWriter_Menu_UI(self)
 		Generate_BugWriter_Tab_UI(self)
-
+		
 		try:
 			Generate_BugWriter_UI(self, self.BugWriterTab)
 			Generate_SimpleTranslator_UI(self, self.SimpleTranslatorTab)
@@ -1816,7 +1816,8 @@ def main():
 	
 	#root.geometry("400x350+300+300")
 	#application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
-
+	now = datetime.now()
+	init_time = datetime.timestamp(now)	
 	try:
 		#root.attributes('-topmost', True)
 		application = MyTranslatorHelper(root, return_text, MyTranslator, grammar_check_result = grammar_check_result, tm_manager = tm_manager, language_tool_enable = language_tool_enable)
@@ -1827,6 +1828,15 @@ def main():
 			root.iconbitmap(icon_path)
 			
 		#root.attributes('-topmost', False)
+		now = datetime.now()
+		complete_time = datetime.timestamp(now)	
+		launch_time = (complete_time - init_time)  / 1000
+		if launch_time > 120:
+			MsgBox = messagebox.askquestion (title='Whitelist problem', message="Your application take long time to initial, please prefer to this link for the solution:\nhttps://confluence.nexon.com/display/NWVNQA/%5BTranslation+Tool%5D+Anti-virus+issue")
+			if MsgBox == 'yes':
+				webbrowser.open_new(r"https://confluence.nexon.com/display/NWVNQA/%5BTranslation+Tool%5D+Anti-virus+issue")
+		else:
+			print('Launch time:', launch_time)
 		root.mainloop()
 		try:
 			application.MyTranslator.send_tracking_record()

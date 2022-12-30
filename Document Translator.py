@@ -52,7 +52,7 @@ from libs.documentprocessing import translate_docx, translate_msg
 from libs.documentprocessing import translate_presentation, translate_workbook
 
 from libs.general import get_version, resource_path, send_fail_request, get_user_name
-from libs.tkinter_extension import AutocompleteCombobox, Generate_Document_Translate_Setting_UI, Apply_Transparency
+from libs.tkinter_extension import AutocompleteCombobox, Generate_Document_Translate_Setting_UI, Apply_Transparency, Apply_FontSize
 
 from google.cloud import logging
 import pandas as pd
@@ -61,8 +61,9 @@ import pkgutil
 
 
 tool_display_name = "Document Translator"
+#This variable will be passed to AIO translator to know the source of translate request.
 tool_name = 'document'
-rev = 4201
+rev = 4202
 ver_num = get_version(rev) 
 version = tool_display_name  + " v" +  ver_num
 
@@ -188,6 +189,9 @@ class DocumentTranslator(Frame):
 		self.Generate_TM_Manager_UI(self.TM_Manager)
 		self.Generate_DB_Uploader_UI(self.DB_Uploader)
 		#self.Generate_Debugger_UI(self.Process)
+
+		font_size  = self.Configuration['Document_Translator']['font_size']
+		Apply_FontSize(font_size, self)
 
 	def Generate_DocumentTranslator_UI(self, Tab):
 		Row=1
@@ -433,10 +437,13 @@ class DocumentTranslator(Frame):
 		self.after(DELAY, self.debug_listening)
 
 	def write_debug(self, text):
-		self.Debugger.insert("end", "\n\r")
-		ct = datetime.now()
-		self.Debugger.insert("end", str(ct) + ": " + text)
-		self.Debugger.yview(END)
+		try:
+			self.Debugger.insert("end", "\n\r")
+			ct = datetime.now()
+			self.Debugger.insert("end", str(ct) + ": " + text)
+			self.Debugger.yview(END)
+		except:
+			pass	
 
 	def search_tm_event(self, event):
 		self.search_tm_list()
@@ -621,7 +628,7 @@ class DocumentTranslator(Frame):
 		messagebox.showinfo("About....", "Creator: Giang - evan@nexonnetworks.com")
 
 	def Error(self, ErrorText):
-		messagebox.showinfo('Tool error...', ErrorText)	
+		messagebox.showerror('Tool error...', ErrorText)	
 
 	def SaveAppLanguage(self, language):
 		print('Save language:', language)
@@ -749,6 +756,8 @@ class DocumentTranslator(Frame):
 				'The system default theme will be used instead.')
 		transparency  = self.Configuration['Document_Translator']['Transparent']
 		Apply_Transparency(transparency, self)
+
+		
 
 
 	def select_theme_name(self):
@@ -1081,6 +1090,7 @@ class DocumentTranslator(Frame):
 		self.LicensePath = StringVar()
 
 		self.Transparent = IntVar()
+		self.FontSize = IntVar()
 
 		self.DictionaryPath = StringVar()
 		self.TMPath = StringVar()
@@ -1126,7 +1136,8 @@ class DocumentTranslator(Frame):
 		self.glossary_id = self.Configuration['Translator']['glossary_id']
 
 		self.used_theme = self.Configuration['Document_Translator']['theme_name']
-		
+		self.font_size = self.Configuration['Document_Translator']['font_size']		
+
 		self.strvar_theme_name = StringVar()
 
 
@@ -1279,8 +1290,21 @@ class DocumentTranslator(Frame):
 			self._update_day.set(Date)
 			
 			self.write_debug(self.LanguagePack.ToolTips['AppInitDone'])
+			all_tm = self.MyTranslator.all_tm
+			self.write_debug('TM version: ' +  str(all_tm['tm_version']))
+			self.write_debug('TM sub version: ' + str(all_tm['tm_sub_version']))
+			#all_key = all_tm.keys()
+			#print('All project key: ', all_tm.keys())
+			for key in all_tm:
+				if key == 'tm_version':
+					pass
+				elif key == 'tm_sub_version':
+					pass
+				else:
+					self.write_debug(key + ": " + str(len(all_tm[key])))
+			
 			self.TranslatorProcess.join()
-
+			
 	
 
 	def TMTranslateModeToggle(self):
@@ -2088,7 +2112,8 @@ def main():
 	MyDB = Queue()
     
 	root = Window(themename="minty")
-
+	now = datetime.now()
+	init_time = datetime.timestamp(now)	
 	#application = DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue, status_queue = StatusQueue, my_translator_queue = MyTranslatorQueue, my_db_queue = MyDB, tm_manager = TMManager)
 	try:
 		application = DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue, status_queue = StatusQueue, my_translator_queue = MyTranslatorQueue, my_db_queue = MyDB, tm_manager = TMManager)
@@ -2097,8 +2122,16 @@ def main():
 		print(icon_path)
 		if os.path.isfile(icon_path):
 			root.iconbitmap(icon_path)
-		root.mainloop()
-
+		now = datetime.now()
+		complete_time = datetime.timestamp(now)	
+		launch_time = (complete_time - init_time)  / 1000
+		if launch_time > 120:
+			MsgBox = messagebox.askquestion (title='Whitelist problem', message="Your application take long time to initial, please prefer to this link for the solution:\nhttps://confluence.nexon.com/display/NWVNQA/%5BTranslation+Tool%5D+Anti-virus+issue")
+			if MsgBox == 'yes':
+				webbrowser.open_new(r"https://confluence.nexon.com/display/NWVNQA/%5BTranslation+Tool%5D+Anti-virus+issue")
+		else:
+			print('Launch time:', launch_time)
+		root.mainloop()	
 	except Exception as e:
 		try:
 			root.withdraw()
@@ -2109,7 +2142,7 @@ def main():
 		except Exception as e2:
 			messagebox.showinfo(title='Fail to launch the application', message="Error details has not been reported.\n Please contact with me (evan) if you need urgent support.")
 			return
-		application.MyTranslator.write_local_log('Critical error: ' + str(e))
+		#application.MyTranslator.write_local_log('Critical error: ' + str(e))
 		messagebox.showinfo(title='Fail to launch the application', message="Error details has been reported.\n Please contact with me (evan) if you need urgent support.")
 
 if __name__ == '__main__':
