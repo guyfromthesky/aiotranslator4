@@ -330,7 +330,6 @@ class MyTranslatorHelper(Frame):
 		else:
 			self.simple_secondary_target_language.set(self.language_list[simple_secondary_language])
 
-
 	def init_theme(self):
 		"""Applied the theme name saved in the settings on init."""
 		try:
@@ -364,6 +363,7 @@ class MyTranslatorHelper(Frame):
 				Theme name retrieved from config. (Default: '')
 		"""
 		try:
+			""""
 			style = Style(self.parent) # self.parent is root
 			theme_name = self.strvar_theme_name.get()
 			
@@ -376,6 +376,15 @@ class MyTranslatorHelper(Frame):
 			style.theme_use(theme_name)
 			self.apply_theme_color()
 			self.btn_remove_theme.configure(state=NORMAL)
+			"""
+			theme_name = self.strvar_theme_name.get()
+			print('Select theme:', theme_name)
+			self.style.theme_use(theme_name)
+			self.AppConfig.Save_Config(
+				self.AppConfig.Writer_Config_Path,
+				'Bug_Writer',
+				'theme_name',
+				theme_name, True)
 		except Exception as err:
 			messagebox.showerror(
 				title='Error',
