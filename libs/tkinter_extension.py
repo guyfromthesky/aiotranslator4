@@ -256,6 +256,7 @@ class BottomPanel(Frame):
 		self.project_id_select.set_completion_list([])
 		self.project_id_select.grid(in_=self, row=Row, column=Col, padx=5, pady=5, stick=W)
 		self.project_id_select.bind("<<ComboboxSelected>>", master._save_project_key)
+		self.project_id_select.configure(state=DISABLED)
 		Col += 1
 		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=15, command= master.RenewMyTranslator, state=DISABLED)
 		self.RenewTranslatorMain.grid(in_=self, row=Row, column=Col, padx=10, pady=5, stick=E)
@@ -297,6 +298,7 @@ class BugWriter_BottomPanel(Frame):
 		master.project_id_select.set_completion_list([])
 		master.project_id_select.grid(in_=master.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, stick=W)
 		master.project_id_select.bind("<<ComboboxSelected>>", master._save_project_key)
+		self.project_id_select.configure(state=DISABLED)
 		Col += 1
 		master.RenewTranslatorMain = Button(master.Bottom_Frame, text=master.LanguagePack.Button['RenewDatabase'], width=10, command= master.RenewMyTranslator, state=DISABLED, style= master.Btn_Style)
 		master.RenewTranslatorMain.grid(row=Row, column=Col, padx=5, pady=5, stick=W)

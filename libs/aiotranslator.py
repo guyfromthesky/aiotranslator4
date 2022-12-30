@@ -109,6 +109,7 @@ class Translator:
 		# Check and get the location of TM file
 		# If path is invalid or not stated, use local TM
 		self.init_tm_path(tm_path)
+		self.init_log_path()
 		# Select correct log file.
 		self.init_logging_file()
 
@@ -368,7 +369,7 @@ class Translator:
 	def send_tracking_record(self,file_names = None):
 		print('Send tracking record to logging')
 		self.last_section_api_usage = self.load_request_log(self.tracking_log)
-		print('translate-usage:', self.last_section_api_usage)
+		print('api-usage:', self.last_section_api_usage)
 		self.last_section_tm_request = self.load_request_log(self.tm_request_log)
 		print('tm-usage:', self.last_section_tm_request)
 		self.last_section_invalid_request = self.load_request_log(self.invalid_request_log)
@@ -1775,6 +1776,13 @@ class Translator:
 		self.tm_path = self.correct_path_os(tm_path)
 		return
 
+	def init_log_path(self):
+		self.local_log_path = self.config_path + '\\AIO Translator\\log.txt'
+		tm_dir =  os.path.dirname(self.tm_path)
+		self.tm_log_path   = os.path.join(tm_dir,  "log.txt")
+
+		return
+
 	def init_translation_memory(self):
 		return pd.DataFrame(columns=self.supported_language)
 
@@ -1876,10 +1884,6 @@ class Translator:
 			return
 		else:
 			try:
-				self.monthly_tm_maintain()
-			except:
-				print('Cannot backup TM file.')	
-			try:
 				with open(self.tm_path, 'rb') as pickle_load:
 					all_tm = pickle.load(pickle_load)
 					print('All project key: ', all_tm.keys())
@@ -1905,10 +1909,15 @@ class Translator:
 				elif _tm_version == 2:
 					self.current_tm = self.import_tm_v2(all_tm)
 				else:
+					self.current_tm = self.init_translation_memory()
 					print('Broken TM file.')	
 			except Exception as e:
 				print('Error while opening TM file:', e)
-
+		try:
+			self.monthly_tm_maintain()
+		except Exception as e:
+			self.write_log('Cannot backup TM file due to: ' + str(e))
+			print('Cannot backup TM file.', str(e))	
 		self.update_tm_from_dataframe()
 
 
@@ -1956,6 +1965,7 @@ class Translator:
 						with open(self.tm_path, 'rb') as pickle_load:
 							_all_tm = pickle.load(pickle_load)
 					except Exception as e:
+						self.write_log('Error while reading TM file:'+  str(e))	
 						print("Error while reading TM file: ", e)
 						Counter += 1
 						continue
@@ -1999,7 +2009,14 @@ class Translator:
 					# Broken TM file or a large amount of TM is removed
 					# we will re-create the TM base on the TM in the RAM
 					# Before that, we will make a copy of the current TM for recovery:
-					self.backup_tm_file()
+					try:
+						self.backup_tm_file()
+					except Exception as e:
+						#backup_log = os.path.join(_backup_dir, "backup_log" + '.txt')
+						#message = str(self.user_name) + ' has backup the file ' + _filename
+						#self.write_log(backup_log, message)
+						self.write_log('Error while backup TM:'+  str(e))	
+						print('Error while backup TM:', e)
 					# TM in the TM file (ROM) will be ignore, TM in RAM will be use.
 					_current_tm = self.current_tm
 
@@ -2012,7 +2029,6 @@ class Translator:
 					except Exception as e:
 						print('Append TM DF error:', e)	
 				
-
 				_tm_sub_version = self.get_tm_sub_version(self.current_tm)
 				if _tm_sub_version < 41:
 					print('Fix currupted TM')
@@ -2027,12 +2043,15 @@ class Translator:
 				try:
 					# Confirm that the length of current TM greater than the length in TM file
 					_second_backup_file = self.backup_tm_file()
+
 					_current_tm_file_size = os.path.getsize(_second_backup_file)
-	
+
 					with open(self.tm_path, 'wb') as pickle_file:
 						print("Updating pickle file....", self.tm_path)
 						pickle.dump(_all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+
 					_new_tm_file_size = 	os.path.getsize(self.tm_path)
+
 					# Double confirm process, confirm if file size is greater than old one
 					if _current_tm_file_size > _new_tm_file_size:
 						# Revert to old version if new TM file is smaller than the old one
@@ -2040,8 +2059,11 @@ class Translator:
 						os.remove(self.tm_path)
 						shutil.copy(_second_backup_file, self.tm_path)
 						os.remove(_second_backup_file)
+						self.write_log('Error while appending TM file, TM has been restored: '+  str(e))	
 						raise Exception("Error while appending TM file, TM file has been reversed to the older version.")
 					else:
+						_message = self.user_name + ' has appended new TM.'
+						self.write_log(_message)	
 						os.remove(_second_backup_file)
 						#TM append safety, remove backup file.
 					_translation_memory_size = len(_current_tm)
@@ -2049,9 +2071,11 @@ class Translator:
 					self.init_temporary_tm()
 					return new_tm_size
 				except Exception  as e:
-					print("Error 1:", e)
+					self.write_log('Error while writing TM:'+  str(e))	
+					print("Error while writing TM:", e)
 			except Exception  as e:
-				print("Error 2:", e)		
+				self.write_log('Error while handling TM:'+  str(e))	
+				print('Error while handling TM:',  e)		
 		return 0
 	
 	def monthly_tm_maintain(self):
@@ -2059,6 +2083,8 @@ class Translator:
 		if _check == False:
 			self.optimize_translation_memory()
 			self.monthly_tm_backup()
+
+
 
 	def maintenance_check(self):
 		_dirname = os.path.dirname(self.tm_path)
@@ -2091,6 +2117,20 @@ class Translator:
 				print("Fail to backup TM file:", e)	
 		
 
+	# Remove duplicated pair, lower string in the TM
+	def optimize_translation_memory(self):
+		print('Optimizing TM...')
+		print('Old TM:', len(self.current_tm))
+		#self.import_translation_memory()
+		for language in self.supported_language:
+			self.current_tm[language] = self.current_tm[language].str.lower()
+
+		self.current_tm.drop_duplicates(inplace=True)
+
+		print('New TM:', len(self.current_tm))
+		print('Optmize TM completed...')
+
+
 	def backup_tm_file(self):
 		_dirname = os.path.dirname(self.tm_path)
 		_basename = os.path.basename(self.tm_path)
@@ -2101,7 +2141,35 @@ class Translator:
 			os.mkdir(_backup_dir)	
 		_backup_file  = os.path.join(_backup_dir, _filename + "_backup_" + _time_stamp + _ext)
 		shutil.copy(self.tm_path, _backup_file)
+		backup_log = os.path.join(_backup_dir, "backup_log.txt")
+		message = str(self.user_name) + ' has backup the file ' + _filename
+		self.write_log(backup_log, message)
+
 		return _backup_file
+
+	def write_local_log(self, message,  backup_log_path = None):
+		if backup_log_path == None:
+			backup_log_path = self.local_log_path
+		try:
+			_time_stamp = self.get_timestamp()
+			f = open(backup_log_path, "a")
+			f.write('\n'+ _time_stamp + ': ' + message)
+			f.close()
+		except Exception as e:
+			print('Error while writing log file: ', e)
+		return
+
+	def write_log(self, message,  backup_log_path = None):
+		if backup_log_path == None:
+			backup_log_path = self.tm_log_path
+		try:
+			_time_stamp = self.get_timestamp()
+			f = open(backup_log_path, "a")
+			f.write('\n'+ _time_stamp + ': ' + message)
+			f.close()
+		except Exception as e:
+			print('Error while writing log file: ', e)
+		return
 
 	def export_current_translation_memory(self):
 		'''
@@ -2186,18 +2254,6 @@ class Translator:
 		new_row = {self.to_language: translated, self.from_language: input}
 		self.temporary_tm.append(new_row)
 
-	# Remove duplicated pair, lower string in the TM
-	def optimize_translation_memory(self):
-		print('Optimizing TM...')
-		print('Old TM:', len(self.current_tm))
-		self.import_translation_memory()
-		for language in self.supported_language:
-			self.current_tm[language] = self.current_tm[language].str.lower()
-
-		self.current_tm.drop_duplicates(inplace=True)
-
-		print('New TM:', len(self.current_tm))
-		print('Optmize TM completed...')
 
 	# Used in TM Manager tool
 	# to remove TM pair in the TM

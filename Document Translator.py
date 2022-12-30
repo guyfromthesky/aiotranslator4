@@ -607,12 +607,13 @@ class DocumentTranslator(Frame):
 	def disable_button(self):
 		_state = DISABLED
 		self.bottom_panel.btn_renew_translator.configure(state=_state)
-		
+		self.bottom_panel.project_id_select.configure(state=_state)
 		self.btn_translate.configure(state=_state)
 		
 	def enable_button(self):
 		_state = NORMAL
 		self.bottom_panel.btn_renew_translator.configure(state=_state)
+		self.bottom_panel.project_id_select.configure(state=_state)
 		self.btn_translate.configure(state=_state)
 
 	# Menu Function
@@ -2091,11 +2092,12 @@ def main():
 	#application = DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue, status_queue = StatusQueue, my_translator_queue = MyTranslatorQueue, my_db_queue = MyDB, tm_manager = TMManager)
 	try:
 		application = DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue, status_queue = StatusQueue, my_translator_queue = MyTranslatorQueue, my_db_queue = MyDB, tm_manager = TMManager)
-		root.mainloop()
+		
 		icon_path = resource_path('resource/document_translator.ico')
 		print(icon_path)
 		if os.path.isfile(icon_path):
 			root.iconbitmap(icon_path)
+		root.mainloop()
 
 	except Exception as e:
 		try:
@@ -2107,6 +2109,7 @@ def main():
 		except Exception as e2:
 			messagebox.showinfo(title='Fail to launch the application', message="Error details has not been reported.\n Please contact with me (evan) if you need urgent support.")
 			return
+		application.MyTranslator.write_local_log('Critical error: ' + str(e))
 		messagebox.showinfo(title='Fail to launch the application', message="Error details has been reported.\n Please contact with me (evan) if you need urgent support.")
 
 if __name__ == '__main__':
