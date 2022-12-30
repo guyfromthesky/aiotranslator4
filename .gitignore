@@ -19,4 +19,5 @@ test files
 *.exe
 Compiler/dist/*
 Compiler/build/*
+translator/*
 *.n7
