@@ -10,8 +10,6 @@ import subprocess
 import time
 from datetime import datetime
 
-from Shared.libs.documentprocessing import API_LENGTH_LIMIT
-
 API_LENGTH_LIMIT = 5000
 
 # Functions used for processor
@@ -359,7 +357,7 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 			TaskLength = 0
 			
 			while TaskLength < API_LENGTH_LIMIT:
-				print('Len text:', TaskLength)
+				#print('Len text:', TaskLength)
 				if len(task_list) > 0:
 					Input = task_list[0].Text
 					if isinstance(Input, list):

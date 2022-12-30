@@ -151,7 +151,7 @@ class ConfigLoader:
 		self.Init_Config_Option(config, Section, 'MenuColor', "")
 		self.Init_Config_Option(config, Section, 'UsedTheme', "", True)
 		
-		self.Init_Config_Option(config, Section, 'theme_name', "clam", True)
+		self.Init_Config_Option(config, Section, 'theme_name', "minty", True)
 
 		Section = 'BugDetails'
 		
@@ -259,7 +259,10 @@ class ConfigLoader:
 		self.Init_Config_Option_Numberic(config, Section, 'remove_unselected_sheet', 0)
 		self.Init_Config_Option_Numberic(config, Section, 'usage', 0)
 		
-		
+		self.Init_Config_Option_Float(config, Section, 'Transparent', 97)
+		self.Init_Config_Option(config, Section, 'theme_name', "minty", True)
+
+
 
 		with open(config_path, 'w') as configfile:
 			config.write(configfile)

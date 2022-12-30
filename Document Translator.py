@@ -23,10 +23,12 @@ import pickle
 
 #from urllib.parse import urlparse
 
+from ttkbootstrap.constants import *
+
 #GUI
-from tkinter.ttk import Entry, Label, Treeview, Scrollbar, OptionMenu
-from tkinter.ttk import Checkbutton, Button, Notebook
-from tkinter.ttk import Progressbar, Style
+from ttkbootstrap import Entry, Label, Treeview, Scrollbar, OptionMenu
+from ttkbootstrap import Checkbutton, Button, Notebook
+from ttkbootstrap import Progressbar, Style, Window
 
 from tkinter import Tk, Frame, Menubutton
 from tkinter import Menu, filedialog, messagebox
@@ -43,15 +45,14 @@ from tkinter.dnd import *
 # Web redirect
 import webbrowser
 
-from libs.aiotranslator import ver_num as TranslatorVersion
 from libs.aiotranslator import generate_translator
 
 from libs.aioconfigmanager import ConfigLoader
 from libs.documentprocessing import translate_docx, translate_msg
 from libs.documentprocessing import translate_presentation, translate_workbook
 
-from libs.version import get_version
-from libs.tkinter_extension import AutocompleteCombobox
+from libs.general import get_version, resource_path, send_fail_request, get_user_name
+from libs.tkinter_extension import AutocompleteCombobox, Generate_Document_Translate_Setting_UI, Apply_Transparency
 
 from google.cloud import logging
 import pandas as pd
@@ -61,9 +62,9 @@ import pkgutil
 
 tool_display_name = "Document Translator"
 tool_name = 'document'
-rev = 4126
+rev = 4201
 ver_num = get_version(rev) 
-version = tool_display_name  + " " +  ver_num + " | " + "Translator lib " + TranslatorVersion
+version = tool_display_name  + " v" +  ver_num
 
 DELAY = 20
 
@@ -79,7 +80,7 @@ class DocumentTranslator(Frame):
 		self.pack(side=TOP, expand=Y, fill=X)
 		self.parent = Root 
 		self.parent.protocol("WM_DELETE_WINDOW", self.on_closing)
-
+		self.style =  Style()
 		# Queue
 		self.ProcessQueue = process_queue
 		self.ResultQueue = result_queue
@@ -117,6 +118,11 @@ class DocumentTranslator(Frame):
 		self.BUTTON_WIDTH = 20
 		self.HALF_BUTTON_WIDTH = 15
 
+		self.BUTTON_SIZE = 20
+		self.HALF_BUTTON_SIZE = 15
+
+		self.Btn_Style = "Accent.TButton"
+
 		self.STATUS_LENGTH = 120
 
 		self.LanguagePack = {}
@@ -131,7 +137,9 @@ class DocumentTranslator(Frame):
 	
 		# Init function
 		self.create_buttom_panel()
-		
+
+		self.init_theme()
+
 		self.init_ui()
 		
 		self.init_UI_setting()
@@ -176,14 +184,11 @@ class DocumentTranslator(Frame):
 		self.Progress = StringVar()
 		
 		self.Generate_DocumentTranslator_UI(self.MainTab)
-		self.Generate_TranslateSetting_UI(self.TranslateSetting)
+		Generate_Document_Translate_Setting_UI(self, self.TranslateSetting)
 		self.Generate_TM_Manager_UI(self.TM_Manager)
 		self.Generate_DB_Uploader_UI(self.DB_Uploader)
 		#self.Generate_Debugger_UI(self.Process)
 
-		
-
-		
 	def Generate_DocumentTranslator_UI(self, Tab):
 		Row=1
 		Label(Tab, textvariable=self.Progress, width= 40).grid(row=Row, column=1, columnspan=3, padx=5, pady=5, sticky=W)
@@ -229,7 +234,7 @@ class DocumentTranslator(Frame):
 
 		# Menubutton Tool Option
 		Extension_Option = Menubutton(Tab, text = self.LanguagePack.Label['ToolOptions'], width= 20, relief = RAISED)
-		Extension_Option.grid(row=Row, column=1, columnspan=2, padx=5, pady=5)
+		Extension_Option.grid(row=Row, column=2, padx=0, pady=5, sticky=W)
 		Extension_Option_Menu = Menu(Extension_Option, tearoff = 0)
 
 		self.TranslateFileName = IntVar()
@@ -255,7 +260,7 @@ class DocumentTranslator(Frame):
 
 		# Menubutton TM Option
 		TM_Option = Menubutton(Tab, text = self.LanguagePack.Label['TMOptions'], width= 20, relief = RAISED)
-		TM_Option.grid(row=Row, column=3, columnspan=2, padx=5, pady=5)
+		TM_Option.grid(row=Row, column=3, padx=0, pady=5, sticky=W)
 		TM_Option_Menu = Menu(TM_Option, tearoff = 0)
 
 		self.TMUpdate = IntVar()
@@ -271,7 +276,7 @@ class DocumentTranslator(Frame):
 
 		# Menubutton ETC
 		Result_File_Option = Menubutton(Tab, text = "Result Option:", width= 20, relief = RAISED)
-		Result_File_Option.grid(row=Row, column=5, columnspan=2, padx=5, pady=5)
+		Result_File_Option.grid(row=Row, column=4, padx=0, pady=5, sticky=W)
 		Result_File_Option_Menu = Menu(Result_File_Option, tearoff = 0)
 
 
@@ -318,7 +323,6 @@ class DocumentTranslator(Frame):
 		self.TextLicensePath.grid(row=Row, column=3, columnspan=5, padx=5, pady=5, sticky=W)
 		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Browse'], command= self.SelectTM).grid(row=Row, column=8, columnspan=2, padx=5, pady=5, sticky=E)
 		
-		
 
 	def Generate_Debugger_UI(self, Tab):	
 
@@ -335,15 +339,15 @@ class DocumentTranslator(Frame):
 		
 		#Label(Tab, width = 100, text= "").grid(row=Row, column=1, columnspan=Max_Size, padx=5, pady=5, sticky = (N,S,W,E))
 		Row = 1
-		self.search_text = Text(Tab, height=1, width=85) #
+		self.search_text = Text(Tab, height=1, width=100) #
 		self.search_text.grid(row=Row,  column=1, columnspan=7, padx=5, pady=5, stick=W+E)
 
 		#self.search_text.bind("<Enter>", self.search_tm_event)
 
 		#print('Btn size', self.HALF_BUTTON_WIDTH)
-		Button(Tab, text= self.LanguagePack.Button['Load'], width= self.HALF_BUTTON_WIDTH, command= self.load_tm_list).grid(row=Row, column=8, sticky=E)
-		Button(Tab, text= self.LanguagePack.Button['Save'], width= self.HALF_BUTTON_WIDTH, command= self.save_tm).grid(row=Row, column=9, sticky=E)
-		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Search'] , command= self.search_tm_list).grid(row=Row, column=10,sticky=E)
+		Button(Tab, text= self.LanguagePack.Button['Load'], width= self.HALF_BUTTON_WIDTH, command= self.load_tm_list).grid(row=Row,padx=5, pady=5, column=8, sticky=E)
+		Button(Tab, text= self.LanguagePack.Button['Save'], width= self.HALF_BUTTON_WIDTH, command= self.save_tm).grid(row=Row,padx=5, pady=5, column=9, sticky=E)
+		Button(Tab, width = self.HALF_BUTTON_WIDTH, text=  self.LanguagePack.Button['Search'] , command= self.search_tm_list).grid(row=Row,padx=5, pady=5, column=10,sticky=E)
 		Row +=1
 		#self.Debugger = Text(Tab, width=120, height=20, undo=True, wrap=WORD)
 		#self.List = scrolledtext.ScrolledText(Tab, width=125, height=20, undo=True, wrap=WORD, )
@@ -623,6 +627,9 @@ class DocumentTranslator(Frame):
 		self.write_debug(self.LanguagePack.ToolTips['AppLanuageUpdate'] + " "+ language) 
 		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'app_lang', language)
 
+	def SaveAppTransparency(self, transparency):
+		self.AppConfig.Save_Config(self.AppConfig.Doc_Config_Path, 'Document_Translator', 'Transparent', transparency)
+
 	def save_app_config(self):
 		target_language = self.target_language.get()
 		target_language_index = self.language_list.index(target_language)
@@ -693,6 +700,94 @@ class DocumentTranslator(Frame):
 		else:
 			return str(path).replace('\\', '//')
 	
+	def init_theme(self):
+		"""Applied the theme name saved in the settings on init."""
+		print('init_theme')
+		try:
+			all_themes = self.style.theme_names()
+			personalize_themes = ['wynnmeister', 'erza\'s', 'tien\'s', 'dao\'s', 'blackpink']
+			self.theme_names = []
+			for theme in all_themes:
+				
+				if theme in personalize_themes:
+					print('Personalize theme:', theme)
+					user = get_user_name()
+					if theme == 'dao\'s' and user == 'jennie':
+						self.theme_names.append(theme)
+					elif theme == 'wynnmeister' and user == 'wynn.saltywaffle':
+						self.theme_names.append(theme)	
+					elif theme == 'erza\'s' and user == 'erzaerza':
+						self.theme_names.append(theme)	
+					elif theme == 'tien\'s' and user == 'hann':
+						self.theme_names.append(theme)	
+					elif theme == 'blackpink' and user == 'ruko':
+						self.theme_names.append(theme)
+					elif user == 'evan':
+						self.theme_names.append(theme)
+				else:	
+					self.theme_names.append(theme)
+	
+
+		
+
+							#	['cosmo', 'flatly', 'litera', 'minty',
+							#	"lumen", "sandstone",	"yeti", "pulse", 
+							#	"united", "morph", "journal", "darkly", 'superhero', 
+							#	'solar', 'cyborg', 'vapor', 'simplex', 'cerculean'
+							#		, 'pinky']
+			if self.used_theme not in self.theme_names:
+				raise Exception('Cannot use the theme saved in the config'
+					' because it is not supported or required files have'
+					' been removed.')
+
+			self.style.theme_use(self.used_theme)
+
+		except Exception as err:
+			print('Error while initializing theme:\n'
+				f'- {err}\n'
+				'The system default theme will be used instead.')
+		transparency  = self.Configuration['Document_Translator']['Transparent']
+		Apply_Transparency(transparency, self)
+
+
+	def select_theme_name(self):
+		"""Save the theme name value to Configuration and change
+		the theme based on the selection in the UI.
+		
+		Args:
+			config_theme_name -- str
+				Theme name retrieved from config. (Default: '')
+		"""
+		try:
+			theme_name = self.strvar_theme_name.get()
+			print('Select theme:', theme_name)
+			self.style.theme_use(theme_name)
+			self.AppConfig.Save_Config(
+				self.AppConfig.Doc_Config_Path,
+				'Document_Translator',
+				'theme_name',
+				theme_name, True)
+
+		except Exception as err:
+			messagebox.showerror(
+				title='Error',
+				message=f'Error occurs when selecting theme: {err}')
+
+	def remove_theme(self):
+		print('remove_theme')
+		"""Remove the theme saved in config then restart the app."""
+		self.AppConfig.Save_Config(
+			self.AppConfig.Doc_Config_Path,
+			'Document_Translator',
+			'theme_name',
+			'')
+		
+		messagebox.showinfo(
+			title='Info',
+			message='App will restart to apply the change.')
+		self.parent.destroy()
+		main()
+
 	def CorrectExt(self, path, ext):
 		if path != None and ext != None:
 			Outputdir = os.path.dirname(path)
@@ -983,6 +1078,9 @@ class DocumentTranslator(Frame):
 	def init_App_Setting(self):
 
 		self.LicensePath = StringVar()
+
+		self.Transparent = IntVar()
+
 		self.DictionaryPath = StringVar()
 		self.TMPath = StringVar()
 
@@ -1010,6 +1108,9 @@ class DocumentTranslator(Frame):
 
 		_tm_path = self.Configuration['Translator']['translation_memory']
 		
+		Transparent  = self.Configuration['Document_Translator']['Transparent']
+		self.Transparent.set(Transparent)
+
 		# Check if tm path is valid
 		if not os.path.exists(_tm_path):
 			with open(_tm_path, 'wb') as pickle_file:
@@ -1022,6 +1123,11 @@ class DocumentTranslator(Frame):
 		self.project_bucket_id = self.Configuration['Translator']['project_bucket_id']
 
 		self.glossary_id = self.Configuration['Translator']['glossary_id']
+
+		self.used_theme = self.Configuration['Document_Translator']['theme_name']
+		
+		self.strvar_theme_name = StringVar()
+
 
 	def init_UI_setting(self):
 
@@ -1855,7 +1961,9 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 		ProgressQueue.get_nowait()
 	except queue.Empty:
 		pass
-	
+		
+	translate_file = []	
+
 	for File in SourceDocument:
 		if File != None:
 			
@@ -1945,6 +2053,7 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 				Result = str(e)
 
 		if Result == True:
+			translate_file.append(baseName)
 			ResultQueue.put(Result)
 			End = time.time()
 			Total = End - Start
@@ -1953,84 +2062,20 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 		else:
 			Message = 'Fail to translate document, details: \n' + str(Result)
 			ResultQueue.put(str(Message))
-		try:
-			mem_tm = len(MyTranslator.temporary_tm)
-			newTM = MyTranslator.append_translation_memory()
-			MyTranslator.send_tracking_record(file_name = baseName)
-			StatusQueue.put('Source: ' + str(baseName))
-			StatusQueue.put('TM usage: ' + str(MyTranslator.last_section_tm_request))
-			StatusQueue.put('API usage: ' + str(MyTranslator.last_section_api_usage))
-			StatusQueue.put('Invalid request: ' + str(MyTranslator.last_section_invalid_request))
-			StatusQueue.put('TM In-memory: ' + str(mem_tm))
-			StatusQueue.put('TM append this section: ' + str(newTM))
-			#StatusQueue.put('TM In-memory: ' + str(len(MyTranslator.TMManager)))
-
-		except Exception as e:
-			StatusQueue.put('Error while appending TM: ' + str(e))
-
-def fixed_map(style, option):
-	# Fix for setting text colour for Tkinter 8.6.9
-	# From: https://core.tcl.tk/tk/info/509cafafae
-	#
-	# Returns the style map for 'option' with any styles starting with
-	# ('!disabled', '!selected', ...) filtered out.
-
-	# style.map() returns an empty list for missing options, so this
-	# should be future-safe.
-	return [elm for elm in style.map('Treeview', query_opt=option) if
-	  elm[:2] != ('!disabled', '!selected')]
-
-def send_fail_request(error_message):
 	try:
-		from google.cloud import logging
-		AppConfig = ConfigLoader(Document=True)
-		Configuration = AppConfig.Config
-		print('JSON file: ', Configuration['license_file']['path'])
-		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = Configuration['license_file']['path']
-		client = logging.Client()
-	except:
-
-		print('JSON file: ', Configuration['license_file']['path'])
-		print('Fail to communicate with logging server')
-		messagebox.showinfo(title='Critical error', message=error_message)
-		return
-
-	log_name = 'critical-error'
-	logger = client.logger(log_name)
-	
-	try:
-		if sys.platform.startswith('win'):
-			try:
-				user_name = os.getlogin()
-			except:
-				user_name = os.environ['COMPUTERNAME']
-		else:
-			try:
-				user_name = os.environ['LOGNAME']
-			except:
-				user_name = "Anonymous"
-	except:
-		user_name = "Anonymous"
-
-	data_object = {
-		'tool': 'Document Translator',
-		'translator_ver': ver_num,
-		'error_message': str(error_message)
-	}
-
-	tracking_object = {
-		'user': user_name,
-		'details': data_object
-	}
-	
-	try:
-		logger.log_struct(tracking_object)
-	except Exception  as e:
-		print('exception:', e)
-		result = False
-
-	return
+		mem_tm = len(MyTranslator.temporary_tm)
+		newTM = MyTranslator.append_translation_memory()
+		MyTranslator.send_tracking_record(file_names = translate_file)
+		StatusQueue.put('Source: ' + str(baseName))
+		StatusQueue.put('TM usage: ' + str(MyTranslator.last_section_tm_request))
+		StatusQueue.put('API usage: ' + str(MyTranslator.last_section_api_usage))
+		StatusQueue.put('Invalid request: ' + str(MyTranslator.last_section_invalid_request))
+		StatusQueue.put('TM In-memory: ' + str(mem_tm))
+		StatusQueue.put('TM append this section: ' + str(newTM))
 		
+	except Exception as e:
+		StatusQueue.put('Error while appending TM: ' + str(e))
+
 def main():
 	ProcessQueue = Queue()
 	ResultQueue = Queue()
@@ -2040,74 +2085,31 @@ def main():
 	MyManager = Manager()
 	TMManager = MyManager.list()
 	MyDB = Queue()
-	root = Tk()
-
-	style = Style(root)
-	style.map('Treeview', foreground=fixed_map(style, 'foreground'), background=fixed_map(style, 'background'))
+    
+	root = Window(themename="minty")
 
 	#application = DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue, status_queue = StatusQueue, my_translator_queue = MyTranslatorQueue, my_db_queue = MyDB, tm_manager = TMManager)
 	try:
-		version_byte_data = pkgutil.get_data( 'Document Translator', 'source/version.txt' )
-		print(version_byte_data)
-		version = version_byte_data.decode('utf-8')
-		print('Ver num', version)
-		messagebox.showinfo(title='Ver num', message=version)
-
-		#root.iconbitmap(r"theme\ico\ico.ico")
-	except Exception as e:
-		print('1.Error while loading version number', e)
-	try:
-		version_byte_data = pkgutil.get_data( 'source', 'version.txt' )
-		print(version_byte_data)
-		version = version_byte_data.decode('utf-8')
-		print('Ver num', version)
-		messagebox.showinfo(title='Ver num', message=version)
-
-		#root.iconbitmap(r"theme\ico\ico.ico")
-	except Exception as e:
-		print('2.Error while loading version number', e)
-	try:
-		version_byte_data = pkgutil.get_data( 'source', 'source/version.txt' )
-		print(version_byte_data)
-		version = version_byte_data.decode('utf-8')
-		print('Ver num', version)
-		messagebox.showinfo(title='Ver num', message=version)
-
-		#root.iconbitmap(r"theme\ico\ico.ico")
-	except Exception as e:
-		print('3.Error while loading version number', e)
-	try:
-		version_byte_data = pkgutil.get_data( 'source/source', 'version.txt' )
-		print(version_byte_data)
-		version = version_byte_data.decode('utf-8')
-		print('Ver num', version)
-		messagebox.showinfo(title='Ver num', message=version)
-
-		#root.iconbitmap(r"theme\ico\ico.ico")
-	except Exception as e:
-		print('3.Error while loading version number', e)
-
-	try:
 		application = DocumentTranslator(root, process_queue = ProcessQueue, result_queue = ResultQueue, status_queue = StatusQueue, my_translator_queue = MyTranslatorQueue, my_db_queue = MyDB, tm_manager = TMManager)
 		root.mainloop()
-	
-		
-		#print('Root is terminated sending logging from current session')
-		#app.MyTranslator.send_tracking_record()
-		#Remove created process
-	except Exception as e:
-		print('Fail to launch the application:', e)
-		root.withdraw()
-		try:
-			send_fail_request(e)
-		except Exception as e2:
-			print(e2)
-		print("Fail to launch the application:", e)	
-		messagebox.showinfo(title='Fail to launch the application', message="Error details has been reported.\n Please contact with me (evan) if you need urgent support.")
+		icon_path = resource_path('resource/document_translator.ico')
+		print(icon_path)
+		if os.path.isfile(icon_path):
+			root.iconbitmap(icon_path)
 
+	except Exception as e:
+		try:
+			root.withdraw()
+		except:
+			return
+		try:
+			send_fail_request(e, ver_num)
+		except Exception as e2:
+			messagebox.showinfo(title='Fail to launch the application', message="Error details has not been reported.\n Please contact with me (evan) if you need urgent support.")
+			return
+		messagebox.showinfo(title='Fail to launch the application', message="Error details has been reported.\n Please contact with me (evan) if you need urgent support.")
 
 if __name__ == '__main__':
 	if sys.platform.startswith('win'):
 		freeze_support()
-	
 	main()
