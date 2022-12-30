@@ -8,7 +8,6 @@ import re
 #Object copy, handle excel style
 import copy
 #Get timestamp
-import datetime
 from datetime import date, datetime
 #import time
 #function difination
@@ -1545,7 +1544,7 @@ def Translate_Simple(Object, simple_template, my_translator, secondary_target_la
 		strTestVersion = AddCssLayout("Test Version", Details)
 
 		if TextReproduceTime == "":
-			now = datetime.datetime.now()
+			now = datetime.now()
 			TextReproduceTime = str(date.today()) + " " + str(now.hour) + ':' + str(now.minute) 
 		Details = '\r\n<p><b>Reproduce Time : </b>&nbsp;' + TextReproduceTime + '</p>'
 		Details += '\r\n<p><b>Account ID/Character Name : </b>&nbsp;' + TextTestAccount + '</p>'
