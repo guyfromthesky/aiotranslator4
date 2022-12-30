@@ -55,7 +55,7 @@ from libs.cloudconfig import CloudConfigLoader
 
 from libs.grammarcheck import LanguageTool
 
-from libs.version import get_version
+from libs.general import get_version, resource_path
 from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText, ConfirmationPopup
 
 
@@ -67,9 +67,8 @@ from google.cloud import logging
 
 tool_display_name = "[MH] Translate Helper"
 tool_name = 'writer'
-REV = 4126
+REV = 4201
 ver_num = get_version(REV) 
-#VERSION = tool_display_name  + " " +  ver_num + " | Language Tool v5.6"
 
 DELAY = 20
 DELAY2 = 1000
@@ -234,6 +233,9 @@ class MyTranslatorHelper(Frame):
 		else:
 			self.after(DELAY2, self.status_listening)
 		#print('Device status:', device_status, time.time()- Start)
+
+	def Error(self, ErrorText):
+		messagebox.showinfo('Error...', ErrorText)	
 
 	def init_ui(self):
 		self.parent.resizable(False, False)
@@ -1375,30 +1377,23 @@ class MyTranslatorHelper(Frame):
 
 
 	def _save_report(self, event = None):
-		TextTitle = self.TextTitle.get("1.0", END)			
-		
-		EnvInfo = self.EnvInfo.get("1.0", END)
-		Reproducibility = self.Reproducibility.get("1.0", END)
-		
-		TextTestReport = self.TextTestReport.get("1.0", END)
-		TextReproduceSteps = self.TextReproduceSteps.get("1.0", END)
-		TextShouldBe = self.TextShouldBe.get("1.0", END)
-		HeaderA = self.HeaderOptionA.get()
-		HeaderB = self.HeaderOptionB.get()
+
 		try:
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTitle', TextTitle, True)
+			for widget_name in self.Configuration['BugDetails']:
+				for widget in dir(self):
+					if widget == widget_name:
+						_widget = getattr(self, widget)
+						_string = _widget.get("1.0", END)
+					
+						self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', widget_name, _string, True)
 
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'EnvInfo', EnvInfo, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'Reproducibility', Reproducibility, True)
-			
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextTestReport', TextTestReport, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextReproduceSteps', TextReproduceSteps, True)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'TextShouldBe', TextShouldBe, True)
-
+			HeaderA = self.HeaderOptionA.get()
+			HeaderB = self.HeaderOptionB.get()		
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)
 
-		except:
+		except Exception as e:
+			print('Cannot sve the report:', e)
 			pass
 
 	def SaveTempReport(self, event=None):
@@ -1412,8 +1407,8 @@ class MyTranslatorHelper(Frame):
 
 			HeaderA = self.HeaderOptionA.get()
 			HeaderB = self.HeaderOptionB.get()		
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)			
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderA', HeaderA)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)			
 		except Exception as e:
 			print('Cannot save the report:', e)
 			pass
@@ -1477,7 +1472,10 @@ class MyTranslatorHelper(Frame):
 			self.Configuration = self.AppConfig.Config
 			for widget_name in self.Configuration['Temp_BugDetails']:
 				temp_string = self.Configuration['Temp_BugDetails'][widget_name]
-				
+
+				if temp_string != None:
+					temp_string = temp_string.rstrip('\n')
+
 				for widget in dir(self):
 					if widget == widget_name:
 						_widget = getattr(self, widget)
@@ -1848,17 +1846,6 @@ def Add_Style(Text):
 		return '{color:#DC143C}*실행결과(Actual Result)*{color}' 
 	elif Text == 'Expected Result':
 		return '{color:#32288E}*기대결과(Expected Result)*{color}' 	
-
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
-
 # MAIN
 
 def main():
@@ -1899,7 +1886,7 @@ def main():
 		#application.pack(fill="both", expand=True)
 		#root.attributes('-topmost', False)
 		icon_path = resource_path('resource/translate_helper.ico')
-		print(icon_path)
+		
 		if os.path.isfile(icon_path):
 			root.iconbitmap(icon_path)
 		#root.deiconify()

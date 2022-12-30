@@ -27,6 +27,6 @@ libs/__pycache__/documentprocessing.cpython-38.pyc
 *.toc
 *.zip
 *.toc
-Compiler/dist/theme/Breeze/radio-check-preesed
+Compiler/dist/*
+Compiler/build/*
 *.n7
-Compiler/build/\[MDNF\] Translate Helper/warn-\[MDNF\] Translate Helper.txt

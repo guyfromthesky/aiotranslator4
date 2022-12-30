@@ -49,7 +49,6 @@ import queue
 import webbrowser
 import inspect
 
-from libs.aiotranslator import ver_num as TranslatorVersion
 from libs.aiotranslator import generate_translator
 
 from libs.aioconfigmanager import ConfigLoader
@@ -60,18 +59,18 @@ from libs.cloudconfig import CloudConfigLoader
 
 from libs.version import get_version
 from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText
-
 from libs.tkinter_extension import Generate_BugWriter_Tab_UI, Generate_BugWriter_Menu_UI, Generate_Translate_Setting_UI
 from libs.tkinter_extension import Generate_BugWriter_UI, Generate_SimpleTranslator_UI
 from libs.tkinter_extension import Apply_Transparency, BugWriter_BottomPanel
 
+from libs.general import get_version, resource_path, get_user_name
 #from openpyxl import load_workbook, worksheet, Workbook
 
 from google.cloud import logging
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4126
+REV = 4202
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num
 
@@ -156,9 +155,6 @@ class MyTranslatorHelper(Frame):
 		
 		self.init_UI_setting()
 
-		#self.LoadTempReport()
-
-
 		if REV < int(self.latest_version):
 			self.Error('Current version is lower than the minimal version allowed. Please update.')	
 			webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/AIO+Translator")
@@ -182,7 +178,7 @@ class MyTranslatorHelper(Frame):
 
 			if closed_box == True:
 				#self.Error('No license selected, please select the key in Translate setting.')
-				self.TAB_CONTROL.select(self.TranslateSetting)
+				self.TAB_CONTROL.select(self.TranslateSettingTab)
 				#self.flash_btn(self.Browse_License_Btn)
 		
 		self.parent.minsize(self.parent.winfo_width(), self.parent.winfo_height())
@@ -348,12 +344,29 @@ class MyTranslatorHelper(Frame):
 	def init_theme(self):
 		"""Applied the theme name saved in the settings on init."""
 		try:
-			self.theme_names = self.style.theme_names()
-							#	['cosmo', 'flatly', 'litera', 'minty',
-							#	"lumen", "sandstone",	"yeti", "pulse", 
-							#	"united", "morph", "journal", "darkly", 'superhero', 
-							#	'solar', 'cyborg', 'vapor', 'simplex', 'cerculean'
-							#		, 'pinky']
+			all_themes = self.style.theme_names()
+			personalize_themes = ['wynnmeister', 'erza\'s', 'tien\'s', 'dao\'s', 'blackpink']
+			self.theme_names = []
+			for theme in all_themes:
+				
+				if theme in personalize_themes:
+					print('Personalize theme:', theme)
+					user = get_user_name()
+					if theme == 'dao\'s' and user == 'jennie':
+						self.theme_names.append(theme)
+					elif theme == 'wynnmeister' and user == 'wynn.saltywaffle':
+						self.theme_names.append(theme)	
+					elif theme == 'erza\'s' and user == 'erzaerza':
+						self.theme_names.append(theme)	
+					elif theme == 'tien\'s' and user == 'hann':
+						self.theme_names.append(theme)	
+					elif theme == 'blackpink' and user == 'ruko':
+						self.theme_names.append(theme)
+					elif user == 'evan':
+						self.theme_names.append(theme)
+				else:	
+					self.theme_names.append(theme)
+	
 			if self.used_theme not in self.theme_names:
 				raise Exception('Cannot use the theme saved in the config'
 					' because it is not supported or required files have'
@@ -728,7 +741,7 @@ class MyTranslatorHelper(Frame):
 		
 		self.primary_translation = ''
 		self.main_translation = ''
-		self.source_language
+		#self.source_language
 	
 		primary_target_language = self.language_id_list[self.language_list.index(self.simple_secondary_target_language.get())]
 		if primary_target_language == "":
@@ -1319,15 +1332,13 @@ class MyTranslatorHelper(Frame):
 	def _save_report(self,event=None):
 		print('Save report')
 		try:
-			
-
-			for widget_name in self.Configuration['Temp_BugDetails']:
+			for widget_name in self.Configuration['BugDetails']:
 				for widget in dir(self):
 					if widget == widget_name:
 						_widget = getattr(self, widget)
 						_string = _widget.get("1.0", END)
 					
-						self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', widget_name, _string, True)
+						self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', widget_name, _string, True)
 
 			HeaderA = self.HeaderOptionA.get()
 			HeaderB = self.HeaderOptionB.get()		
@@ -1352,8 +1363,8 @@ class MyTranslatorHelper(Frame):
 
 			HeaderA = self.HeaderOptionA.get()
 			HeaderB = self.HeaderOptionB.get()		
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)			
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderA', HeaderA)
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)			
 		except Exception as e:
 			print('Cannot save the report:', e)
 			pass
@@ -1403,7 +1414,10 @@ class MyTranslatorHelper(Frame):
 			self.Configuration = self.AppConfig.Config
 			for widget_name in self.Configuration['Temp_BugDetails']:
 				temp_string = self.Configuration['Temp_BugDetails'][widget_name]
-				
+				# Remove break line
+				if temp_string != None:
+					temp_string = temp_string.rstrip('\n')
+
 				for widget in dir(self):
 					if widget == widget_name:
 						_widget = getattr(self, widget)
@@ -1787,17 +1801,6 @@ def AddCssLayout(Title, content):
 def Add_Style(Text):
 	return '___________' + Text + '___________' 
 
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
-
-
 def main():
 
 	MyTranslator = Queue()
@@ -1825,10 +1828,15 @@ def main():
 			
 		#root.attributes('-topmost', False)
 		root.mainloop()
-		application.MyTranslator.send_tracking_record()
+		try:
+			application.MyTranslator.send_tracking_record()
+		except:
+			pass	
 	except Exception as e:	
-		root.withdraw()
-
+		try:
+			root.withdraw()
+		except:
+			pass
 		try:
 			#from google.cloud import logging
 			AppConfig = ConfigLoader(Writer = True)
