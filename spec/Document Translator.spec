@@ -41,7 +41,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='..\\icon\\Document Translator.ico',
+    icon='..\\src\\document_translator.ico',
 )
 coll = COLLECT(
     exe,
