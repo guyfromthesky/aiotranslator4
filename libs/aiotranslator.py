@@ -1799,7 +1799,7 @@ class Translator:
 			# TM format v4
 			if 'tm_version' in all_tm:
 				if all_tm['tm_version'] == 4:
-					return 4	
+					return 4
 			elif 'EN' in all_tm:
 				return 3
 				
@@ -2061,7 +2061,7 @@ class Translator:
 						_all_tm['tm_sub_version'] = 41
 				except Exception as e:
 					self.write_log('Error while optimize TM:'+  str(e))	
-					
+
 				_current_tm = _current_tm.reindex()
 				#print('Size TM after reindex:', _translation_memory_size)
 				_all_tm[_glossary] = _current_tm

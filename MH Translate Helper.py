@@ -67,7 +67,7 @@ from google.cloud import logging
 
 tool_display_name = "[MH] Translate Helper"
 tool_name = 'writer'
-REV = 4201
+REV = 4202
 ver_num = get_version(REV) 
 
 DELAY = 20
