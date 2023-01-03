@@ -152,7 +152,7 @@ class ConfigLoader:
 		self.Init_Config_Option(config, Section, 'UsedTheme', "", True)
 		
 		self.Init_Config_Option(config, Section, 'theme_name', "minty", True)
-
+		self.Init_Config_Option(config, Section, 'font_size', "12", True)
 		Section = 'BugDetails'
 		
 		self.Init_Config_Option(config, Section, 'TextTitle', "", True)
@@ -261,7 +261,7 @@ class ConfigLoader:
 		
 		self.Init_Config_Option_Float(config, Section, 'Transparent', 97)
 		self.Init_Config_Option(config, Section, 'theme_name', "minty", True)
-
+		self.Init_Config_Option(config, Section, 'font_size', "12", True)
 
 
 		with open(config_path, 'w') as configfile:

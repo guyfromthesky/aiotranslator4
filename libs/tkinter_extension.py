@@ -256,6 +256,7 @@ class BottomPanel(Frame):
 		self.project_id_select.set_completion_list([])
 		self.project_id_select.grid(in_=self, row=Row, column=Col, padx=5, pady=5, stick=W)
 		self.project_id_select.bind("<<ComboboxSelected>>", master._save_project_key)
+		self.project_id_select.configure(state=DISABLED)
 		Col += 1
 		self.RenewTranslatorMain = Button(text=master.LanguagePack.Button['RenewDatabase'], width=15, command= master.RenewMyTranslator, state=DISABLED)
 		self.RenewTranslatorMain.grid(in_=self, row=Row, column=Col, padx=10, pady=5, stick=E)
@@ -297,6 +298,7 @@ class BugWriter_BottomPanel(Frame):
 		master.project_id_select.set_completion_list([])
 		master.project_id_select.grid(in_=master.Bottom_Frame, row=Row, column=Col, padx=5, pady=5, stick=W)
 		master.project_id_select.bind("<<ComboboxSelected>>", master._save_project_key)
+		master.project_id_select.configure(state=DISABLED)
 		Col += 1
 		master.RenewTranslatorMain = Button(master.Bottom_Frame, text=master.LanguagePack.Button['RenewDatabase'], width=10, command= master.RenewMyTranslator, state=DISABLED, style= master.Btn_Style)
 		master.RenewTranslatorMain.grid(row=Row, column=Col, padx=5, pady=5, stick=W)
@@ -689,9 +691,9 @@ def Generate_Translate_Setting_UI(master, Tab):
 	master.Browse_License_Btn = Button(Right_Frame, width = master.HALF_BUTTON_SIZE, text=  master.LanguagePack.Button['Browse'], command = lambda: Btn_Select_License_Path(master), style=master.Btn_Style)
 	master.Browse_License_Btn.grid(row=Row, column=9, padx=5, pady=5, sticky=W)
 
-	Row += 1
+	Row += 2
 	Label(Left_Frame, text= master.LanguagePack.Label['Transparent']) \
-		.grid(row=Row, rowspan = 2, column=0, padx=5, pady=5, sticky=W)
+		.grid(row=Row, rowspan = 2, column=0, padx=5, pady=10, sticky=W)
 	master.TransparentPercent = Scale(
 		Left_Frame,
 		length=400,
@@ -702,11 +704,30 @@ def Generate_Translate_Setting_UI(master, Tab):
 		 
 		orient=HORIZONTAL,)
 	master.TransparentPercent.grid(
-		row=Row, rowspan=2, column=2, columnspan=7, padx=5, pady=5,
+		row=Row, rowspan=2, column=2, columnspan=7, padx=5, pady=10,
 		sticky=E+W)
 	master.TransparentPercent.bind('<ButtonRelease-1>', lambda event, root = master: SaveAppTransparency(event, master),)	
 
-	Row += 2
+	try:
+		Row += 2
+		Label(Left_Frame, text= 'Font size:') \
+			.grid(row=Row, rowspan = 2, column=0, padx=5, pady=10, sticky=W)
+		master.FontSize_Slider = Scale(
+			Left_Frame,
+			length=400,
+			from_=12,
+			to=20,
+			variable=master.FontSize,
+			command= lambda value, root = master: Apply_FontSize(value, master),
+			
+			orient=HORIZONTAL,)
+		master.FontSize_Slider.grid(
+			row=Row, rowspan=2, column=2, columnspan=7, padx=5, pady=10,
+			sticky=E+W)
+		master.FontSize_Slider.bind('<ButtonRelease-1>', lambda event, root = master: SaveFontSize(event, master),)	
+	except:
+		pass
+	Row += 1
 	Label(Left_Frame, text='Theme name:') \
 		.grid(row=Row, rowspan=2, column=0, padx=5, pady=5, sticky=E)
 	
@@ -732,6 +753,8 @@ def Generate_Translate_Setting_UI(master, Tab):
 	config_theme_name = master.Configuration['Bug_Writer']['theme_name']
 	if config_theme_name in master.theme_names:
 		master.strvar_theme_name.set(config_theme_name)
+
+	
 
 def Generate_Document_Translate_Setting_UI(master, Tab):
 	"""Create Translate Setting tab."""
@@ -762,7 +785,7 @@ def Generate_Document_Translate_Setting_UI(master, Tab):
 	Button(Right_Frame, width = master.HALF_BUTTON_WIDTH, text=  master.LanguagePack.Button['Browse'], command= master.SelectTM).grid(row=Row, column=9, padx=5, pady=5, sticky=W)
 		
 
-	Row += 1
+	Row += 2
 	Label(Left_Frame, text= master.LanguagePack.Label['Transparent']) \
 		.grid(row=Row, rowspan = 2, column=0, padx=5, pady=5, sticky=W)
 	master.TransparentPercent = Scale(
@@ -777,14 +800,30 @@ def Generate_Document_Translate_Setting_UI(master, Tab):
 	master.TransparentPercent.grid(
 		row=Row, rowspan=2, column=2, columnspan=7, padx=5, pady=5,
 		sticky=E+W)
-	master.TransparentPercent.bind('<ButtonRelease-1>', lambda event, root = master: SaveAppTransparency(event, master),)	
+	master.TransparentPercent.bind('<ButtonRelease-1>', lambda event, root = master: SaveAppTransparency(event, master, used_tool = 'Document_Translator'),)	
+	'''
+	try:
+		Row += 2
+		Label(Left_Frame, text= 'Font size:') \
+			.grid(row=Row, rowspan = 2, column=0, padx=5, pady=10, sticky=W)
+		master.FontSize_Slider = Scale(
+			Left_Frame,
+			length=400,
+			from_=12,
+			to=20,
+			variable=master.FontSize,
+			command= lambda value, root = master: Apply_FontSize(value, master),
+			
+			orient=HORIZONTAL,)
+		master.FontSize_Slider.grid(
+			row=Row, rowspan=2, column=2, columnspan=7, padx=5, pady=10,
+			sticky=E+W)
+		master.FontSize_Slider.bind('<ButtonRelease-1>', lambda event, root = master: SaveFontSize(event, master),)	
+
+	except:
+		pass
+	'''
 	
-	Button(
-			Right_Frame,
-			width=master.HALF_BUTTON_SIZE,
-			text=master.LanguagePack.Button['Reset'],
-			command=master.rebuild_UI, style=master.Btn_Style) \
-		.grid(row=Row, column=9, padx=5, pady=5, rowspan=2, sticky=W)
 
 	Row += 2
 	Label(Left_Frame, text='Theme name:') \
@@ -1590,10 +1629,13 @@ def review_report(master):
 
 # SUPPORT FUNCTION
 
-def SaveAppTransparency(event, master):
+def SaveAppTransparency(event, master, used_tool = 'Bug_Writer'):
 	transparency = int(float(master.TransparentPercent.get()))
 	Apply_Transparency(transparency, master)
-	master.AppConfig.Save_Config(master.AppConfig.Writer_Config_Path, 'Bug_Writer', 'Transparent', transparency)
+	if used_tool == 'Bug_Writer':
+		master.AppConfig.Save_Config(master.AppConfig.Writer_Config_Path, 'Bug_Writer', 'Transparent', transparency)
+	else:
+		master.AppConfig.Save_Config(master.AppConfig.Translator_Config_Path, 'Document_Translator', 'Transparent', transparency)	
 
 def Apply_Transparency(transparency, master):
 	_transparency = int(float(transparency))
@@ -1606,3 +1648,18 @@ def Apply_Transparency(transparency, master):
 	master.parent.attributes("-alpha", float(_transparency)/100)
 
 
+def SaveFontSize(event, master, used_tool = 'Bug_Writer'):
+	font_size = int(float(master.FontSize_Slider.get()))
+	Apply_FontSize(font_size, master)
+	if used_tool == 'Bug_Writer':
+		master.AppConfig.Save_Config(master.AppConfig.Writer_Config_Path, 'Bug_Writer', 'font_size', font_size)
+	else:
+		master.AppConfig.Save_Config(master.AppConfig.Translator_Config_Path, 'Document_Translator', 'font_size', font_size)	
+
+def Apply_FontSize(font_size, master):
+
+	font_size = int(float(font_size))
+	print('Set font size to: ', font_size)
+
+	master.style.configure('TEntry', font=('Helvetica', font_size))
+	#master.style.configure('TText', font=('Helvetica', font_size))

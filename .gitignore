@@ -5,10 +5,6 @@ obsolete
 compile
 test files
 *.pyc
-libs/__pycache__/aioconfigmanager.cpython-38.pyc
-libs/__pycache__/aiotranslator_v2.cpython-38.pycư
-libs/__pycache__/aiotranslator.cpython-38.pyc
-libs/__pycache__/documentprocessing.cpython-38.pyc
 *.svg
 *.tcl
 *.png
@@ -20,13 +16,8 @@ libs/__pycache__/documentprocessing.cpython-38.pyc
 *.html
 *.tcl
 *.gif
-*.toc
-*.toc
-*.pyz
 *.exe
-*.toc
-*.zip
-*.toc
 Compiler/dist/*
 Compiler/build/*
+translator/*
 *.n7
