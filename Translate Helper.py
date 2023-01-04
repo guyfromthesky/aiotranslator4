@@ -15,15 +15,14 @@ from datetime import date, datetime
 from pyperclip import copy, paste
 #from tkinter import *
 #from tkinter.ttk import *
-from ttkbootstrap import Entry, Label, Style
-from ttkbootstrap import Checkbutton, OptionMenu, Notebook, Radiobutton, LabelFrame, Button
-from ttkbootstrap import Progressbar, Style, Window
+from ttkbootstrap import Checkbutton, Button, Style
+from ttkbootstrap import Style, Window
 
-from tkinter import Tk, Frame, Toplevel, Scale
+from tkinter import Frame, Toplevel
 
 # Widget type
-from tkinter import Menu, filedialog, messagebox
-from tkinter import Text
+from tkinter import filedialog, messagebox
+
 # Variable type
 from tkinter import IntVar, StringVar, DoubleVar
 # Wrap type
@@ -59,7 +58,7 @@ from libs.cloudconfig import CloudConfigLoader
 from libs.version import get_version
 from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText
 from libs.tkinter_extension import Generate_BugWriter_Tab_UI, Generate_BugWriter_Menu_UI, Generate_Translate_Setting_UI
-from libs.tkinter_extension import Generate_BugWriter_UI, Generate_SimpleTranslator_UI
+from libs.tkinter_extension import Generate_BugWriter_UI, Generate_SimpleTranslator_UI, Generate_Theme_Setting_UI
 from libs.tkinter_extension import Apply_Transparency, BugWriter_BottomPanel
 
 from libs.general import get_version, resource_path, get_user_name
@@ -228,20 +227,28 @@ class MyTranslatorHelper(Frame):
 			Generate_BugWriter_UI(self, self.BugWriterTab)
 			Generate_SimpleTranslator_UI(self, self.SimpleTranslatorTab)
 			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
-
+			Generate_Theme_Setting_UI(self, self.ThemeSettingTab)
 			self.bottom_panel = BugWriter_BottomPanel(self)
 	
 		except Exception as e:
 			print(f'An error occurs while initializing UI: {e}')
-
-
-
+		#Generate_Theme_Setting_UI(self, self.ThemeSettingTab)
+		#self.bottom_panel = BugWriter_BottomPanel(self)
 		#self.Generate_Search_UI(self.Searcher)
-
 		#self.Init_Translator_Config
 
-		
+	def update_color_patches(self):
+		"""Updates the color patches next to the color code entry."""
+		for row in self.color_rows:
+			row.color_value = self.style.colors.get(row.label["text"])
+			row.update_patch_color()
 	
+	def update_patch_color(self):
+		"""Update the color patch frame with the color value stored in
+		the entry widget."""
+		self.entry.delete(0, END)
+		self.entry.insert(END, self.color_value)
+		self.patch.configure(background=self.color_value)
 		
 	# Init functions
 	# Some option is saved for the next time use
@@ -1100,15 +1107,6 @@ class MyTranslatorHelper(Frame):
 		self.TextShouldBe.tag_selected()
 		self.SourceText.tag_selected()
 
-	def review_report(self):
-
-		child_windows = Toplevel(self.parent)
-		#child_windows.geometry("200x200")  # Size of the window 
-		child_windows.resizable(False, False)
-		child_windows.title("Report reviewer")
-		self.report_review = HTMLScrolledText(child_windows)
-		self.report_review.set_html(self.html_content)
-		self.report_review.pack(pady=5, padx=5, fill=BOTH)
 	
 	def analyze_fault_terminology(self):
 		for term in self.MyTranslator.dictionary:
@@ -1660,13 +1658,13 @@ def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Se
 		for row in Text_List:
 			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
 			x += 1
-		Details += '\r\n================================================='
+		Details += '\r\n===================='
 		x = 1
 		for row in Text_List_Old:
 			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
 			x += 1
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '\r\n===================='
 			x = 1
 			for row in Text_List_Secondary:
 				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
@@ -1675,13 +1673,13 @@ def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Se
 		for row in Text_List_Old:
 			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
 			x += 1
-		Details += '\r\n================================================='
+		Details += '\r\n===================='
 		x = 1
 		for row in Text_List:
 			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
 			x += 1
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '\r\n===================='
 			x = 1
 			for row in Text_List_Secondary:
 				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
@@ -1690,7 +1688,7 @@ def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Se
 	return Details
 
 def Simple_Step_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
-	print('Text_List_Secondary', Text_List_Secondary)
+	#print('Text_List_Secondary', Text_List_Secondary)
 	Details = "\r\n"
 	Details += Add_Style(Title)
 	x = 1
@@ -1698,13 +1696,13 @@ def Simple_Step_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Second
 		for row in Text_List:
 			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
 			x += 1
-		Details += '\r\n================================================='
+		Details += '\r\n===================='
 		x = 1
 		for row in Text_List_Old:
 			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
 			x += 1
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '\r\n===================='
 			for row in Text_List_Secondary:
 				Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
 				x += 1
@@ -1712,39 +1710,39 @@ def Simple_Step_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Second
 		for row in Text_List_Old:
 			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
 			x += 1
-		Details += '\r\n================================================='
+		Details += '\r\n===================='
 		x = 1
 		for row in Text_List:
 			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
 			x += 1
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '\r\n===================='
 			for row in Text_List_Secondary:
 				Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
 				x += 1
 	return Details
 
 def Simple_Row_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
-	print('Text_List_Secondary', Text_List_Secondary)
+	#print('Text_List_Secondary', Text_List_Secondary)
 	Details = ''
 	if Lang == 'ko':		
 		for row in Text_List:
 			Details += '\r\n<p>'+ remove_notranslate_tag(row) + '&nbsp;</p>'
-		Details += '\r\n================================================='
+		Details += '\r\n===================='
 		for row in Text_List_Old:
 			Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '\r\n===================='
 			for row in Text_List_Secondary:
 				Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
 	else:
 		for row in Text_List_Old:
 			Details += '\r\n<p>'+ remove_notranslate_tag(row) + '&nbsp;</p>'
-		Details += '\r\n================================================='
+		Details += '\r\n===================='
 		for row in Text_List:
 			Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '\r\n===================='
 			for row in Text_List_Secondary:
 				Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
 	
@@ -1763,22 +1761,22 @@ def Simple_Row_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Seconda
 	if Lang == 'ko':		
 		for row in Text_List:
 			Details += '\r\n'+ remove_notranslate_tag(row)
-		Details += '\r\n================================================='
+		Details += '\r\n===================='
 		for row in Text_List_Old:
 			Details += '\r\n'+ remove_notranslate_tag(row)
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '\r\n===================='
 			for row in Text_List_Secondary:
 				Details += '\r\n'+ remove_notranslate_tag(row)
 
 	else:
 		for row in Text_List_Old:
 			Details += '\r\n'+ remove_notranslate_tag(row)
-		Details += '\r\n================================================='
+		Details += '\r\n===================='
 		for row in Text_List:
 			Details += '\r\n'+ remove_notranslate_tag(row)
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '\r\n===================='
 			for row in Text_List_Secondary:
 				Details += '\r\n'+ remove_notranslate_tag(row)
 	return Details

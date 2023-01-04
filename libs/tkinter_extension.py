@@ -1,18 +1,22 @@
 from ttkbootstrap import Entry, Label, Style
 from ttkbootstrap import Checkbutton, OptionMenu, Notebook, Radiobutton, LabelFrame, Button, Scale, Combobox
+from ttkbootstrap.style import ThemeDefinition
+from ttkbootstrap.constants import *
 
 
 from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, RIGHT, LEFT, BOTTOM, HORIZONTAL
 from tkinter import INSERT, ACTIVE, NORMAL, DISABLED, WORD, SEL, SEL_FIRST, SEL_LAST
 
+from tkinter.colorchooser import askcolor
+
 from tkinter import Text, IntVar, StringVar, Menu, filedialog, messagebox
 from tkinter import Frame, Listbox, Label, Toplevel, PhotoImage, Canvas
 
 from tkhtmlview import HTMLScrolledText
-from PIL import ImageTk, Image
+#from PIL import ImageTk, Image
 
 import webbrowser
-
+from uuid import uuid4
 import textwrap
 import re
 import os
@@ -604,6 +608,10 @@ def Generate_BugWriter_Tab_UI(master):
 	## TAB 3
 	master.TranslateSettingTab = Frame(master.TAB_CONTROL)
 	master.TAB_CONTROL.add(master.TranslateSettingTab, text=master.LanguagePack.Tab['Translator'])
+
+	## TAB 3
+	master.ThemeSettingTab = Frame(master.TAB_CONTROL)
+	master.TAB_CONTROL.add(master.ThemeSettingTab, text= "Theme Setting")
 	
 	#Apply_Background_Image(master.TranslateSettingTab, 'bg_setting.png')
 
@@ -667,6 +675,37 @@ def OpenWeb():
 def Error(self, ErrorText):
 	messagebox.showerror('Translate error...', ErrorText)	
 
+# SETTING UI
+def Generate_Theme_Setting_UI(master, Tab):
+	"""Create Translate Setting tab."""
+
+	master.configure_frame = Frame(Tab)
+	master.configure_frame.pack(side=LEFT, fill=BOTH, expand=YES)
+	Row = 1
+	
+	Label(master.configure_frame, text='Custom theme:').grid(row=Row, column=0, columnspan = 2, padx=5, pady=5, sticky= E+W)
+	master.theme_name = Entry(master.configure_frame)
+
+	master.theme_name.insert(END, "new theme")
+	master.theme_name.grid(row=Row, column=2, columnspan = 6, padx=5, pady=5, sticky= E+W)
+
+	Row += 2
+	master.color_rows = []
+	for color in master.style.colors.label_iter():
+		
+		if  Row <= 10:
+			_col = 2
+			_row = Row
+		else:
+			_col = 8
+			_row = Row - 8
+
+		row = ColorRow(master.configure_frame, color, master.style)
+		master.color_rows.append(row)
+		row.grid(row=_row, rowspan=1, column=_col, columnspan=4, padx=5, pady=5,
+			sticky=E+W)
+		row.bind("<<ColorSelected>>",  lambda event, master= master: create_temp_theme(event, master))
+		Row +=1
 
 # SETTING UI
 def Generate_Translate_Setting_UI(master, Tab):
@@ -725,8 +764,8 @@ def Generate_Translate_Setting_UI(master, Tab):
 			row=Row, rowspan=2, column=2, columnspan=7, padx=5, pady=10,
 			sticky=E+W)
 		master.FontSize_Slider.bind('<ButtonRelease-1>', lambda event, root = master: SaveFontSize(event, master),)	
-	except:
-		pass
+	except Exception as e:
+		print('Error when generating Theme font size', e)
 	Row += 1
 	Label(Left_Frame, text='Theme name:') \
 		.grid(row=Row, rowspan=2, column=0, padx=5, pady=5, sticky=E)
@@ -1620,11 +1659,13 @@ def Btn_Select_License_Path(master):
 
 def review_report(master):
 
+	#webbrowser.open(master.html_content)
 	child_windows = Toplevel(master.parent)
 	child_windows.resizable(False, False)
 	child_windows.title("Report reviewer")
 	master.report_review = HTMLScrolledText(child_windows)
 	master.report_review.set_html(master.html_content)
+	#master.report_review.fit_height()
 	master.report_review.pack(pady=5, padx=5, fill=BOTH)
 
 # SUPPORT FUNCTION
@@ -1663,3 +1704,70 @@ def Apply_FontSize(font_size, master):
 
 	master.style.configure('TEntry', font=('Helvetica', font_size))
 	#master.style.configure('TText', font=('Helvetica', font_size))
+
+
+def create_temp_theme(event, master, *_):
+	"""Creates a temp theme using the current configure settings and
+	changes the theme in tkinter to that new theme.
+	"""
+	themename = "temp_" + str(uuid4()).replace("-", "")[:10]
+	colors = {}
+	for row in master.color_rows:
+		colors[row.label["text"]] = row.color_value
+	definition = ThemeDefinition(themename, colors, master.style.theme.type)
+	master.style.register_theme(definition)
+	master.style.theme_use(themename)
+	master.update_color_patches()
+
+
+class ColorRow(Frame):
+    def __init__(self, master, color, style):
+        super().__init__(master)
+        self.colorname = color
+        self.style = style
+
+        self.label = Label(self, text=color, width=12)
+        self.label.pack(side=LEFT)
+        self.patch = Frame(
+            master=self, background=self.style.colors.get(color), width=15
+        )
+        self.patch.pack(side=LEFT, fill=BOTH, padx=2)
+        self.entry = Entry(self, width=12)
+        self.entry.pack(side=LEFT, fill=X, expand=YES)
+        self.entry.bind("<FocusOut>", self.enter_color)
+        self.color_picker = Button(
+            master=self,
+            text="...",
+            bootstyle=SECONDARY,
+            command=self.pick_color,
+        )
+        self.color_picker.pack(side=LEFT, padx=2)
+
+        # set initial color value and patch color
+        self.color_value = self.style.colors.get(color)
+        self.update_patch_color()
+
+    def pick_color(self):
+        """Callback for when a color is selected from the color chooser"""
+        color = askcolor(color=self.color_value)
+        if color[1]:
+            self.color_value = color[1]
+            self.update_patch_color()
+        self.event_generate("<<ColorSelected>>")
+
+    def enter_color(self, *_):
+        """Callback for when a color is typed into the entry"""
+        try:
+            self.color_value = self.entry.get().lower()
+            self.update_patch_color()
+        except:
+            self.color_value = self.style.colors.get(self.label["text"])
+            self.update_patch_color()
+        self.event_generate("<<ColorSelected>>")
+
+    def update_patch_color(self):
+        """Update the color patch frame with the color value stored in
+        the entry widget."""
+        self.entry.delete(0, END)
+        self.entry.insert(END, self.color_value)
+        self.patch.configure(background=self.color_value)
