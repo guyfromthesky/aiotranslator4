@@ -10,16 +10,20 @@ from tkinter import INSERT, ACTIVE, NORMAL, DISABLED, WORD, SEL, SEL_FIRST, SEL_
 from tkinter.colorchooser import askcolor
 
 from tkinter import Text, IntVar, StringVar, Menu, filedialog, messagebox
-from tkinter import Frame, Listbox, Label, Toplevel, PhotoImage, Canvas
+from tkinter import Frame, Listbox, Label, Toplevel, Canvas
 
 from tkhtmlview import HTMLScrolledText
-#from PIL import ImageTk, Image
+from PIL import ImageTk, Image, ImageDraw, ImageFont
 
 import webbrowser
 from uuid import uuid4
 import textwrap
 import re
 import os
+
+import easyocr
+import cv2
+import numpy as np
 
 class AutocompleteCombobox(Combobox):
 
@@ -568,7 +572,7 @@ def Apply_Background_Image(Frame, name):
 	
 	if os.path.isfile(bg_path):
 		print('Apply image: ', bg_path)
-		background_image = PhotoImage(file = bg_path)
+		background_image = ImageTk.PhotoImage(file = bg_path)
 		background_label = Label(Frame, image = background_image)
 		background_label.image = background_image
 		background_label.place(x = 0, y = 0, relwidth = 1, relheight = 1)
@@ -604,12 +608,16 @@ def Generate_BugWriter_Tab_UI(master):
 	master.TAB_CONTROL.add(master.SimpleTranslatorTab, text=master.LanguagePack.Tab['SimpleTranslator'])
 	
 	#Apply_Background_Image(master.SimpleTranslatorTab, 'bg_simple.png')
-	
+	master.ImageTranslateTab = Frame(master.TAB_CONTROL)
+	master.TAB_CONTROL.add(master.ImageTranslateTab, text= "Image Translate")
+
 	## TAB 3
 	master.TranslateSettingTab = Frame(master.TAB_CONTROL)
 	master.TAB_CONTROL.add(master.TranslateSettingTab, text=master.LanguagePack.Tab['Translator'])
 
-	## TAB 3
+	
+	
+	## TAB 4
 	master.ThemeSettingTab = Frame(master.TAB_CONTROL)
 	master.TAB_CONTROL.add(master.ThemeSettingTab, text= "Theme Setting")
 	
@@ -684,15 +692,23 @@ def Generate_Theme_Setting_UI(master, Tab):
 	Row = 1
 	
 	Label(master.configure_frame, text='Custom theme:').grid(row=Row, column=0, columnspan = 2, padx=5, pady=5, sticky= E+W)
-	master.theme_name = Entry(master.configure_frame)
+	master.Btn_Copy_Theme = Button(master.configure_frame, width = master.HALF_BUTTON_SIZE, text=  'Copy', 
+					command = lambda: get_current_theme_color(master), style=master.Btn_Style)
+	master.Btn_Copy_Theme.grid(row=Row, column=11, columnspan= 2, padx=5, pady=5, sticky=W)
 
-	master.theme_name.insert(END, "new theme")
-	master.theme_name.grid(row=Row, column=2, columnspan = 6, padx=5, pady=5, sticky= E+W)
+	
+	#master.theme_name = Entry(master.configure_frame)
+
+	#master.theme_name.insert(END, "new theme")
+	#master.theme_name.grid(row=Row, column=2, columnspan = 6, padx=5, pady=5, sticky= E+W)
 
 	Row += 2
 	master.color_rows = []
-	for color in master.style.colors.label_iter():
-		
+
+	for color_type in master.Configuration['Theme']:
+		#color_type, ": ", master.Configuration['Theme'][color_type])
+		color_value = master.Configuration['Theme'][color_type]
+	#for color in master.style.colors.label_iter():
 		if  Row <= 10:
 			_col = 2
 			_row = Row
@@ -700,12 +716,15 @@ def Generate_Theme_Setting_UI(master, Tab):
 			_col = 8
 			_row = Row - 8
 
-		row = ColorRow(master.configure_frame, color, master.style)
+		row = ColorRow(master.configure_frame, color_type, color_value)
 		master.color_rows.append(row)
 		row.grid(row=_row, rowspan=1, column=_col, columnspan=4, padx=5, pady=5,
 			sticky=E+W)
 		row.bind("<<ColorSelected>>",  lambda event, master= master: create_temp_theme(event, master))
 		Row +=1
+	_used_theme = master.strvar_theme_name.get()
+	if _used_theme == 'Custom':
+		create_temp_theme(event = None, master = master)
 
 # SETTING UI
 def Generate_Translate_Setting_UI(master, Tab):
@@ -746,7 +765,7 @@ def Generate_Translate_Setting_UI(master, Tab):
 		row=Row, rowspan=2, column=2, columnspan=7, padx=5, pady=10,
 		sticky=E+W)
 	master.TransparentPercent.bind('<ButtonRelease-1>', lambda event, root = master: SaveAppTransparency(event, master),)	
-
+	'''
 	try:
 		Row += 2
 		Label(Left_Frame, text= 'Font size:') \
@@ -766,7 +785,9 @@ def Generate_Translate_Setting_UI(master, Tab):
 		master.FontSize_Slider.bind('<ButtonRelease-1>', lambda event, root = master: SaveFontSize(event, master),)	
 	except Exception as e:
 		print('Error when generating Theme font size', e)
-	Row += 1
+	'''
+	
+	Row += 2
 	Label(Left_Frame, text='Theme name:') \
 		.grid(row=Row, rowspan=2, column=0, padx=5, pady=5, sticky=E)
 	
@@ -777,7 +798,7 @@ def Generate_Translate_Setting_UI(master, Tab):
 			text=theme_name,
 			value=theme_name,
 			variable=master.strvar_theme_name,
-			command=master.select_theme_name)
+			command = lambda: select_theme_name(master) )
 		master.radiobutton_theme_name.config(width=master.HALF_BUTTON_SIZE)
 		master.radiobutton_theme_name.grid(
 			row=Row, column=col, padx=0, pady=5, sticky=W)
@@ -875,7 +896,7 @@ def Generate_Document_Translate_Setting_UI(master, Tab):
 			text=theme_name,
 			value=theme_name,
 			variable=master.strvar_theme_name,
-			command=master.select_theme_name)
+			command = lambda: select_theme_name(master))
 		master.radiobutton_theme_name.config(width=master.HALF_BUTTON_SIZE)
 		master.radiobutton_theme_name.grid(
 			row=Row, column=col, padx=0, pady=5, sticky=W)
@@ -1291,8 +1312,8 @@ def Generate_SimpleTranslator_UI(master, Tab):
 	master.parent.update()
 	x_delta = int(round((master.parent.winfo_width() - 1080)/20))
 	master.SOURCE_WIDTH += x_delta
-	print(master.SOURCE_WIDTH, master.parent.winfo_width())
-	print(master.ROW_SIZE, master.parent.winfo_height())
+	#print(master.SOURCE_WIDTH, master.parent.winfo_width())
+	#print(master.ROW_SIZE, master.parent.winfo_height())
 	y_delta = int(round((master.parent.winfo_height() - 560)/20))
 	master.ROW_SIZE += y_delta 
 	Row=1
@@ -1644,8 +1665,33 @@ def Generate_SimpleTranslator_V2_UI(master, Tab):
 		if isinstance(child, Text):
 			master.text_widgets.append(child)
 
+def Generate_Image_Translate_UI(master, Tab):
+	"""Create Image Translate tab."""
+
+	Main_Frame = Frame(Tab, width=600, height=850)
+	Main_Frame.pack(side = TOP, fill=X, expand=None)
+	Row = 1
+	Label(Main_Frame, textvariable=master.Notice).grid(row=Row, column=0, columnspan = 10, padx=5, pady=5, sticky= E)
+
+	Row += 1
+	Label(Main_Frame, text= 'Image Path').grid(row=Row, column=0, padx=5, pady=5, sticky=E)
+	master.img_path_var = StringVar()
+	master.TextImgPath = Entry(Main_Frame, width = 100, state="readonly", textvariable=master.img_path_var)
+	master.TextImgPath.grid(row=Row, column=2, columnspan=7, padx=5, pady=5, sticky=W+E)
+	master.Browse_Img_Btn = Button(Main_Frame, width = master.HALF_BUTTON_SIZE, text=  master.LanguagePack.Button['Browse'], command = lambda: Btn_Select_Image_Path(master), style=master.Btn_Style)
+	master.Browse_Img_Btn.grid(row=Row, column=9, padx=5, pady=5, sticky=E)
+	
+	Row += 1
+	master.Img_Frm = Label(Main_Frame, width = 100)
+	master.Img_Frm.grid(row=Row, column=0, columnspan = 50, padx=5, pady=5, sticky= E+W)
 
 # Related function
+def get_current_theme_color(master):
+	#for color in master.style.colors.label_iter():
+	for row in master.color_rows:
+		row.color_value = master.style.colors.get(row.colorname)
+		row.update_patch_color()
+
 def Btn_Select_License_Path(master):
 	filename = filedialog.askopenfilename(title =  master.LanguagePack.ToolTips['SelectDB'],filetypes = (("JSON files","*.json" ), ), )	
 	if filename != "":
@@ -1654,6 +1700,15 @@ def Btn_Select_License_Path(master):
 		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LicensePath
 		master.LicensePath.set(LicensePath)
 		master.rebuild_UI()
+	else:
+		master.Notice.set("No file is selected")
+
+def Btn_Select_Image_Path(master):
+	filename = filedialog.askopenfilename(title =  'Select image',filetypes = (("Image files","*.png *.jpg" ), ), )	
+	if filename != "":
+		image_path = master.CorrectPath(filename)
+		show_image(master, image_path)
+		#master.img_path_var.set(image_path)
 	else:
 		master.Notice.set("No file is selected")
 
@@ -1710,26 +1765,30 @@ def create_temp_theme(event, master, *_):
 	"""Creates a temp theme using the current configure settings and
 	changes the theme in tkinter to that new theme.
 	"""
+	_used_theme = master.strvar_theme_name.get()
+	
 	themename = "temp_" + str(uuid4()).replace("-", "")[:10]
 	colors = {}
 	for row in master.color_rows:
 		colors[row.label["text"]] = row.color_value
-	definition = ThemeDefinition(themename, colors, master.style.theme.type)
-	master.style.register_theme(definition)
-	master.style.theme_use(themename)
-	master.update_color_patches()
+		master.AppConfig.Save_Config(master.AppConfig.Theme_Config_Path, 'Theme', row.label["text"], row.color_value)
+	if _used_theme == 'Custom':
+		definition = ThemeDefinition(themename, colors, master.style.theme.type)
+		master.style.register_theme(definition)
+		master.style.theme_use(themename)
+	
+	update_color_patches(master)
 
 
 class ColorRow(Frame):
-    def __init__(self, master, color, style):
+    def __init__(self, master, color, color_value):
         super().__init__(master)
         self.colorname = color
-        self.style = style
 
         self.label = Label(self, text=color, width=12)
         self.label.pack(side=LEFT)
         self.patch = Frame(
-            master=self, background=self.style.colors.get(color), width=15
+            master=self, background= color_value, width=15
         )
         self.patch.pack(side=LEFT, fill=BOTH, padx=2)
         self.entry = Entry(self, width=12)
@@ -1744,7 +1803,7 @@ class ColorRow(Frame):
         self.color_picker.pack(side=LEFT, padx=2)
 
         # set initial color value and patch color
-        self.color_value = self.style.colors.get(color)
+        self.color_value = color_value
         self.update_patch_color()
 
     def pick_color(self):
@@ -1771,3 +1830,97 @@ class ColorRow(Frame):
         self.entry.delete(0, END)
         self.entry.insert(END, self.color_value)
         self.patch.configure(background=self.color_value)
+
+
+def init_theme(master):
+	"""Applied the theme name saved in the settings on init."""
+	try:
+		all_themes = master.style.theme_names()
+		
+		master.theme_names = []
+		master.theme_names.append('custom')
+		for theme in all_themes:
+			master.theme_names.append(theme)
+
+		if master.used_theme not in master.theme_names:
+			raise Exception('Cannot use the theme saved in the config'
+				' because it is not supported or required files have'
+				' been removed.')
+		if master.used_theme != 'Custom':
+			master.style.theme_use(master.used_theme)
+	except Exception as err:
+		print('Error while initializing theme:\n'
+			f'- {err}\n'
+			'The system default theme will be used instead.')
+	transparency  = master.Configuration['Bug_Writer']['Transparent']
+	Apply_Transparency(transparency, master)
+
+
+def select_theme_name(master):
+	"""Save the theme name value to Configuration and change
+	the theme based on the selection in the UI.
+	
+	Args:
+		config_theme_name -- str
+			Theme name retrieved from config. (Default: '')
+	"""
+	try:
+		theme_name = master.strvar_theme_name.get()
+
+		master.AppConfig.Save_Config(master.AppConfig.Writer_Config_Path,
+			'Bug_Writer','theme_name',	theme_name, True)
+	except Exception as err:
+		messagebox.showerror(
+			title='Error',
+			message=f'Error occurs when selecting theme: {err}')
+	try:
+		if theme_name != 'Custom':
+			master.style.theme_use(theme_name)
+		else:
+			create_temp_theme(event = None, master = master)
+	except:
+		pass
+
+def update_color_patches(master):
+	"""Updates the color patches next to the color code entry."""
+	for row in master.color_rows:
+		row.color_value = master.style.colors.get(row.label["text"])
+		row.update_patch_color()
+
+
+def show_image(master, img_path):
+	# Set the image of the label widget.
+	
+	#master.Img_Frm.config(image=master.img_byte)
+	#master.parent.update()
+
+	reader = easyocr.Reader(['ko'], gpu=False)
+	image = cv2.imread(img_path)
+	results = reader.readtext(img_path)
+	
+		
+
+	#cv2.imshow('Im', image)
+	#cv2.waitKey(0)
+	img_byte =  Image.fromarray(image)
+	draw = ImageDraw.Draw(img_byte)
+
+	# Select a font
+	count = 1
+	
+	font = ImageFont.truetype('malgun.ttf', 24)
+	for res in results:
+		top_left = tuple(res[0][0]) # top left coordinates as tuple
+		bottom_right = tuple(res[0][2]) # bottom right coordinates as tuple
+		print(top_left,bottom_right)
+		shape = [top_left, bottom_right]
+		draw.rectangle(shape, fill = None, outline ="red")
+		draw.text((top_left[0], top_left[1]-10), "[" + str(count) + "] " + res[1], font=font, fill=(255, 0, 0))	
+		count+=1
+	# Draw the translated text onto the image
+		
+	master.img_byte = ImageTk.PhotoImage(img_byte)
+	master.Img_Frm.config(image=master.img_byte)
+	master.parent.update()
+	print('winfo_width:', master.Img_Frm.winfo_width())
+	print('winfo_height:', master.Img_Frm.winfo_height())

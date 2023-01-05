@@ -18,6 +18,8 @@ import subprocess
 from google.cloud import translate_v3 as translator
 from google.cloud import storage
 from google.cloud import logging
+#from google.cloud import vision
+
 from google.cloud.translate_v3.types.translation_service import Glossary
 from google.api_core.exceptions import Forbidden
 
@@ -48,7 +50,8 @@ Tool = "translator"
 rev = 4200
 ver_num = get_version(rev)
 Translatorversion = Tool + " " + ver_num
-
+TM_VERSION = 4
+TM_SUB_VERSION = 41
 # self.temporary_tm: @Manager.List
 # If the translator is run in multiple process, the temporary 
 # TM can be share with this feature.
@@ -109,6 +112,7 @@ class Translator:
 		# Check and get the location of TM file
 		# If path is invalid or not stated, use local TM
 		self.init_tm_path(tm_path)
+
 		self.init_log_path()
 		# Select correct log file.
 		self.init_logging_file()
@@ -1765,26 +1769,34 @@ class Translator:
 	# Get the tm's path.
 	# if tm is invalid, use local tm instead
 	def init_tm_path(self, tm_path = None):
+		if self.used_tool == 'writer':
+			self.tm_path = None
+			return
+
 		if tm_path not in [None, '']:
 			if os.path.isfile(tm_path):
 				self.tm_path = self.correct_path_os(tm_path)
 				return
-		if self.used_tool == 'writer':
-			self.tm_path = None
-			return
 		tm_path = self.config_path + '\\AIO Translator\\Local.pkl'
 		self.tm_path = self.correct_path_os(tm_path)
 		return
 
 	def init_log_path(self):
-		
-		self.local_log_path = self.config_path + '\\AIO Translator\\log.txt'
-		if self.used_tool == 'writer':
-			self.tm_log_path = self.local_log_path
-		else:	
-			tm_dir =  os.path.dirname(self.tm_path)
-			self.tm_log_path   = os.path.join(tm_dir,  "log.txt")
 
+		_filename = ''
+		if self.tm_path not in [None, '']:	
+			if os.path.isfile(self.tm_path):
+				_basename = os.path.basename(self.tm_path)
+				_filename = os.path.splitext(_basename)[0] + '_'
+				self.local_log_path = self.config_path + '\\AIO Translator\\' + _filename + 'log.txt'
+				tm_dir =  os.path.dirname(self.tm_path)
+				self.tm_log_path   = os.path.join(tm_dir,  _filename + "log.txt")
+			else:
+				self.local_log_path = self.config_path + '\\AIO Translator\\log.txt'
+				self.tm_log_path = self.local_log_path
+		else:
+			self.local_log_path = self.config_path + '\\AIO Translator\\log.txt'
+			self.tm_log_path = self.local_log_path
 		return
 
 	def init_translation_memory(self):
@@ -1827,48 +1839,16 @@ class Translator:
 	def import_tm_v2(self, pickle_data):
 		_current_tm = self.init_translation_memory()
 		for Pair in pickle_data:
-			#new_row = {'en': Pair[1], 'ko':Pair[0], 'cn': NaN, 'jp': NaN, 'vi': NaN}
-			new_row = {'en': Pair[1], 'ko':Pair[0], 'cn': NaN, 'jp': NaN, 'vi': NaN}
+			new_row = {'en': Pair[1].lower(), 'ko':Pair[0].lower(), 'cn': NaN, 'jp': NaN, 'vi': NaN}
 			_current_tm = _current_tm.append(new_row, ignore_index=True)	
-		pickle_data = {}	
-		if self.glossary_id == "":
-			_glossary = 'Default'
-		else:
-			_glossary = self.glossary_id
-
-		pickle_data[_glossary] = _current_tm
-		pickle_data['tm_version'] = 4
-
-		try:
-			with open(self.tm_path, 'wb') as pickle_file:
-				print("Updating pickle file....", self.tm_path)
-				pickle.dump(pickle_data, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
-				
-		except Exception  as e:
-			print("Error while convert TM v2 to TM v4:", e)
-		
 		return _current_tm
 
 	def import_tm_v3(self, pickle_data):
 
 		_current_tm = pd.DataFrame({'en': pickle_data['EN'],'ko': pickle_data['KO']})
-		
-		pickle_data = {}	
-		if self.glossary_id == "":
-			_glossary = 'Default'
-		else:
-			_glossary = self.glossary_id
-
-		pickle_data[_glossary] = _current_tm
-		pickle_data['tm_version'] = 4
-
-		try:
-			with open(self.tm_path, 'wb') as pickle_file:
-				print("Updating pickle file....", self.tm_path)
-				pickle.dump(pickle_data, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
-		except Exception  as e:
-			print("Error while convert TM v3 to TM v4:", e)		
-
+		supported_language = ['en', 'ko']
+		for language in supported_language:
+			self.current_tm[language] = self.current_tm[language].str.lower()
 		return _current_tm
 
 
@@ -1893,53 +1873,102 @@ class Translator:
 				Use for Bug Writer (in 1 session)
 		'''
 		#print('Import TM from pickle file', str(self.tm_path))
-
+		# Reset the temporary TM
 		self.init_temporary_tm()
-		
-		if self.tm_path == None:
-			print('Pickle file not found')
-			return
-		if not os.path.isfile(self.tm_path):
-			print('Pickle file not found')
-			return
-		else:
-			try:
-				with open(self.tm_path, 'rb') as pickle_load:
-					self.all_tm =pickle.load(pickle_load) 
-					print('All project key: ', self.all_tm.keys())
-					if 'tm_version' in self.all_tm:
-						print('TM version:', self.all_tm['tm_version'])
-					if 'tm_sub_version' in self.all_tm:
-						print('TM sub version:', self.all_tm['tm_sub_version'])	
-					#print('all tm:', all_tm)
-				_tm_version = self.get_tm_version(self.all_tm)
-				
-				
-				if _tm_version == 4:
-					if self.glossary_id in self.all_tm:
-						self.current_tm = self.all_tm[self.glossary_id]
-						
-					else:
-						self.current_tm = self.init_translation_memory()
-						print('New project')
-					
-
-				elif _tm_version == 3:
-					self.current_tm = self.import_tm_v3(self.all_tm)
-				elif _tm_version == 2:
-					self.current_tm = self.import_tm_v2(self.all_tm)
-				else:
-					self.current_tm = self.init_translation_memory()
-					print('Broken TM file.')	
-			except Exception as e:
-				print('Error while opening TM file:', e)
+		# Reset the temporary TM
+		self.refresh_tm_variable()
+		# Backup TM file (monthly)
 		try:
 			self.monthly_tm_maintain()
 		except Exception as e:
 			self.write_log('Cannot backup TM file due to: ' + str(e))
 			print('Cannot backup TM file.', str(e))	
+		# Generate the self.translation_memory from self.current_tm
 		self.update_tm_from_dataframe()
 
+	def refresh_tm_variable(self):
+		'''
+		Load the TM from pkl to memory.
+		Use for these following function:
+		@ import_translation_memory
+		@ append_translation_memory
+		Used variable:
+		@ self.all_tm: dict of dataframe. Load from TM file (pickle)
+			special key: 
+				tm_version: version of TM. The current version is 4.
+				tm_sub_version: sub version. The current version is 41.
+
+		@ self.current_tm: Dataframe of the current project key (All supported language)
+			Related variable:
+				@ self.translation_memory: Dataframe that contain only self.from_language and self.to_language
+				Only available on Document Translator
+		@ self.temporary_tm: Dataframe. Store the TM in a session.
+			When a new session is start, TM from this variable will be cleared.
+				Used for Document Translator (while translating a file)
+				Use for Bug Writer (in 1 session)
+		'''
+		if self.tm_path not in ['', None]:
+			if os.path.isfile(self.tm_path):
+				_attemp_count = 100
+				while _attemp_count != 0:
+					try:
+						print('Loading TM at:', self.tm_path)
+						with open(self.tm_path, 'rb') as pickle_load:
+							self.all_tm = pickle.load(pickle_load) 
+						_tm_version = self.get_tm_version(self.all_tm)
+						print('_tm_version', _tm_version)
+						if _tm_version == 4:
+							print('TM loading: Load V4 TM')
+							if self.glossary_id in self.all_tm:
+								self.current_tm = self.all_tm[self.glossary_id]
+							else:
+								self.current_tm = self.init_translation_memory()
+								print('New project')
+							if 'tm_sub_version' not in self.all_tm:
+								self.all_tm['tm_sub_version'] = TM_SUB_VERSION
+								self.optimize_translation_memory()
+						else:
+							print('TM loading: Fix obsoleted TM')
+							self.load_and_fix_obsoleted_tm(_tm_version)
+						return True
+					except Exception as e:
+						print('Error while opening TM file:', e)
+						_attemp_count-=1
+						continue
+		print('Fail to load TM, ignore TM file and move on')
+		self.all_tm = {}
+
+		self.current_tm = self.init_translation_memory()
+		
+		self.translation_memory = pd.DataFrame(columns=[self.from_language, self.to_language])				
+		self.current_tm = self.init_translation_memory()
+		self.all_tm[self.glossary_id] = self.current_tm
+		self.all_tm['tm_version'] = TM_VERSION
+		self.all_tm['tm_sub_version'] = TM_SUB_VERSION
+		return False
+
+	def load_and_fix_obsoleted_tm(self, current_tm_version):
+		self.all_tm = {}
+		
+		
+		with open(self.tm_path, 'rb') as pickle_load:
+			_all_tm = pickle.load(pickle_load) 
+		
+		if current_tm_version == 3:
+			self.current_tm = self.import_tm_v3(_all_tm)
+			#
+		elif current_tm_version == 2:
+			self.current_tm = self.import_tm_v2(_all_tm)
+		else:
+			self.current_tm = self.init_translation_memory()
+			print('Broken TM file.')	
+		self.all_tm[self.glossary_id] = self.current_tm
+		self.all_tm['tm_version'] = TM_VERSION
+		self.all_tm['tm_sub_version'] = TM_SUB_VERSION
+
+		with open(self.tm_path, 'wb') as pickle_file:
+			print("Updating pickle file....", self.tm_path)
+			pickle.dump(self.all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 
 	def update_tm_from_dataframe(self):
 		print('Update TM from dataframe')
@@ -1978,12 +2007,69 @@ class Translator:
 
 		# Append the temporary_tm (RAM) to TM file (ROM)
 		if len(self.temporary_tm) > 0:
+			# Before loading 
+			_translation_memory_size = len(self.current_tm)
+			_tm_loading_fail = False
+			_tm_backup_already = False
+			_tm_writing_attemp_count = 100
+			while True:
+				try:
+					print('TM Append: Refresh TM')
+					if _tm_loading_fail != True:
+						_tc_loaded = self.refresh_tm_variable()
+						if _tc_loaded == False:
+							_tm_loading_fail = True
+					_current_translation_memory_size = len(self.all_tm[_glossary])
+					print('Current TM size:', _current_translation_memory_size)
+					print('TM size in the memory:', _translation_memory_size)
+					if _tm_backup_already == False:
+						if int(_translation_memory_size * 0.7) > _current_translation_memory_size:
+							# Broken TM file or a large amount of TM is removed
+							# we will re-create the TM base on the TM in the RAM
+							# Before that, we will make a copy of the current TM for recovery:
+							try:
+								self.backup_tm_file()
+								_tm_backup_already = True
+							except Exception as e:
+								#backup_log = os.path.join(_backup_dir, "backup_log" + '.txt')
+								#message = str(self.user_name) + ' has backup the file ' + _filename
+								#self.write_log(backup_log, message)
+								self.write_log('Error while backup TM:'+  str(e))	
+								print('Error while backup TM:', e)
+					_actual_tm_size = 0
+					print("Append temp TM to Project TM")
+					for Pair in self.temporary_tm:
+						try:
+							self.current_tm = self.append_tm_dataframe(self.current_tm, Pair)
+							_actual_tm_size +=1
+						except Exception as e:
+							self.write_log('Error while appending TM:'+  str(e))	
+							print('Append TM DF error:', e)	
+
+					self.current_tm = self.current_tm.reindex()
+					#print('Size TM after reindex:', _translation_memory_size)
+					self.all_tm[_glossary] = self.current_tm	
+
+					with open(self.tm_path, 'wb') as pickle_file:
+						print("Updating pickle file....", self.tm_path)
+						pickle.dump(self.all_tm, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+					return _actual_tm_size
+
+				except Exception  as e:
+					self.write_log('Error while writing TM:'+  str(e))	
+					print("Error while writing TM:", e)
+					_tm_writing_attemp_count-=1
+					continue
+				break
+			'''
+			OLD FUNCTION
 			try:
 				Counter = 0
 				while Counter < 1000:
 					try:
 						with open(self.tm_path, 'rb') as pickle_load:
 							_all_tm = pickle.load(pickle_load)
+						break
 					except Exception as e:
 						self.write_log('Error while reading TM file:'+  str(e))	
 						print("Error while reading TM file: ", e)
@@ -2040,6 +2126,7 @@ class Translator:
 					# TM in the TM file (ROM) will be ignore, TM in RAM will be use.
 					_current_tm = self.current_tm
 
+
 				for Pair in self.temporary_tm:
 					try:
 						#print('Size TM before append:', len(_current_tm))
@@ -2048,19 +2135,23 @@ class Translator:
 						#print('Size TM after append:', len(_current_tm))
 					except Exception as e:
 						print('Append TM DF error:', e)	
+				
+				# Handling sub_version
 				try:
 					_tm_sub_version = self.get_tm_sub_version(_all_tm)
 					if _tm_sub_version < 41:
+						_all_tm['tm_sub_version'] = 41
 						print('Fix currupted TM')
 						for language in self.supported_language:
-							_all_tm[language] = _all_tm[language].str.lower()
-
-						_all_tm.drop_duplicates(inplace=True)
+							if language in _current_tm:
+								_current_tm[language] = _current_tm[language].str.lower()
+						#_all_tm.drop_duplicates(inplace=True)	
+						#_all_tm.drop_duplicates(inplace=True)
 						#_current_tm['en'] = _current_tm['en'].str.lower()
 						#_current_tm.drop_duplicates(inplace=True)
 						_all_tm['tm_sub_version'] = 41
 				except Exception as e:
-					self.write_log('Error while optimize TM:'+  str(e))	
+					self.write_log('Error while signing sub version number:'+  str(e))	
 
 				_current_tm = _current_tm.reindex()
 				#print('Size TM after reindex:', _translation_memory_size)
@@ -2069,7 +2160,6 @@ class Translator:
 				try:
 					# Confirm that the length of current TM greater than the length in TM file
 					_second_backup_file = self.backup_tm_file()
-
 					_current_tm_file_size = os.path.getsize(_second_backup_file)
 
 					with open(self.tm_path, 'wb') as pickle_file:
@@ -2079,13 +2169,13 @@ class Translator:
 					_new_tm_file_size = 	os.path.getsize(self.tm_path)
 
 					# Double confirm process, confirm if file size is greater than old one
-					if _current_tm_file_size > _new_tm_file_size:
+					if _current_tm_file_size > (_new_tm_file_size * 0.9):
 						# Revert to old version if new TM file is smaller than the old one
 						print("Reverse TM file to older version")
 						os.remove(self.tm_path)
 						shutil.copy(_second_backup_file, self.tm_path)
 						os.remove(_second_backup_file)
-						self.write_log('Error while appending TM file, TM has been restored: '+  str(e))	
+						self.write_log('Error while appending TM file, TM has been restored')	
 						raise Exception("Error while appending TM file, TM file has been reversed to the older version.")
 					else:
 						_message = self.user_name + ' has appended new TM.'
@@ -2102,27 +2192,37 @@ class Translator:
 			except Exception  as e:
 				self.write_log('Error while handling TM:'+  str(e))	
 				print('Error while handling TM:',  e)		
+			'''
 		return 0
 	
 	def monthly_tm_maintain(self):
 		_check = self.maintenance_check()
 		if _check == False:
-			self.optimize_translation_memory()
-			self.monthly_tm_backup()
+			try:
+				self.optimize_translation_memory()
+			except:
+				pass
+			try:
+				self.monthly_tm_backup()
+			except:
+				pass	
 
 
 
 	def maintenance_check(self):
-		_dirname = os.path.dirname(self.tm_path)
-		_basename = os.path.basename(self.tm_path)
-		_filename, _ext = os.path.splitext(_basename)
-		_month_stamp = self.get_month_timestamp()
-		_backup_dir = os.path.join(_dirname, "Monthly Backup TM")
-		_backup_file  = os.path.join(_backup_dir, _filename + "_backup_" + _month_stamp + _ext)
-		if not os.path.isdir(_backup_dir):
-			return False
-		if not os.path.isfile(_backup_file):
-			return False
+		if self.tm_path not in ['', None]:
+			_dirname = os.path.dirname(self.tm_path)
+			_basename = os.path.basename(self.tm_path)
+			_filename, _ext = os.path.splitext(_basename)
+			_month_stamp = self.get_month_timestamp()
+			_backup_dir = os.path.join(_dirname, "Monthly Backup TM")
+			_backup_file  = os.path.join(_backup_dir, _filename + "_backup_" + _month_stamp + _ext)
+			if not os.path.isdir(_backup_dir):
+				return False
+			if not os.path.isfile(_backup_file):
+				return False
+		else:
+			return False		
 		return True	
 
 	def monthly_tm_backup(self):
@@ -2149,7 +2249,8 @@ class Translator:
 		print('Old TM:', len(self.current_tm))
 		#self.import_translation_memory()
 		for language in self.supported_language:
-			self.current_tm[language] = self.current_tm[language].str.lower()
+			if language in self.current_tm:
+				self.current_tm[language] = self.current_tm[language].str.lower()
 
 		self.current_tm.drop_duplicates(inplace=True)
 		print('New TM:', len(self.current_tm))

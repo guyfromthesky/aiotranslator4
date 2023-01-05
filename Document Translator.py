@@ -63,7 +63,7 @@ import pkgutil
 tool_display_name = "Document Translator"
 #This variable will be passed to AIO translator to know the source of translate request.
 tool_name = 'document'
-rev = 4202
+rev = 4203
 ver_num = get_version(rev) 
 version = tool_display_name  + " v" +  ver_num
 
@@ -864,7 +864,7 @@ class DocumentTranslator(Frame):
 			self.Error('No file selected')	
 		
 	def BtnLoadDocument(self):
-		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectSource'],filetypes = (("All type files","*.docx *.xlsx *.xlsm *.pptx *.msg"), ("Workbook files","*.xlsx *.xlsm"), ("Document files","*.docx"), ("Presentation files","*.pptx"), ("Email files","*.msg"), ("PDF files","*.pdf")), multiple = True)	
+		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectSource'],filetypes = (("All type files","*.docx *.xlsx *.xlsm *.pptx *.msg *.png *.jpg"), ("Workbook files","*.xlsx *.xlsm"), ("Document files","*.docx"), ("Presentation files","*.pptx"), ("Email files","*.msg"), ("PDF files","*.pdf"), ("Image files","*.png *.jpeg")), multiple = True)	
 		if filename != "":
 			self.ListFile = list(filename)
 			self.CurrentSourceFile.set(str(self.ListFile[0]))
@@ -1290,18 +1290,30 @@ class DocumentTranslator(Frame):
 			self._update_day.set(Date)
 			
 			self.write_debug(self.LanguagePack.ToolTips['AppInitDone'])
-			all_tm = self.MyTranslator.all_tm
-			self.write_debug('TM version: ' +  str(all_tm['tm_version']))
-			self.write_debug('TM sub version: ' + str(all_tm['tm_sub_version']))
+			try:
+				all_tm = self.MyTranslator.all_tm
+			except:
+				self.write_debug('Error while loading TM info.')	
+			try:
+				self.write_debug('TM version: ' +  str(all_tm['tm_version']))
+			except:
+				self.write_debug('Cannot read the TM version')	
+			try:
+				self.write_debug('TM sub version: ' + str(all_tm['tm_sub_version']))
+			except:
+				self.write_debug('TM does not have sub version number.')
 			#all_key = all_tm.keys()
 			#print('All project key: ', all_tm.keys())
-			for key in all_tm:
-				if key == 'tm_version':
-					pass
-				elif key == 'tm_sub_version':
-					pass
-				else:
-					self.write_debug(key + ": " + str(len(all_tm[key])))
+			try:
+				for key in all_tm:
+					if key == 'tm_version':
+						pass
+					elif key == 'tm_sub_version':
+						pass
+					else:
+						self.write_debug(key + ": " + str(len(all_tm[key])))
+			except: 
+				pass			
 			
 			self.TranslatorProcess.join()
 			
@@ -1323,7 +1335,7 @@ class DocumentTranslator(Frame):
 			return False
 		self.MyTranslator.set_language_pair(target_language = target_language, source_language = source_language)
 		
-		#Add Subscription key
+		#Add Subscription key	
 		#self.MyTranslator.SetSubscriptionKey(self.SubscriptionKey)	
 
 		#Set TM Update Mode
@@ -1907,11 +1919,11 @@ def function_create_db_data(DB_Path):
 										try:
 											raw_cell_value = str(database[cell_adress].value)
 										except:
-											raw_cell_value = None	
-
-										if raw_cell_value not in ['', None]:
+											raw_cell_value = ''	
+										cell_value = raw_cell_value.replace('\r', '').replace('\n', '')	
+										if cell_value not in ['', None, "None", 'none']:
 											valid = True
-											cell_value = raw_cell_value.replace('\r', '').replace('\n', '')	
+											#cell_value = raw_cell_value.replace('\r', '').replace('\n', '')	
 
 											#if sheetname != 'header':
 											#	cell_value = cell_value.lower()
@@ -2076,7 +2088,15 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 				StatusQueue.put(str(ErrorMsg))
 
 				Result = str(e)
+		elif ext in ('.jpg', '.png'):
+			#Result = translate_presentation(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
+			try:
+				Result = translate_presentation(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
+			except Exception as e:
+				ErrorMsg = ('Error message: ' + str(e))
+				StatusQueue.put(str(ErrorMsg))
 
+				Result = str(e)
 		if Result == True:
 			translate_file.append(baseName)
 			ResultQueue.put(Result)
