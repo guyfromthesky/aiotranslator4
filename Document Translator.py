@@ -27,7 +27,7 @@ from ttkbootstrap.constants import *
 
 #GUI
 from ttkbootstrap import Entry, Label, Treeview, Scrollbar, OptionMenu
-from ttkbootstrap import Checkbutton, Button, Notebook
+from ttkbootstrap import Button, Notebook
 from ttkbootstrap import Progressbar, Style, Window
 
 from tkinter import Tk, Frame, Menubutton
@@ -52,18 +52,17 @@ from libs.documentprocessing import translate_docx, translate_msg
 from libs.documentprocessing import translate_presentation, translate_workbook
 
 from libs.general import get_version, resource_path, send_fail_request, get_user_name
-from libs.tkinter_extension import AutocompleteCombobox, Generate_Document_Translate_Setting_UI, Apply_Transparency, Apply_FontSize
+from libs.tkinter_extension import AutocompleteCombobox, Generate_Document_Translate_Setting_UI, Apply_Transparency, init_theme
 
 from google.cloud import logging
 import pandas as pd
 
-import pkgutil
 
 
 tool_display_name = "Document Translator"
 #This variable will be passed to AIO translator to know the source of translate request.
 tool_name = 'document'
-rev = 4203
+rev = 4204
 ver_num = get_version(rev) 
 version = tool_display_name  + " v" +  ver_num
 
@@ -139,7 +138,7 @@ class DocumentTranslator(Frame):
 		# Init function
 		self.create_buttom_panel()
 
-		self.init_theme()
+		init_theme()
 
 		self.init_ui()
 		
@@ -191,7 +190,7 @@ class DocumentTranslator(Frame):
 		#self.Generate_Debugger_UI(self.Process)
 
 		font_size  = self.Configuration['Document_Translator']['font_size']
-		Apply_FontSize(font_size, self)
+		#Apply_FontSize(font_size, self)
 
 	def Generate_DocumentTranslator_UI(self, Tab):
 		Row=1
@@ -757,46 +756,6 @@ class DocumentTranslator(Frame):
 		transparency  = self.Configuration['Document_Translator']['Transparent']
 		Apply_Transparency(transparency, self)
 
-		
-
-
-	def select_theme_name(self):
-		"""Save the theme name value to Configuration and change
-		the theme based on the selection in the UI.
-		
-		Args:
-			config_theme_name -- str
-				Theme name retrieved from config. (Default: '')
-		"""
-		try:
-			theme_name = self.strvar_theme_name.get()
-			print('Select theme:', theme_name)
-			self.style.theme_use(theme_name)
-			self.AppConfig.Save_Config(
-				self.AppConfig.Doc_Config_Path,
-				'Document_Translator',
-				'theme_name',
-				theme_name, True)
-
-		except Exception as err:
-			messagebox.showerror(
-				title='Error',
-				message=f'Error occurs when selecting theme: {err}')
-
-	def remove_theme(self):
-		print('remove_theme')
-		"""Remove the theme saved in config then restart the app."""
-		self.AppConfig.Save_Config(
-			self.AppConfig.Doc_Config_Path,
-			'Document_Translator',
-			'theme_name',
-			'')
-		
-		messagebox.showinfo(
-			title='Info',
-			message='App will restart to apply the change.')
-		self.parent.destroy()
-		main()
 
 	def CorrectExt(self, path, ext):
 		if path != None and ext != None:
