@@ -56,7 +56,7 @@ from libs.cloudconfig import CloudConfigLoader
 from libs.version import get_version
 from libs.tkinter_extension import Generate_BugWriter_Tab_UI, Generate_BugWriter_Menu_UI, Generate_Translate_Setting_UI
 from libs.tkinter_extension import Generate_BugWriter_UI, Generate_SimpleTranslator_UI, Generate_Theme_Setting_UI, Generate_Image_Translate_UI
-from libs.tkinter_extension import BugWriter_BottomPanel, init_theme
+from libs.tkinter_extension import BugWriter_BottomPanel, init_writer_theme
 
 from libs.general import get_version, resource_path, get_user_name
 #from openpyxl import load_workbook, worksheet, Workbook

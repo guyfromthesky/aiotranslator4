@@ -27,7 +27,7 @@ from ttkbootstrap.constants import *
 
 #GUI
 from ttkbootstrap import Entry, Label, Treeview, Scrollbar, OptionMenu
-from ttkbootstrap import Checkbutton, Button, Notebook
+from ttkbootstrap import Button, Notebook
 from ttkbootstrap import Progressbar, Style, Window
 
 from tkinter import Tk, Frame, Menubutton
@@ -52,12 +52,11 @@ from libs.documentprocessing import translate_docx, translate_msg
 from libs.documentprocessing import translate_presentation, translate_workbook
 
 from libs.general import get_version, resource_path, send_fail_request, get_user_name
-from libs.tkinter_extension import AutocompleteCombobox, Generate_Document_Translate_Setting_UI, Apply_Transparency, Apply_FontSize
+from libs.tkinter_extension import AutocompleteCombobox, Generate_Document_Translate_Setting_UI, init_doc_theme
 
 from google.cloud import logging
 import pandas as pd
 
-import pkgutil
 
 
 tool_display_name = "Document Translator"
@@ -139,7 +138,7 @@ class DocumentTranslator(Frame):
 		# Init function
 		self.create_buttom_panel()
 
-		self.init_theme()
+		init_doc_theme(self)
 
 		self.init_ui()
 		
@@ -191,7 +190,7 @@ class DocumentTranslator(Frame):
 		#self.Generate_Debugger_UI(self.Process)
 
 		font_size  = self.Configuration['Document_Translator']['font_size']
-		Apply_FontSize(font_size, self)
+		#Apply_FontSize(font_size, self)
 
 	def Generate_DocumentTranslator_UI(self, Tab):
 		Row=1
@@ -707,96 +706,7 @@ class DocumentTranslator(Frame):
 			return str(path).replace('/', '\\')
 		else:
 			return str(path).replace('\\', '//')
-	
-	def init_theme(self):
-		"""Applied the theme name saved in the settings on init."""
-		print('init_theme')
-		try:
-			all_themes = self.style.theme_names()
-			personalize_themes = ['wynnmeister', 'erza\'s', 'tien\'s', 'dao\'s', 'blackpink']
-			self.theme_names = []
-			for theme in all_themes:
-				
-				if theme in personalize_themes:
-					print('Personalize theme:', theme)
-					user = get_user_name()
-					if theme == 'dao\'s' and user == 'jennie':
-						self.theme_names.append(theme)
-					elif theme == 'wynnmeister' and user == 'wynn.saltywaffle':
-						self.theme_names.append(theme)	
-					elif theme == 'erza\'s' and user == 'erzaerza':
-						self.theme_names.append(theme)	
-					elif theme == 'tien\'s' and user == 'hann':
-						self.theme_names.append(theme)	
-					elif theme == 'blackpink' and user == 'ruko':
-						self.theme_names.append(theme)
-					elif user == 'evan':
-						self.theme_names.append(theme)
-				else:	
-					self.theme_names.append(theme)
-	
 
-		
-
-							#	['cosmo', 'flatly', 'litera', 'minty',
-							#	"lumen", "sandstone",	"yeti", "pulse", 
-							#	"united", "morph", "journal", "darkly", 'superhero', 
-							#	'solar', 'cyborg', 'vapor', 'simplex', 'cerculean'
-							#		, 'pinky']
-			if self.used_theme not in self.theme_names:
-				raise Exception('Cannot use the theme saved in the config'
-					' because it is not supported or required files have'
-					' been removed.')
-
-			self.style.theme_use(self.used_theme)
-
-		except Exception as err:
-			print('Error while initializing theme:\n'
-				f'- {err}\n'
-				'The system default theme will be used instead.')
-		transparency  = self.Configuration['Document_Translator']['Transparent']
-		Apply_Transparency(transparency, self)
-
-		
-
-
-	def select_theme_name(self):
-		"""Save the theme name value to Configuration and change
-		the theme based on the selection in the UI.
-		
-		Args:
-			config_theme_name -- str
-				Theme name retrieved from config. (Default: '')
-		"""
-		try:
-			theme_name = self.strvar_theme_name.get()
-			print('Select theme:', theme_name)
-			self.style.theme_use(theme_name)
-			self.AppConfig.Save_Config(
-				self.AppConfig.Doc_Config_Path,
-				'Document_Translator',
-				'theme_name',
-				theme_name, True)
-
-		except Exception as err:
-			messagebox.showerror(
-				title='Error',
-				message=f'Error occurs when selecting theme: {err}')
-
-	def remove_theme(self):
-		print('remove_theme')
-		"""Remove the theme saved in config then restart the app."""
-		self.AppConfig.Save_Config(
-			self.AppConfig.Doc_Config_Path,
-			'Document_Translator',
-			'theme_name',
-			'')
-		
-		messagebox.showinfo(
-			title='Info',
-			message='App will restart to apply the change.')
-		self.parent.destroy()
-		main()
 
 	def CorrectExt(self, path, ext):
 		if path != None and ext != None:
