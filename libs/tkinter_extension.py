@@ -21,8 +21,6 @@ import textwrap
 import re
 import os
 
-import easyocr
-import cv2
 import numpy as np
 
 class AutocompleteCombobox(Combobox):
@@ -1665,26 +1663,6 @@ def Generate_SimpleTranslator_V2_UI(master, Tab):
 		if isinstance(child, Text):
 			master.text_widgets.append(child)
 
-def Generate_Image_Translate_UI(master, Tab):
-	"""Create Image Translate tab."""
-
-	Main_Frame = Frame(Tab, width=600, height=850)
-	Main_Frame.pack(side = TOP, fill=X, expand=None)
-	Row = 1
-	Label(Main_Frame, textvariable=master.Notice).grid(row=Row, column=0, columnspan = 10, padx=5, pady=5, sticky= E)
-
-	Row += 1
-	Label(Main_Frame, text= 'Image Path').grid(row=Row, column=0, padx=5, pady=5, sticky=E)
-	master.img_path_var = StringVar()
-	master.TextImgPath = Entry(Main_Frame, width = 100, state="readonly", textvariable=master.img_path_var)
-	master.TextImgPath.grid(row=Row, column=2, columnspan=7, padx=5, pady=5, sticky=W+E)
-	master.Browse_Img_Btn = Button(Main_Frame, width = master.HALF_BUTTON_SIZE, text=  master.LanguagePack.Button['Browse'], command = lambda: Btn_Select_Image_Path(master), style=master.Btn_Style)
-	master.Browse_Img_Btn.grid(row=Row, column=9, padx=5, pady=5, sticky=E)
-	
-	Row += 1
-	master.Img_Frm = Label(Main_Frame, width = 100)
-	master.Img_Frm.grid(row=Row, column=0, columnspan = 50, padx=5, pady=5, sticky= E+W)
-
 # Related function
 def get_current_theme_color(master):
 	#for color in master.style.colors.label_iter():
@@ -1700,15 +1678,6 @@ def Btn_Select_License_Path(master):
 		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LicensePath
 		master.LicensePath.set(LicensePath)
 		master.rebuild_UI()
-	else:
-		master.Notice.set("No file is selected")
-
-def Btn_Select_Image_Path(master):
-	filename = filedialog.askopenfilename(title =  'Select image',filetypes = (("Image files","*.png *.jpg" ), ), )	
-	if filename != "":
-		image_path = master.CorrectPath(filename)
-		show_image(master, image_path)
-		#master.img_path_var.set(image_path)
 	else:
 		master.Notice.set("No file is selected")
 
@@ -1886,41 +1855,3 @@ def update_color_patches(master):
 	for row in master.color_rows:
 		row.color_value = master.style.colors.get(row.label["text"])
 		row.update_patch_color()
-
-
-def show_image(master, img_path):
-	# Set the image of the label widget.
-	
-	#master.Img_Frm.config(image=master.img_byte)
-	#master.parent.update()
-
-	reader = easyocr.Reader(['ko'], gpu=False)
-	image = cv2.imread(img_path)
-	results = reader.readtext(img_path)
-	
-		
-
-	#cv2.imshow('Im', image)
-	#cv2.waitKey(0)
-	img_byte =  Image.fromarray(image)
-	draw = ImageDraw.Draw(img_byte)
-
-	# Select a font
-	count = 1
-	
-	font = ImageFont.truetype('malgun.ttf', 24)
-	for res in results:
-		top_left = tuple(res[0][0]) # top left coordinates as tuple
-		bottom_right = tuple(res[0][2]) # bottom right coordinates as tuple
-		print(top_left,bottom_right)
-		shape = [top_left, bottom_right]
-		draw.rectangle(shape, fill = None, outline ="red")
-		draw.text((top_left[0], top_left[1]-10), "[" + str(count) + "] " + res[1], font=font, fill=(255, 0, 0))	
-		count+=1
-	# Draw the translated text onto the image
-		
-	master.img_byte = ImageTk.PhotoImage(img_byte)
-	master.Img_Frm.config(image=master.img_byte)
-	master.parent.update()
-	print('winfo_width:', master.Img_Frm.winfo_width())
-	print('winfo_height:', master.Img_Frm.winfo_height())
