@@ -1848,7 +1848,7 @@ class Translator:
 		_current_tm = pd.DataFrame({'en': pickle_data['EN'],'ko': pickle_data['KO']})
 		supported_language = ['en', 'ko']
 		for language in supported_language:
-			self.current_tm[language] = self.current_tm[language].str.lower()
+			self.current_tm[language] = self.current_tm[language].astype(str).str.lower()
 		return _current_tm
 
 
@@ -2250,7 +2250,7 @@ class Translator:
 		#self.import_translation_memory()
 		for language in self.supported_language:
 			if language in self.current_tm:
-				self.current_tm[language] = self.current_tm[language].str.lower()
+				self.current_tm[language] = self.current_tm[language].astype(str).str.lower()
 
 		self.current_tm.drop_duplicates(inplace=True)
 		print('New TM:', len(self.current_tm))

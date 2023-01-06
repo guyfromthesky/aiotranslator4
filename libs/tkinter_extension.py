@@ -679,7 +679,7 @@ def Generate_BugWriter_Menu_UI(master):
 def About():
 	messagebox.showinfo("About....", "Creator: Evan@nexonnetworks.com")
 def OpenWeb():
-	webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/%5BTranslation%5D+AIO+Translator")
+	webbrowser.open_new(r"https://confluence.nexon.com/display/NWVNQA/%5BTranslation+Tool%5D+AIO+Translator")
 def Error(self, ErrorText):
 	messagebox.showerror('Translate error...', ErrorText)	
 
@@ -1667,23 +1667,56 @@ def Generate_SimpleTranslator_V2_UI(master, Tab):
 
 def Generate_Image_Translate_UI(master, Tab):
 	"""Create Image Translate tab."""
+	Top_Frame = LabelFrame(Tab, text = 'Image Source')
+	Top_Frame.pack(side = TOP, fill=BOTH, expand= False)
 
-	Main_Frame = Frame(Tab, width=600, height=850)
-	Main_Frame.pack(side = TOP, fill=X, expand=None)
+	Right_Frame = LabelFrame(Tab, text = 'OCR Result')
+	Right_Frame.pack(side = RIGHT, fill=BOTH, expand= False)
+	
+	Left_Frame = LabelFrame(Tab, text = 'Preview')
+	Left_Frame.pack(side = LEFT, fill=BOTH, expand= Y)
+
+	# Top Frame
 	Row = 1
-	Label(Main_Frame, textvariable=master.Notice).grid(row=Row, column=0, columnspan = 10, padx=5, pady=5, sticky= E)
-
-	Row += 1
-	Label(Main_Frame, text= 'Image Path').grid(row=Row, column=0, padx=5, pady=5, sticky=E)
+	#Label(Top_Frame, textvariable=master.Notice).grid(row=Row, column=0, columnspan = 10, padx=5, pady=5, sticky= E)
+	Label(Top_Frame, text= 'Image Path').grid(row=Row, column = 1, padx=5, pady=5, sticky=E)
 	master.img_path_var = StringVar()
-	master.TextImgPath = Entry(Main_Frame, width = 100, state="readonly", textvariable=master.img_path_var)
-	master.TextImgPath.grid(row=Row, column=2, columnspan=7, padx=5, pady=5, sticky=W+E)
-	master.Browse_Img_Btn = Button(Main_Frame, width = master.HALF_BUTTON_SIZE, text=  master.LanguagePack.Button['Browse'], command = lambda: Btn_Select_Image_Path(master), style=master.Btn_Style)
-	master.Browse_Img_Btn.grid(row=Row, column=9, padx=5, pady=5, sticky=E)
+	master.TextImgPath = Entry(Top_Frame, width = 100, state="readonly", textvariable=master.img_path_var)
+	master.TextImgPath.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=W+E)
+	master.Browse_Img_Btn = Button(Top_Frame, width = master.HALF_BUTTON_SIZE, text=  master.LanguagePack.Button['Browse'], command = lambda: Btn_Select_Image_Path(master), style=master.Btn_Style)
+	master.Browse_Img_Btn.grid(row=Row, column=10, padx=5, pady=5, sticky=E)
+	
+
+	# Planning (NOT IMPEMENTED YET)
+	# Able to select image source from file or Android device (ADB)
+	#Row += 1
+	master.source_image = IntVar()
+
+	master.radiobutton_theme_name = Radiobutton(
+		Top_Frame, text= "File", value = 0,	variable= master.source_image )
+	master.radiobutton_theme_name.config(width=master.HALF_BUTTON_SIZE)
+	master.radiobutton_theme_name.grid(row=Row, column=0 , padx=5, pady=5, sticky=W)
 	
 	Row += 1
-	master.Img_Frm = Label(Main_Frame, width = 100)
-	master.Img_Frm.grid(row=Row, column=0, columnspan = 50, padx=5, pady=5, sticky= E+W)
+	master.radiobutton_theme_name = Radiobutton(
+		Top_Frame, text= "Phone screen", value = 1,	variable= master.source_image )
+	master.radiobutton_theme_name.config(width=master.HALF_BUTTON_SIZE)
+	master.radiobutton_theme_name.grid(row=Row, column=0 , padx=5, pady=5, sticky=W)
+
+	Row += 1
+	master.radiobutton_theme_name = Radiobutton(
+		Top_Frame, text= "Clipboard", value = 2,	variable= master.source_image )
+	master.radiobutton_theme_name.config(width=master.HALF_BUTTON_SIZE)
+	master.radiobutton_theme_name.grid(row=Row, column=0 , padx=5, pady=5, sticky=W)
+
+	# Left Frame
+	master.Img_Frm = Label(Left_Frame, width = 100)
+	master.Img_Frm.grid(row=Row, column=1, columnspan = 10, padx=5, pady=5, sticky= E+W)
+
+	# Right Frame
+	Row = 1
+	master.OCR_Text = CustomText(Right_Frame, width=40, height=30, undo=True, wrap=WORD)
+	master.OCR_Text.grid(row=Row, column=2, columnspan=4, rowspan=30, padx=5, pady=5, stick=W+E)
 
 # Related function
 def get_current_theme_color(master):
@@ -1867,7 +1900,7 @@ def select_theme_name(master):
 	try:
 		theme_name = master.strvar_theme_name.get()
 
-		master.AppConfig.Save_Config(master.AppConfig.Writer_Config_Path,
+		master.AppConfig.Save_Config(master.AppConfig.Theme_Config_Path,
 			'Bug_Writer','theme_name',	theme_name, True)
 	except Exception as err:
 		messagebox.showerror(
@@ -1896,7 +1929,7 @@ def show_image(master, img_path):
 
 	reader = easyocr.Reader(['ko'], gpu=False)
 	image = cv2.imread(img_path)
-	results = reader.readtext(img_path)
+	results = reader.readtext(img_path, paragraph="True")
 	
 		
 

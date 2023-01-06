@@ -63,7 +63,7 @@ import pkgutil
 tool_display_name = "Document Translator"
 #This variable will be passed to AIO translator to know the source of translate request.
 tool_name = 'document'
-rev = 4203
+rev = 4204
 ver_num = get_version(rev) 
 version = tool_display_name  + " v" +  ver_num
 
