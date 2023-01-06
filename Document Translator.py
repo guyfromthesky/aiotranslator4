@@ -52,7 +52,7 @@ from libs.documentprocessing import translate_docx, translate_msg
 from libs.documentprocessing import translate_presentation, translate_workbook
 
 from libs.general import get_version, resource_path, send_fail_request, get_user_name
-from libs.tkinter_extension import AutocompleteCombobox, Generate_Document_Translate_Setting_UI, Apply_Transparency, init_theme
+from libs.tkinter_extension import AutocompleteCombobox, Generate_Document_Translate_Setting_UI, Apply_Transparency, init_doc_theme
 
 from google.cloud import logging
 import pandas as pd
@@ -138,7 +138,7 @@ class DocumentTranslator(Frame):
 		# Init function
 		self.create_buttom_panel()
 
-		init_theme()
+		init_doc_theme(self)
 
 		self.init_ui()
 		
@@ -706,56 +706,6 @@ class DocumentTranslator(Frame):
 			return str(path).replace('/', '\\')
 		else:
 			return str(path).replace('\\', '//')
-	
-	def init_theme(self):
-		"""Applied the theme name saved in the settings on init."""
-		print('init_theme')
-		try:
-			all_themes = self.style.theme_names()
-			personalize_themes = ['wynnmeister', 'erza\'s', 'tien\'s', 'dao\'s', 'blackpink']
-			self.theme_names = []
-			for theme in all_themes:
-				
-				if theme in personalize_themes:
-					print('Personalize theme:', theme)
-					user = get_user_name()
-					if theme == 'dao\'s' and user == 'jennie':
-						self.theme_names.append(theme)
-					elif theme == 'wynnmeister' and user == 'wynn.saltywaffle':
-						self.theme_names.append(theme)	
-					elif theme == 'erza\'s' and user == 'erzaerza':
-						self.theme_names.append(theme)	
-					elif theme == 'tien\'s' and user == 'hann':
-						self.theme_names.append(theme)	
-					elif theme == 'blackpink' and user == 'ruko':
-						self.theme_names.append(theme)
-					elif user == 'evan':
-						self.theme_names.append(theme)
-				else:	
-					self.theme_names.append(theme)
-	
-
-		
-
-							#	['cosmo', 'flatly', 'litera', 'minty',
-							#	"lumen", "sandstone",	"yeti", "pulse", 
-							#	"united", "morph", "journal", "darkly", 'superhero', 
-							#	'solar', 'cyborg', 'vapor', 'simplex', 'cerculean'
-							#		, 'pinky']
-			if self.used_theme not in self.theme_names:
-				raise Exception('Cannot use the theme saved in the config'
-					' because it is not supported or required files have'
-					' been removed.')
-
-			self.style.theme_use(self.used_theme)
-
-		except Exception as err:
-			print('Error while initializing theme:\n'
-				f'- {err}\n'
-				'The system default theme will be used instead.')
-		transparency  = self.Configuration['Document_Translator']['Transparent']
-		Apply_Transparency(transparency, self)
-
 
 	def CorrectExt(self, path, ext):
 		if path != None and ext != None:

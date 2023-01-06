@@ -1801,7 +1801,7 @@ class ColorRow(Frame):
         self.patch.configure(background=self.color_value)
 
 
-def init_theme(master):
+def init_writer_theme(master):
 	"""Applied the theme name saved in the settings on init."""
 	try:
 		all_themes = master.style.theme_names()
@@ -1824,6 +1824,28 @@ def init_theme(master):
 	transparency  = master.Configuration['Bug_Writer']['Transparent']
 	Apply_Transparency(transparency, master)
 
+def init_doc_theme(master):
+	"""Applied the theme name saved in the settings on init."""
+	try:
+		all_themes = master.style.theme_names()
+		
+		master.theme_names = []
+		master.theme_names.append('custom')
+		for theme in all_themes:
+			master.theme_names.append(theme)
+
+		if master.used_theme not in master.theme_names:
+			raise Exception('Cannot use the theme saved in the config'
+				' because it is not supported or required files have'
+				' been removed.')
+		if master.used_theme != 'Custom':
+			master.style.theme_use(master.used_theme)
+	except Exception as err:
+		print('Error while initializing theme:\n'
+			f'- {err}\n'
+			'The system default theme will be used instead.')
+	transparency  = master.Configuration['Document_Translator']['Transparent']
+	Apply_Transparency(transparency, master)
 
 def select_theme_name(master):
 	"""Save the theme name value to Configuration and change
