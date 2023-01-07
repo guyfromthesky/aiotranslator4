@@ -15,23 +15,21 @@ from datetime import date, datetime
 from pyperclip import copy, paste
 #from tkinter import *
 #from tkinter.ttk import *
-from ttkbootstrap import Entry, Label, Style
-from ttkbootstrap import Checkbutton, OptionMenu, Notebook, Radiobutton, LabelFrame, Button
-from ttkbootstrap import Progressbar, Style, Window
+from ttkbootstrap import Checkbutton, Button, Style
+from ttkbootstrap import Style, Window
 
-from tkinter import Tk, Frame, Toplevel, Scale
+from tkinter import Frame, Toplevel
 
 # Widget type
-from tkinter import Menu, filedialog, messagebox
-from tkinter import Text
+from tkinter import filedialog, messagebox
+
 # Variable type
 from tkinter import IntVar, StringVar, DoubleVar
 # Wrap type
-from tkinter import WORD
 # sticky state
 from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, BOTTOM
 # Config state
-from tkinter import DISABLED, NORMAL, HORIZONTAL
+from tkinter import DISABLED, NORMAL
 from tkhtmlview import HTMLScrolledText
 
 #from tkinter import filedialog
@@ -46,7 +44,6 @@ import pickle
 import queue 
 
 import webbrowser
-import inspect
 
 from libs.aiotranslator import generate_translator
 
@@ -57,19 +54,21 @@ from libs.cloudconfig import CloudConfigLoader
 #from libs.grammarcheck import LanguageTool
 
 from libs.version import get_version
-from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText
 from libs.tkinter_extension import Generate_BugWriter_Tab_UI, Generate_BugWriter_Menu_UI, Generate_Translate_Setting_UI
-from libs.tkinter_extension import Generate_BugWriter_UI, Generate_SimpleTranslator_UI
-from libs.tkinter_extension import Apply_Transparency, BugWriter_BottomPanel
+from libs.tkinter_extension import Generate_BugWriter_UI, Generate_SimpleTranslator_UI, Generate_Theme_Setting_UI, Generate_Image_Translate_UI
+from libs.tkinter_extension import BugWriter_BottomPanel, init_theme
 
 from libs.general import get_version, resource_path, get_user_name
 #from openpyxl import load_workbook, worksheet, Workbook
+
+
+
 
 from google.cloud import logging
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4202
+REV = 4204
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num
 
@@ -91,6 +90,7 @@ class MyTranslatorHelper(Frame):
 
 		Frame.__init__(self, parent)
 		self.pack(side=TOP, expand=Y, fill=X)
+		#self.pack(side=TOP, expand=False, fill=None)
 		self.style =  Style()
 
 		self.parent = parent
@@ -148,7 +148,7 @@ class MyTranslatorHelper(Frame):
 		self.LanguagePack = LanguagePack
 		
 
-		self.init_theme()
+		init_theme(self)
 		
 		self.init_ui()
 		
@@ -173,7 +173,7 @@ class MyTranslatorHelper(Frame):
 			self.parent.deiconify()
 					
 		else:
-			closed_box = messagebox.askokcancel('Bug Writer', 'No license selected, please select the key in Translate setting.',icon = 'info')
+			closed_box = messagebox.askokcancel('Bug Writer', 'No license selected, please select the key in Translate setting.', icon = 'info')
 
 			if closed_box == True:
 				#self.Error('No license selected, please select the key in Translate setting.')
@@ -208,6 +208,7 @@ class MyTranslatorHelper(Frame):
 	def on_closing(self):
 		if messagebox.askokcancel(tool_display_name, "Do you want to quit?"):
 			self.parent.destroy()
+
 			self.TranslatorProcess.terminate()
 
 	def rebuild_UI(self):
@@ -227,21 +228,18 @@ class MyTranslatorHelper(Frame):
 		try:
 			Generate_BugWriter_UI(self, self.BugWriterTab)
 			Generate_SimpleTranslator_UI(self, self.SimpleTranslatorTab)
+			Generate_Image_Translate_UI(self, self.ImageTranslateTab)
 			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
-
+			Generate_Theme_Setting_UI(self, self.ThemeSettingTab)
+			Generate_Image_Translate_UI
 			self.bottom_panel = BugWriter_BottomPanel(self)
 	
 		except Exception as e:
 			print(f'An error occurs while initializing UI: {e}')
-
-
-
+		#Generate_Theme_Setting_UI(self, self.ThemeSettingTab)
+		#self.bottom_panel = BugWriter_BottomPanel(self)
 		#self.Generate_Search_UI(self.Searcher)
-
 		#self.Init_Translator_Config
-
-		
-	
 		
 	# Init functions
 	# Some option is saved for the next time use
@@ -340,86 +338,7 @@ class MyTranslatorHelper(Frame):
 		else:
 			self.simple_secondary_target_language.set(self.language_list[simple_secondary_language])
 
-	def init_theme(self):
-		"""Applied the theme name saved in the settings on init."""
-		try:
-			all_themes = self.style.theme_names()
-			personalize_themes = ['wynnmeister', 'erza\'s', 'tien\'s', 'dao\'s', 'blackpink']
-			self.theme_names = []
-			for theme in all_themes:
-				
-				if theme in personalize_themes:
-					print('Personalize theme:', theme)
-					user = get_user_name()
-					if theme == 'dao\'s' and user == 'jennie':
-						self.theme_names.append(theme)
-					elif theme == 'wynnmeister' and user == 'wynn.saltywaffle':
-						self.theme_names.append(theme)	
-					elif theme == 'erza\'s' and user == 'erzaerza':
-						self.theme_names.append(theme)	
-					elif theme == 'tien\'s' and user == 'hann':
-						self.theme_names.append(theme)	
-					elif theme == 'blackpink' and user == 'ruko':
-						self.theme_names.append(theme)
-					elif user == 'evan':
-						self.theme_names.append(theme)
-				else:	
-					self.theme_names.append(theme)
-	
-			if self.used_theme not in self.theme_names:
-				raise Exception('Cannot use the theme saved in the config'
-					' because it is not supported or required files have'
-					' been removed.')
 
-			self.style.theme_use(self.used_theme)
-
-		except Exception as err:
-			print('Error while initializing theme:\n'
-				f'- {err}\n'
-				'The system default theme will be used instead.')
-		transparency  = self.Configuration['Bug_Writer']['Transparent']
-		Apply_Transparency(transparency, self)
-
-
-	def select_theme_name(self):
-		"""Save the theme name value to Configuration and change
-		the theme based on the selection in the UI.
-		
-		Args:
-			config_theme_name -- str
-				Theme name retrieved from config. (Default: '')
-		"""
-
-		try:
-			theme_name = self.strvar_theme_name.get()
-			print('Select theme:', theme_name)
-			self.style.theme_use(theme_name)
-			self.AppConfig.Save_Config(
-				self.AppConfig.Writer_Config_Path,
-				'Bug_Writer',
-				'theme_name',
-				theme_name, True)
-
-		except Exception as err:
-			messagebox.showerror(
-				title='Error',
-				message=f'Error occurs when selecting theme: {err}')
-
-	
-	def remove_theme(self):
-		print('remove_theme')
-		"""Remove the theme saved in config then restart the app."""
-		self.AppConfig.Save_Config(
-			self.AppConfig.Writer_Config_Path,
-			'Bug_Writer',
-			'theme_name',
-			'')
-		
-		messagebox.showinfo(
-			title='Info',
-			message='App will restart to apply the change.')
-		self.parent.destroy()
-		main()
 
 #######################################################################
 # Menu function
@@ -542,7 +461,7 @@ class MyTranslatorHelper(Frame):
 
 
 	def set_simple_language(self, event):
-		print(event)
+		#print(event)
 		simple_target_language_index = self.language_list.index(self.simple_target_language.get())
 		simple_target_language = self.language_id_list[simple_target_language_index]
 		self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Simple_Translator', 'target_lang', simple_target_language_index)
@@ -763,7 +682,7 @@ class MyTranslatorHelper(Frame):
 		
 		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
 			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
-			print('Update language pair from: ', source_language, ' to ',  target_language)
+			#print('Update language pair from: ', source_language, ' to ',  target_language)
 
 
 		self.source_text = self.SourceText.get("1.0", END)
@@ -1100,15 +1019,6 @@ class MyTranslatorHelper(Frame):
 		self.TextShouldBe.tag_selected()
 		self.SourceText.tag_selected()
 
-	def review_report(self):
-
-		child_windows = Toplevel(self.parent)
-		#child_windows.geometry("200x200")  # Size of the window 
-		child_windows.resizable(False, False)
-		child_windows.title("Report reviewer")
-		self.report_review = HTMLScrolledText(child_windows)
-		self.report_review.set_html(self.html_content)
-		self.report_review.pack(pady=5, padx=5, fill=BOTH)
 	
 	def analyze_fault_terminology(self):
 		for term in self.MyTranslator.dictionary:
@@ -1130,7 +1040,7 @@ class MyTranslatorHelper(Frame):
 		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
 		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
 			self.MyTranslator.set_language_pair(source_language = source_language, target_language = target_language)
-			print('Update language pair from: ', source_language, ' to ',  target_language)
+			#print('Update language pair from: ', source_language, ' to ',  target_language)
 		self.Notice.set(self.LanguagePack.ToolTips['GenerateBugTitle'])
 		#self.strSourceTitle = self.TextTitle.get("1.0", END).replace('\n', '')
 		self.strSourceTitle = self.TextTitle.get("1.0", END).rstrip()
@@ -1660,13 +1570,13 @@ def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Se
 		for row in Text_List:
 			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
 			x += 1
-		Details += '\r\n================================================='
+		Details += '\r\n===================='
 		x = 1
 		for row in Text_List_Old:
 			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
 			x += 1
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '\r\n===================='
 			x = 1
 			for row in Text_List_Secondary:
 				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
@@ -1675,13 +1585,13 @@ def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Se
 		for row in Text_List_Old:
 			Details += '\r\n<p><b>'+ str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
 			x += 1
-		Details += '\r\n================================================='
+		Details += '\r\n===================='
 		x = 1
 		for row in Text_List:
 			Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
 			x += 1
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '\r\n===================='
 			x = 1
 			for row in Text_List_Secondary:
 				Details += '\r\n<p><b>' + str(x) + ')</b>&nbsp;' + remove_notranslate_tag(row) + '&nbsp;</p>'
@@ -1690,7 +1600,7 @@ def Simple_Step_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Se
 	return Details
 
 def Simple_Step_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
-	print('Text_List_Secondary', Text_List_Secondary)
+	#print('Text_List_Secondary', Text_List_Secondary)
 	Details = "\r\n"
 	Details += Add_Style(Title)
 	x = 1
@@ -1698,13 +1608,13 @@ def Simple_Step_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Second
 		for row in Text_List:
 			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
 			x += 1
-		Details += '\r\n================================================='
+		Details += '\r\n===================='
 		x = 1
 		for row in Text_List_Old:
 			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
 			x += 1
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '\r\n===================='
 			for row in Text_List_Secondary:
 				Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
 				x += 1
@@ -1712,39 +1622,39 @@ def Simple_Step_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Second
 		for row in Text_List_Old:
 			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
 			x += 1
-		Details += '\r\n================================================='
+		Details += '\r\n===================='
 		x = 1
 		for row in Text_List:
 			Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
 			x += 1
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '\r\n===================='
 			for row in Text_List_Secondary:
 				Details += '\r\n' + str(x) + ') ' + remove_notranslate_tag(row)
 				x += 1
 	return Details
 
 def Simple_Row_CSS_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Secondary = []):
-	print('Text_List_Secondary', Text_List_Secondary)
+	#print('Text_List_Secondary', Text_List_Secondary)
 	Details = ''
 	if Lang == 'ko':		
 		for row in Text_List:
 			Details += '\r\n<p>'+ remove_notranslate_tag(row) + '&nbsp;</p>'
-		Details += '\r\n================================================='
+		Details += '\r\n===================='
 		for row in Text_List_Old:
 			Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '\r\n===================='
 			for row in Text_List_Secondary:
 				Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
 	else:
 		for row in Text_List_Old:
 			Details += '\r\n<p>'+ remove_notranslate_tag(row) + '&nbsp;</p>'
-		Details += '\r\n================================================='
+		Details += '\r\n===================='
 		for row in Text_List:
 			Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '\r\n===================='
 			for row in Text_List_Secondary:
 				Details += '\r\n<p>' + remove_notranslate_tag(row) + '&nbsp;</p>'
 	
@@ -1763,22 +1673,22 @@ def Simple_Row_Template(Lang, Title, Text_List, Text_List_Old, Text_List_Seconda
 	if Lang == 'ko':		
 		for row in Text_List:
 			Details += '\r\n'+ remove_notranslate_tag(row)
-		Details += '\r\n================================================='
+		Details += '\r\n===================='
 		for row in Text_List_Old:
 			Details += '\r\n'+ remove_notranslate_tag(row)
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '\r\n===================='
 			for row in Text_List_Secondary:
 				Details += '\r\n'+ remove_notranslate_tag(row)
 
 	else:
 		for row in Text_List_Old:
 			Details += '\r\n'+ remove_notranslate_tag(row)
-		Details += '\r\n================================================='
+		Details += '\r\n===================='
 		for row in Text_List:
 			Details += '\r\n'+ remove_notranslate_tag(row)
 		if len(Text_List_Secondary) > 0:
-			Details += '\r\n================================================='
+			Details += '\r\n===================='
 			for row in Text_List_Secondary:
 				Details += '\r\n'+ remove_notranslate_tag(row)
 	return Details

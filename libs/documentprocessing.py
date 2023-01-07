@@ -10,6 +10,10 @@ import subprocess
 import time
 from datetime import datetime
 
+#from google.cloud import vision
+
+#import easyocr
+
 API_LENGTH_LIMIT = 5000
 
 # Functions used for processor
@@ -314,7 +318,7 @@ def translate_workbook(progress_queue=None, result_queue=None, status_queue=None
 							if DataOnly == False:
 								#print('Data only False')
 								if cell.data_type == 'f':
-									print('Formula cell: ', current_string)
+									#print('Formula cell: ', current_string)
 									continue
 							# ValidateSourceText in aiotranslator lib
 							result = MyTranslator.ValidateSourceText(current_string)
@@ -940,3 +944,74 @@ def translate_msg(progress_queue=None, result_queue=None, status_queue=None, MyT
 	except Exception as e:
 		status_queue.put('Error message: ' + str(e))
 		return e
+
+
+#**********************************************************************************
+# UI handle ***********************************************************************
+#**********************************************************************************
+def image_hadnler(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
+	from outlook_msg import Message
+	from docx import Document
+	from docx.shared import Inches
+
+	print('Estimating total work to do...')
+	status_queue.put('Estimating total task to do...')
+	progress_queue.put(0)
+	
+	if not 'SourceDocument' in Options:
+		status_queue.put('No source document input')
+		return False
+	else:
+		SourceDocument = Options['SourceDocument']
+
+	if not 'OutputDocument' in Options:
+		now = datetime.now()
+		timestamp = str(int(datetime.timestamp(now)))
+		output_dir = os.path.dirname(SourceDocument)
+		base_name = os.path.basename(SourceDocument)
+		source_name, ext = os.path.splitext(base_name)
+		OutputDocument = output_dir + '/' + 'Translated_' + source_name + '_' + timestamp + ext
+	else:
+		OutputDocument = Options['OutputDocument']
+
+	Start = time.time()
+	cp = 0
+	total_task_count = 0
+
+	document = Document()
+
+	with open(SourceDocument) as msg_file:
+		msg = Message(msg_file)
+
+	contents = msg.body
+	subject = msg.subject
+	translated = MyTranslator.translate(subject)	
+	document.add_heading(translated, 0)
+
+	para = contents.split('\n')
+	total_task_count += len(para)
+	cp = 0
+	
+	
+	#reader = easyocr.Reader(['ch_sim','en']) # this needs to run only once to load the model into memory
+	#result = reader.readtext('chinese.jpg')
+	
+	for Par in para:
+		if Par not in ["", ' ', '\r', '\n']:
+			translated = MyTranslator.translate(Par)
+			document.add_paragraph(translated)
+			cp+=1
+			show_progress(cp, total_task_count)
+	try:
+		document.save(OutputDocument + '.docx')
+		if (os.path.isfile(OutputDocument+ '.docx')):
+			End = time.time()
+			Message = "Total time spend: " + str(int(End-Start)) + ' seconds.'
+			status_queue.put(Message)
+			return True
+		else:
+			status_queue.put('Fail to export file')
+			return False
+	except Exception as e:
+		status_queue.put('Error message: ' + str(e))
+		return e		

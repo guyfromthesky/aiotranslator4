@@ -27,7 +27,7 @@ from ttkbootstrap.constants import *
 
 #GUI
 from ttkbootstrap import Entry, Label, Treeview, Scrollbar, OptionMenu
-from ttkbootstrap import Checkbutton, Button, Notebook
+from ttkbootstrap import Button, Notebook
 from ttkbootstrap import Progressbar, Style, Window
 
 from tkinter import Tk, Frame, Menubutton
@@ -52,18 +52,17 @@ from libs.documentprocessing import translate_docx, translate_msg
 from libs.documentprocessing import translate_presentation, translate_workbook
 
 from libs.general import get_version, resource_path, send_fail_request, get_user_name
-from libs.tkinter_extension import AutocompleteCombobox, Generate_Document_Translate_Setting_UI, Apply_Transparency, Apply_FontSize
+from libs.tkinter_extension import AutocompleteCombobox, Generate_Document_Translate_Setting_UI, Apply_Transparency, init_doc_theme
 
 from google.cloud import logging
 import pandas as pd
 
-import pkgutil
 
 
 tool_display_name = "Document Translator"
 #This variable will be passed to AIO translator to know the source of translate request.
 tool_name = 'document'
-rev = 4202
+rev = 4204
 ver_num = get_version(rev) 
 version = tool_display_name  + " v" +  ver_num
 
@@ -139,7 +138,7 @@ class DocumentTranslator(Frame):
 		# Init function
 		self.create_buttom_panel()
 
-		self.init_theme()
+		init_doc_theme(self)
 
 		self.init_ui()
 		
@@ -191,7 +190,7 @@ class DocumentTranslator(Frame):
 		#self.Generate_Debugger_UI(self.Process)
 
 		font_size  = self.Configuration['Document_Translator']['font_size']
-		Apply_FontSize(font_size, self)
+		#Apply_FontSize(font_size, self)
 
 	def Generate_DocumentTranslator_UI(self, Tab):
 		Row=1
@@ -707,96 +706,6 @@ class DocumentTranslator(Frame):
 			return str(path).replace('/', '\\')
 		else:
 			return str(path).replace('\\', '//')
-	
-	def init_theme(self):
-		"""Applied the theme name saved in the settings on init."""
-		print('init_theme')
-		try:
-			all_themes = self.style.theme_names()
-			personalize_themes = ['wynnmeister', 'erza\'s', 'tien\'s', 'dao\'s', 'blackpink']
-			self.theme_names = []
-			for theme in all_themes:
-				
-				if theme in personalize_themes:
-					print('Personalize theme:', theme)
-					user = get_user_name()
-					if theme == 'dao\'s' and user == 'jennie':
-						self.theme_names.append(theme)
-					elif theme == 'wynnmeister' and user == 'wynn.saltywaffle':
-						self.theme_names.append(theme)	
-					elif theme == 'erza\'s' and user == 'erzaerza':
-						self.theme_names.append(theme)	
-					elif theme == 'tien\'s' and user == 'hann':
-						self.theme_names.append(theme)	
-					elif theme == 'blackpink' and user == 'ruko':
-						self.theme_names.append(theme)
-					elif user == 'evan':
-						self.theme_names.append(theme)
-				else:	
-					self.theme_names.append(theme)
-	
-
-		
-
-							#	['cosmo', 'flatly', 'litera', 'minty',
-							#	"lumen", "sandstone",	"yeti", "pulse", 
-							#	"united", "morph", "journal", "darkly", 'superhero', 
-							#	'solar', 'cyborg', 'vapor', 'simplex', 'cerculean'
-							#		, 'pinky']
-			if self.used_theme not in self.theme_names:
-				raise Exception('Cannot use the theme saved in the config'
-					' because it is not supported or required files have'
-					' been removed.')
-
-			self.style.theme_use(self.used_theme)
-
-		except Exception as err:
-			print('Error while initializing theme:\n'
-				f'- {err}\n'
-				'The system default theme will be used instead.')
-		transparency  = self.Configuration['Document_Translator']['Transparent']
-		Apply_Transparency(transparency, self)
-
-		
-
-
-	def select_theme_name(self):
-		"""Save the theme name value to Configuration and change
-		the theme based on the selection in the UI.
-		
-		Args:
-			config_theme_name -- str
-				Theme name retrieved from config. (Default: '')
-		"""
-		try:
-			theme_name = self.strvar_theme_name.get()
-			print('Select theme:', theme_name)
-			self.style.theme_use(theme_name)
-			self.AppConfig.Save_Config(
-				self.AppConfig.Doc_Config_Path,
-				'Document_Translator',
-				'theme_name',
-				theme_name, True)
-
-		except Exception as err:
-			messagebox.showerror(
-				title='Error',
-				message=f'Error occurs when selecting theme: {err}')
-
-	def remove_theme(self):
-		print('remove_theme')
-		"""Remove the theme saved in config then restart the app."""
-		self.AppConfig.Save_Config(
-			self.AppConfig.Doc_Config_Path,
-			'Document_Translator',
-			'theme_name',
-			'')
-		
-		messagebox.showinfo(
-			title='Info',
-			message='App will restart to apply the change.')
-		self.parent.destroy()
-		main()
 
 	def CorrectExt(self, path, ext):
 		if path != None and ext != None:
@@ -864,7 +773,7 @@ class DocumentTranslator(Frame):
 			self.Error('No file selected')	
 		
 	def BtnLoadDocument(self):
-		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectSource'],filetypes = (("All type files","*.docx *.xlsx *.xlsm *.pptx *.msg"), ("Workbook files","*.xlsx *.xlsm"), ("Document files","*.docx"), ("Presentation files","*.pptx"), ("Email files","*.msg"), ("PDF files","*.pdf")), multiple = True)	
+		filename = filedialog.askopenfilename(title =  self.LanguagePack.ToolTips['SelectSource'],filetypes = (("All type files","*.docx *.xlsx *.xlsm *.pptx *.msg *.png *.jpg"), ("Workbook files","*.xlsx *.xlsm"), ("Document files","*.docx"), ("Presentation files","*.pptx"), ("Email files","*.msg"), ("PDF files","*.pdf"), ("Image files","*.png *.jpeg")), multiple = True)	
 		if filename != "":
 			self.ListFile = list(filename)
 			self.CurrentSourceFile.set(str(self.ListFile[0]))
@@ -1290,18 +1199,30 @@ class DocumentTranslator(Frame):
 			self._update_day.set(Date)
 			
 			self.write_debug(self.LanguagePack.ToolTips['AppInitDone'])
-			all_tm = self.MyTranslator.all_tm
-			self.write_debug('TM version: ' +  str(all_tm['tm_version']))
-			self.write_debug('TM sub version: ' + str(all_tm['tm_sub_version']))
+			try:
+				all_tm = self.MyTranslator.all_tm
+			except:
+				self.write_debug('Error while loading TM info.')	
+			try:
+				self.write_debug('TM version: ' +  str(all_tm['tm_version']))
+			except:
+				self.write_debug('Cannot read the TM version')	
+			try:
+				self.write_debug('TM sub version: ' + str(all_tm['tm_sub_version']))
+			except:
+				self.write_debug('TM does not have sub version number.')
 			#all_key = all_tm.keys()
 			#print('All project key: ', all_tm.keys())
-			for key in all_tm:
-				if key == 'tm_version':
-					pass
-				elif key == 'tm_sub_version':
-					pass
-				else:
-					self.write_debug(key + ": " + str(len(all_tm[key])))
+			try:
+				for key in all_tm:
+					if key == 'tm_version':
+						pass
+					elif key == 'tm_sub_version':
+						pass
+					else:
+						self.write_debug(key + ": " + str(len(all_tm[key])))
+			except: 
+				pass			
 			
 			self.TranslatorProcess.join()
 			
@@ -1323,7 +1244,7 @@ class DocumentTranslator(Frame):
 			return False
 		self.MyTranslator.set_language_pair(target_language = target_language, source_language = source_language)
 		
-		#Add Subscription key
+		#Add Subscription key	
 		#self.MyTranslator.SetSubscriptionKey(self.SubscriptionKey)	
 
 		#Set TM Update Mode
@@ -1907,11 +1828,11 @@ def function_create_db_data(DB_Path):
 										try:
 											raw_cell_value = str(database[cell_adress].value)
 										except:
-											raw_cell_value = None	
-
-										if raw_cell_value not in ['', None]:
+											raw_cell_value = ''	
+										cell_value = raw_cell_value.replace('\r', '').replace('\n', '')	
+										if cell_value not in ['', None, "None", 'none']:
 											valid = True
-											cell_value = raw_cell_value.replace('\r', '').replace('\n', '')	
+											#cell_value = raw_cell_value.replace('\r', '').replace('\n', '')	
 
 											#if sheetname != 'header':
 											#	cell_value = cell_value.lower()
@@ -2076,7 +1997,15 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 				StatusQueue.put(str(ErrorMsg))
 
 				Result = str(e)
+		elif ext in ('.jpg', '.png'):
+			#Result = translate_presentation(ProgressQueue=ProgressQueue, ResultQueue=ResultQueue, StatusQueue=StatusQueue, Mytranslator=MyTranslator, Options=Options)
+			try:
+				Result = translate_presentation(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
+			except Exception as e:
+				ErrorMsg = ('Error message: ' + str(e))
+				StatusQueue.put(str(ErrorMsg))
 
+				Result = str(e)
 		if Result == True:
 			translate_file.append(baseName)
 			ResultQueue.put(Result)

@@ -22,14 +22,14 @@ class ConfigLoader:
 			self.appdata = os.getcwd() + '\\AIO Translator'
 	
 		# Config file
+		self.Translator_Config_Path = self.appdata + '\\translator.ini'
+		self.Theme_Config_Path = self.appdata + '\\theme.ini'
+		
 		if Document == True:
-			self.Translator_Config_Path = self.appdata + '\\translator.ini'
 			self.Doc_Config_Path = self.appdata + '\\doc.ini'
 		if Writer == True:
-			self.Translator_Config_Path = self.appdata + '\\translator.ini'
 			self.Writer_Config_Path = self.appdata + '\\writer.ini'
 			self.Custom_Writer_Config_Path = self.appdata + '\\custom_writer.ini'
-			self.theme_loading_path = f'{self.appdata}\\theme'
 		# Folder
 		self.TM_Backup_Folder_Path = self.appdata + '\\TM'
 
@@ -41,13 +41,13 @@ class ConfigLoader:
 		# Generate app folder (os.environ['APPDATA'] + '\\AIO Translator)
 		self.initFolder()
 
+		self.Translator_Init_Setting()
+		self.Theme_Init_Setting()
+
 		if self.Writer == True:
-			# Set default value:
-			self.Translator_Init_Setting()
 			self.Writer_Init_Setting()
 		if self.Document == True:
-			#self.Custom_Writer_Init_Setting()
-			self.Translator_Init_Setting()
+		
 			self.Doc_Init_Setting()
 	
 		
@@ -294,6 +294,44 @@ class ConfigLoader:
 		with open(config_path, 'w') as configfile:
 			config.write(configfile)
 	
+	def Theme_Init_Setting(self):
+		Section = 'Theme'
+
+		config_path = self.Theme_Config_Path
+
+		if not os.path.isfile(config_path):
+			config = configparser.ConfigParser()
+			config.add_section('Theme')
+
+			with open(config_path, 'w') as configfile:
+				config.write(configfile)
+
+		
+		config = configparser.ConfigParser()
+		config.read(config_path)
+
+		self.Init_Config_Option(config, Section, 'primary', '#0080ff')
+		self.Init_Config_Option(config, Section, 'secondary', '#94a2a4')
+		self.Init_Config_Option(config, Section, 'success', '#44aca4')
+		self.Init_Config_Option(config, Section, 'info', '#3f98d7')
+		self.Init_Config_Option(config, Section, 'warning', '#d05e2f')
+		self.Init_Config_Option(config, Section, 'danger', '#d95092')
+		self.Init_Config_Option(config, Section, 'light', '#A9BDBD')
+		self.Init_Config_Option(config, Section, 'dark', '#073642')
+		self.Init_Config_Option(config, Section, 'bg', '#002B36')
+		self.Init_Config_Option(config, Section, 'fg', '#ffffff')
+		self.Init_Config_Option(config, Section, 'selectbg', '#0b5162')
+		self.Init_Config_Option(config, Section, 'selectfg', '#ffffff')
+		self.Init_Config_Option(config, Section, 'border', '#00252e')
+		self.Init_Config_Option(config, Section, 'inputfg', '#A9BDBD')
+		self.Init_Config_Option(config, Section, 'inputbg', '#073642')
+		self.Init_Config_Option(config, Section, 'active', '#002730')
+
+		
+		
+		with open(config_path, 'w') as configfile:
+			config.write(configfile)
+
 	# Function will load the value from selected option.
 	# If value does not exist, return the default value
 	def Init_Config_Option(self, Config_Obj, Section, Option, Default_Value, Encoded = False):
@@ -469,9 +507,12 @@ class ConfigLoader:
 			Config_Obj.write(configfile)
 		
 	def Refresh_Config_Data(self):
+		self.Theme_Init_Setting()
+		self.Translator_Init_Setting()
 		if self.Writer == True:
-			self.Translator_Init_Setting()
+			
 			self.Writer_Init_Setting()
-		if self.Document == True:
-			self.Translator_Init_Setting()
+			
+		elif self.Document == True:
 			self.Doc_Init_Setting()
+		

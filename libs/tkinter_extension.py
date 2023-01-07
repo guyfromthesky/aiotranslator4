@@ -1,21 +1,27 @@
 from ttkbootstrap import Entry, Label, Style
 from ttkbootstrap import Checkbutton, OptionMenu, Notebook, Radiobutton, LabelFrame, Button, Scale, Combobox
+from ttkbootstrap.style import ThemeDefinition
+from ttkbootstrap.constants import *
 
 
 from tkinter import W, E, S, N, END,X, Y, BOTH, TOP, RIGHT, LEFT, BOTTOM, HORIZONTAL
 from tkinter import INSERT, ACTIVE, NORMAL, DISABLED, WORD, SEL, SEL_FIRST, SEL_LAST
 
+from tkinter.colorchooser import askcolor
+
 from tkinter import Text, IntVar, StringVar, Menu, filedialog, messagebox
-from tkinter import Frame, Listbox, Label, Toplevel, PhotoImage, Canvas
+from tkinter import Frame, Listbox, Label, Toplevel, Canvas
 
 from tkhtmlview import HTMLScrolledText
-from PIL import ImageTk, Image
+from PIL import ImageTk, Image, ImageDraw, ImageFont
 
 import webbrowser
-
+from uuid import uuid4
 import textwrap
 import re
 import os
+
+import numpy as np
 
 class AutocompleteCombobox(Combobox):
 
@@ -564,7 +570,7 @@ def Apply_Background_Image(Frame, name):
 	
 	if os.path.isfile(bg_path):
 		print('Apply image: ', bg_path)
-		background_image = PhotoImage(file = bg_path)
+		background_image = ImageTk.PhotoImage(file = bg_path)
 		background_label = Label(Frame, image = background_image)
 		background_label.image = background_image
 		background_label.place(x = 0, y = 0, relwidth = 1, relheight = 1)
@@ -600,10 +606,18 @@ def Generate_BugWriter_Tab_UI(master):
 	master.TAB_CONTROL.add(master.SimpleTranslatorTab, text=master.LanguagePack.Tab['SimpleTranslator'])
 	
 	#Apply_Background_Image(master.SimpleTranslatorTab, 'bg_simple.png')
-	
+	master.ImageTranslateTab = Frame(master.TAB_CONTROL)
+	master.TAB_CONTROL.add(master.ImageTranslateTab, text= "Image Translate")
+
 	## TAB 3
 	master.TranslateSettingTab = Frame(master.TAB_CONTROL)
 	master.TAB_CONTROL.add(master.TranslateSettingTab, text=master.LanguagePack.Tab['Translator'])
+
+	
+	
+	## TAB 4
+	master.ThemeSettingTab = Frame(master.TAB_CONTROL)
+	master.TAB_CONTROL.add(master.ThemeSettingTab, text= "Theme Setting")
 	
 	#Apply_Background_Image(master.TranslateSettingTab, 'bg_setting.png')
 
@@ -667,6 +681,48 @@ def OpenWeb():
 def Error(self, ErrorText):
 	messagebox.showerror('Translate error...', ErrorText)	
 
+# SETTING UI
+def Generate_Theme_Setting_UI(master, Tab):
+	"""Create Translate Setting tab."""
+
+	master.configure_frame = Frame(Tab)
+	master.configure_frame.pack(side=LEFT, fill=BOTH, expand=YES)
+	Row = 1
+	
+	Label(master.configure_frame, text='Custom theme:').grid(row=Row, column=0, columnspan = 2, padx=5, pady=5, sticky= E+W)
+	master.Btn_Copy_Theme = Button(master.configure_frame, width = master.HALF_BUTTON_SIZE, text=  'Copy', 
+					command = lambda: get_current_theme_color(master), style=master.Btn_Style)
+	master.Btn_Copy_Theme.grid(row=Row, column=11, columnspan= 2, padx=5, pady=5, sticky=W)
+
+	
+	#master.theme_name = Entry(master.configure_frame)
+
+	#master.theme_name.insert(END, "new theme")
+	#master.theme_name.grid(row=Row, column=2, columnspan = 6, padx=5, pady=5, sticky= E+W)
+
+	Row += 2
+	master.color_rows = []
+
+	for color_type in master.Configuration['Theme']:
+		#color_type, ": ", master.Configuration['Theme'][color_type])
+		color_value = master.Configuration['Theme'][color_type]
+	#for color in master.style.colors.label_iter():
+		if  Row <= 10:
+			_col = 2
+			_row = Row
+		else:
+			_col = 8
+			_row = Row - 8
+
+		row = ColorRow(master.configure_frame, color_type, color_value)
+		master.color_rows.append(row)
+		row.grid(row=_row, rowspan=1, column=_col, columnspan=4, padx=5, pady=5,
+			sticky=E+W)
+		row.bind("<<ColorSelected>>",  lambda event, master= master: create_temp_theme(event, master))
+		Row +=1
+	_used_theme = master.strvar_theme_name.get()
+	if _used_theme == 'Custom':
+		create_temp_theme(event = None, master = master)
 
 # SETTING UI
 def Generate_Translate_Setting_UI(master, Tab):
@@ -707,7 +763,7 @@ def Generate_Translate_Setting_UI(master, Tab):
 		row=Row, rowspan=2, column=2, columnspan=7, padx=5, pady=10,
 		sticky=E+W)
 	master.TransparentPercent.bind('<ButtonRelease-1>', lambda event, root = master: SaveAppTransparency(event, master),)	
-
+	'''
 	try:
 		Row += 2
 		Label(Left_Frame, text= 'Font size:') \
@@ -725,9 +781,11 @@ def Generate_Translate_Setting_UI(master, Tab):
 			row=Row, rowspan=2, column=2, columnspan=7, padx=5, pady=10,
 			sticky=E+W)
 		master.FontSize_Slider.bind('<ButtonRelease-1>', lambda event, root = master: SaveFontSize(event, master),)	
-	except:
-		pass
-	Row += 1
+	except Exception as e:
+		print('Error when generating Theme font size', e)
+	'''
+	
+	Row += 2
 	Label(Left_Frame, text='Theme name:') \
 		.grid(row=Row, rowspan=2, column=0, padx=5, pady=5, sticky=E)
 	
@@ -738,7 +796,7 @@ def Generate_Translate_Setting_UI(master, Tab):
 			text=theme_name,
 			value=theme_name,
 			variable=master.strvar_theme_name,
-			command=master.select_theme_name)
+			command = lambda: select_theme_name(master) )
 		master.radiobutton_theme_name.config(width=master.HALF_BUTTON_SIZE)
 		master.radiobutton_theme_name.grid(
 			row=Row, column=col, padx=0, pady=5, sticky=W)
@@ -836,7 +894,7 @@ def Generate_Document_Translate_Setting_UI(master, Tab):
 			text=theme_name,
 			value=theme_name,
 			variable=master.strvar_theme_name,
-			command=master.select_theme_name)
+			command = lambda: select_theme_name(master))
 		master.radiobutton_theme_name.config(width=master.HALF_BUTTON_SIZE)
 		master.radiobutton_theme_name.grid(
 			row=Row, column=col, padx=0, pady=5, sticky=W)
@@ -1252,8 +1310,8 @@ def Generate_SimpleTranslator_UI(master, Tab):
 	master.parent.update()
 	x_delta = int(round((master.parent.winfo_width() - 1080)/20))
 	master.SOURCE_WIDTH += x_delta
-	print(master.SOURCE_WIDTH, master.parent.winfo_width())
-	print(master.ROW_SIZE, master.parent.winfo_height())
+	#print(master.SOURCE_WIDTH, master.parent.winfo_width())
+	#print(master.ROW_SIZE, master.parent.winfo_height())
 	y_delta = int(round((master.parent.winfo_height() - 560)/20))
 	master.ROW_SIZE += y_delta 
 	Row=1
@@ -1605,8 +1663,13 @@ def Generate_SimpleTranslator_V2_UI(master, Tab):
 		if isinstance(child, Text):
 			master.text_widgets.append(child)
 
-
 # Related function
+def get_current_theme_color(master):
+	#for color in master.style.colors.label_iter():
+	for row in master.color_rows:
+		row.color_value = master.style.colors.get(row.colorname)
+		row.update_patch_color()
+
 def Btn_Select_License_Path(master):
 	filename = filedialog.askopenfilename(title =  master.LanguagePack.ToolTips['SelectDB'],filetypes = (("JSON files","*.json" ), ), )	
 	if filename != "":
@@ -1620,11 +1683,13 @@ def Btn_Select_License_Path(master):
 
 def review_report(master):
 
+	#webbrowser.open(master.html_content)
 	child_windows = Toplevel(master.parent)
 	child_windows.resizable(False, False)
 	child_windows.title("Report reviewer")
 	master.report_review = HTMLScrolledText(child_windows)
 	master.report_review.set_html(master.html_content)
+	#master.report_review.fit_height()
 	master.report_review.pack(pady=5, padx=5, fill=BOTH)
 
 # SUPPORT FUNCTION
@@ -1663,3 +1728,152 @@ def Apply_FontSize(font_size, master):
 
 	master.style.configure('TEntry', font=('Helvetica', font_size))
 	#master.style.configure('TText', font=('Helvetica', font_size))
+
+
+def create_temp_theme(event, master, *_):
+	"""Creates a temp theme using the current configure settings and
+	changes the theme in tkinter to that new theme.
+	"""
+	_used_theme = master.strvar_theme_name.get()
+	
+	themename = "temp_" + str(uuid4()).replace("-", "")[:10]
+	colors = {}
+	for row in master.color_rows:
+		colors[row.label["text"]] = row.color_value
+		master.AppConfig.Save_Config(master.AppConfig.Theme_Config_Path, 'Theme', row.label["text"], row.color_value)
+	if _used_theme == 'Custom':
+		definition = ThemeDefinition(themename, colors, master.style.theme.type)
+		master.style.register_theme(definition)
+		master.style.theme_use(themename)
+	
+	update_color_patches(master)
+
+
+class ColorRow(Frame):
+    def __init__(self, master, color, color_value):
+        super().__init__(master)
+        self.colorname = color
+
+        self.label = Label(self, text=color, width=12)
+        self.label.pack(side=LEFT)
+        self.patch = Frame(
+            master=self, background= color_value, width=15
+        )
+        self.patch.pack(side=LEFT, fill=BOTH, padx=2)
+        self.entry = Entry(self, width=12)
+        self.entry.pack(side=LEFT, fill=X, expand=YES)
+        self.entry.bind("<FocusOut>", self.enter_color)
+        self.color_picker = Button(
+            master=self,
+            text="...",
+            bootstyle=SECONDARY,
+            command=self.pick_color,
+        )
+        self.color_picker.pack(side=LEFT, padx=2)
+
+        # set initial color value and patch color
+        self.color_value = color_value
+        self.update_patch_color()
+
+    def pick_color(self):
+        """Callback for when a color is selected from the color chooser"""
+        color = askcolor(color=self.color_value)
+        if color[1]:
+            self.color_value = color[1]
+            self.update_patch_color()
+        self.event_generate("<<ColorSelected>>")
+
+    def enter_color(self, *_):
+        """Callback for when a color is typed into the entry"""
+        try:
+            self.color_value = self.entry.get().lower()
+            self.update_patch_color()
+        except:
+            self.color_value = self.style.colors.get(self.label["text"])
+            self.update_patch_color()
+        self.event_generate("<<ColorSelected>>")
+
+    def update_patch_color(self):
+        """Update the color patch frame with the color value stored in
+        the entry widget."""
+        self.entry.delete(0, END)
+        self.entry.insert(END, self.color_value)
+        self.patch.configure(background=self.color_value)
+
+
+def init_writer_theme(master):
+	"""Applied the theme name saved in the settings on init."""
+	try:
+		all_themes = master.style.theme_names()
+		
+		master.theme_names = []
+		master.theme_names.append('custom')
+		for theme in all_themes:
+			master.theme_names.append(theme)
+
+		if master.used_theme not in master.theme_names:
+			raise Exception('Cannot use the theme saved in the config'
+				' because it is not supported or required files have'
+				' been removed.')
+		if master.used_theme != 'Custom':
+			master.style.theme_use(master.used_theme)
+	except Exception as err:
+		print('Error while initializing theme:\n'
+			f'- {err}\n'
+			'The system default theme will be used instead.')
+	transparency  = master.Configuration['Bug_Writer']['Transparent']
+	Apply_Transparency(transparency, master)
+
+def init_doc_theme(master):
+	"""Applied the theme name saved in the settings on init."""
+	try:
+		all_themes = master.style.theme_names()
+		
+		master.theme_names = []
+		master.theme_names.append('custom')
+		for theme in all_themes:
+			master.theme_names.append(theme)
+
+		if master.used_theme not in master.theme_names:
+			raise Exception('Cannot use the theme saved in the config'
+				' because it is not supported or required files have'
+				' been removed.')
+		if master.used_theme != 'Custom':
+			master.style.theme_use(master.used_theme)
+	except Exception as err:
+		print('Error while initializing theme:\n'
+			f'- {err}\n'
+			'The system default theme will be used instead.')
+	transparency  = master.Configuration['Document_Translator']['Transparent']
+	Apply_Transparency(transparency, master)
+
+def select_theme_name(master):
+	"""Save the theme name value to Configuration and change
+	the theme based on the selection in the UI.
+	
+	Args:
+		config_theme_name -- str
+			Theme name retrieved from config. (Default: '')
+	"""
+	try:
+		theme_name = master.strvar_theme_name.get()
+
+		master.AppConfig.Save_Config(master.AppConfig.Writer_Config_Path,
+			'Bug_Writer','theme_name',	theme_name, True)
+	except Exception as err:
+		messagebox.showerror(
+			title='Error',
+			message=f'Error occurs when selecting theme: {err}')
+	try:
+		if theme_name != 'Custom':
+			master.style.theme_use(theme_name)
+		else:
+			create_temp_theme(event = None, master = master)
+	except:
+		pass
+
+def update_color_patches(master):
+	"""Updates the color patches next to the color code entry."""
+	for row in master.color_rows:
+		row.color_value = master.style.colors.get(row.label["text"])
+		row.update_patch_color()
