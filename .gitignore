@@ -21,3 +21,6 @@ Compiler/dist/*
 Compiler/build/*
 translator/*
 *.n7
+Setup/.DS_Store
+AIO Translator/*
+.DS_Store

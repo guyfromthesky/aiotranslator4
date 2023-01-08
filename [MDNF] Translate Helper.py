@@ -482,7 +482,7 @@ class MyTranslatorHelper(Frame):
 		if sys.platform.startswith('win'):
 			return str(path).replace('/', '\\')
 		else:
-			return str(path).replace('\\', '//')
+			return str(path).replace('\\', '/')
 	
 	def CorrectExt(self, path, ext):
 		if path != None and ext != None:
