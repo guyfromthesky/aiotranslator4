@@ -47,7 +47,7 @@ from pandas.core.frame import DataFrame
 from libs.version import get_version
 
 Tool = "translator"
-rev = 4200
+rev = 4210
 ver_num = get_version(rev)
 Translatorversion = Tool + " " + ver_num
 TM_VERSION = 4
@@ -1922,7 +1922,8 @@ class Translator:
 							if self.glossary_id in self.all_tm:
 								self.current_tm = self.all_tm[self.glossary_id]
 							else:
-								self.current_tm = self.init_translation_memory()
+								self.all_tm[self.glossary_id] = self.init_translation_memory()
+								self.current_tm = self.all_tm[self.glossary_id]
 								print('New project')
 							if 'tm_sub_version' not in self.all_tm:
 								self.all_tm['tm_sub_version'] = TM_SUB_VERSION
@@ -1938,11 +1939,14 @@ class Translator:
 		print('Fail to load TM, ignore TM file and move on')
 		self.all_tm = {}
 
-		self.current_tm = self.init_translation_memory()
+		#self.current_tm = self.init_translation_memory()
 		
-		self.translation_memory = pd.DataFrame(columns=[self.from_language, self.to_language])				
-		self.current_tm = self.init_translation_memory()
-		self.all_tm[self.glossary_id] = self.current_tm
+		self.translation_memory = pd.DataFrame(columns=[self.from_language, self.to_language])	
+
+		self.all_tm[self.glossary_id] = self.init_translation_memory()
+		self.current_tm = self.all_tm[self.glossary_id]
+		
+		#self.all_tm[self.glossary_id] = self.all_tm
 		self.all_tm['tm_version'] = TM_VERSION
 		self.all_tm['tm_sub_version'] = TM_SUB_VERSION
 		return False

@@ -62,7 +62,7 @@ import pandas as pd
 tool_display_name = "Document Translator"
 #This variable will be passed to AIO translator to know the source of translate request.
 tool_name = 'document'
-rev = 4204
+rev = 4210
 ver_num = get_version(rev) 
 version = tool_display_name  + " v" +  ver_num
 
@@ -750,7 +750,7 @@ class DocumentTranslator(Frame):
 			NewTM = self.CorrectPath(filename)
 			with open(NewTM, 'wb') as pickle_file:
 				# New TM format.
-				pickle.dump({'tm_version': 4}, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+				pickle.dump({'tm_version': 4, 'tm_sub_version' : 41}, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 			self.TMPath.set(NewTM)
 			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'translation_memory', NewTM, True)
 			self.renew_my_translator()
@@ -1114,15 +1114,6 @@ class DocumentTranslator(Frame):
 		self.write_debug('Translate Process has been stop')
 		return
 
-	def Stop(self):
-		try:
-			if self.TranslatorProcess.is_alive():
-				self.TranslatorProcess.terminate()
-		except:
-			pass
-		self.progressbar["value"] = 0
-		self.progressbar.update()
-		self.write_debug('Translate Process has been stop')	
 
 	def generate_translator_engine(self):
 		self.write_debug(self.LanguagePack.ToolTips['AppInit'])

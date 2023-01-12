@@ -148,7 +148,7 @@ class MyTranslatorHelper(Frame):
 		self.LanguagePack = LanguagePack
 		
 
-		init_theme(self)
+		init_writer_theme(self)
 		
 		self.init_ui()
 		
