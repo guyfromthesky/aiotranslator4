@@ -68,7 +68,7 @@ from google.cloud import logging
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4204
+REV = 4210
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num
 
@@ -228,7 +228,7 @@ class MyTranslatorHelper(Frame):
 		try:
 			Generate_BugWriter_UI(self, self.BugWriterTab)
 			Generate_SimpleTranslator_UI(self, self.SimpleTranslatorTab)
-			Generate_Image_Translate_UI(self, self.ImageTranslateTab)
+			#Generate_Image_Translate_UI(self, self.ImageTranslateTab)
 			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
 			Generate_Theme_Setting_UI(self, self.ThemeSettingTab)
 			Generate_Image_Translate_UI

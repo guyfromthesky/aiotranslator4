@@ -1740,7 +1740,7 @@ def Btn_Select_Image_Path(master):
 	filename = filedialog.askopenfilename(title =  'Select image',filetypes = (("Image files","*.png *.jpg" ), ), )	
 	if filename != "":
 		image_path = master.CorrectPath(filename)
-		show_image(master, image_path)
+		#show_image(master, image_path)
 		#master.img_path_var.set(image_path)
 	else:
 		master.Notice.set("No file is selected")
@@ -1979,3 +1979,4 @@ def show_image(master, img_path):
 	master.parent.update()
 	print('winfo_width:', master.Img_Frm.winfo_width())
 	print('winfo_height:', master.Img_Frm.winfo_height())
+
