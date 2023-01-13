@@ -567,13 +567,16 @@ def ADB_Controller(Tab):
 # BUG WRITER CLASS
 def Apply_Background_Image(Frame, name):
 	bg_path =os.path.join( r'theme/background', name)
-	
+	print(bg_path)
 	if os.path.isfile(bg_path):
 		print('Apply image: ', bg_path)
-		background_image = ImageTk.PhotoImage(file = bg_path)
+		background_image = Image.open(bg_path)
+		background_image = background_image.resize((400,400))
+		background_image = ImageTk.PhotoImage(background_image)
 		background_label = Label(Frame, image = background_image)
 		background_label.image = background_image
 		background_label.place(x = 0, y = 0, relwidth = 1, relheight = 1)
+
 
 # BUG WRITER TAB UI
 def Generate_BugWriter_Tab_UI(master):
@@ -593,7 +596,8 @@ def Generate_BugWriter_Tab_UI(master):
 	## TAB 1
 	master.BugWriterTab = Frame(master.TAB_CONTROL)
 	master.TAB_CONTROL.add(master.BugWriterTab, text=master.LanguagePack.Tab['BugWriter'])
-	#Apply_Background_Image(master.BugWriterTab, 'bg_writer.png')
+
+	#Apply_Background_Image(master.BugWriterTab, 'logo.png')
 	
 	
 
@@ -631,7 +635,16 @@ def Generate_BugWriter_Tab_UI(master):
 	master.Bottom_Frame.pack(side=RIGHT, fill=BOTH, expand=False)
 	
 
-	
+#def MDNF_Logo(master):
+#	bg_path =os.path.join( r'theme/background', 'logo.png')
+#	if os.path.isfile(bg_path):
+#		print('Apply image: ', bg_path)
+#		background_image = Image.open(bg_path)
+#		background_image = background_image.resize((400,400))
+#		background_image = ImageTk.PhotoImage(background_image)
+#		background_label = Label(master.BugWriterTab, image = background_image)
+#		background_label.image = background_image
+#		background_label.place(x = 0, y = 0, relwidth = 1, relheight = 1)	
 
 # BUG WRITER 
 def Generate_BugWriter_Menu_UI(master):
