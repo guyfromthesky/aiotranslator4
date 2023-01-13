@@ -175,6 +175,14 @@ class ConfigLoader:
 		self.Init_Config_Option(config, Section, 'HeaderA', "")
 		self.Init_Config_Option(config, Section, 'HeaderB', "")
 
+		Section = 'NXLog'
+		self.Init_Config_Option(config, Section, 'table', "", True)
+		self.Init_Config_Option(config, Section, 'column', "", True)
+		self.Init_Config_Option(config, Section, 'jsondata', "", True)
+		self.Init_Config_Option(config, Section, 'nx_TextTestReport', "", True)
+		self.Init_Config_Option(config, Section, 'nx_TextShouldBe', "", True)
+		self.Init_Config_Option(config, Section, 'nx_TextTitle', "", True)
+
 		Section = 'Temp_BugDetails'
 		self.Init_Config_Option(config, Section, 'TextTitle', "", True)
 
@@ -217,7 +225,19 @@ class ConfigLoader:
 		self.Init_Config_Option_Numberic(config, Section, 'target_lang', 1)
 		self.Init_Config_Option_Numberic(config, Section, 'source_lang', 2)
 		self.Init_Config_Option_Numberic(config, Section, 'secondary_target_lang', 5)
+		self.Init_Config_Option(config, Section, 'SourceText', "", True)
+		self.Init_Config_Option(config, Section, 'TargetText', "", True)
 
+		Section = 'Temp_NXLog'
+		if not config.has_section(Section):
+			config.add_section(Section)
+			self.Config[Section] = {}
+		self.Init_Config_Option(config, Section, 'table', "", True)
+		self.Init_Config_Option(config, Section, 'column', "", True)
+		self.Init_Config_Option(config, Section, 'jsondata', "", True)
+		self.Init_Config_Option(config, Section, 'nx_TextTestReport', "", True)
+		self.Init_Config_Option(config, Section, 'nx_TextShouldBe', "", True)
+		self.Init_Config_Option(config, Section, 'nx_TextTitle', "", True)
 
 		with open(config_path, 'w') as configfile:
 			config.write(configfile)

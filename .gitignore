@@ -24,3 +24,5 @@ translator/*
 Setup/.DS_Store
 AIO Translator/*
 .DS_Store
+Compiler/\[MDNF\] Translate Helper.bat
+Compiler/Theme creator.bat

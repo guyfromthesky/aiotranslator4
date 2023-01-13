@@ -885,12 +885,14 @@ class Translator:
 
 	def add_notranslate_tag(self, source_text):
 		for index in range(len(source_text)):
-			string_to_translate = source_text[index]
-			special_texts = re.findall("\«([^\»]*)\»", string_to_translate)
+			#string_to_translate = source_text[index]
+			#special_texts = re.findall("\«([^\»]*)\»", string_to_translate)
 			#print('special_texts list', special_texts)
-			for special_text in special_texts:
-				source_text[index]  = string_to_translate.replace("«" + special_text + "»", ("<span class=\"notranslate\">" + special_text + "</span>"))
+			#for special_text in special_texts:
+			#	source_text[index]  = string_to_translate.replace("«" + special_text + "»", ("<span class=\"notranslate\">" + special_text + "</span>"))
 		#print('New source', source_text)
+			source_text[index]=source_text[index].replace("«",'<span class=\"notranslate\">').replace("»","</span>")
+		print(source_text)
 		return source_text
 
 	def remove_notranslate_tag(self, translation):

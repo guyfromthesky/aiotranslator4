@@ -166,6 +166,10 @@ class LanguagePackEN:
 
 	Label['Transparent'] = "Transparent percent:"
 
+	Label['NX.Table'] = "Table:"
+	Label['NX.Column'] = "Column:"
+	Label['jsondata'] = "JSON:"
+	Label['phenomenon'] = "Phenomenon:"
 
 	Tab = {}
 	Tab['Main'] = "Main Menu"
@@ -266,6 +270,7 @@ class LanguagePackEN:
 
 	ToolTips['Bilingual'] = "Original text is kept in the comment."
 
+	ToolTips['tableorcolumnisempty'] = "Please re-check. Table or column is empty!"
 	Notice = {}
 
 
