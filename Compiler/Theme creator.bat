@@ -1,2 +1,2 @@
-"D:\All env\Translator Env\Scripts\pyinstaller.exe" "..\Theme creator.py" -F -w --clean --icon="..\src\Translate Helper.ico"
+"D:\App\translator_env\Scripts\pyinstaller.exe" "..\spec\Theme Creator.spec"
 cmd /k

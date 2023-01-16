@@ -19,21 +19,21 @@ class ConfigLoader:
 		if sys.platform.startswith('win'):
 			self.appdata = os.environ['APPDATA'] + '\\AIO Translator'
 		else:
-			self.appdata = os.getcwd() + '\\AIO Translator'
+			self.appdata = os.getcwd() + self.correct_path_os('\\AIO Translator')
 	
 		# Config file
-		self.Translator_Config_Path = self.appdata + '\\translator.ini'
-		self.Theme_Config_Path = self.appdata + '\\theme.ini'
+		self.Translator_Config_Path = self.appdata + self.correct_path_os('\\translator.ini')
+		self.Theme_Config_Path = self.appdata + self.correct_path_os('\\theme.ini')
 		
 		if Document == True:
-			self.Doc_Config_Path = self.appdata + '\\doc.ini'
+			self.Doc_Config_Path = self.appdata + self.correct_path_os('\\doc.ini')
 		if Writer == True:
-			self.Writer_Config_Path = self.appdata + '\\writer.ini'
-			self.Custom_Writer_Config_Path = self.appdata + '\\custom_writer.ini'
+			self.Writer_Config_Path = self.appdata + self.correct_path_os('\\writer.ini')
+			self.Custom_Writer_Config_Path = self.appdata + self.correct_path_os('\\custom_writer.ini')
 		# Folder
-		self.TM_Backup_Folder_Path = self.appdata + '\\TM'
+		self.TM_Backup_Folder_Path = self.appdata + self.correct_path_os('\\TM')
 
-		self.LocalTM = self.appdata + '\\Local.pkl'
+		self.LocalTM = self.appdata + self.correct_path_os('\\Local.pkl')
 
 		self.Config = {}
 		self.Document = Document
@@ -54,6 +54,10 @@ class ConfigLoader:
 		#self.Initconfig()
 		#self.Init_DB_Config()
 		
+	def correct_path_os(self, path):
+		if not sys.platform.startswith('win'):
+			return str(path).replace('\\', '/')
+		return path
 
 	def initFolder(self):
 		if not os.path.isdir(self.appdata):
@@ -170,6 +174,14 @@ class ConfigLoader:
 		self.Init_Config_Option(config, Section, 'HeaderA', "")
 		self.Init_Config_Option(config, Section, 'HeaderB', "")
 
+		Section = 'NXLog'
+		self.Init_Config_Option(config, Section, 'table', "", True)
+		self.Init_Config_Option(config, Section, 'column', "", True)
+		self.Init_Config_Option(config, Section, 'jsondata', "", True)
+		self.Init_Config_Option(config, Section, 'nx_TextTestReport', "", True)
+		self.Init_Config_Option(config, Section, 'nx_TextShouldBe', "", True)
+		self.Init_Config_Option(config, Section, 'nx_TextTitle', "", True)
+
 		Section = 'Temp_BugDetails'
 		self.Init_Config_Option(config, Section, 'TextTitle', "", True)
 
@@ -212,7 +224,19 @@ class ConfigLoader:
 		self.Init_Config_Option_Numberic(config, Section, 'target_lang', 1)
 		self.Init_Config_Option_Numberic(config, Section, 'source_lang', 2)
 		self.Init_Config_Option_Numberic(config, Section, 'secondary_target_lang', 5)
+		self.Init_Config_Option(config, Section, 'SourceText', "", True)
+		self.Init_Config_Option(config, Section, 'TargetText', "", True)
 
+		Section = 'Temp_NXLog'
+		if not config.has_section(Section):
+			config.add_section(Section)
+			self.Config[Section] = {}
+		self.Init_Config_Option(config, Section, 'table', "", True)
+		self.Init_Config_Option(config, Section, 'column', "", True)
+		self.Init_Config_Option(config, Section, 'jsondata', "", True)
+		self.Init_Config_Option(config, Section, 'nx_TextTestReport', "", True)
+		self.Init_Config_Option(config, Section, 'nx_TextShouldBe', "", True)
+		self.Init_Config_Option(config, Section, 'nx_TextTitle', "", True)
 
 		with open(config_path, 'w') as configfile:
 			config.write(configfile)

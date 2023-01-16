@@ -230,7 +230,7 @@ class Translator:
 
 	def correct_path_os(self, path):
 		if not sys.platform.startswith('win'):
-			return str(path).replace('\\', '//')
+			return str(path).replace('\\', '/')
 		return path
 	
 
@@ -887,12 +887,14 @@ class Translator:
 
 	def add_notranslate_tag(self, source_text):
 		for index in range(len(source_text)):
-			string_to_translate = source_text[index]
-			special_texts = re.findall("\«([^\»]*)\»", string_to_translate)
+			#string_to_translate = source_text[index]
+			#special_texts = re.findall("\«([^\»]*)\»", string_to_translate)
 			#print('special_texts list', special_texts)
-			for special_text in special_texts:
-				source_text[index]  = string_to_translate.replace("«" + special_text + "»", ("<span class=\"notranslate\">" + special_text + "</span>"))
+			#for special_text in special_texts:
+			#	source_text[index]  = string_to_translate.replace("«" + special_text + "»", ("<span class=\"notranslate\">" + special_text + "</span>"))
 		#print('New source', source_text)
+			source_text[index]=source_text[index].replace("«",'<span class=\"notranslate\">').replace("»","</span>")
+		print(source_text)
 		return source_text
 
 	def remove_notranslate_tag(self, translation):
@@ -1129,6 +1131,7 @@ class Translator:
 		blob = bucket.get_blob(self.db_list_uri)
 		
 		_download_path = self.config_path + '\\AIO Translator\\config.csv'
+		self._download_path = self.correct_path_os(_download_path)
 		print('Download path:', _download_path)
 		blob.download_to_filename(_download_path)	
 		# Write new line to the config file
@@ -1289,6 +1292,7 @@ class Translator:
 			try:
 				_download_path = self.config_path \
 					+ '\\AIO Translator\\temp_header.csv'
+				self._download_path = self.correct_path_os(_download_path)
 				blob.download_to_filename(_download_path)	
 			except Exception as e:
 				print('Fail to load blob:', e)
@@ -1349,6 +1353,7 @@ class Translator:
 		if blob != None:
 			try:
 				_download_path = self.config_path + '\\AIO Translator\\temp_db.csv'
+				self._download_path = self.correct_path_os(_download_path)
 				blob.download_to_filename(_download_path)	
 			except Exception as e:
 				print('Fail to load blob:', e)
@@ -1803,13 +1808,16 @@ class Translator:
 				_basename = os.path.basename(self.tm_path)
 				_filename = os.path.splitext(_basename)[0] + '_'
 				self.local_log_path = self.config_path + '\\AIO Translator\\' + _filename + 'log.txt'
+				self.local_log_path = self.correct_path_os(self.local_log_path)
 				tm_dir =  os.path.dirname(self.tm_path)
 				self.tm_log_path   = os.path.join(tm_dir,  _filename + "log.txt")
 			else:
 				self.local_log_path = self.config_path + '\\AIO Translator\\log.txt'
+				self.local_log_path = self.correct_path_os(self.local_log_path)
 				self.tm_log_path = self.local_log_path
 		else:
 			self.local_log_path = self.config_path + '\\AIO Translator\\log.txt'
+			self.local_log_path = self.correct_path_os(self.local_log_path)
 			self.tm_log_path = self.local_log_path
 		return
 
