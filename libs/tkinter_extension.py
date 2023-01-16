@@ -622,8 +622,8 @@ def Generate_BugWriter_Tab_UI(master):
 	master.TAB_CONTROL.add(master.NXLogTab, text= "NXLog Bug Writer")
 
 	##TAB 4
-	#master.ImageTranslateTab = Frame(master.TAB_CONTROL)
-	#master.TAB_CONTROL.add(master.ImageTranslateTab, text= "Image Translate")
+	master.ImageTranslateTab = Frame(master.TAB_CONTROL)
+	master.TAB_CONTROL.add(master.ImageTranslateTab, text= "Image Translate")
 
 	## TAB 5
 	master.TranslateSettingTab = Frame(master.TAB_CONTROL)
