@@ -58,7 +58,7 @@ from libs.version import get_version
 from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText, ConfirmationPopup, Generate_NXLog_UI
 
 
-from libs.tkinter_extension import Generate_BugWriter_Tab_UI, Generate_BugWriter_Menu_UI, Generate_Translate_Setting_UI, MDNF_Logo
+from libs.tkinter_extension import Generate_BugWriter_Tab_UI, Generate_BugWriter_Menu_UI, Generate_Translate_Setting_UI
 from libs.tkinter_extension import Generate_MDNF_BugWriter_UI, Generate_SimpleTranslator_UI, Apply_Transparency, BugWriter_BottomPanel
 
 import webbrowser
