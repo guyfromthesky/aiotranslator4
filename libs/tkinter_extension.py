@@ -719,9 +719,7 @@ def Generate_Theme_Setting_UI(master, Tab):
 					command = lambda: get_current_theme_color(master), style=master.Btn_Style)
 	master.Btn_Copy_Theme.grid(row=Row, column=11, columnspan= 2, padx=5, pady=5, sticky=W)
 
-	
 	#master.theme_name = Entry(master.configure_frame)
-
 	#master.theme_name.insert(END, "new theme")
 	#master.theme_name.grid(row=Row, column=2, columnspan = 6, padx=5, pady=5, sticky= E+W)
 

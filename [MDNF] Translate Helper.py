@@ -60,7 +60,7 @@ from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, Cust
 
 from libs.tkinter_extension import Generate_BugWriter_Tab_UI, Generate_BugWriter_Menu_UI, Generate_Translate_Setting_UI
 from libs.tkinter_extension import Generate_MDNF_BugWriter_UI, Generate_SimpleTranslator_UI, Apply_Transparency, BugWriter_BottomPanel
-
+from libs.tkinter_extension import init_writer_theme, Generate_Theme_Setting_UI, Generate_Image_Translate_UI
 import webbrowser
 
 from google.cloud import logging
@@ -154,7 +154,8 @@ class MyTranslatorHelper(Frame):
 
 		self.LanguagePack = LanguagePack
 		
-		self.init_theme()
+		init_writer_theme(self)
+		
 		self.init_ui()
 		self.init_UI_setting()
 		
@@ -238,10 +239,13 @@ class MyTranslatorHelper(Frame):
 		try:
 			Generate_MDNF_BugWriter_UI(self, self.BugWriterTab)
 			Generate_SimpleTranslator_UI(self, self.SimpleTranslatorTab)
+			Generate_Image_Translate_UI(self, self.ImageTranslateTab)
 			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
 			Generate_NXLog_UI(self, self.NXLogTab)
 			self.bottom_panel = BugWriter_BottomPanel(self)
+			Generate_Theme_Setting_UI(self, self.ThemeSettingTab)
 			self.SourceText.bind('<KeyRelease>', self.SourceTextCallback)
+			self.bottom_panel = BugWriter_BottomPanel(self)
 
 		except Exception as e:
 			print(f'An error occurs while initializing UI: {e}')
@@ -292,7 +296,9 @@ class MyTranslatorHelper(Frame):
 		self.project_bucket_id = self.Configuration['Translator']['project_bucket_id']
 
 		self.glossary_id = self.Configuration['Translator']['glossary_id']
-		self.used_theme = self.Configuration['Bug_Writer']['theme_name']
+
+		self.used_theme = self.Configuration['Used_Theme']['Bug_Writer']
+
 		try:
 			cloud_config = CloudConfigLoader()
 			cloud_configuration = cloud_config.Config
@@ -335,31 +341,6 @@ class MyTranslatorHelper(Frame):
 			self.simple_secondary_target_language.set('')
 		else:
 			self.simple_secondary_target_language.set(self.language_list[simple_secondary_language])
-
-	def init_theme(self):
-		"""Applied the theme name saved in the settings on init."""
-		try:
-			self.theme_names = self.style.theme_names()
-							#	['cosmo', 'flatly', 'litera', 'minty',
-							#	"lumen", "sandstone",	"yeti", "pulse", 
-							#	"united", "morph", "journal", "darkly", 'superhero', 
-							#	'solar', 'cyborg', 'vapor', 'simplex', 'cerculean'
-							#		, 'pinky']
-			if self.used_theme not in self.theme_names:
-				raise Exception('Cannot use the theme saved in the config'
-					' because it is not supported or required files have'
-					' been removed.')
-			#if self.used_theme == "Quanimus":
-			#	MDNF_Logo(self)
-			self.style.theme_use(self.used_theme)
-
-		except Exception as err:
-			print('Error while initializing theme:\n'
-				f'- {err}\n'
-				'The system default theme will be used instead.')
-		transparency  = self.Configuration['Bug_Writer']['Transparent']
-		Apply_Transparency(transparency, self)
-
 
 	def select_theme_name(self):
 		"""Save the theme name value to Configuration and change
