@@ -68,7 +68,7 @@ from google.cloud import logging
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4210
+REV = 4211
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num
 
@@ -231,7 +231,7 @@ class MyTranslatorHelper(Frame):
 			#Generate_Image_Translate_UI(self, self.ImageTranslateTab)
 			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
 			Generate_Theme_Setting_UI(self, self.ThemeSettingTab)
-			Generate_Image_Translate_UI
+	
 			self.bottom_panel = BugWriter_BottomPanel(self)
 	
 		except Exception as e:
@@ -287,8 +287,8 @@ class MyTranslatorHelper(Frame):
 
 		self.glossary_id = self.Configuration['Translator']['glossary_id']
 		
-		self.used_theme = self.Configuration['Bug_Writer']['theme_name']
-	
+		self.used_theme = self.Configuration['Used_Theme']['Bug_Writer']
+
 		try:
 			cloud_config = CloudConfigLoader()
 			cloud_configuration = cloud_config.Config

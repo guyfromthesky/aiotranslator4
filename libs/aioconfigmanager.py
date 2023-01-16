@@ -151,7 +151,6 @@ class ConfigLoader:
 		self.Init_Config_Option(config, Section, 'MenuColor', "")
 		self.Init_Config_Option(config, Section, 'UsedTheme', "", True)
 		
-		self.Init_Config_Option(config, Section, 'theme_name', "minty", True)
 		self.Init_Config_Option(config, Section, 'font_size', "12", True)
 		Section = 'BugDetails'
 		
@@ -260,7 +259,6 @@ class ConfigLoader:
 		self.Init_Config_Option_Numberic(config, Section, 'usage', 0)
 		
 		self.Init_Config_Option_Float(config, Section, 'Transparent', 97)
-		self.Init_Config_Option(config, Section, 'theme_name', "minty", True)
 		self.Init_Config_Option(config, Section, 'font_size', "12", True)
 
 
@@ -327,7 +325,13 @@ class ConfigLoader:
 		self.Init_Config_Option(config, Section, 'inputbg', '#073642')
 		self.Init_Config_Option(config, Section, 'active', '#002730')
 
-		
+
+		Section = 'Used_Theme'
+		if not config.has_section(Section):
+			config.add_section(Section)
+			self.Config[Section] = {}
+		self.Init_Config_Option(config, Section, 'Bug_Writer', 'minty')
+		self.Init_Config_Option(config, Section, 'Document_Translator', 'minty')
 		
 		with open(config_path, 'w') as configfile:
 			config.write(configfile)
