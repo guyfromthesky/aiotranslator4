@@ -56,7 +56,7 @@ from libs.cloudconfig import CloudConfigLoader
 from libs.version import get_version
 from libs.tkinter_extension import Generate_BugWriter_Tab_UI, Generate_BugWriter_Menu_UI, Generate_Translate_Setting_UI
 from libs.tkinter_extension import Generate_BugWriter_UI, Generate_SimpleTranslator_UI, Generate_Theme_Setting_UI, Generate_Image_Translate_UI
-from libs.tkinter_extension import BugWriter_BottomPanel, init_theme
+from libs.tkinter_extension import BugWriter_BottomPanel, init_writer_theme
 
 from libs.general import get_version, resource_path, get_user_name
 #from openpyxl import load_workbook, worksheet, Workbook
@@ -68,7 +68,7 @@ from google.cloud import logging
 
 tool_display_name = "Translate Helper"
 tool_name = 'writer'
-REV = 4204
+REV = 4211
 ver_num = get_version(REV) 
 version = tool_display_name  + " " +  ver_num
 
@@ -148,7 +148,7 @@ class MyTranslatorHelper(Frame):
 		self.LanguagePack = LanguagePack
 		
 
-		init_theme(self)
+		init_writer_theme(self)
 		
 		self.init_ui()
 		
@@ -228,10 +228,10 @@ class MyTranslatorHelper(Frame):
 		try:
 			Generate_BugWriter_UI(self, self.BugWriterTab)
 			Generate_SimpleTranslator_UI(self, self.SimpleTranslatorTab)
-			Generate_Image_Translate_UI(self, self.ImageTranslateTab)
+			#Generate_Image_Translate_UI(self, self.ImageTranslateTab)
 			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
 			Generate_Theme_Setting_UI(self, self.ThemeSettingTab)
-			Generate_Image_Translate_UI
+	
 			self.bottom_panel = BugWriter_BottomPanel(self)
 	
 		except Exception as e:
@@ -287,8 +287,8 @@ class MyTranslatorHelper(Frame):
 
 		self.glossary_id = self.Configuration['Translator']['glossary_id']
 		
-		self.used_theme = self.Configuration['Bug_Writer']['theme_name']
-	
+		self.used_theme = self.Configuration['Used_Theme']['Bug_Writer']
+
 		try:
 			cloud_config = CloudConfigLoader()
 			cloud_configuration = cloud_config.Config

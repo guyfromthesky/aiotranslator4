@@ -47,12 +47,14 @@ import webbrowser
 
 from libs.aiotranslator import generate_translator
 
+from libs.cloudconfig import CloudConfigLoader
+
 from libs.aioconfigmanager import ConfigLoader
 from libs.documentprocessing import translate_docx, translate_msg
 from libs.documentprocessing import translate_presentation, translate_workbook
 
 from libs.general import get_version, resource_path, send_fail_request, get_user_name
-from libs.tkinter_extension import AutocompleteCombobox, Generate_Document_Translate_Setting_UI, Apply_Transparency, init_doc_theme
+from libs.tkinter_extension import AutocompleteCombobox, Generate_Document_Translate_Setting_UI, init_doc_theme
 
 from google.cloud import logging
 import pandas as pd
@@ -62,8 +64,8 @@ import pandas as pd
 tool_display_name = "Document Translator"
 #This variable will be passed to AIO translator to know the source of translate request.
 tool_name = 'document'
-rev = 4204
-ver_num = get_version(rev) 
+REV = 4210
+ver_num = get_version(REV) 
 version = tool_display_name  + " v" +  ver_num
 
 DELAY = 20
@@ -143,6 +145,17 @@ class DocumentTranslator(Frame):
 		self.init_ui()
 		
 		self.init_UI_setting()
+
+		if REV < int(self.latest_version):
+			self.Error('Current version is lower than the minimal version allowed. Please update.')	
+			webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/AIO+Translator")
+			self.quit()
+			return
+
+		if self.banning_status:
+			self.Error('You\'re not allowed to use the tool. If you feel that it\'s unfair, please contact with your manager for more information.')	
+			self.quit()
+			return
 
 		#Create Translator
 		if self.LicensePath.get() != "":
@@ -412,6 +425,9 @@ class DocumentTranslator(Frame):
 		self.ProjectList.set_completion_list([])
 		if self.glossary_id != None:
 			self.ProjectList.set(self.glossary_id)
+
+		self.ProjectList.bind('<Control-x>', lambda e: 'break')
+		self.ProjectList.bind('<Control-c>', lambda e: 'break')
 
 		self.ProjectList.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, stick=W)
 		Button(Tab, width = self.HALF_BUTTON_WIDTH, text= self.LanguagePack.Button['Reset'], command= self.Btn_DB_Uploader_Reset).grid(row=Row, column=7, columnspan=2,padx=5, pady=5, sticky=E)
@@ -707,6 +723,7 @@ class DocumentTranslator(Frame):
 		else:
 			return str(path).replace('\\', '//')
 
+
 	def CorrectExt(self, path, ext):
 		if path != None and ext != None:
 			Outputdir = os.path.dirname(path)
@@ -749,7 +766,7 @@ class DocumentTranslator(Frame):
 			NewTM = self.CorrectPath(filename)
 			with open(NewTM, 'wb') as pickle_file:
 				# New TM format.
-				pickle.dump({'tm_version': 4}, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+				pickle.dump({'tm_version': 4, 'tm_sub_version' : 41}, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 			self.TMPath.set(NewTM)
 			self.AppConfig.Save_Config(self.AppConfig.Translator_Config_Path, 'Translator', 'translation_memory', NewTM, True)
 			self.renew_my_translator()
@@ -979,8 +996,14 @@ class DocumentTranslator(Frame):
 	def Confirm_Popup(self, Request, message):
 		MsgBox = simpledialog.askstring(title="Confirmation popup", prompt=message)
 		self.Supper = False
+		self.Admin = False
 		secret = Request + '_' + "SU"
-		if MsgBox == secret:
+		secret_admin = secret + "AD"
+		if MsgBox == secret_admin:
+			self.Supper = True
+			self.Admin = True
+			return True
+		elif MsgBox == secret:
 			self.Supper = True
 			return True
 		if MsgBox == Request:
@@ -1031,12 +1054,26 @@ class DocumentTranslator(Frame):
 		Transparent  = self.Configuration['Document_Translator']['Transparent']
 		self.Transparent.set(Transparent)
 
+		try:
+			cloud_config = CloudConfigLoader()
+			cloud_configuration = cloud_config.Config
+			self.banning_status = cloud_configuration['banned']
+			self.latest_version = cloud_configuration['latest_version']
+			print("self.banning_status", self.banning_status)
+			print("self.latest_version", self.latest_version)
+		except Exception as e:
+			print("Error while loading cloud configuration:", e)
+			self.banning_status = False
+			self.latest_version = 1000
+
 		# Check if tm path is valid
 		if not os.path.exists(_tm_path):
 			with open(_tm_path, 'wb') as pickle_file:
 				pickle.dump({'tm_version': 4}, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 				pickle_file.close()
 		self.TMPath.set(_tm_path)		
+
+
 
 		self.bucket_id = self.Configuration['Translator']['bucket_id']
 		self.db_list_uri = self.Configuration['Translator']['db_list_uri']
@@ -1113,15 +1150,6 @@ class DocumentTranslator(Frame):
 		self.write_debug('Translate Process has been stop')
 		return
 
-	def Stop(self):
-		try:
-			if self.TranslatorProcess.is_alive():
-				self.TranslatorProcess.terminate()
-		except:
-			pass
-		self.progressbar["value"] = 0
-		self.progressbar.update()
-		self.write_debug('Translate Process has been stop')	
 
 	def generate_translator_engine(self):
 		self.write_debug(self.LanguagePack.ToolTips['AppInit'])

@@ -46,8 +46,10 @@ from pandas.core.frame import DataFrame
 
 from libs.version import get_version
 
+from libs.cloudconfig import CloudConfigLoader
+
 Tool = "translator"
-rev = 4200
+rev = 4210
 ver_num = get_version(rev)
 Translatorversion = Tool + " " + ver_num
 TM_VERSION = 4
@@ -282,8 +284,8 @@ class Translator:
 	# If the lib is run as a server, consider to use this function
 	def init_glossary(self):
 		self.Client = translator.TranslationServiceClient()	
-		self.Parent = f"projects/{self.project_id}/locations/{self.location}"
-		self.Glossary = self.Client.glossary_path(self.project_id, self.location, self.glossary_id)
+		self.Parent = f"projects/{self.project_bucket_id}/locations/{self.location}"
+		self.Glossary = self.Client.glossary_path(self.project_bucket_id, self.location, self.glossary_id)
 		self.Glossary_Config = translator.TranslateTextGlossaryConfig(glossary=self.Glossary)
 
 	# Check and remove later
@@ -1061,7 +1063,7 @@ class Translator:
 		List = []
 		client = translator.TranslationServiceClient()
 
-		parent = f"projects/{self.project_id}/locations/{self.location}"
+		parent = f"projects/{self.project_bucket_id}/locations/{self.location}"
 
 		for glossary in client.list_glossaries(parent=parent):
 			Gloss = glossary.name.split('/')[-1]
@@ -1088,7 +1090,7 @@ class Translator:
 	def get_glossary(self, glossary_id= None, timeout=180,):
 		# Get glossary from the running project
 		client = translator.TranslationServiceClient()
-		name = client.glossary_path(self.project_id, self.location, glossary_id)
+		name = client.glossary_path(self.project_bucket_id, self.location, glossary_id)
 		glossary = client.get_glossary(name = name)
 
 		return 	glossary
@@ -1405,7 +1407,7 @@ class Translator:
 
 	def get_glossary_length(self, timeout=180,):
 		client = translator.TranslationServiceClient()
-		name = client.glossary_path(self.project_id, self.location, self.glossary_id)
+		name = client.glossary_path(self.project_bucket_id, self.location, self.glossary_id)
 		try:
 			glossary = client.get_glossary(name = name)
 			return glossary.entry_count
@@ -1424,9 +1426,9 @@ class Translator:
 	def create_glossary(self, input_uri= None, glossary_id=None, supported_language = ['en', 'ko'], timeout=180,):
 
 		client = translator.TranslationServiceClient()
-
-		name = client.glossary_path(self.project_id, self.location, glossary_id)
-		
+		#name = client.glossary_path(self.project_id, self.location, glossary_id)
+		name = client.glossary_path(self.project_bucket_id, self.location, glossary_id)
+		print('Client name:', name)
 		language_codes_set = translator.types.Glossary.LanguageCodesSet(
 			language_codes = supported_language
 		)
@@ -1438,13 +1440,16 @@ class Translator:
 		glossary = translator.types.Glossary(
 			name=name, language_codes_set=language_codes_set, input_config=input_config
 		)
-
-		parent = f"projects/{self.project_id}/locations/{self.location}"
+		
+		#parent = f"projects/{self.project_id}/locations/{self.location}"
+		parent = f"projects/{self.project_bucket_id}/locations/{self.location}"
+		print('Creating new Glossary:', parent)
+		print('Glossary name:', glossary)
 		try:
 			operation = client.create_glossary(parent=parent, glossary=glossary)
 			return operation.result(timeout)
 		except Exception as e:
-			print('Error while uploading glossary:', e)
+			print('Error while creating glossary:', e)
 			return False
 	
 	# Delete the glossary that use for glossary_translate
@@ -1452,7 +1457,7 @@ class Translator:
 		"""Delete a specific glossary based on the glossary id."""
 		client = translator.TranslationServiceClient()
 
-		name = client.glossary_path(self.project_id, self.location, glossary_id)
+		name = client.glossary_path(self.project_bucket_id, self.location, glossary_id)
 
 		operation = client.delete_glossary(name=name)
 		result = operation.result(timeout)
@@ -1729,9 +1734,18 @@ class Translator:
 			self.delete_glossary(glossary_id)
 		except:
 			print('DB deleted')
-		create_result = self.create_glossary(_db_uri, glossary_id)
+		#create_result = self.create_glossary(_db_uri, glossary_id)
+		try:
+			create_result = self.create_glossary(_db_uri, glossary_id)
+			print('Creating blob')
+		except Exception as e:
+			print('Error while Creating glossary:', glossary_id, e)	
+			return 'LostDB'
+
 		if create_result != False:
+
 			return True
+		print("Result of creating Glossary:", create_result)	
 		return False
 
 	def delete_glossary(self, glossary_id= "", timeout=180,):
@@ -1930,7 +1944,8 @@ class Translator:
 							if self.glossary_id in self.all_tm:
 								self.current_tm = self.all_tm[self.glossary_id]
 							else:
-								self.current_tm = self.init_translation_memory()
+								self.all_tm[self.glossary_id] = self.init_translation_memory()
+								self.current_tm = self.all_tm[self.glossary_id]
 								print('New project')
 							if 'tm_sub_version' not in self.all_tm:
 								self.all_tm['tm_sub_version'] = TM_SUB_VERSION
@@ -1946,11 +1961,14 @@ class Translator:
 		print('Fail to load TM, ignore TM file and move on')
 		self.all_tm = {}
 
-		self.current_tm = self.init_translation_memory()
+		#self.current_tm = self.init_translation_memory()
 		
-		self.translation_memory = pd.DataFrame(columns=[self.from_language, self.to_language])				
-		self.current_tm = self.init_translation_memory()
-		self.all_tm[self.glossary_id] = self.current_tm
+		self.translation_memory = pd.DataFrame(columns=[self.from_language, self.to_language])	
+
+		self.all_tm[self.glossary_id] = self.init_translation_memory()
+		self.current_tm = self.all_tm[self.glossary_id]
+		
+		#self.all_tm[self.glossary_id] = self.all_tm
 		self.all_tm['tm_version'] = TM_VERSION
 		self.all_tm['tm_sub_version'] = TM_SUB_VERSION
 		return False
@@ -2582,7 +2600,7 @@ def generate_translator(
 		bucket_id = 'nxvnbucket',
 		db_list_uri = 'config/db_list.csv',
 		project_bucket_id = 'credible-bay-281107'):	
-
+	print(locals())
 	MyTranslator = Translator(	from_language = from_language, 
 								to_language = to_language, 
 								glossary_id =  glossary_id, 

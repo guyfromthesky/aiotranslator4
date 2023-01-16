@@ -21,7 +21,13 @@ import textwrap
 import re
 import os
 
+
+'''
+import easyocr
+import cv2
 import numpy as np
+'''
+
 
 class AutocompleteCombobox(Combobox):
 
@@ -622,12 +628,14 @@ def Generate_BugWriter_Tab_UI(master):
 	## TAB 5
 	master.TranslateSettingTab = Frame(master.TAB_CONTROL)
 	master.TAB_CONTROL.add(master.TranslateSettingTab, text=master.LanguagePack.Tab['Translator'])
+
+	Apply_Background_Image(master.TranslateSettingTab, 'bg_setting.png')
 	
 	## TAB 6
-	#master.ThemeSettingTab = Frame(master.TAB_CONTROL)
-	#master.TAB_CONTROL.add(master.ThemeSettingTab, text= "Theme Setting")
+	master.ThemeSettingTab = Frame(master.TAB_CONTROL)
+	master.TAB_CONTROL.add(master.ThemeSettingTab, text= "Theme Setting")
 	
-	#Apply_Background_Image(master.TranslateSettingTab, 'bg_setting.png')
+	Apply_Background_Image(master.ThemeSettingTab, 'bg_theme_setting.png')
 
 	master.TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
 
@@ -694,7 +702,7 @@ def Generate_BugWriter_Menu_UI(master):
 def About():
 	messagebox.showinfo("About....", "Creator: Evan@nexonnetworks.com")
 def OpenWeb():
-	webbrowser.open_new(r"https://confluence.nexon.com/display/NWMQA/%5BTranslation%5D+AIO+Translator")
+	webbrowser.open_new(r"https://confluence.nexon.com/display/NWVNQA/%5BTranslation+Tool%5D+AIO+Translator")
 def Error(self, ErrorText):
 	messagebox.showerror('Translate error...', ErrorText)	
 
@@ -702,12 +710,12 @@ def Error(self, ErrorText):
 def Generate_Theme_Setting_UI(master, Tab):
 	"""Create Translate Setting tab."""
 
-	master.configure_frame = Frame(Tab)
-	master.configure_frame.pack(side=LEFT, fill=BOTH, expand=YES)
+	#master.configure_frame = Frame(Tab)
+	#master.configure_frame.pack(side=LEFT, fill=BOTH, expand=YES)
 	Row = 1
 	
-	Label(master.configure_frame, text='Custom theme:').grid(row=Row, column=0, columnspan = 2, padx=5, pady=5, sticky= E+W)
-	master.Btn_Copy_Theme = Button(master.configure_frame, width = master.HALF_BUTTON_SIZE, text=  'Copy', 
+	Label(Tab, text='Custom theme:').grid(row=Row, column=0, columnspan = 2, padx=5, pady=5, sticky= E+W)
+	master.Btn_Copy_Theme = Button(Tab, width = master.HALF_BUTTON_SIZE, text=  'Copy', 
 					command = lambda: get_current_theme_color(master), style=master.Btn_Style)
 	master.Btn_Copy_Theme.grid(row=Row, column=11, columnspan= 2, padx=5, pady=5, sticky=W)
 
@@ -731,14 +739,15 @@ def Generate_Theme_Setting_UI(master, Tab):
 			_col = 8
 			_row = Row - 8
 
-		row = ColorRow(master.configure_frame, color_type, color_value)
+		row = ColorRow(Tab, color_type, color_value)
 		master.color_rows.append(row)
 		row.grid(row=_row, rowspan=1, column=_col, columnspan=4, padx=5, pady=5,
 			sticky=E+W)
 		row.bind("<<ColorSelected>>",  lambda event, master= master: create_temp_theme(event, master))
 		Row +=1
+	
 	_used_theme = master.strvar_theme_name.get()
-	if _used_theme == 'Custom':
+	if _used_theme == 'custom':
 		create_temp_theme(event = None, master = master)
 
 # SETTING UI
@@ -746,29 +755,29 @@ def Generate_Translate_Setting_UI(master, Tab):
 	"""Create Translate Setting tab."""
 
 
-	Top_Frame = Frame(Tab)
-	Top_Frame.pack(side = TOP, fill=None, expand= False)
+	#Top_Frame = Frame(Tab)
+	#Top_Frame.pack(side = TOP, fill=None, expand= False)
 
-	Right_Frame = Frame(Tab)
-	Right_Frame.pack(side = RIGHT, fill=BOTH, expand= False)
-	Left_Frame = Frame(Tab)
-	Left_Frame.pack(side = LEFT, fill=BOTH, expand= Y)
+	#Right_Frame = Frame(Tab)
+	#Right_Frame.pack(side = RIGHT, fill=BOTH, expand= False)
+	#Left_Frame = Frame(Tab)
+	#Left_Frame.pack(side = LEFT, fill=BOTH, expand= Y)
 
 	Row = 1
-	Label(Top_Frame, textvariable=master.Notice).grid(row=Row, column=0, columnspan = 10, padx=5, pady=5, sticky= E+W)
+	Label(Tab, textvariable=master.Notice).grid(row=Row, column=0, columnspan = 10, padx=5, pady=5, sticky= E+W)
 
 	Row += 1
-	Label(Left_Frame, text= master.LanguagePack.Label['LicensePath']).grid(row=Row, column=0, padx=5, pady=5, sticky=E)
-	master.TextLicensePath = Entry(Left_Frame,width = 100, state="readonly", textvariable=master.LicensePath)
+	Label(Tab, text= master.LanguagePack.Label['LicensePath']).grid(row=Row, column=0, padx=5, pady=5, sticky=E)
+	master.TextLicensePath = Entry(Tab,width = 100, state="readonly", textvariable=master.LicensePath)
 	master.TextLicensePath.grid(row=Row, column=2, columnspan=7, padx=5, pady=5, sticky=W+E)
-	master.Browse_License_Btn = Button(Right_Frame, width = master.HALF_BUTTON_SIZE, text=  master.LanguagePack.Button['Browse'], command = lambda: Btn_Select_License_Path(master), style=master.Btn_Style)
+	master.Browse_License_Btn = Button(Tab, width = master.HALF_BUTTON_SIZE, text=  master.LanguagePack.Button['Browse'], command = lambda: Btn_Select_License_Path(master), style=master.Btn_Style)
 	master.Browse_License_Btn.grid(row=Row, column=9, padx=5, pady=5, sticky=W)
 
 	Row += 2
-	Label(Left_Frame, text= master.LanguagePack.Label['Transparent']) \
+	Label(Tab, text= master.LanguagePack.Label['Transparent']) \
 		.grid(row=Row, rowspan = 2, column=0, padx=5, pady=10, sticky=W)
 	master.TransparentPercent = Scale(
-		Left_Frame,
+		Tab,
 		length=400,
 		from_=20,
 		to=100,
@@ -803,17 +812,17 @@ def Generate_Translate_Setting_UI(master, Tab):
 	'''
 	
 	Row += 2
-	Label(Left_Frame, text='Theme name:') \
+	Label(Tab, text='Theme name:') \
 		.grid(row=Row, rowspan=2, column=0, padx=5, pady=5, sticky=E)
 	
 	col = 2 # to add more buttons horizontally
 	for theme_name in master.theme_names:
 		master.radiobutton_theme_name = Radiobutton(
-			Left_Frame,
+			Tab,
 			text=theme_name,
 			value=theme_name,
 			variable=master.strvar_theme_name,
-			command = lambda: select_theme_name(master) )
+			command = lambda: select_theme_name(master, 'Writer') )
 		master.radiobutton_theme_name.config(width=master.HALF_BUTTON_SIZE)
 		master.radiobutton_theme_name.grid(
 			row=Row, column=col, padx=0, pady=5, sticky=W)
@@ -825,7 +834,8 @@ def Generate_Translate_Setting_UI(master, Tab):
 			Row += 1
 	
 	# Display selected theme
-	config_theme_name = master.Configuration['Bug_Writer']['theme_name']
+	config_theme_name = master.Configuration['Used_Theme']['Bug_Writer']
+	print('Used theme:', config_theme_name)
 	if config_theme_name in master.theme_names:
 		master.strvar_theme_name.set(config_theme_name)
 
@@ -911,7 +921,7 @@ def Generate_Document_Translate_Setting_UI(master, Tab):
 			text=theme_name,
 			value=theme_name,
 			variable=master.strvar_theme_name,
-			command = lambda: select_theme_name(master))
+			command = lambda: select_theme_name(master, 'Doc'))
 		master.radiobutton_theme_name.config(width=master.HALF_BUTTON_SIZE)
 		master.radiobutton_theme_name.grid(
 			row=Row, column=col, padx=0, pady=5, sticky=W)
@@ -923,7 +933,7 @@ def Generate_Document_Translate_Setting_UI(master, Tab):
 			Row += 1
 	
 	# Display selected theme
-	config_theme_name = master.Configuration['Document_Translator']['theme_name']
+	config_theme_name = master.Configuration['Used_Theme']['Document_Translator']
 	if config_theme_name in master.theme_names:
 		master.strvar_theme_name.set(config_theme_name)
 
@@ -1764,8 +1774,60 @@ def Generate_NXLog_UI(master, Tab):
 	Tab.bind_all('<Control-s>', master._save_report)
 	Tab.bind_all('<Control-l>', master._load_report)
 	Tab.bind_all('<Control-q>', master.ResetReport)
-
 	Tab.bind_all('<Control-g>', master.tag_selected)
+	
+def Generate_Image_Translate_UI(master, Tab):
+	"""Create Image Translate tab."""
+	Top_Frame = LabelFrame(Tab, text = 'Image Source')
+	Top_Frame.pack(side = TOP, fill=BOTH, expand= False)
+
+	Right_Frame = LabelFrame(Tab, text = 'OCR Result')
+	Right_Frame.pack(side = RIGHT, fill=BOTH, expand= False)
+	
+	Left_Frame = LabelFrame(Tab, text = 'Preview')
+	Left_Frame.pack(side = LEFT, fill=BOTH, expand= Y)
+
+	# Top Frame
+	Row = 1
+	#Label(Top_Frame, textvariable=master.Notice).grid(row=Row, column=0, columnspan = 10, padx=5, pady=5, sticky= E)
+	Label(Top_Frame, text= 'Image Path').grid(row=Row, column = 1, padx=5, pady=5, sticky=E)
+	master.img_path_var = StringVar()
+	master.TextImgPath = Entry(Top_Frame, width = 100, state="readonly", textvariable=master.img_path_var)
+	master.TextImgPath.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=W+E)
+	master.Browse_Img_Btn = Button(Top_Frame, width = master.HALF_BUTTON_SIZE, text=  master.LanguagePack.Button['Browse'], command = lambda: Btn_Select_Image_Path(master), style=master.Btn_Style)
+	master.Browse_Img_Btn.grid(row=Row, column=10, padx=5, pady=5, sticky=E)
+	
+
+	# Planning (NOT IMPEMENTED YET)
+	# Able to select image source from file or Android device (ADB)
+	#Row += 1
+	master.source_image = IntVar()
+
+	master.radiobutton_theme_name = Radiobutton(
+		Top_Frame, text= "File", value = 0,	variable= master.source_image )
+	master.radiobutton_theme_name.config(width=master.HALF_BUTTON_SIZE)
+	master.radiobutton_theme_name.grid(row=Row, column=0 , padx=5, pady=5, sticky=W)
+	
+	Row += 1
+	master.radiobutton_theme_name = Radiobutton(
+		Top_Frame, text= "Phone screen", value = 1,	variable= master.source_image )
+	master.radiobutton_theme_name.config(width=master.HALF_BUTTON_SIZE)
+	master.radiobutton_theme_name.grid(row=Row, column=0 , padx=5, pady=5, sticky=W)
+
+	Row += 1
+	master.radiobutton_theme_name = Radiobutton(
+		Top_Frame, text= "Clipboard", value = 2,	variable= master.source_image )
+	master.radiobutton_theme_name.config(width=master.HALF_BUTTON_SIZE)
+	master.radiobutton_theme_name.grid(row=Row, column=0 , padx=5, pady=5, sticky=W)
+
+	# Left Frame
+	master.Img_Frm = Label(Left_Frame, width = 100)
+	master.Img_Frm.grid(row=Row, column=1, columnspan = 10, padx=5, pady=5, sticky= E+W)
+
+	# Right Frame
+	Row = 1
+	master.OCR_Text = CustomText(Right_Frame, width=40, height=30, undo=True, wrap=WORD)
+	master.OCR_Text.grid(row=Row, column=2, columnspan=4, rowspan=30, padx=5, pady=5, stick=W+E)
 
 # Related function
 def get_current_theme_color(master):
@@ -1782,6 +1844,15 @@ def Btn_Select_License_Path(master):
 		os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = LicensePath
 		master.LicensePath.set(LicensePath)
 		master.rebuild_UI()
+	else:
+		master.Notice.set("No file is selected")
+
+def Btn_Select_Image_Path(master):
+	filename = filedialog.askopenfilename(title =  'Select image',filetypes = (("Image files","*.png *.jpg" ), ), )	
+	if filename != "":
+		image_path = master.CorrectPath(filename)
+		#show_image(master, image_path)
+		#master.img_path_var.set(image_path)
 	else:
 		master.Notice.set("No file is selected")
 
@@ -1840,12 +1911,13 @@ def create_temp_theme(event, master, *_):
 	"""
 	_used_theme = master.strvar_theme_name.get()
 	
-	themename = "temp_" + str(uuid4()).replace("-", "")[:10]
+	
 	colors = {}
 	for row in master.color_rows:
 		colors[row.label["text"]] = row.color_value
 		master.AppConfig.Save_Config(master.AppConfig.Theme_Config_Path, 'Theme', row.label["text"], row.color_value)
-	if _used_theme == 'Custom':
+	if _used_theme == 'custom':
+		themename = "temp_" + str(uuid4()).replace("-", "")[:10]
 		definition = ThemeDefinition(themename, colors, master.style.theme.type)
 		master.style.register_theme(definition)
 		master.style.theme_use(themename)
@@ -1919,12 +1991,14 @@ def init_writer_theme(master):
 			raise Exception('Cannot use the theme saved in the config'
 				' because it is not supported or required files have'
 				' been removed.')
-		if master.used_theme != 'Custom':
+			
+		if master.used_theme != 'custom':
 			master.style.theme_use(master.used_theme)
 	except Exception as err:
 		print('Error while initializing theme:\n'
 			f'- {err}\n'
 			'The system default theme will be used instead.')
+		master.used_theme = master.theme_names[1]	
 	transparency  = master.Configuration['Bug_Writer']['Transparent']
 	Apply_Transparency(transparency, master)
 
@@ -1951,7 +2025,7 @@ def init_doc_theme(master):
 	transparency  = master.Configuration['Document_Translator']['Transparent']
 	Apply_Transparency(transparency, master)
 
-def select_theme_name(master):
+def select_theme_name(master, used_tool):
 	"""Save the theme name value to Configuration and change
 	the theme based on the selection in the UI.
 	
@@ -1960,16 +2034,20 @@ def select_theme_name(master):
 			Theme name retrieved from config. (Default: '')
 	"""
 	try:
+		if used_tool == 'Writer':
+			section = 'Bug_Writer'
+		else:
+			section = 'Document_Translator'
 		theme_name = master.strvar_theme_name.get()
 
-		master.AppConfig.Save_Config(master.AppConfig.Writer_Config_Path,
-			'Bug_Writer','theme_name',	theme_name, True)
+		master.AppConfig.Save_Config(master.AppConfig.Theme_Config_Path,
+			'Used_Theme', section,	theme_name)
 	except Exception as err:
 		messagebox.showerror(
 			title='Error',
 			message=f'Error occurs when selecting theme: {err}')
 	try:
-		if theme_name != 'Custom':
+		if theme_name != 'custom':
 			master.style.theme_use(theme_name)
 		else:
 			create_temp_theme(event = None, master = master)
@@ -1981,3 +2059,44 @@ def update_color_patches(master):
 	for row in master.color_rows:
 		row.color_value = master.style.colors.get(row.label["text"])
 		row.update_patch_color()
+
+'''
+def show_image(master, img_path):
+	# Set the image of the label widget.
+	
+	#master.Img_Frm.config(image=master.img_byte)
+	#master.parent.update()
+
+	reader = easyocr.Reader(['ko'], gpu=False)
+	image = cv2.imread(img_path)
+	results = reader.readtext(img_path, paragraph="True")
+	
+		
+
+	#cv2.imshow('Im', image)
+	#cv2.waitKey(0)
+	img_byte =  Image.fromarray(image)
+	draw = ImageDraw.Draw(img_byte)
+
+	# Select a font
+	count = 1
+	
+	font = ImageFont.truetype('malgun.ttf', 24)
+	for res in results:
+		top_left = tuple(res[0][0]) # top left coordinates as tuple
+		bottom_right = tuple(res[0][2]) # bottom right coordinates as tuple
+		print(top_left,bottom_right)
+		shape = [top_left, bottom_right]
+		draw.rectangle(shape, fill = None, outline ="red")
+		draw.text((top_left[0], top_left[1]-10), "[" + str(count) + "] " + res[1], font=font, fill=(255, 0, 0))	
+		count+=1
+	# Draw the translated text onto the image
+		
+	master.img_byte = ImageTk.PhotoImage(img_byte)
+	master.Img_Frm.config(image=master.img_byte)
+	master.parent.update()
+	print('winfo_width:', master.Img_Frm.winfo_width())
+	print('winfo_height:', master.Img_Frm.winfo_height())
+
+
+'''
