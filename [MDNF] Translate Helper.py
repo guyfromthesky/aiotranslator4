@@ -54,7 +54,7 @@ from libs.cloudconfig import CloudConfigLoader
 from libs.grammarcheck import LanguageTool
 
 from libs.version import get_version
-from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText, ConfirmationPopup
+from libs.tkinter_extension import AutocompleteCombobox, AutocompleteEntry, CustomText, ConfirmationPopup, Generate_NXLog_UI
 
 
 from libs.tkinter_extension import Generate_BugWriter_Tab_UI, Generate_BugWriter_Menu_UI, Generate_Translate_Setting_UI
@@ -236,6 +236,7 @@ class MyTranslatorHelper(Frame):
 		try:
 			Generate_MDNF_BugWriter_UI(self, self.BugWriterTab)
 			Generate_SimpleTranslator_UI(self, self.SimpleTranslatorTab)
+			Generate_NXLog_UI(self, self.NXLogTab)
 			Generate_Image_Translate_UI(self, self.ImageTranslateTab)
 			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
 			Generate_Theme_Setting_UI(self, self.ThemeSettingTab)
@@ -956,7 +957,9 @@ class MyTranslatorHelper(Frame):
 
 	def disable_btn(self):
 		self.GetTitleBtn.configure(state=DISABLED)
+		self.nx_GetTitleBtn.configure(state=DISABLED)
 		self.GetReportBtn.configure(state=DISABLED)
+		self.nx_GetReportBtn.configure(state=DISABLED)
 		#self.CorrectGrammarBtn.configure(state=DISABLED)
 		self.TranslateBtn.configure(state=DISABLED)
 		self.dual_translate_btn.configure(state=DISABLED)
@@ -984,6 +987,8 @@ class MyTranslatorHelper(Frame):
 	def enable_btn(self):
 		self.GetTitleBtn.configure(state=NORMAL)
 		self.GetReportBtn.configure(state=NORMAL)
+		self.nx_GetTitleBtn.configure(state=NORMAL)
+		self.nx_GetReportBtn.configure(state=NORMAL)
 		#self.CorrectGrammarBtn.configure(state=NORMAL)
 		self.TranslateBtn.configure(state=NORMAL)
 		self.dual_translate_btn.configure(state=NORMAL)
@@ -1104,10 +1109,10 @@ class MyTranslatorHelper(Frame):
 			self.confirm_report_grammar()
 
 		
-	def GetTitle(self, event=None):
+	def GetTitle(self, event = None):
 		self.disable_btn()
 		copy("")
-
+		self.event = event
 		target_language = self.language_id_list[self.language_list.index(self.target_language.get())]
 		source_language = self.language_id_list[self.language_list.index(self.source_language.get())]
 		if target_language != self.MyTranslator.to_language or source_language != self.MyTranslator.from_language:
@@ -1115,11 +1120,11 @@ class MyTranslatorHelper(Frame):
 			print('Update language pair from: ', source_language, ' to ',  target_language)
 		self.Notice.set(self.LanguagePack.ToolTips['GenerateBugTitle'])
 
-		self.strSourceTitle = self.TextTitle.get("1.0", END).rstrip()
-
-
-
-		self.Title_Translate = Process(target=SimpleTranslate, args=(self.return_text, self.MyTranslator, self.strSourceTitle,))
+		if self.TAB_CONTROL.index("current") == 2:
+			self.strSourceTitle = self.nx_TextTitle.get("1.0", END).rstrip()
+		else:
+			self.strSourceTitle = self.TextTitle.get("1.0", END).rstrip()
+		self.Title_Translate = Process(target=SimpleTranslate, args=(self.return_text, self.MyTranslator, self.strSourceTitle))
 		self.Title_Translate.start()
 		self.after(DELAY, self.TextTitleGet)
 		return
@@ -1140,34 +1145,51 @@ class MyTranslatorHelper(Frame):
 				
 				HeaderA = ""
 				HeaderB = ""
-				
-				HeaderA = self.HeaderOptionA.get()
-				if HeaderA != "":
-					HeaderA_Translated = self.MyTranslator.translate_header(HeaderA)
-				else:
-					HeaderA_Translated = False
-					
-				HeaderB = self.HeaderOptionB.get()
-				if HeaderB != "":
-					HeaderB_Translated = self.MyTranslator.translate_header(HeaderB)
-				else:
-					HeaderB_Translated = False
-				SourceHeader = ""
-				TargetHeader = ""
+				if self.TAB_CONTROL.index("current") == 2:
+					try:
+						HeaderA = self.table.get("1.0", END).rstrip()
+						HeaderB = self.column.get("1.0", END).rstrip()
+						if HeaderA == "" or HeaderB == "":
+							raise Exception
+						TargetHeader = "[" + HeaderA + "]" + " <" + HeaderB + ">"
+						Title = TargetHeader + " "  +  self.TargetTitle
+						copy(str(Title))
+						self.Notice.set(self.LanguagePack.ToolTips['GeneratedBugTitle'])
+						self.Title_Translate.join()
+					except Exception as e:
+						print(e)
+						self.Notice.set(self.LanguagePack.ToolTips['tableorcolumnisempty'])
+						self.Title_Translate.join()
+				else:	
+					HeaderA = self.HeaderOptionA.get()
+					if HeaderA != "":
+						HeaderA_Translated = self.MyTranslator.translate_header(HeaderA)
+					else:
+						HeaderA_Translated = False
+						
+					HeaderB = self.HeaderOptionB.get()
+					if HeaderB != "":
+						HeaderB_Translated = self.MyTranslator.translate_header(HeaderB)
+					else:
+						HeaderB_Translated = False
+					SourceHeader = ""
+					TargetHeader = ""
 
-				if HeaderA != "" and HeaderA_Translated != False:
-					SourceHeader += "[" + HeaderA + "]"
-					TargetHeader += "[" + HeaderA_Translated + "]"
-				if HeaderB != False and HeaderB_Translated != False:
-					SourceHeader += "[" + HeaderB + "]"
-					TargetHeader += "[" + HeaderB_Translated + "]"	
-
-				Title = TargetHeader + " "  +  self.TargetTitle + " | " + SourceHeader  + " " +  self.strSourceTitle
-				
-				copy(str(Title))
-				self.Notice.set(self.LanguagePack.ToolTips['GeneratedBugTitle'])
-				self.Title_Translate.join()
-			except queue.Empty:
+					if HeaderA != "" and HeaderA_Translated != False:
+						SourceHeader += "[" + HeaderA + "]"
+						TargetHeader += "[" + HeaderA_Translated + "]"
+					if HeaderB != False and HeaderB_Translated != False:
+						SourceHeader += "[" + HeaderB + "]"
+						TargetHeader += "[" + HeaderB_Translated + "]"	
+					Title = TargetHeader + " "  +  self.TargetTitle + " | " + SourceHeader  + " " +  self.strSourceTitle
+					copy(str(Title))
+					self.TitleForReport = str(Title)
+					self.Notice.set(self.LanguagePack.ToolTips['GeneratedBugTitle'])
+					self.Title_Translate.join()
+					if self.event == "report":
+						self.generate_report()
+			except Exception as e:
+				print(e)
 				self.Notice.set(self.LanguagePack.ToolTips['GenerateBugTitleFail'])
 
 			self.enable_btn()	
@@ -1386,7 +1408,13 @@ class MyTranslatorHelper(Frame):
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderA', HeaderA)
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'BugDetails', 'HeaderB', HeaderB)
 
-			
+			for widget_name in self.Configuration['NXLog']:
+				for widget in dir(self):
+					if widget == widget_name:
+						_widget = getattr(self, widget)
+						_string = _widget.get("1.0", END)
+						self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'NXLog', widget_name, _string, True)
+
 		except Exception as e:
 			print('Cannot sve the report:', e)
 			pass
@@ -1406,7 +1434,16 @@ class MyTranslatorHelper(Frame):
 			HeaderA = self.HeaderOptionA.get()
 			HeaderB = self.HeaderOptionB.get()		
 			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderA', HeaderA)
-			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)			
+			self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_BugDetails', 'HeaderB', HeaderB)		
+
+			for widget_name in self.Configuration['Temp_NXLog']:
+				
+				for widget in dir(self):
+					if widget == widget_name:
+						_widget = getattr(self, widget)
+						_string = _widget.get("1.0", END)
+						self.AppConfig.Save_Config(self.AppConfig.Writer_Config_Path, 'Temp_NXLog', widget_name, _string, True)
+							
 		except Exception as e:
 			print('Cannot save the report:', e)
 			pass
@@ -1442,6 +1479,15 @@ class MyTranslatorHelper(Frame):
 			self.HeaderOptionA.set(self.Configuration['BugDetails']['HeaderA'])
 			self.HeaderOptionB.set(self.Configuration['BugDetails']['HeaderB'])
 			
+			for widget_name in self.Configuration['NXLog']:
+				temp_string = self.Configuration['NXLog'][widget_name]
+				if temp_string != None and isinstance(temp_string, str):
+					temp_string = temp_string.rstrip('\n')
+				for widget in dir(self):
+					if widget == widget_name:
+						_widget = getattr(self, widget)
+						_widget.delete("1.0", END)
+						_widget.insert("end", temp_string)
 		except Exception as e:
 			print('Fail somewhere:', e)
 			pass
@@ -1464,6 +1510,16 @@ class MyTranslatorHelper(Frame):
 	
 			self.HeaderOptionA.set(self.Configuration['Temp_BugDetails']['HeaderA'])
 			self.HeaderOptionB.set(self.Configuration['Temp_BugDetails']['HeaderB'])
+
+			for widget_name in self.Configuration['Temp_NXLog']:
+				temp_string = self.Configuration['Temp_NXLog'][widget_name]
+				if temp_string != None and isinstance(temp_string, str):
+					temp_string = temp_string.rstrip('\n')					
+				for widget in dir(self):
+					if widget == widget_name:
+						_widget = getattr(self, widget)
+						_widget.delete("1.0", END)
+						_widget.insert("end", temp_string)
 
 			SourceText  = self.Configuration['Temp_BugDetails']['SimpleTranslator'].rstrip('\n')
 			self.SourceText.delete("1.0", END)
