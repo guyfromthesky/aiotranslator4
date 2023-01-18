@@ -228,7 +228,7 @@ class MyTranslatorHelper(Frame):
 		try:
 			Generate_BugWriter_UI(self, self.BugWriterTab)
 			Generate_SimpleTranslator_UI(self, self.SimpleTranslatorTab)
-			#Generate_Image_Translate_UI(self, self.ImageTranslateTab)
+			Generate_Image_Translate_UI(self, self.ImageTranslateTab)
 			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
 			Generate_Theme_Setting_UI(self, self.ThemeSettingTab)
 	

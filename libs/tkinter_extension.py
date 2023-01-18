@@ -576,9 +576,10 @@ def Apply_Background_Image(Frame, name):
 	print(bg_path)
 	if os.path.isfile(bg_path):
 		print('Apply image: ', bg_path)
-		background_image = Image.open(bg_path)
-		background_image = background_image.resize((400,400))
-		background_image = ImageTk.PhotoImage(background_image)
+		#background_image = Image.open(bg_path)
+		#background_image = background_image.resize((400,400))
+		#background_image = ImageTk.PhotoImage(background_image)
+		background_image = ImageTk.PhotoImage(file = bg_path)
 		background_label = Label(Frame, image = background_image)
 		background_label.image = background_image
 		background_label.place(x = 0, y = 0, relwidth = 1, relheight = 1)
