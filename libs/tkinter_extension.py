@@ -22,11 +22,11 @@ import re
 import os
 
 
-'''
+
 import easyocr
 import cv2
 import numpy as np
-'''
+
 
 
 class AutocompleteCombobox(Combobox):
@@ -582,6 +582,36 @@ def Apply_Background_Image(Frame, name):
 		background_label.place(x = 0, y = 0, relwidth = 1, relheight = 1)
 
 # BUG WRITER TAB UI
+
+def Init_Tab(master):
+	MainPanel = Frame(master, name='mainpanel')
+	MainPanel.pack(side=TOP, fill=BOTH, expand=Y)
+
+	
+	master.TAB_CONTROL = Notebook(MainPanel, name='notebook')
+	 
+	# extend bindings to top level window allowing
+	#   CTRL+TAB - cycles thru tabs
+	#   SHIFT+CTRL+TAB - previous tab
+	#   ALT+K - select tab using mnemonic (K = underlined letter)
+	master.TAB_CONTROL.enable_traversal()
+	#TAB_CONTROL = Notebook(self.parent)
+
+	master.TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
+	master.Bottom_Frame = Frame(master)
+	master.Bottom_Frame.pack(side=RIGHT, fill=BOTH, expand=False)
+
+
+def Add_Tab(master, Tab_Name, BG_Image = None, call_function=None):
+	New_Tab = Frame(master.TAB_CONTROL)
+	master.TAB_CONTROL.add(New_Tab, text=Tab_Name)
+	if call_function:
+		call_function(master, New_Tab)
+	
+	if BG_Image:
+		Apply_Background_Image(New_Tab, BG_Image)
+	return New_Tab
+
 def Generate_BugWriter_Tab_UI(master):
 	MainPanel = Frame(master, name='mainpanel')
 	MainPanel.pack(side=TOP, fill=BOTH, expand=Y)
@@ -1057,6 +1087,7 @@ def Generate_BugWriter_UI(master, Tab):
 	Tab.bind_all('<Control-g>', master.tag_selected)
 	# Add all Text in the tab to a list to change theme dynamically
 	
+
 
 def Generate_MDNF_BugWriter_UI(master, Tab):
 	# Title
@@ -1710,6 +1741,10 @@ def Generate_Image_Translate_UI(master, Tab):
 	master.radiobutton_theme_name.config(width=master.HALF_BUTTON_SIZE)
 	master.radiobutton_theme_name.grid(row=Row, column=0 , padx=5, pady=5, sticky=W)
 
+	master.Browse_Img_Btn = Button(Top_Frame, width = master.HALF_BUTTON_SIZE, text=  'Select Area', command = lambda: Btn_Select_Image_Path(master), style=master.Btn_Style)
+	master.Browse_Img_Btn.grid(row=Row, column=10, padx=5, pady=5, sticky=E)
+	
+
 	Row += 1
 	master.radiobutton_theme_name = Radiobutton(
 		Top_Frame, text= "Clipboard", value = 2,	variable= master.source_image )
@@ -1720,10 +1755,20 @@ def Generate_Image_Translate_UI(master, Tab):
 	master.Img_Frm = Label(Left_Frame, width = 100)
 	master.Img_Frm.grid(row=Row, column=1, columnspan = 10, padx=5, pady=5, sticky= E+W)
 
+	master.Browse_Img_Btn = Button(Top_Frame, width = master.HALF_BUTTON_SIZE, text=  master.LanguagePack.Button['Translate'], command = lambda: Btn_Select_Image_Path(master), style=master.Btn_Style)
+	master.Browse_Img_Btn.grid(row=Row, column=10, padx=5, pady=5, sticky=E)
+	
+
 	# Right Frame
 	Row = 1
 	master.OCR_Text = CustomText(Right_Frame, width=40, height=30, undo=True, wrap=WORD)
 	master.OCR_Text.grid(row=Row, column=2, columnspan=4, rowspan=30, padx=5, pady=5, stick=W+E)
+
+	master.parent.update()
+	iWidth = master.parent.winfo_width()
+	iHeight = master.parent.winfo_height()
+	print(iWidth, 'x', iHeight)
+	#print(iHeight, 'y', iHeight)
 
 # Related function
 def get_current_theme_color(master):
@@ -1743,14 +1788,7 @@ def Btn_Select_License_Path(master):
 	else:
 		master.Notice.set("No file is selected")
 
-def Btn_Select_Image_Path(master):
-	filename = filedialog.askopenfilename(title =  'Select image',filetypes = (("Image files","*.png *.jpg" ), ), )	
-	if filename != "":
-		image_path = master.CorrectPath(filename)
-		#show_image(master, image_path)
-		#master.img_path_var.set(image_path)
-	else:
-		master.Notice.set("No file is selected")
+
 
 def review_report(master):
 
@@ -1956,7 +1994,6 @@ def update_color_patches(master):
 		row.color_value = master.style.colors.get(row.label["text"])
 		row.update_patch_color()
 
-'''
 def show_image(master, img_path):
 	# Set the image of the label widget.
 	
@@ -1995,4 +2032,12 @@ def show_image(master, img_path):
 	print('winfo_height:', master.Img_Frm.winfo_height())
 
 
-'''
+
+def Btn_Select_Image_Path(master):
+	filename = filedialog.askopenfilename(title =  'Select image',filetypes = (("Image files","*.png *.jpg" ), ), )	
+	if filename != "":
+		image_path = master.CorrectPath(filename)
+		#show_image(master, image_path)
+		#master.img_path_var.set(image_path)
+	else:
+		master.Notice.set("No file is selected")

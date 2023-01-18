@@ -56,7 +56,7 @@ from libs.cloudconfig import CloudConfigLoader
 from libs.version import get_version
 from libs.tkinter_extension import Generate_BugWriter_Tab_UI, Generate_BugWriter_Menu_UI, Generate_Translate_Setting_UI
 from libs.tkinter_extension import Generate_BugWriter_UI, Generate_SimpleTranslator_UI, Generate_Theme_Setting_UI, Generate_Image_Translate_UI
-from libs.tkinter_extension import BugWriter_BottomPanel, init_writer_theme
+from libs.tkinter_extension import BugWriter_BottomPanel, init_writer_theme, Init_Tab, Add_Tab
 
 from libs.general import get_version, resource_path, get_user_name
 #from openpyxl import load_workbook, worksheet, Workbook
@@ -221,25 +221,32 @@ class MyTranslatorHelper(Frame):
 	def init_ui(self):
 		self.parent.resizable(False, False)
 		self.parent.title(version)
-
+		# Add the top menu to the UI
 		Generate_BugWriter_Menu_UI(self)
-		Generate_BugWriter_Tab_UI(self)
-		
+		# Add Tab to the Main body
+		Init_Tab(self)
 		try:
-			Generate_BugWriter_UI(self, self.BugWriterTab)
-			Generate_SimpleTranslator_UI(self, self.SimpleTranslatorTab)
-			#Generate_Image_Translate_UI(self, self.ImageTranslateTab)
-			Generate_Translate_Setting_UI(self, self.TranslateSettingTab)
-			Generate_Theme_Setting_UI(self, self.ThemeSettingTab)
-	
+			##TAB 1
+			self.BugWriterTab = 		Add_Tab(self, Tab_Name = self.LanguagePack.Tab['BugWriter'], 
+										BG_Image = None, call_function = Generate_BugWriter_UI)
+			##TAB 2
+			self.SimpleTranslatorTab = 	Add_Tab(self, Tab_Name = self.LanguagePack.Tab['SimpleTranslator'], 
+										BG_Image = None, call_function = Generate_SimpleTranslator_UI)
+			##TAB 3
+			self.ImageTranslateTab =	Add_Tab(self, Tab_Name = "Image Translate", 
+										BG_Image = None, call_function = Generate_Image_Translate_UI)
+			## TAB 4
+			self.TranslateSettingTab =	Add_Tab(self, Tab_Name = self.LanguagePack.Tab['Translator'], 
+										BG_Image = 'bg_setting.png', call_function = Generate_Translate_Setting_UI)
+			## TAB 5
+			self.ThemeSettingTab = 		Add_Tab(self, Tab_Name =  "Theme Setting", 
+										BG_Image = 'bg_setting.png', call_function = Generate_Theme_Setting_UI)
+			## Bottom Pannel
 			self.bottom_panel = BugWriter_BottomPanel(self)
-	
+
 		except Exception as e:
 			print(f'An error occurs while initializing UI: {e}')
-		#Generate_Theme_Setting_UI(self, self.ThemeSettingTab)
-		#self.bottom_panel = BugWriter_BottomPanel(self)
-		#self.Generate_Search_UI(self.Searcher)
-		#self.Init_Translator_Config
+		
 		
 	# Init functions
 	# Some option is saved for the next time use
