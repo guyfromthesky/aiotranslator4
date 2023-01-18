@@ -51,7 +51,7 @@ from libs.cloudconfig import CloudConfigLoader
 
 from libs.aioconfigmanager import ConfigLoader
 from libs.documentprocessing import translate_docx, translate_msg
-from libs.documentprocessing import translate_presentation, translate_workbook
+from libs.documentprocessing import translate_presentation, translate_workbook, translate_workbook_new
 
 from libs.general import get_version, resource_path, send_fail_request, get_user_name
 from libs.tkinter_extension import AutocompleteCombobox, Generate_Document_Translate_Setting_UI, init_doc_theme
@@ -64,7 +64,7 @@ import pandas as pd
 tool_display_name = "Document Translator"
 #This variable will be passed to AIO translator to know the source of translate request.
 tool_name = 'document'
-REV = 4210
+REV = 4220
 ver_num = get_version(REV) 
 version = tool_display_name  + " v" +  ver_num
 
@@ -1081,8 +1081,8 @@ class DocumentTranslator(Frame):
 
 		self.glossary_id = self.Configuration['Translator']['glossary_id']
 
-		self.used_theme = self.Configuration['Document_Translator']['theme_name']
-		self.font_size = self.Configuration['Document_Translator']['font_size']		
+		self.used_theme = self.Configuration['Used_Theme']['Document_Translator']
+		#self.font_size = self.Configuration['Document_Translator']['font_size']		
 
 		self.strvar_theme_name = StringVar()
 
@@ -1584,8 +1584,8 @@ def function_compare_db(status_queue, result_queue, MyTranslator, glossary_id, a
 			result = MyTranslator.download_db_to_file(glossary_id, old_csv_db)
 			if result == False:
 				status_queue.put('Fail to load OLD DB file')
-				status_queue.put(str(_error_message))
-				result_queue.put(False)
+				#status_queue.put(str(_error_message))
+				#result_queue.put(False)
 				return
 				
 		except Exception as _error_message:
@@ -1989,19 +1989,20 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 		Options['OutputDocument'] = output_file
 		print('Option:', Options)
 		if ext == '.docx':
-			Result = translate_docx(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
+			#Result = translate_docx(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			try:
 				print('Debug')
-				#Result = translate_docx(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
+				Result = translate_docx(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
 				StatusQueue.put(str(ErrorMsg))
 				Result = str(e)
 				
 		elif ext in ['.xlsx', '.xlsm']:
-			#Result = translate_workbook(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
+			Result = translate_workbook(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
 			try:
-				Result = translate_workbook(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
+				#Result = translate_workbook_new(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
+				pass
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
 				StatusQueue.put(str(ErrorMsg))

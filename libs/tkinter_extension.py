@@ -576,9 +576,10 @@ def Apply_Background_Image(Frame, name):
 	print(bg_path)
 	if os.path.isfile(bg_path):
 		print('Apply image: ', bg_path)
-		background_image = Image.open(bg_path)
-		background_image = background_image.resize((400,400))
-		background_image = ImageTk.PhotoImage(background_image)
+		#background_image = Image.open(bg_path)
+		#background_image = background_image.resize((400,400))
+		#background_image = ImageTk.PhotoImage(background_image)
+		background_image = ImageTk.PhotoImage(file = bg_path)
 		background_label = Label(Frame, image = background_image)
 		background_label.image = background_image
 		background_label.place(x = 0, y = 0, relwidth = 1, relheight = 1)
@@ -622,8 +623,8 @@ def Generate_BugWriter_Tab_UI(master):
 	master.TAB_CONTROL.add(master.NXLogTab, text= "NXLog Bug Writer")
 
 	##TAB 4
-	#master.ImageTranslateTab = Frame(master.TAB_CONTROL)
-	#master.TAB_CONTROL.add(master.ImageTranslateTab, text= "Image Translate")
+	master.ImageTranslateTab = Frame(master.TAB_CONTROL)
+	master.TAB_CONTROL.add(master.ImageTranslateTab, text= "Image Translate")
 
 	## TAB 5
 	master.TranslateSettingTab = Frame(master.TAB_CONTROL)

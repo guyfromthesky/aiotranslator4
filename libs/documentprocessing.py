@@ -9,6 +9,7 @@ from multiprocessing import Process , Queue, Manager
 import subprocess
 import time
 from datetime import datetime
+import shutil
 
 #from google.cloud import vision
 
@@ -199,6 +200,276 @@ class RunData:
 		self.Text = string
 
 #Workbook handle
+def translate_workbook_new(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
+	""" How Document Translator tool proccesses the translation in Excel file """
+	print(locals())
+	from openpyxl import load_workbook, worksheet, Workbook
+	from openpyxl.styles import Font
+	import xlwings as xw
+
+	if 'SourceDocument' not in Options:
+		status_queue.put('No source document input')
+		return False
+	else:
+		SourceDocument = Options['SourceDocument']
+
+		
+
+	if 'OutputDocument' not in Options:
+		now = datetime.now()
+		timestamp = str(int(datetime.timestamp(now)))
+		output_dir = os.path.dirname(SourceDocument)
+		base_name = os.path.basename(SourceDocument) # File name
+		source_name = os.path.splitext(base_name)[0] # File extension
+		OutputDocument = output_dir + '/' + 'Translated_' + source_name + '_' + timestamp + '.xlsx'
+	else:
+		OutputDocument = Options['OutputDocument']
+
+	### TOOL OPTIONS START ###
+	# Check if an option is selected
+	if 'TranslateSheetName' not in Options:
+		TranslateSheetName = True
+	else:
+		TranslateSheetName = Options['TranslateSheetName']
+
+	if 'Sheet' not in Options:
+		Sheet = []
+	else:
+		Sheet = Options['Sheet']
+	### TOOL OPTIONS END ###
+
+	### TRANSLATE OPTIONS START ###
+	# Check if an option is selected
+	if 'DataOnly' not in Options:
+		DataOnly = True
+	else:
+		DataOnly = Options['DataOnly']
+
+	if 'SheetRemovalMode' not in Options:
+		SheetRemovalMode = False
+	else:
+		SheetRemovalMode = Options['SheetRemovalMode']
+	
+	if 'Bilingual' not in Options:
+		BilingualMode = False
+	else:
+		BilingualMode = Options['Bilingual']
+		from openpyxl.comments import Comment
+
+	try:
+		if DataOnly == True:
+			print('Data only')
+			xlsx = load_workbook(SourceDocument, data_only=True)
+		else:
+			print('Disable data only')
+			xlsx = load_workbook(SourceDocument)
+	except Exception as e:
+		status_queue.put('Failed to load the document: ' + str(e))
+		return e
+	
+	### TRANSLATE OPTIONS END ###
+	shutil.copy(SourceDocument, OutputDocument)
+	write_wb = xw.Book(OutputDocument)
+	status_queue.put('Estimating total task to do...')
+	progress_queue.put(0)
+	#tasks_to_accomplish = Queue()
+	#tasks_that_are_done = Queue()
+	#processes = []
+	
+	task_list = []
+
+	sheet_list = []
+	for sheet in xlsx:
+		sheet_list.append(sheet.title)
+	#status_queue.put('Sheet List' + str(sheet_list))
+
+	current_task_count = 0
+
+	# 
+	translate_list = generate_sheet_list(sheet_list, Sheet)	
+	#status_queue.put('Translate List' + str(translate_list))
+	# Check if there's a value in the cell, number of task increases by 1
+	for sheet in translate_list:
+		ws = xlsx[sheet]
+		for row in ws.iter_rows():
+			for cell in row:
+				if cell.value != None:
+					current_task_count+=1
+	
+	total_task_count = current_task_count
+	cp = 0
+	if current_task_count == 0:
+		print('Done')
+	else:
+		status_queue.put('Total task: ' + str(total_task_count))
+		percent = show_progress(cp, total_task_count)
+		progress_queue.put(percent)
+		memory_translation = 0
+		fail_request = 0
+		empty_cell = 0
+		status_queue.put('Checking task detail...')
+
+		status_queue.put('Pre-processing document...')
+		for sheet in xlsx:
+			if check_list(sheet.title, translate_list):
+				status_queue.put("Checking sheet: " + str(sheet.title))
+				for row in sheet.iter_rows():
+					for cell in row:
+						if cell.value != None:
+							current_string = str(cell.value)
+							# If this cell is content formula:
+							if DataOnly == False:
+								#print('Data only False')
+								if cell.data_type == 'f':
+									#print('Formula cell: ', current_string)
+									continue
+							# ValidateSourceText in aiotranslator lib
+							result = MyTranslator.ValidateSourceText(current_string)
+							if result == False:
+								fail_request+=1
+							elif result != True:
+								sheet_name = sheet.title
+								cell_address = cell.column_letter + str(cell.row)	
+
+								#if BilingualMode == True:
+									#_comment = Comment(current_string, "Translator")
+									#write_wb.sheets[sheet_name][cell_address].api.AddComment(Text=_comment) 
+									#cell.comment = _comment
+									
+								
+								write_wb.sheets[sheet_name][cell_address].value = str(result)	
+								#print('Appending to', sheet_name, cell_address)
+								#ws[cell_address].value = str(result)	
+								#cell.value = result
+								memory_translation+=1
+							else:
+								list_string = current_string.split('\n')
+								sheet_name = sheet.title
+								cell_address = cell.column_letter + str(cell.row)	
+								#if BilingualMode == True:
+									#_comment = Comment(current_string, "Translator")
+									#write_wb.sheets[sheet_name][cell_address].api.AddComment(Text=_comment) 
+									#cell.comment = _comment
+								
+								Task = CellData(sheet_name, cell_address, list_string)
+								task_list.append(Task)
+				cp = fail_request + memory_translation
+				percent = show_progress(cp, total_task_count)
+				progress_queue.put(percent)
+			else:
+				if SheetRemovalMode:
+					std = xlsx.get_sheet_by_name(sheet.title)
+					xlsx.remove_sheet(std)
+
+		status_queue.put('Empty cell: ' + str(empty_cell))
+		status_queue.put('Fail request: ' + str(fail_request))
+		status_queue.put('Translated by Memory: ' + str(memory_translation))
+		remaining_task_count = total_task_count - cp	
+		status_queue.put('Remained task: ' + str(remaining_task_count))
+		
+		Task_todo = []
+		
+		status_queue.put('Opening document and start updating translation result.')
+		xlsx.close()
+
+		while len(task_list) > 0:
+			#print('Len task:', len(task_list))
+			Translated = []
+			TaskLength = 0
+			
+			while TaskLength < API_LENGTH_LIMIT:
+				#print('Len text:', TaskLength)
+				if len(task_list) > 0:
+					Input = task_list[0].Text
+					if isinstance(Input, list):
+						TempLen = TaskLength
+						for tempString in Input:
+							TempLen += len(tempString)
+			
+					elif isinstance(Input, str):
+						TempLen = TaskLength + len(task_list[0].Text)
+						
+					if TempLen < API_LENGTH_LIMIT:
+						TaskLength = TempLen
+						Task_todo.append(task_list[0])
+						del task_list[0]
+					else:
+						break	
+				else:
+					break
+		
+			Translated = cell_translate(MyTranslator, Task_todo)
+			
+			for task in Translated:
+				Return = task
+				NewSheet = Return.Sheet
+				NewAdd = Return.Address
+				NewVal = Return.Text
+				if isinstance(NewVal, list):
+					NewVal = '\r\n'.join(NewVal)
+
+				# Use xlwings to write file
+				# Rewrite the code of openpyxl
+				#ws = xlsx[NewSheet]
+				#cell  = ws[NewAdd]
+				#cell.value = str(NewVal)
+				#print('Sheet name', NewSheet)
+				ws = write_wb.sheets[NewSheet]
+				print('Appending to', NewSheet, NewAdd)
+				ws[NewAdd].value = str(NewVal)
+				#tempFont = copy.copy(cell.font)  
+				#tempFont.name = 'Times New Roman'
+				#cell.font = tempFont
+		
+			remaining_task_count = len(task_list)
+			Message = str(remaining_task_count) + ' tasks remain....'
+			status_queue.put(Message)	
+
+			cp = total_task_count - remaining_task_count
+			percent = show_progress(cp, total_task_count)
+			progress_queue.put(percent)
+			del Task_todo
+			Task_todo = []
+
+		index = 0
+		if TranslateSheetName:
+		
+			status_queue.put('Translating sheet name...')
+			to_translate = []
+			for sheet in xlsx:
+				if check_list(sheet.title, translate_list):
+					CurrentSheetName = sheet.title
+					to_translate.append(CurrentSheetName)
+			translated = MyTranslator.translate(to_translate)
+			index = 0
+			for sheet in write_wb.sheets:
+				#print("Translate sheet: ", sheet.name)
+				if check_list(sheet.name, translate_list):
+					try:
+						write_wb.sheets[sheet].name = translated[index][0:29]
+						#print(translated[index][0:29])
+					except Exception as e:
+						print("error when translate Sheet Name", sheet.name, e)
+						pass	
+					index+=1
+
+		status_queue.put('Exporting result....')	
+		print('Exporting file to ', OutputDocument)
+		
+		try:
+			write_wb.save(OutputDocument)
+			#xlsx.save(OutputDocument)
+			if os.path.isfile(OutputDocument):
+				return True
+			else:
+				return False	
+		except Exception as e:
+			status_queue.put('Failed to save the result: ' + str(e))
+			return e
+	write_wb.app.quit()
+	status_queue.put('No thing to do with this file.')	
+
+
 def translate_workbook(progress_queue=None, result_queue=None, status_queue=None, MyTranslator=None, Options = {}):
 	""" How Document Translator tool proccesses the translation in Excel file """
 	print(locals())
