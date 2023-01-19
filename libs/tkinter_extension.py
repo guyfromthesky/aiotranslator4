@@ -1717,10 +1717,10 @@ def Generate_Image_Translate_UI(master, Tab):
 	# Top Frame
 	Row = 1
 	#Label(Top_Frame, textvariable=master.Notice).grid(row=Row, column=0, columnspan = 10, padx=5, pady=5, sticky= E)
-	Label(Top_Frame, text= 'Image Path').grid(row=Row, column = 1, padx=5, pady=5, sticky=E)
+	#Label(Top_Frame, text= 'Image Path').grid(row=Row, column = 1, padx=5, pady=5, sticky=E)
 	master.img_path_var = StringVar()
 	master.TextImgPath = Entry(Top_Frame, width = 100, state="readonly", textvariable=master.img_path_var)
-	master.TextImgPath.grid(row=Row, column=3, columnspan=7, padx=5, pady=5, sticky=W+E)
+	master.TextImgPath.grid(row=Row, column= 1, columnspan=7, padx=5, pady=5, sticky=W+E)
 	master.Browse_Img_Btn = Button(Top_Frame, width = master.HALF_BUTTON_SIZE, text=  master.LanguagePack.Button['Browse'], command = lambda: Btn_Select_Image_Path(master), style=master.Btn_Style)
 	master.Browse_Img_Btn.grid(row=Row, column=10, padx=5, pady=5, sticky=E)
 	
@@ -1761,7 +1761,7 @@ def Generate_Image_Translate_UI(master, Tab):
 
 	# Right Frame
 	Row = 1
-	master.OCR_Text = CustomText(Right_Frame, width=40, height=30, undo=True, wrap=WORD)
+	master.OCR_Text = CustomText(Right_Frame, width=40, height=27, undo=True, wrap=WORD)
 	master.OCR_Text.grid(row=Row, column=2, columnspan=4, rowspan=30, padx=5, pady=5, stick=W+E)
 
 	master.parent.update()
@@ -1994,39 +1994,34 @@ def update_color_patches(master):
 		row.color_value = master.style.colors.get(row.label["text"])
 		row.update_patch_color()
 
-def show_image(master, img_path):
+def show_image_in_Image_Translate(master):
 	# Set the image of the label widget.
 	
 	#master.Img_Frm.config(image=master.img_byte)
 	#master.parent.update()
 
-	reader = easyocr.Reader(['ko'], gpu=False)
-	image = cv2.imread(img_path)
-	results = reader.readtext(img_path, paragraph="True")
+	#reader = easyocr.Reader(['ko'], gpu=False)
+	##image = cv2.imread(img_path)
+	#results = reader.readtext(img_path, paragraph="True")
 	
-		
-
 	#cv2.imshow('Im', image)
 	#cv2.waitKey(0)
-	img_byte =  Image.fromarray(image)
-	draw = ImageDraw.Draw(img_byte)
-
-	# Select a font
-	count = 1
 	
-	font = ImageFont.truetype('malgun.ttf', 24)
-	for res in results:
-		top_left = tuple(res[0][0]) # top left coordinates as tuple
-		bottom_right = tuple(res[0][2]) # bottom right coordinates as tuple
-		print(top_left,bottom_right)
-		shape = [top_left, bottom_right]
-		draw.rectangle(shape, fill = None, outline ="red")
-		draw.text((top_left[0], top_left[1]-10), "[" + str(count) + "] " + res[1], font=font, fill=(255, 0, 0))	
-		count+=1
+	# Select a font
+	#count = 1
+	
+	#font = ImageFont.truetype('malgun.ttf', 24)
+	#for res in results:
+	#	top_left = tuple(res[0][0]) # top left coordinates as tuple
+	#	bottom_right = tuple(res[0][2]) # bottom right coordinates as tuple
+	#	print(top_left,bottom_right)
+	#	shape = [top_left, bottom_right]
+	#	draw.rectangle(shape, fill = None, outline ="red")
+	#	draw.text((top_left[0], top_left[1]-10), "[" + str(count) + "] " + res[1], font=font, fill=(255, 0, 0))	
+	#	count+=1
 	# Draw the translated text onto the image
-		
-	master.img_byte = ImageTk.PhotoImage(img_byte)
-	master.Img_Frm.config(image=master.img_byte)
+	#	
+	
 	master.parent.update()
 	print('winfo_width:', master.Img_Frm.winfo_width())
 	print('winfo_height:', master.Img_Frm.winfo_height())
@@ -2037,7 +2032,20 @@ def Btn_Select_Image_Path(master):
 	filename = filedialog.askopenfilename(title =  'Select image',filetypes = (("Image files","*.png *.jpg" ), ), )	
 	if filename != "":
 		image_path = master.CorrectPath(filename)
-		#show_image(master, image_path)
-		#master.img_path_var.set(image_path)
+		Set_Current_Raw_Img(master, image_path)
+		master.img_path_var.set(image_path)
+		Set_Current_Raw_Img(master)
 	else:
 		master.Notice.set("No file is selected")
+
+def Set_Current_Raw_Img(master):
+	master.img_byte = None
+	source_image = master.source_image.get()
+	if source_image == 1:
+		img_path = master.img_path_var.get()
+		raw_img_byte =  Image.fromarray(img_path)
+		master.img_byte = ImageTk.PhotoImage(raw_img_byte)
+	
+	
+	master.Img_Frm.config(image=master.img_byte)
+	return
