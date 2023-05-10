@@ -619,30 +619,67 @@ def Generate_BugWriter_Tab_UI(master):
 	#Apply_Background_Image(master.SimpleTranslatorTab, 'bg_simple.png')
 
 	##TAB 3
-	master.NXLogTab = Frame(master.TAB_CONTROL)
-	master.TAB_CONTROL.add(master.NXLogTab, text= "NXLog Bug Writer")
+	#master.ImageTranslateTab = Frame(master.TAB_CONTROL)
+	#master.TAB_CONTROL.add(master.ImageTranslateTab, text= "Image Translate")
 
-	##TAB 4
-	master.ImageTranslateTab = Frame(master.TAB_CONTROL)
-	master.TAB_CONTROL.add(master.ImageTranslateTab, text= "Image Translate")
-
-	## TAB 5
+	## TAB 4
 	master.TranslateSettingTab = Frame(master.TAB_CONTROL)
 	master.TAB_CONTROL.add(master.TranslateSettingTab, text=master.LanguagePack.Tab['Translator'])
 
 	Apply_Background_Image(master.TranslateSettingTab, 'bg_setting.png')
 	
-	## TAB 6
-	master.ThemeSettingTab = Frame(master.TAB_CONTROL)
-	master.TAB_CONTROL.add(master.ThemeSettingTab, text= "Theme Setting")
+	## TAB 5
+	#master.ThemeSettingTab = Frame(master.TAB_CONTROL)
+	#master.TAB_CONTROL.add(master.ThemeSettingTab, text= "Theme Setting")
 	
-	Apply_Background_Image(master.ThemeSettingTab, 'bg_theme_setting.png')
+	#Apply_Background_Image(master.ThemeSettingTab, 'bg_theme_setting.png')
 
 	master.TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
 
 	master.Bottom_Frame = Frame(master)
 	master.Bottom_Frame.pack(side=RIGHT, fill=BOTH, expand=False)
+
+# BUG WRITER TAB UI FOR NXLOG MDNF
+def Generate_NXLog_Tab_UI(master):
+	MainPanel = Frame(master, name='mainpanel')
+	MainPanel.pack(side=TOP, fill=BOTH, expand=Y)
+
 	
+	master.TAB_CONTROL = Notebook(MainPanel, name='notebook')
+	 
+	# extend bindings to top level window allowing
+	#   CTRL+TAB - cycles thru tabs
+	#   SHIFT+CTRL+TAB - previous tab
+	#   ALT+K - select tab using mnemonic (K = underlined letter)
+	master.TAB_CONTROL.enable_traversal()
+	#TAB_CONTROL = Notebook(self.parent)
+	
+	## TAB 1
+	master.NXLogTab = Frame(master.TAB_CONTROL)
+	master.TAB_CONTROL.add(master.NXLogTab, text= "NXLog Bug Writer")
+
+	## TAB 2
+	master.TemplateTab = Frame(master.TAB_CONTROL)
+	master.TAB_CONTROL.add(master.TemplateTab, text= "NXLog Template")
+
+	## TAB 3
+	master.SimpleTranslatorTab = Frame(master.TAB_CONTROL)
+	master.TAB_CONTROL.add(master.SimpleTranslatorTab, text=master.LanguagePack.Tab['SimpleTranslator'])
+	
+	#Apply_Background_Image(master.SimpleTranslatorTab, 'bg_simple.png')
+
+	##TAB 4
+	master.TranslateSettingTab = Frame(master.TAB_CONTROL)
+	master.TAB_CONTROL.add(master.TranslateSettingTab, text=master.LanguagePack.Tab['Translator'])
+
+	##TAB 5
+	#master.ThemeSettingTab = Frame(master.TAB_CONTROL)
+	#master.TAB_CONTROL.add(master.ThemeSettingTab, text= "Theme Setting")
+
+	master.TAB_CONTROL.pack(side=TOP, fill=BOTH, expand=Y)
+
+	master.Bottom_Frame = Frame(master)
+	master.Bottom_Frame.pack(side=RIGHT, fill=BOTH, expand=False)
 
 #def MDNF_Logo(master):
 #	bg_path =os.path.join( r'theme/background', 'logo.png')
@@ -1353,7 +1390,7 @@ def Generate_SimpleTranslator_UI(master, Tab):
 	master.SourceText.grid(row=Row, column=0, columnspan=5, rowspan=master.ROW_SIZE, padx=5, pady=5, sticky=N+S+E+W)
 	master.SourceText.bind("<Double-Tab>", master.BindSwap)
 
-	master.TargetText = CustomText(Main_Frame, width = master.SOURCE_WIDTH, height=master.ROW_SIZE, undo=True, inactiveselectbackground="grey") #
+	master.TargetText = CustomText(Main_Frame, width = 79, height=master.ROW_SIZE, undo=True, inactiveselectbackground="grey")
 	master.TargetText.grid(row = Row, column=5, columnspan=5, rowspan=master.ROW_SIZE, padx=5, pady=5, sticky=N+S+E+W)
 	
 	Row +=master.ROW_SIZE
@@ -1717,23 +1754,20 @@ def Generate_NXLog_UI(master, Tab):
 	#master.nx_GetTitleBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
 	
 	Row+=1
-	Label(Tab, text=master.LanguagePack.Label['NX.Table']).grid(row=Row, column = 1, padx=5, pady=5, stick=W)
-
-	#AutocompleteCombobox
-	
+	Label(Tab, text=master.LanguagePack.Label['NX.Table']).grid(row=Row, column = 1, padx=5, stick=NW)
 	master.table = CustomText(Tab, width=master.HALF_BUTTON_SIZE*2, height=1, undo=True, wrap=WORD, inactiveselectbackground="grey")
-	master.table.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
+	master.table.grid(row=Row, column=2, columnspan=2, padx=5, sticky=NW+E)
 	
 	master.nx_TextTitle = CustomText(Tab, width=70, height=4, undo=True, wrap=WORD, inactiveselectbackground="grey")
-	master.nx_TextTitle.grid(row=Row, column=4, columnspan=6, rowspan=2, padx=5, pady=5, stick=W+E)
+	master.nx_TextTitle.grid(row=Row, column=4, columnspan=6, rowspan=2, padx=5, stick=W+E)
 	master.nx_GetTitleBtn = Button(Tab, text=master.LanguagePack.Button['GetTitle'], command=master.GetTitle, style=master.Btn_Style, state=DISABLED)
-	master.nx_GetTitleBtn.grid(row=Row, column=10, rowspan=2, stick=NSEW, pady=5, padx=(0,5))
+	master.nx_GetTitleBtn.grid(row=Row, column=10, rowspan=2, stick=NSEW, padx=(0,5))
 
 	Row+=1
-	Label(Tab, text=master.LanguagePack.Label['NX.Column']).grid(row=Row, column = 1, padx=5, pady=5, stick=W)
+	Label(Tab, text=master.LanguagePack.Label['NX.Column']).grid(row=Row, column = 1, rowspan=2, padx=5, stick=NW)
 
-	master.column = CustomText(Tab, width=master.HALF_BUTTON_SIZE*2, height=1, undo=True, wrap=WORD, inactiveselectbackground="grey")
-	master.column.grid(row=Row, column=2, columnspan=2, padx=5, pady=5, sticky=W+E)
+	master.column = CustomText(Tab, width=master.HALF_BUTTON_SIZE*2, height=4, undo=True, wrap=WORD, inactiveselectbackground="grey")
+	master.column.grid(row=Row, column=2, columnspan=2, rowspan=2, padx=5, pady=5, sticky=NW+E)
 	
 	Row+=1
 	Label(Tab, text=master.LanguagePack.Label['jsondata']).grid(row=Row, column=1, padx=5, pady=5, stick=W)
@@ -1741,7 +1775,7 @@ def Generate_NXLog_UI(master, Tab):
 
 	Row+=1
 	master.jsondata = Text(Tab, width=40, height=23, undo=True, inactiveselectbackground="grey")
-	master.jsondata.grid(row=Row, column=1, columnspan=3, rowspan=20,  padx=(5,0), pady=5, stick=W+E)
+	master.jsondata.grid(row=Row, column=1, columnspan=3, rowspan=23,  padx=(5,0), pady=5, stick=NW+E)
 	
 	#master.ResetInfoSection()
 	
@@ -1765,8 +1799,83 @@ def Generate_NXLog_UI(master, Tab):
 	
 	if master.language_tool_enable == True:
 		Tab.bind_all('<Control-q>', master.analyze_report_grammar)
+
+	Tab.bind_all('<Key>', master.handle_wait)
+	Tab.bind_all('<Control-r>', master.generate_report)
+	Tab.bind_all('<Control-e>', master.GetTitle)
+	Tab.bind_all('<Control-s>', master._save_report)
+	Tab.bind_all('<Control-l>', master._load_report)
+	Tab.bind_all('<Control-q>', master.ResetReport)
+	Tab.bind_all('<Control-g>', master.tag_selected)
+
+def Generate_Template_UI(master, Tab):
+	# Title
+	Row=1
+	Label(Tab, textvariable=master.Notice).grid(row=Row, column=4, columnspan=7, padx=5, pady=5, stick=E)
+	Row+=1
+	Label(Tab, text=master.LanguagePack.Label['NX.Table']).grid(row=Row, column = 1, rowspan=2, padx=5, stick=NSEW)
+	master.table = CustomText(Tab, width=60, height=2, undo=True, wrap=WORD, inactiveselectbackground="grey")
+	master.table.grid(row=Row, column=2, columnspan=4, rowspan=2, padx=5, pady=5, sticky=NS+W)
+
+	Label(Tab, text=master.LanguagePack.Label['NX.Column']).grid(row=Row, column = 5 , rowspan=2, padx=5, stick=NSEW)
+	master.column = CustomText(Tab, width=70, height=2, undo=True, wrap=WORD, inactiveselectbackground="grey")
+	master.column.grid(row=Row, column=6, columnspan=6, rowspan=2, padx=5, pady=5, sticky=NS+W)
+	Row += 2
+	Label(Tab, text= "Issue Title").grid(row = Row, column = 1, padx=5, pady=10, stick=W)
+
+	Row += 1
+
+	master.titleSelect = OptionMenu(Tab, master.titleTemplate, *master.Title_Template)
+	#master.titleSelect.config(width=master.HALF_BUTTON_SIZE+2)
+	master.titleSelect.grid(row=Row, column=1, padx=5, pady=5, sticky=E+W, columnspan=4)
+
+	Label(Tab, text= "when").grid(row = Row, column = 5, pady=5, stick=W+E)
+
+	master.summaryAction = CustomText(Tab, width=70, height=1, undo=True, wrap=WORD, inactiveselectbackground="grey")
+	master.summaryAction.grid(row=Row, column=6, columnspan=6, padx=5, pady=10, stick=W+E)
+	Row += 1
+
+	master.spacing= Label(Tab, text= "")
+	master.spacing.config(width=50)
+	master.spacing.grid(row=Row, column = 3, padx=5, stick=W)
+
+	Row += 1
+	#master.nx_target_language_select = OptionMenu(Tab, master.target_language, *master.language_list, command = master.set_writer_language)
+	#master.nx_target_language_select.config(width=master.HALF_BUTTON_SIZE)
+	#master.nx_target_language_select.grid(row=Row, column=2, padx=5, pady=5, sticky=W)
 	
-	master.TextTitle.focus_set()
+	#secondary_language_list = master.language_list + ['']
+	#master.nx_secondary_target_language_select = OptionMenu(Tab, master.secondary_target_language, *secondary_language_list, command = master.set_writer_language)
+	#master.nx_secondary_target_language_select.config(width=master.HALF_BUTTON_SIZE)
+	#master.nx_secondary_target_language_select.grid(row=Row, column=3, padx=5, pady=5, sticky=W)
+
+	#master.nx_GetTitleBtn = Button(Tab, text=master.LanguagePack.Button['GetTitle'], width=10, command=master.GetTitle, style=master.Btn_Style, state=DISABLED)
+	#master.nx_GetTitleBtn.grid(row=Row, column=10, padx=5, pady=5, stick=W+E)
+	
+	Label(Tab, text="Issue Body").grid(row = Row, column = 1, padx=5, pady=10, stick=W)
+	Row+=1
+	#AutocompleteCombobox
+	
+	master.bodyActionSelect = OptionMenu(Tab, master.bodyActionTemplate, *master.bodyAction_Template)
+	#master.bodyActionSelect.config(width=master.HALF_BUTTON_SIZE+2)
+	master.bodyActionSelect.grid(row=Row, column=1, padx=5, pady=5, sticky=E+W, columnspan=4)
+
+	master.detailedAction = CustomText(Tab, width=70, height=4, undo=True, wrap=WORD, inactiveselectbackground="grey")
+	master.detailedAction.grid(row=Row, column=6, columnspan=6, rowspan=3, padx=5, pady=10, stick=W+E)
+	Row += 3
+
+	master.bodyValueSelect = OptionMenu(Tab, master.bodyValueTemplate, *master.bodyValue_Template)
+	#master.bodyValueSelect.config(width=master.HALF_BUTTON_SIZE+2)
+	master.bodyValueSelect.grid(row=Row, column=1, padx=5, pady=5, sticky=E+W, columnspan=4)
+
+	master.detailedValue = CustomText(Tab, width=70, height=4, undo=True, wrap=WORD, inactiveselectbackground="grey")
+	master.detailedValue.grid(row=Row, column=6, columnspan=6, rowspan=3, padx=5, pady=10, stick=W+E)
+
+	Row += 3
+	
+	if master.language_tool_enable == True:
+		Tab.bind_all('<Control-q>', master.analyze_report_grammar)
+
 	Tab.bind_all('<Key>', master.handle_wait)
 	Tab.bind_all('<Control-r>', master.generate_report)
 	Tab.bind_all('<Control-e>', master.GetTitle)
