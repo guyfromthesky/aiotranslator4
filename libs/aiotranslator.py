@@ -1429,10 +1429,13 @@ class Translator:
 		#name = client.glossary_path(self.project_id, self.location, glossary_id)
 		name = client.glossary_path(self.project_bucket_id, self.location, glossary_id)
 		print('Client name:', name)
+		if len(supported_language) == 0:
+			supported_language = [self.from_language, self.to_language]
+		print('supported_language', supported_language)
 		language_codes_set = translator.types.Glossary.LanguageCodesSet(
 			language_codes = supported_language
 		)
-
+		
 		gcs_source = translator.types.GcsSource(input_uri=input_uri)
 
 		input_config = translator.types.GlossaryInputConfig(gcs_source=gcs_source)

@@ -66,7 +66,7 @@ tool_display_name = "Document Translator"
 tool_name = 'document'
 REV = 4220
 ver_num = get_version(REV) 
-version = tool_display_name  + " v" +  ver_num
+version = tool_display_name  + " v BETA " +  ver_num
 
 DELAY = 20
 
@@ -1999,10 +1999,17 @@ def execute_document_translate(MyTranslator, ProgressQueue, ResultQueue, StatusQ
 				Result = str(e)
 				
 		elif ext in ['.xlsx', '.xlsm']:
-			Result = translate_workbook(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
+			#Result = translate_workbook(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
+			if len (SourceDocument) == 1:
+				enhanced_translate = messagebox.askokcancel('Excel Translate advanced option', 'Do you want to use test mod. It took more time to translate, but the image and shape will not be broken.', icon = 'info')
+			else:
+				enhanced_translate = False
+			
 			try:
-				#Result = translate_workbook_new(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
-				pass
+				if enhanced_translate == True:
+					Result = translate_workbook_new(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)
+				else:
+					Result = translate_workbook(progress_queue=ProgressQueue, result_queue=ResultQueue, status_queue=StatusQueue, MyTranslator=MyTranslator, Options=Options)	
 			except Exception as e:
 				ErrorMsg = ('Error message: ' + str(e))
 				StatusQueue.put(str(ErrorMsg))

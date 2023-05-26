@@ -1706,9 +1706,9 @@ def AddCssLayout(Title, content):
 	return CssCode
 
 
-
 def Add_Style(Text):
 	return '___________' + Text + '___________' 
+
 
 def main():
 
